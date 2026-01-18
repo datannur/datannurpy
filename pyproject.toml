@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "datannurpy"
-version = "0.1.2"
+version = "0.1.3"
 description = "Python library for datannur catalog metadata management"
 authors = [{ name = "datannur" }]
 readme = "README.md"
@@ -44,6 +44,13 @@ exclude = ["examples/output"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/datannurpy"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/datannurpy"]
+
+[tool.hatch.build]
+# Include app/ even though it's gitignored
+ignore-vcs = true
 
 [tool.pyright]
 pythonVersion = "3.9"

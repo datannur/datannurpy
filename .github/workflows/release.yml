@@ -29,6 +29,9 @@ jobs:
       - name: Install build tools
         run: pip install build tomli
 
+      - name: Download app
+        run: make download-app
+
       - name: Build package
         run: python -m build
 
