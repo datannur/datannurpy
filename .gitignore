@@ -1,0 +1,7 @@
+.DS_Store
+.pytest_cache/
+.venv/
+.ruff_cache/
+__pycache__/
+src/datannurpy/app/
+examples/output/

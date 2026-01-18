@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "datannurpy"
+version = "0.1.0"
+description = "Python library for datannur catalog metadata management"
+authors = [{ name = "datannur" }]
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = [
+  "polars[calamine]>=1.0",
+  "typing_extensions>=4.0;python_version<'3.11'",
+]
+
+[project.urls]
+Homepage = "https://github.com/datannur/datannurpy"
+Repository = "https://github.com/datannur/datannurpy"
+Documentation = "https://github.com/datannur/datannurpy#readme"
+Issues = "https://github.com/datannur/datannurpy/issues"
+
+[tool.uv]
+dev-dependencies = ["pytest", "ruff", "pyright"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py39"
+exclude = ["examples/output"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/datannurpy"]
+
+[tool.pyright]
+pythonVersion = "3.9"
+typeCheckingMode = "standard"
+exclude = ["src/datannurpy/app"]

@@ -1,0 +1,117 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    # Only run if CI succeeded and it was a push (not a PR)
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push'
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install build tools
+        run: pip install build tomli
+
+      - name: Build package
+        run: python -m build
+
+      - name: Get current version
+        id: current_version
+        run: |
+          VERSION=$(python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Check if version changed
+        id: version_check
+        run: |
+          CURRENT_VERSION="${{ steps.current_version.outputs.version }}"
+
+          # Get the latest release tag using GitHub API
+          LATEST_TAG=$(gh release list --limit 1 --exclude-pre-releases --json tagName --jq '.[0].tagName' 2>/dev/null || echo "")
+
+          if [[ -z "$LATEST_TAG" ]]; then
+            echo "No previous releases found, creating first release"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "is_first_release=true" >> "$GITHUB_OUTPUT"
+          else
+            # Extract version from latest tag (remove 'v' prefix)
+            LATEST_VERSION="${LATEST_TAG#v}"
+            
+            if [[ "$CURRENT_VERSION" != "$LATEST_VERSION" ]]; then
+              echo "Version changed from ${LATEST_VERSION} to ${CURRENT_VERSION}"
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+              echo "is_first_release=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "Version unchanged (${CURRENT_VERSION})"
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+              echo "is_first_release=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract changelog
+        id: changelog
+        if: steps.version_check.outputs.changed == 'true'
+        run: |
+          VERSION="${{ steps.current_version.outputs.version }}"
+
+          # Extract changelog section for this version
+          awk "
+          /^## ${VERSION} / { found=1; next }
+          /^## / && found { exit }
+          found { print }
+          " CHANGELOG.md > /tmp/changelog_section.md
+
+          # Check if changelog was found
+          if [ ! -s /tmp/changelog_section.md ]; then
+            echo "No changelog found for version ${VERSION}"
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Changelog found for version ${VERSION}"
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to PyPI
+        if: steps.version_check.outputs.changed == 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Create GitHub release
+        if: steps.version_check.outputs.changed == 'true'
+        run: |
+          TAG="${{ steps.current_version.outputs.tag }}"
+          VERSION="${{ steps.current_version.outputs.version }}"
+
+          if [[ "${{ steps.changelog.outputs.found }}" == "true" ]]; then
+            # Use changelog file created in extract step
+            gh release create "${TAG}" \
+              --title "datannurpy ${TAG}" \
+              --notes-file /tmp/changelog_section.md \
+              dist/*
+          else
+            # Generate notes automatically
+            gh release create "${TAG}" \
+              --title "datannurpy ${TAG}" \
+              --generate-notes \
+              dist/*
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
