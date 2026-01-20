@@ -138,20 +138,32 @@ def list_tables(
     """List tables in a database, filtered by include/exclude patterns. Views excluded."""
     # Get all tables
     tables = list(con.list_tables(database=schema) if schema else con.list_tables())
+    backend = backend_name or _get_backend_name(con)
 
-    # Filter out views (SQLite includes them in list_tables)
-    if (backend_name or _get_backend_name(con)) == "sqlite":
-        raw_sql = getattr(con, "raw_sql", None)
-        if raw_sql:
-            try:
+    # Filter out views (some backends include them in list_tables)
+    raw_sql = getattr(con, "raw_sql", None)
+    if raw_sql:
+        try:
+            if backend == "sqlite":
                 result = raw_sql(
                     "SELECT name FROM sqlite_master WHERE type='table' "
                     "AND name NOT LIKE 'sqlite_%'"
                 ).fetchall()
                 actual_tables = {row[0] for row in result}
                 tables = [t for t in tables if t in actual_tables]
-            except Exception:
-                pass
+            elif backend in ("duckdb", "postgres", "mysql"):
+                # Use information_schema (standard SQL)
+                query = (
+                    "SELECT table_name FROM information_schema.tables "
+                    "WHERE table_type = 'BASE TABLE'"
+                )
+                if schema:
+                    query += f" AND table_schema = '{schema}'"
+                result = raw_sql(query).fetchall()
+                actual_tables = {row[0] for row in result}
+                tables = [t for t in tables if t in actual_tables]
+        except Exception:
+            pass
 
     if include is not None:
         included = _match_patterns(tables, include)
