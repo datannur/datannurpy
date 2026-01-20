@@ -77,9 +77,16 @@ def create_test_tables(con: ibis.BaseBackend) -> None:
     """Create test tables and view using Ibis (backend-agnostic)."""
     raw_sql: Any = getattr(con, "raw_sql")
 
-    con.create_table("employees", EMPLOYEES_DATA, overwrite=True)
-    con.create_table("departments", DEPARTMENTS_DATA, overwrite=True)
-    con.create_table("empty_table", EMPTY_TABLE_DATA, overwrite=True)
+    # Drop then create (works on all backends, avoids MySQL's lack of ALTER TABLE IF EXISTS)
+    for table in ["employees", "departments", "empty_table"]:
+        try:
+            con.drop_table(table, force=True)
+        except Exception:
+            pass
+
+    con.create_table("employees", EMPLOYEES_DATA)
+    con.create_table("departments", DEPARTMENTS_DATA)
+    con.create_table("empty_table", EMPTY_TABLE_DATA)
 
     # Create a view (standard SQL, works on all backends)
     try:
@@ -111,7 +118,7 @@ def drop_test_tables(con: ibis.BaseBackend) -> None:
 
 
 def create_schema_tables(con: ibis.BaseBackend, backend: str) -> None:
-    """Create schemas and tables for schema tests (backend-agnostic where possible).
+    """Create schemas and tables for schema tests.
 
     Creates:
     - sales schema: orders, customers tables
@@ -120,37 +127,35 @@ def create_schema_tables(con: ibis.BaseBackend, backend: str) -> None:
     """
     raw_sql: Any = getattr(con, "raw_sql")
 
-    # Schema creation syntax varies slightly but is standard SQL
+    # Schema creation (MySQL uses databases, others use schemas)
     if backend == "mysql":
-        # MySQL uses databases as schemas
         raw_sql("CREATE DATABASE IF NOT EXISTS sales")
         raw_sql("CREATE DATABASE IF NOT EXISTS inventory")
-        # MySQL doesn't support ALTER TABLE IF EXISTS, so we drop first then create
-        for db, table in [
-            ("sales", "orders"),
-            ("sales", "customers"),
-            ("inventory", "products"),
-        ]:
-            raw_sql(f"DROP TABLE IF EXISTS {db}.{table}")
-        con.create_table("orders", ORDERS_DATA, database="sales")
-        con.create_table("customers", CUSTOMERS_DATA, database="sales")
-        con.create_table("products", PRODUCTS_DATA, database="inventory")
     else:
-        # PostgreSQL, DuckDB use CREATE SCHEMA
         raw_sql("CREATE SCHEMA IF NOT EXISTS sales")
         raw_sql("CREATE SCHEMA IF NOT EXISTS inventory")
-        con.create_table("orders", ORDERS_DATA, overwrite=True, database="sales")
-        con.create_table("customers", CUSTOMERS_DATA, overwrite=True, database="sales")
-        con.create_table(
-            "products", PRODUCTS_DATA, overwrite=True, database="inventory"
-        )
 
-    # Create table in default schema
-    if backend == "mysql":
-        raw_sql("DROP TABLE IF EXISTS main_table")
-        con.create_table("main_table", pa.table({"id": [1]}))
-    else:
-        con.create_table("main_table", pa.table({"id": [1]}), overwrite=True)
+    # Drop then create tables (works on all backends)
+    for schema, table in [
+        ("sales", "orders"),
+        ("sales", "customers"),
+        ("inventory", "products"),
+    ]:
+        try:
+            con.drop_table(table, database=schema, force=True)
+        except Exception:
+            pass
+
+    con.create_table("orders", ORDERS_DATA, database="sales")
+    con.create_table("customers", CUSTOMERS_DATA, database="sales")
+    con.create_table("products", PRODUCTS_DATA, database="inventory")
+
+    # Main table in default schema
+    try:
+        con.drop_table("main_table", force=True)
+    except Exception:
+        pass
+    con.create_table("main_table", pa.table({"id": [1]}))
 
 
 def drop_schema_tables(con: ibis.BaseBackend, backend: str) -> None:
