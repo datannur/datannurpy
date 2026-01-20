@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import json
+import time
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
-import polars as pl
+import pyarrow as pa
 
 from ..entities.base import Entity
 
@@ -58,19 +59,22 @@ def _clean_value(value: Any) -> Any:
     return value
 
 
-def _build_jsonjs(data: list[dict[str, Any]], name: str) -> str:
+def _build_jsonjs(
+    data: list[dict[str, Any]], name: str, *, columns: list[str] | None = None
+) -> str:
     """Build jsonjs format: [columns, row1, row2, ...]."""
     if not data:
         return f"jsonjs.data['{name}'] = []"
 
-    # Get all unique columns (preserve order from first record, add missing)
-    columns: list[str] = []
-    seen: set[str] = set()
-    for record in data:
-        for key in record.keys():
-            if key not in seen:
-                columns.append(key)
-                seen.add(key)
+    # Use provided columns or discover from data
+    if columns is None:
+        columns = []
+        seen: set[str] = set()
+        for record in data:
+            for key in record.keys():
+                if key not in seen:
+                    columns.append(key)
+                    seen.add(key)
 
     # Build array format: [columns, row1, row2, ...]
     rows: list[list[Any]] = [columns]
@@ -87,23 +91,28 @@ def _build_jsonjs(data: list[dict[str, Any]], name: str) -> str:
 def _write_atomic(path: Path, content: str) -> None:
     """Write file atomically (temp + rename)."""
     temp_path = path.with_suffix(path.suffix + ".temp")
-    with open(temp_path, "w", encoding="utf-8") as f:
-        f.write(content)
-    temp_path.rename(path)
+    try:
+        with open(temp_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        temp_path.rename(path)
+    except Exception:
+        # Cleanup temp file on error
+        temp_path.unlink(missing_ok=True)
+        raise
 
 
 def write_freq_json(
-    freq_df: pl.DataFrame,
+    freq_table: pa.Table,
     output_dir: str | Path,
     *,
     write_js: bool = True,
 ) -> Path:
-    """Write freq DataFrame to freq.json and freq.json.js files."""
+    """Write freq table to freq.json and freq.json.js files."""
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Convert to list of dicts
-    data = freq_df.to_dicts()
+    data: list[dict[str, Any]] = freq_table.to_pylist()
 
     # Write .json (pretty-printed)
     json_path = output_dir / "freq.json"
@@ -112,13 +121,10 @@ def write_freq_json(
     # Write .json.js (compact array format for jsonjsdb)
     if write_js and data:
         jsonjs_path = output_dir / "freq.json.js"
-        columns = ["variable_id", "value", "freq"]
-        rows: list[list[Any]] = [columns]
-        for record in data:
-            row = [record.get(col) for col in columns]
-            rows.append(row)
-        json_minified = json.dumps(rows, ensure_ascii=False, separators=(",", ":"))
-        jsonjs_content = f"jsonjs.data['freq'] = {json_minified}"
+        # Fixed column order for freq table
+        jsonjs_content = _build_jsonjs(
+            data, "freq", columns=["variable_id", "value", "freq"]
+        )
         _write_atomic(jsonjs_path, jsonjs_content)
 
     return json_path
@@ -128,8 +134,6 @@ def write_table_registry(
     output_dir: Path, tables: list[str], *, write_js: bool = True
 ) -> None:
     """Write __table__.json registry for jsonjsdb."""
-    import time
-
     now = int(time.time())
 
     # Build table registry
@@ -142,12 +146,8 @@ def write_table_registry(
 
     # Write __table__.json.js
     if write_js:
-        rows: list[list[str | int]] = [["name", "last_modif"]]
-        for entry in registry:
-            rows.append([entry["name"], entry["last_modif"]])
-
-        jsonjs_content = (
-            f"jsonjs.data['__table__'] = {json.dumps(rows, separators=(',', ':'))}"
-        )
         jsonjs_path = output_dir / "__table__.json.js"
+        jsonjs_content = _build_jsonjs(
+            registry, "__table__", columns=["name", "last_modif"]
+        )
         _write_atomic(jsonjs_path, jsonjs_content)

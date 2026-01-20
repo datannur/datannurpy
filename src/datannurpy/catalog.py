@@ -8,7 +8,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 
-import polars as pl
+import ibis
+import pyarrow as pa
 
 from ._ids import make_id, sanitize_id
 from .entities import Dataset, Folder, Variable
@@ -30,7 +31,7 @@ class Catalog:
     datasets: list[Dataset] = field(default_factory=list)
     variables: list[Variable] = field(default_factory=list)
     freq_threshold: int = 100  # 0 = disabled
-    _freq_df: pl.DataFrame | None = field(default=None, repr=False)
+    _freq_tables: list[pa.Table] = field(default_factory=list, repr=False)
 
     def _process_file(
         self,
@@ -39,13 +40,13 @@ class Catalog:
         *,
         infer_stats: bool,
         freq_threshold: int | None,
-    ) -> pl.DataFrame | None:
-        """Scan file, update dataset with row count, add variables. Returns freq_df."""
+    ) -> None:
+        """Scan file, update dataset with row count, add variables."""
         from .readers.csv import scan_csv
         from .readers.excel import scan_excel
 
         scanner = scan_csv if dataset.delivery_format == "csv" else scan_excel
-        file_vars, nb_row, freq_df = scanner(
+        file_vars, nb_row, freq_table = scanner(
             file_path, infer_stats=infer_stats, freq_threshold=freq_threshold
         )
 
@@ -59,23 +60,24 @@ class Catalog:
             var.id = make_id(dataset.id, sanitize_id(var.name or old_col_name))
             var_id_mapping[old_col_name] = var.id
 
-        # Update freq DataFrame with final variable IDs
-        if freq_df is not None:
-            freq_df = freq_df.with_columns(
-                pl.col("variable_id").replace(var_id_mapping)
-            )
+        # Update freq table with final variable IDs and materialize to PyArrow
+        if freq_table is not None:
+            cases_list = [
+                (freq_table["variable_id"] == old_id, new_id)
+                for old_id, new_id in var_id_mapping.items()
+            ]
+            case_expr = ibis.cases(*cases_list, else_=freq_table["variable_id"])
+            freq_table = freq_table.mutate(variable_id=case_expr)
+            # Materialize immediately to avoid lazy table reference issues
+            self._freq_tables.append(freq_table.to_pyarrow())
 
         self.variables.extend(file_vars)
-        return freq_df
 
-    def _accumulate_freq(self, freq_df: pl.DataFrame | None) -> None:
-        """Accumulate frequency DataFrame."""
-        if freq_df is None:
-            return
-        if self._freq_df is None:
-            self._freq_df = freq_df
-        else:
-            self._freq_df = pl.concat([self._freq_df, freq_df])
+    def _get_freq_table(self) -> pa.Table | None:
+        """Get combined frequency table."""
+        if not self._freq_tables:
+            return None
+        return pa.concat_tables(self._freq_tables)
 
     def add_folder(
         self,
@@ -136,7 +138,7 @@ class Catalog:
             subdir_ids[subdir] = folder_id
 
         # Process files
-        freq_threshold = self.freq_threshold or None
+        freq_threshold = self.freq_threshold if self.freq_threshold else None
 
         for file_path in sorted(files):
             # Determine folder_id for this file
@@ -168,13 +170,12 @@ class Catalog:
             )
             self.datasets.append(dataset)
 
-            freq_df = self._process_file(
+            self._process_file(
                 file_path,
                 dataset,
                 infer_stats=infer_stats,
                 freq_threshold=freq_threshold,
             )
-            self._accumulate_freq(freq_df)
 
     def add_dataset(
         self,
@@ -258,13 +259,12 @@ class Catalog:
         )
         self.datasets.append(dataset)
 
-        freq_df = self._process_file(
+        self._process_file(
             file_path,
             dataset,
             infer_stats=infer_stats,
-            freq_threshold=self.freq_threshold or None,
+            freq_threshold=self.freq_threshold if self.freq_threshold else None,
         )
-        self._accumulate_freq(freq_df)
 
     def write(
         self,
@@ -290,8 +290,9 @@ class Catalog:
             write_json(self.variables, "variable", output_dir, write_js=write_js)
             tables.append("variable")
 
-        if self._freq_df is not None and len(self._freq_df) > 0:
-            write_freq_json(self._freq_df, output_dir, write_js=write_js)
+        freq_table = self._get_freq_table()
+        if freq_table is not None and len(freq_table) > 0:
+            write_freq_json(freq_table, output_dir, write_js=write_js)
             tables.append("freq")
 
         if tables:

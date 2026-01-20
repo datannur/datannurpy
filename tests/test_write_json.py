@@ -57,6 +57,25 @@ class TestFreq:
         assert values["red"] == 2
         assert values["blue"] == 1
 
+    def test_freq_multiple_files(self, tmp_path: Path):
+        """freq should work with multiple files (union of lazy tables)."""
+        # Create two separate CSV files with freq-eligible columns
+        (tmp_path / "file1.csv").write_text("status\nactive\nactive\ninactive\n")
+        (tmp_path / "file2.csv").write_text("status\npending\npending\nactive\n")
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path)
+        catalog.write(tmp_path / "output")
+
+        # Should not raise CatalogException about missing table
+        assert (tmp_path / "output" / "freq.json").exists()
+
+        with open(tmp_path / "output" / "freq.json") as f:
+            data = json.load(f)
+
+        # Should have freq data from both files
+        assert len(data) > 0
+
 
 class TestCatalogWrite:
     """Test Catalog.write method."""

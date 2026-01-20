@@ -1,11 +1,11 @@
-"""CSV reader using Polars."""
+"""CSV reader using Ibis/DuckDB."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-import polars as pl
-from polars.exceptions import NoDataError
+import duckdb
+import ibis
 
 from ..entities import Variable
 from ._utils import build_variables
@@ -17,18 +17,28 @@ def scan_csv(
     dataset_id: str | None = None,
     infer_stats: bool = True,
     freq_threshold: int | None = None,
-) -> tuple[list[Variable], int, pl.DataFrame | None]:
-    """Scan a CSV file and return (variables, row_count, freq_df)."""
-    try:
-        lf = pl.scan_csv(Path(path))  # pyright: ignore[reportCallIssue]
-        df = lf.collect()
-    except NoDataError:
-        # Empty CSV file
+) -> tuple[list[Variable], int, ibis.Table | None]:
+    """Scan a CSV file and return (variables, row_count, freq_table)."""
+    file_path = Path(path)
+
+    # Check for truly empty file (no content at all)
+    if file_path.stat().st_size == 0:
         return [], 0, None
-    variables, freq_df = build_variables(
-        df,
+
+    con = ibis.duckdb.connect()
+    try:
+        table = con.read_csv(file_path)
+    except duckdb.InvalidInputException:
+        # Empty or malformed CSV
+        return [], 0, None
+
+    row_count: int = table.count().execute()
+
+    variables, freq_table = build_variables(
+        table,
+        nb_rows=row_count,
         dataset_id=dataset_id,
         infer_stats=infer_stats,
         freq_threshold=freq_threshold,
     )
-    return variables, len(df), freq_df
+    return variables, row_count, freq_table

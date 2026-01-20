@@ -6,12 +6,10 @@ from collections.abc import Sequence
 from datetime import datetime, timezone
 from pathlib import Path
 
-import polars as pl
+import ibis
+import ibis.expr.datatypes as dt
 
 from ..entities import Variable
-
-# Default extensions to scan
-DEFAULT_EXTENSIONS = {".csv", ".xlsx", ".xls"}
 
 # Supported file formats: suffix -> delivery_format
 SUPPORTED_FORMATS: dict[str, str] = {
@@ -24,8 +22,8 @@ SUPPORTED_FORMATS: dict[str, str] = {
 def get_mtime_iso(path: Path) -> str:
     """Get file modification time as YYYY/MM/DD."""
     mtime = path.stat().st_mtime
-    dt = datetime.fromtimestamp(mtime, tz=timezone.utc)
-    return dt.strftime("%Y/%m/%d")
+    dt_obj = datetime.fromtimestamp(mtime, tz=timezone.utc)
+    return dt_obj.strftime("%Y/%m/%d")
 
 
 def find_files(
@@ -38,7 +36,7 @@ def find_files(
     if include is None:
         pattern = "**/*" if recursive else "*"
         candidates = [
-            f for f in root.glob(pattern) if f.suffix.lower() in DEFAULT_EXTENSIONS
+            f for f in root.glob(pattern) if f.suffix.lower() in SUPPORTED_FORMATS
         ]
     else:
         candidates = []
@@ -82,66 +80,63 @@ def find_subdirs(root: Path, files: list[Path]) -> set[Path]:
     return subdirs
 
 
-def polars_type_to_str(dtype: pl.DataType) -> str:
-    """Convert Polars dtype to string."""
-    type_map: dict[type, str] = {
-        pl.Int8: "integer",
-        pl.Int16: "integer",
-        pl.Int32: "integer",
-        pl.Int64: "integer",
-        pl.UInt8: "integer",
-        pl.UInt16: "integer",
-        pl.UInt32: "integer",
-        pl.UInt64: "integer",
-        pl.Float32: "float",
-        pl.Float64: "float",
-        pl.Boolean: "boolean",
-        pl.String: "string",
-        pl.Utf8: "string",
-        pl.Date: "date",
-        pl.Datetime: "datetime",
-        pl.Time: "time",
-        pl.Duration: "duration",
-        pl.Categorical: "categorical",
-        pl.Null: "null",
-    }
-
-    for polars_type, type_str in type_map.items():
-        if isinstance(dtype, polars_type):
-            return type_str
-
+def ibis_type_to_str(dtype: dt.DataType) -> str:
+    """Convert Ibis dtype to string."""
+    if isinstance(dtype, (dt.Int8, dt.Int16, dt.Int32, dt.Int64)):
+        return "integer"
+    if isinstance(dtype, (dt.UInt8, dt.UInt16, dt.UInt32, dt.UInt64)):
+        return "integer"
+    if isinstance(dtype, (dt.Float32, dt.Float64, dt.Decimal)):
+        return "float"
+    if isinstance(dtype, dt.Boolean):
+        return "boolean"
+    if isinstance(dtype, dt.String):
+        return "string"
+    if isinstance(dtype, dt.Date):
+        return "date"
+    if isinstance(dtype, dt.Timestamp):
+        return "datetime"
+    if isinstance(dtype, dt.Time):
+        return "time"
+    if isinstance(dtype, dt.Interval):
+        return "duration"
+    if isinstance(dtype, dt.Null):
+        return "null"
     return "unknown"
 
 
 def build_variables(
-    df: pl.DataFrame,
+    table: ibis.Table,
     *,
+    nb_rows: int,
     dataset_id: str | None = None,
     infer_stats: bool = True,
     freq_threshold: int | None = None,
-) -> tuple[list[Variable], pl.DataFrame | None]:
-    """Build Variable entities from DataFrame, return (variables, freq_df)."""
-    schema = df.schema
-    nb_rows = len(df)
+) -> tuple[list[Variable], ibis.Table | None]:
+    """Build Variable entities from Ibis Table, return (variables, freq_table)."""
+    schema = table.schema()
+    columns = list(schema)
 
     # Compute stats only if needed
     stats: dict[str, tuple[int, int, int]] = {}
-    if infer_stats:
-        stats_df = df.select(
-            [pl.col(col).n_unique().alias(f"{col}__distinct") for col in schema.names()]
-            + [
-                pl.col(col).null_count().alias(f"{col}__missing")
-                for col in schema.names()
-            ]
-        )
-        for col in schema.names():
-            nb_distinct = stats_df[f"{col}__distinct"][0]
-            nb_missing = stats_df[f"{col}__missing"][0]
+    if infer_stats and nb_rows > 0:
+        # Build aggregation expressions for distinct and null counts
+        agg_exprs = []
+        for col in columns:
+            agg_exprs.append(table[col].nunique().name(f"{col}__distinct"))
+            # count() excludes nulls, so nb_rows - count = nb_missing
+            agg_exprs.append(table[col].count().name(f"{col}__non_null"))
+
+        stats_row = table.aggregate(agg_exprs).to_pyarrow().to_pylist()[0]
+        for col in columns:
+            nb_distinct = int(stats_row[f"{col}__distinct"])
+            nb_non_null = int(stats_row[f"{col}__non_null"])
+            nb_missing = nb_rows - nb_non_null
             nb_duplicate = nb_rows - nb_distinct
             stats[col] = (nb_distinct, nb_duplicate, nb_missing)
 
     # Compute freq if threshold is set
-    freq_df: pl.DataFrame | None = None
+    freq_table: ibis.Table | None = None
     if freq_threshold is not None and stats:
         eligible_cols = [
             col
@@ -149,33 +144,30 @@ def build_variables(
             if nb_distinct <= freq_threshold
         ]
         if eligible_cols:
-            freq_dfs: list[pl.DataFrame] = []
+            freq_tables: list[ibis.Table] = []
             for col in eligible_cols:
-                # Use column name as variable_id placeholder, will be updated in catalog
-                vc = (
-                    df.select(pl.col(col).value_counts(sort=True))
-                    .unnest(col)
-                    .rename({col: "value", "count": "freq"})
-                    .with_columns(pl.lit(col).alias("variable_id"))
-                    .select(["variable_id", "value", "freq"])
+                # Value counts: group by column, count occurrences
+                grouped = table.group_by(col).agg(freq=table.count())
+                vc = grouped.select(
+                    ibis.literal(col).name("variable_id"),
+                    grouped[col].cast("string").name("value"),
+                    grouped["freq"],
                 )
-                # Cast value to string for consistency
-                vc = vc.with_columns(pl.col("value").cast(pl.Utf8))
-                freq_dfs.append(vc)
-            if freq_dfs:
-                freq_df = pl.concat(freq_dfs)
+                freq_tables.append(vc)
+            if freq_tables:
+                freq_table = ibis.union(*freq_tables)
 
     variables = [
         Variable(
             id=col_name,
             name=col_name,
             dataset_id=dataset_id,
-            type=polars_type_to_str(col_type),
+            type=ibis_type_to_str(schema[col_name]),
             nb_distinct=stats[col_name][0] if stats else None,
             nb_duplicate=stats[col_name][1] if stats else None,
             nb_missing=stats[col_name][2] if stats else None,
         )
-        for col_name, col_type in schema.items()
+        for col_name in columns
     ]
 
-    return variables, freq_df
+    return variables, freq_table

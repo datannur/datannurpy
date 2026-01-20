@@ -22,7 +22,7 @@ classifiers = [
   "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
-  "polars[calamine]>=1.0",
+  "ibis-framework[duckdb]>=11.0",
   "typing_extensions>=4.0;python_version<'3.11'",
 ]
 
@@ -33,7 +33,11 @@ Documentation = "https://github.com/datannur/datannurpy#readme"
 Issues = "https://github.com/datannur/datannurpy/issues"
 
 [tool.uv]
-dev-dependencies = ["pytest", "ruff", "pyright"]
+dev-dependencies = [
+    "pytest",
+ "ruff",
+ "pyright>=1.1.400",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

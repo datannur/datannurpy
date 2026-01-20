@@ -6,9 +6,9 @@ Python library for datannur catalog metadata management.
 
 3 layers:
 
-1. **Readers** (`src/datannurpy/readers/`): Polars for CSV/Excel scanning
+1. **Readers** (`src/datannurpy/readers/`): Ibis/DuckDB for CSV/Excel scanning
 2. **Entities** (`src/datannurpy/entities/`): dataclasses (Folder, Dataset, Variable)
-3. **Writers** (`src/datannurpy/writers/`): JSON stdlib for output
+3. **Writers** (`src/datannurpy/writers/`): JSON stdlib for output (PyArrow for data conversion)
 
 ## Public API
 
@@ -50,4 +50,4 @@ make check  # ruff + pyright + pytest
 
 - Python 3.9+ (use `from __future__ import annotations`)
 - pyright mode: standard
-- Polars typing issues: use `# pyright: ignore[reportCallIssue]` when needed
+- Ibis typing: prefer `.to_pyarrow()` methods over `.execute()` for better type inference
