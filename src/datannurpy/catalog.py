@@ -218,8 +218,8 @@ class Catalog:
         schemas_to_scan: list[str | None]
         if schema is not None:
             schemas_to_scan = [schema]
-        elif backend_name in ("postgres", "mysql"):
-            # For postgres/mysql, scan all schemas (or just public)
+        elif backend_name in ("postgres", "mysql", "duckdb"):
+            # For postgres/mysql/duckdb, scan all schemas
             available_schemas = list_schemas(con)
             # Filter out system schemas
             system_schemas = {

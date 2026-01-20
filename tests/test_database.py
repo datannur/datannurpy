@@ -6,16 +6,21 @@ import sqlite3
 import tempfile
 from collections.abc import Generator
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from datannurpy import Catalog, Folder
 from datannurpy.readers.database import (
     connect,
+    list_schemas,
     list_tables,
     parse_connection_string,
     scan_table,
 )
+
+if TYPE_CHECKING:
+    import ibis
 
 
 @pytest.fixture
@@ -65,6 +70,14 @@ def sample_sqlite_db() -> Generator[Path, None, None]:
         ],
     )
 
+    # Create an empty table
+    cursor.execute("""
+        CREATE TABLE empty_table (
+            id INTEGER PRIMARY KEY,
+            value TEXT
+        )
+    """)
+
     # Create a view (should not be included by default)
     cursor.execute("""
         CREATE VIEW employee_summary AS
@@ -80,6 +93,57 @@ def sample_sqlite_db() -> Generator[Path, None, None]:
 
     # Cleanup
     db_path.unlink(missing_ok=True)
+
+
+@pytest.fixture
+def duckdb_with_schemas() -> Generator[ibis.BaseBackend, None, None]:
+    """Create a DuckDB database with multiple schemas."""
+    import ibis
+
+    con = ibis.duckdb.connect(":memory:")
+
+    # Create schemas
+    con.raw_sql("CREATE SCHEMA sales")
+    con.raw_sql("CREATE SCHEMA inventory")
+
+    # Create tables in sales schema
+    con.raw_sql("""
+        CREATE TABLE sales.orders (
+            id INTEGER PRIMARY KEY,
+            customer TEXT,
+            amount DECIMAL(10, 2)
+        )
+    """)
+    con.raw_sql("""
+        INSERT INTO sales.orders VALUES
+        (1, 'Alice', 100.00),
+        (2, 'Bob', 250.50)
+    """)
+
+    con.raw_sql("""
+        CREATE TABLE sales.customers (
+            id INTEGER PRIMARY KEY,
+            name TEXT
+        )
+    """)
+    con.raw_sql("INSERT INTO sales.customers VALUES (1, 'Alice'), (2, 'Bob')")
+
+    # Create tables in inventory schema
+    con.raw_sql("""
+        CREATE TABLE inventory.products (
+            id INTEGER PRIMARY KEY,
+            name TEXT,
+            stock INTEGER
+        )
+    """)
+    con.raw_sql("INSERT INTO inventory.products VALUES (1, 'Widget', 100)")
+
+    # Create table in default schema (main)
+    con.raw_sql("CREATE TABLE main_table (id INTEGER)")
+
+    yield con
+
+    con.disconnect()
 
 
 class TestParseConnectionString:
@@ -131,6 +195,26 @@ class TestConnect:
         assert "employees" in tables
         assert "departments" in tables
 
+    def test_connect_with_existing_backend(self, sample_sqlite_db: Path) -> None:
+        """Test passing an existing Ibis connection."""
+        import ibis
+
+        existing_con = ibis.sqlite.connect(sample_sqlite_db)
+        con, backend = connect(existing_con)
+        assert con is existing_con
+        assert backend == "sqlite"
+
+    def test_connect_nonexistent_file(self) -> None:
+        """Test connecting to a non-existent SQLite file creates it."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = Path(tmpdir) / "nonexistent.db"
+            # SQLite creates the file if it doesn't exist
+            con, backend = connect(f"sqlite:////{db_path}")
+            assert backend == "sqlite"
+            assert db_path.exists()
+
 
 class TestListTables:
     """Tests for table listing."""
@@ -150,8 +234,8 @@ class TestListTables:
 
     def test_include_wildcard(self, sample_sqlite_db: Path) -> None:
         con, _ = connect(f"sqlite:////{sample_sqlite_db}")
-        tables = list_tables(con, include=["emp*"])
-        assert tables == ["employees"]
+        tables = list_tables(con, include=["dep*"])
+        assert tables == ["departments"]
 
     def test_exclude_filter(self, sample_sqlite_db: Path) -> None:
         con, _ = connect(f"sqlite:////{sample_sqlite_db}")
@@ -229,6 +313,24 @@ class TestScanTable:
         assert var_by_name["name"].nb_distinct is not None
         assert var_by_name["name"].nb_distinct <= 2
 
+    def test_scan_empty_table(self, sample_sqlite_db: Path) -> None:
+        """Test scanning a table with no rows."""
+        con, _ = connect(f"sqlite:////{sample_sqlite_db}")
+        variables, row_count, freq_table = scan_table(
+            con, "empty_table", infer_stats=True
+        )
+
+        assert row_count == 0
+        assert len(variables) == 2  # id, value
+
+        # Stats should be None or 0 for empty table
+        var_by_name = {v.name: v for v in variables}
+        assert var_by_name["id"].nb_distinct is None
+        assert var_by_name["value"].nb_missing is None
+
+        # No freq table for empty table
+        assert freq_table is None
+
 
 class TestCatalogAddDatabase:
     """Tests for Catalog.add_database()."""
@@ -241,16 +343,16 @@ class TestCatalogAddDatabase:
         assert len(catalog.folders) == 1
         assert catalog.folders[0].name == sample_sqlite_db.stem
 
-        # Should have 2 datasets (tables)
-        assert len(catalog.datasets) == 2
+        # Should have 3 datasets (tables)
+        assert len(catalog.datasets) == 3
         dataset_names = {d.name for d in catalog.datasets}
-        assert dataset_names == {"employees", "departments"}
+        assert dataset_names == {"employees", "departments", "empty_table"}
 
         # Check delivery_format
         assert all(d.delivery_format == "sqlite" for d in catalog.datasets)
 
         # Should have variables
-        assert len(catalog.variables) == 8  # 5 + 3 columns
+        assert len(catalog.variables) == 10  # 5 + 3 + 2 columns
 
     def test_add_database_with_custom_folder(self, sample_sqlite_db: Path) -> None:
         catalog = Catalog()
@@ -272,7 +374,9 @@ class TestCatalogAddDatabase:
 
     def test_add_database_with_exclude(self, sample_sqlite_db: Path) -> None:
         catalog = Catalog()
-        catalog.add_database(f"sqlite:////{sample_sqlite_db}", exclude=["departments"])
+        catalog.add_database(
+            f"sqlite:////{sample_sqlite_db}", exclude=["departments", "empty_table"]
+        )
 
         assert len(catalog.datasets) == 1
         assert catalog.datasets[0].name == "employees"
@@ -305,3 +409,88 @@ class TestCatalogAddDatabase:
         assert (tmp_path / "folder.json").exists()
         assert (tmp_path / "dataset.json").exists()
         assert (tmp_path / "variable.json").exists()
+
+
+class TestDuckDBWithSchemas:
+    """Tests for databases with multiple schemas (using DuckDB)."""
+
+    def test_list_schemas(self, duckdb_with_schemas: ibis.BaseBackend) -> None:
+        """Test listing schemas."""
+        schemas = list_schemas(duckdb_with_schemas)
+        assert "sales" in schemas
+        assert "inventory" in schemas
+        assert "main" in schemas
+
+    def test_list_tables_in_schema(self, duckdb_with_schemas: ibis.BaseBackend) -> None:
+        """Test listing tables in a specific schema."""
+        tables = list_tables(duckdb_with_schemas, schema="sales")
+        assert "orders" in tables
+        assert "customers" in tables
+        assert "products" not in tables  # In inventory schema
+
+    def test_scan_table_in_schema(self, duckdb_with_schemas: ibis.BaseBackend) -> None:
+        """Test scanning a table in a schema."""
+        variables, row_count, _ = scan_table(
+            duckdb_with_schemas, "orders", schema="sales"
+        )
+        assert row_count == 2
+        var_names = {v.name for v in variables}
+        assert var_names == {"id", "customer", "amount"}
+
+    def test_catalog_with_schemas(self, duckdb_with_schemas: ibis.BaseBackend) -> None:
+        """Test Catalog.add_database with multiple schemas."""
+        catalog = Catalog()
+        catalog.add_database(
+            duckdb_with_schemas,
+            folder=Folder(id="mydb", name="My Database"),
+        )
+
+        # Should have root folder + schema folders (sales, inventory, main)
+        folder_ids = {f.id for f in catalog.folders}
+        assert "mydb" in folder_ids
+        assert "mydb---sales" in folder_ids
+        assert "mydb---inventory" in folder_ids
+
+        # Check schema folders have correct parent
+        sales_folder = next(f for f in catalog.folders if f.id == "mydb---sales")
+        assert sales_folder.parent_id == "mydb"
+        assert sales_folder.name == "sales"
+
+        # Check datasets are in correct folders
+        orders_dataset = next(d for d in catalog.datasets if d.name == "orders")
+        assert orders_dataset.folder_id == "mydb---sales"
+
+        products_dataset = next(d for d in catalog.datasets if d.name == "products")
+        assert products_dataset.folder_id == "mydb---inventory"
+
+    def test_catalog_single_schema(self, duckdb_with_schemas: ibis.BaseBackend) -> None:
+        """Test Catalog.add_database with a single schema specified."""
+        catalog = Catalog()
+        catalog.add_database(
+            duckdb_with_schemas,
+            folder=Folder(id="sales_db", name="Sales DB"),
+            schema="sales",
+        )
+
+        # Should have only root folder (no sub-folders when single schema)
+        assert len(catalog.folders) == 1
+        assert catalog.folders[0].id == "sales_db"
+
+        # Should only have tables from sales schema
+        dataset_names = {d.name for d in catalog.datasets}
+        assert dataset_names == {"orders", "customers"}
+
+    def test_catalog_schema_include_exclude(
+        self, duckdb_with_schemas: ibis.BaseBackend
+    ) -> None:
+        """Test include/exclude with schemas."""
+        catalog = Catalog()
+        catalog.add_database(
+            duckdb_with_schemas,
+            folder=Folder(id="mydb", name="My DB"),
+            schema="sales",
+            include=["orders"],
+        )
+
+        assert len(catalog.datasets) == 1
+        assert catalog.datasets[0].name == "orders"

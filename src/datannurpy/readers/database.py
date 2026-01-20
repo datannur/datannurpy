@@ -26,6 +26,7 @@ BACKEND_FORMATS: dict[str, str] = {
     "sqlite": "sqlite",
     "postgres": "postgres",
     "mysql": "mysql",
+    "duckdb": "duckdb",
 }
 
 
@@ -81,10 +82,10 @@ def connect(connection: str | ibis.BaseBackend) -> tuple[ibis.BaseBackend, str]:
     """Connect to a database, return (connection, backend_name)."""
     if isinstance(connection, ibis.BaseBackend):
         backend_name = _get_backend_name(connection)
-        if backend_name in ("pyspark", "datafusion", "polars", "duckdb"):
+        if backend_name in ("pyspark", "datafusion", "polars"):
             raise ValueError(
                 f"Backend {backend_name!r} is not supported for database scanning. "
-                "Use sqlite, postgres, or mysql."
+                "Use sqlite, postgres, mysql, or duckdb."
             )
         return connection, backend_name
 
