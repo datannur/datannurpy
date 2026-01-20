@@ -13,60 +13,79 @@ Python library for [datannur](https://github.com/datannur/datannur) catalog meta
 pip install datannurpy
 ```
 
-## Usage
+For database support:
+
+```bash
+pip install datannurpy[postgres]  # PostgreSQL
+pip install datannurpy[mysql]     # MySQL
+# SQLite works out of the box
+```
+
+## Quick start
 
 ```python
 from datannurpy import Catalog
 
 catalog = Catalog()
 catalog.add_folder("./data")
-catalog.write("./output")
+catalog.export_app("./my-catalog", open_browser=True)
 ```
 
-### Multiple sources and custom folder metadata
+## Scanning files
 
 ```python
 from datannurpy import Catalog, Folder
 
 catalog = Catalog()
+
+# Scan a folder (CSV, Excel)
+catalog.add_folder("./data")
+
+# With custom folder metadata
 catalog.add_folder("./data", Folder(id="prod", name="Production"))
-catalog.add_folder("/mnt/archive", Folder(id="archive", name="Archives"))
-catalog.write("./output")
-```
 
-### Options
-
-```python
+# With filtering options
 catalog.add_folder(
     "./data",
-    Folder(id="source", name="Source"),
     include=["*.csv", "*.xlsx"],
     exclude=["**/tmp/**"],
     recursive=True,
     infer_stats=True,
 )
+
+# Add a single file
+catalog.add_dataset("./data/sales.csv")
 ```
 
-### Adding individual datasets
+## Scanning databases
 
 ```python
-catalog.add_dataset("./data/sales.csv")
-catalog.add_dataset(
-    "./archive/old.csv",
-    folder=Folder(id="archive", name="Archives"),
-    name="Ventes 2023",
-    description="Données historiques",
+# SQLite
+catalog.add_database("sqlite:///path/to/db.sqlite")
+
+# PostgreSQL / MySQL
+catalog.add_database("postgresql://user:pass@host:5432/mydb")
+catalog.add_database("mysql://user:pass@host:3306/mydb")
+
+# With options
+catalog.add_database(
+    "postgresql://localhost/mydb",
+    schema="public",
+    include=["sales_*"],
+    exclude=["*_tmp"],
+    sample_size=10000,  # limit rows for stats on large tables
 )
 ```
 
-### Export with visualization app
+## Output
 
 ```python
-# Export a complete datannur app instance
+# JSON metadata only (for existing datannur instance)
+catalog.write("./output")
+
+# Complete standalone app
 catalog.export_app("./my-catalog", open_browser=True)
 ```
-
-This creates a standalone visualization app that can be opened directly in a browser or deployed to a web server.
 
 ## License
 

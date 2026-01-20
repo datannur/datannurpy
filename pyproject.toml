@@ -26,6 +26,11 @@ dependencies = [
   "typing_extensions>=4.0;python_version<'3.11'",
 ]
 
+[project.optional-dependencies]
+postgres = ["ibis-framework[postgres]>=11.0"]
+mysql = ["ibis-framework[mysql]>=11.0"]
+databases = ["ibis-framework[postgres,mysql]>=11.0"]
+
 [project.urls]
 Homepage = "https://github.com/datannur/datannurpy"
 Repository = "https://github.com/datannur/datannurpy"
@@ -33,11 +38,7 @@ Documentation = "https://github.com/datannur/datannurpy#readme"
 Issues = "https://github.com/datannur/datannurpy/issues"
 
 [tool.uv]
-dev-dependencies = [
-    "pytest",
- "ruff",
- "pyright>=1.1.400",
-]
+dev-dependencies = ["pytest", "ruff", "pyright>=1.1.400"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

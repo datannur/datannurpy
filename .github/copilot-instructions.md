@@ -6,18 +6,37 @@ Python library for datannur catalog metadata management.
 
 3 layers:
 
-1. **Readers** (`src/datannurpy/readers/`): Ibis/DuckDB for CSV/Excel scanning
+1. **Readers** (`src/datannurpy/readers/`): Ibis for CSV/Excel/Database scanning
 2. **Entities** (`src/datannurpy/entities/`): dataclasses (Folder, Dataset, Variable)
 3. **Writers** (`src/datannurpy/writers/`): JSON stdlib for output (PyArrow for data conversion)
 
 ## Public API
 
-- `Catalog.add_folder(path, folder=None)` → scans and adds to catalog
+- `Catalog.add_folder(path, folder=None)` → scans files and adds to catalog
+- `Catalog.add_database(connection, folder=None)` → scans database tables and adds to catalog
 - `Catalog.write(output_dir)` → exports JSON + JSON.js files only
 - `Catalog.export_app(output_dir, open_browser=False)` → exports full datannur app with data
 - `Folder(id, name)` → optional, for custom folder metadata
 
 Internal entities in `src/datannurpy/entities/`.
+
+### Database connections
+
+Supported connection strings:
+
+- `sqlite:///path/to/db.sqlite`
+- `postgresql://user:pass@host:port/database`
+- `mysql://user:pass@host:port/database`
+
+Options:
+
+- `schema`: specific schema to scan (postgres/mysql)
+- `include/exclude`: table name patterns (supports wildcards)
+- `sample_size`: limit rows for stats on large tables
+
+Install extras: `pip install datannurpy[postgres]`, `datannurpy[mysql]`
+
+SQLite works out of the box (uses Python's built-in sqlite3).
 
 ## App Bundling
 
