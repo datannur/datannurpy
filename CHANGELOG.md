@@ -2,6 +2,10 @@
 
 ## unreleased
 
+## 0.2.0 (2026-01-20)
+
+- add: db scan support and use ibis instead of polars
+
 ## 0.1.3 (2026-01-19)
 
 - fix: include visualization app in package
