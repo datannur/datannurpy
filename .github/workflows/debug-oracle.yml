@@ -1,0 +1,201 @@
+name: Debug Oracle
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_name:
+        description: "Test to run (e.g., test_nunique, test_count, test_schemas)"
+        required: true
+        default: "test_nunique"
+        type: choice
+        options:
+          - test_nunique
+          - test_count
+          - test_raw_sql_stats
+          - test_schemas
+          - test_column_types
+
+jobs:
+  debug-oracle:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.5.14"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --extra oracle
+
+      - name: Start Oracle container
+        run: |
+          docker run -d \
+            --name oracle \
+            -p 1521:1521 \
+            -e ORACLE_PASSWORD=test \
+            gvenzl/oracle-free:slim-faststart
+
+          echo "Waiting for Oracle to be ready..."
+          for i in {1..30}; do
+            if docker exec oracle sqlplus -s system/test@//localhost:1521/FREEPDB1 <<< "SELECT 1 FROM DUAL;" 2>/dev/null | grep -q "1"; then
+              echo "Oracle is ready!"
+              break
+            fi
+            echo "Attempt $i/30 - waiting..."
+            sleep 10
+          done
+
+      - name: Create test table
+        run: |
+          docker exec oracle sqlplus -s system/test@//localhost:1521/FREEPDB1 <<EOF
+          CREATE TABLE test_table (
+            id NUMBER(10),
+            name VARCHAR2(100),
+            description VARCHAR2(4000),
+            amount NUMBER(10,2),
+            created_date DATE
+          );
+          INSERT INTO test_table VALUES (1, 'Alice', 'A description', 100.50, SYSDATE);
+          INSERT INTO test_table VALUES (2, 'Bob', 'Another desc', 200.00, SYSDATE);
+          INSERT INTO test_table VALUES (3, 'Alice', NULL, 150.25, SYSDATE);
+          COMMIT;
+
+          -- Show table structure
+          DESC test_table;
+          SELECT * FROM test_table;
+          EOF
+
+      - name: Run debug test - ${{ inputs.test_name }}
+        env:
+          TEST_ORACLE_URL: "oracle://system:test@localhost:1521/FREEPDB1"
+        run: |
+          uv run python -c "
+          import ibis
+          import ibis.expr.datatypes as dt
+
+          print('=' * 60)
+          print('DEBUG TEST: ${{ inputs.test_name }}')
+          print('=' * 60)
+
+          # Connect
+          con = ibis.oracle.connect(
+              host='localhost',
+              port=1521,
+              user='system',
+              password='test',
+              database='FREEPDB1',
+          )
+          print(f'Connected to Oracle')
+          print(f'Backend: {type(con).__name__}')
+
+          # Get table
+          table = con.table('TEST_TABLE')
+          print(f'\\nTable columns: {table.columns}')
+          print(f'Schema: {table.schema()}')
+
+          # Show column types
+          print('\\nColumn types:')
+          for col in table.columns:
+              col_type = table.schema()[col]
+              print(f'  {col}: {col_type} (isinstance String: {isinstance(col_type, dt.String)})')
+
+          if '${{ inputs.test_name }}' == 'test_nunique':
+              print('\\n--- Testing nunique() on each column ---')
+              for col in table.columns:
+                  try:
+                      result = table[col].nunique().to_pyarrow().as_py()
+                      print(f'  {col}.nunique() = {result} ✓')
+                  except Exception as e:
+                      print(f'  {col}.nunique() FAILED: {type(e).__name__}: {e}')
+
+          elif '${{ inputs.test_name }}' == 'test_count':
+              print('\\n--- Testing count() on each column ---')
+              for col in table.columns:
+                  try:
+                      result = table[col].count().to_pyarrow().as_py()
+                      print(f'  {col}.count() = {result} ✓')
+                  except Exception as e:
+                      print(f'  {col}.count() FAILED: {type(e).__name__}: {e}')
+
+          elif '${{ inputs.test_name }}' == 'test_raw_sql_stats':
+              print('\\n--- Testing raw SQL for stats ---')
+              raw_sql = con.raw_sql
+              
+              # Try COUNT DISTINCT via raw SQL
+              for col in ['ID', 'NAME', 'DESCRIPTION', 'AMOUNT']:
+                  try:
+                      result = raw_sql(f'SELECT COUNT(DISTINCT {col}) FROM TEST_TABLE').fetchone()
+                      print(f'  COUNT(DISTINCT {col}) = {result[0]} ✓')
+                  except Exception as e:
+                      print(f'  COUNT(DISTINCT {col}) FAILED: {type(e).__name__}: {e}')
+              
+              # Try COUNT(*) and COUNT(col)
+              print('\\n  Testing COUNT:')
+              result = raw_sql('SELECT COUNT(*) FROM TEST_TABLE').fetchone()
+              print(f'    COUNT(*) = {result[0]}')
+              
+              for col in ['ID', 'NAME', 'DESCRIPTION']:
+                  result = raw_sql(f'SELECT COUNT({col}) FROM TEST_TABLE').fetchone()
+                  print(f'    COUNT({col}) = {result[0]}')
+
+          elif '${{ inputs.test_name }}' == 'test_schemas':
+              print('\\n--- Testing schema operations ---')
+              print(f'list_tables(): {con.list_tables()}')
+              
+              if hasattr(con, 'list_schemas'):
+                  print(f'list_schemas(): {con.list_schemas()}')
+              
+              # Test user_tables query
+              result = con.raw_sql('SELECT table_name FROM user_tables').fetchall()
+              print(f'user_tables: {[r[0] for r in result]}')
+              
+              # Test all_tables for current user
+              result = con.raw_sql(\"\"\"
+                  SELECT owner, table_name FROM all_tables 
+                  WHERE owner = USER
+              \"\"\").fetchall()
+              print(f'all_tables (current user): {result}')
+
+          elif '${{ inputs.test_name }}' == 'test_column_types':
+              print('\\n--- Testing Ibis type detection ---')
+              
+              # Rename to lowercase and check
+              table_lower = table.rename(str.lower)
+              print(f'After rename: {table_lower.columns}')
+              print(f'Schema after rename: {table_lower.schema()}')
+              
+              # Try aggregate with explicit types
+              print('\\n  Testing aggregate on renamed table:')
+              try:
+                  agg = table_lower.aggregate([
+                      table_lower['id'].count().name('id_count'),
+                      table_lower['amount'].count().name('amount_count'),
+                  ])
+                  result = agg.to_pyarrow().to_pylist()[0]
+                  print(f'    Numeric counts: {result} ✓')
+              except Exception as e:
+                  print(f'    Numeric counts FAILED: {e}')
+              
+              try:
+                  agg = table_lower.aggregate([
+                      table_lower['name'].count().name('name_count'),
+                  ])
+                  result = agg.to_pyarrow().to_pylist()[0]
+                  print(f'    String count: {result} ✓')
+              except Exception as e:
+                  print(f'    String count FAILED: {e}')
+
+          print('\\n' + '=' * 60)
+          print('DEBUG COMPLETE')
+          print('=' * 60)
+          "
+
+      - name: Cleanup
+        if: always()
+        run: docker stop oracle && docker rm oracle
