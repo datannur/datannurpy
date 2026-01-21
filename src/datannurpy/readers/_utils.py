@@ -128,13 +128,21 @@ def build_variables(
             # count() excludes nulls, so nb_rows - count = nb_missing
             agg_exprs.append(table[col].count().name(f"{col}__non_null"))
 
-        stats_row = table.aggregate(agg_exprs).to_pyarrow().to_pylist()[0]
-        for col in columns:
-            nb_distinct = int(stats_row[f"{col}__distinct"])
-            nb_non_null = int(stats_row[f"{col}__non_null"])
-            nb_missing = nb_rows - nb_non_null
-            nb_duplicate = nb_rows - nb_distinct
-            stats[col] = (nb_distinct, nb_duplicate, nb_missing)
+        try:
+            stats_row = table.aggregate(agg_exprs).to_pyarrow().to_pylist()[0]
+            for col in columns:
+                nb_distinct = int(stats_row[f"{col}__distinct"])
+                nb_non_null = int(stats_row[f"{col}__non_null"])
+                nb_missing = nb_rows - nb_non_null
+                nb_duplicate = nb_rows - nb_distinct
+                stats[col] = (nb_distinct, nb_duplicate, nb_missing)
+        except Exception as e:
+            # Oracle ORA-22849: CLOB columns don't support COUNT DISTINCT
+            # Skip stats for this table if aggregation fails
+            if "ORA-22849" in str(e):
+                pass  # stats remains empty, all stats will be None
+            else:
+                raise
 
     # Compute freq if threshold is set
     freq_table: ibis.Table | None = None
