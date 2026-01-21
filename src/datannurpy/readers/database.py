@@ -234,18 +234,26 @@ def list_schemas(con: ibis.BaseBackend) -> list[str]:
     backend = _get_backend_name(con)
     system_schemas = SYSTEM_SCHEMAS.get(backend, set())
 
+    # Oracle: use raw SQL to list user schemas (more reliable than Ibis)
+    if backend == "oracle":
+        raw_sql = getattr(con, "raw_sql", None)
+        if raw_sql:
+            # List all users that have at least one table (user schemas)
+            result = raw_sql(
+                "SELECT DISTINCT owner FROM all_tables "
+                "WHERE owner NOT IN ("
+                + ",".join(f"'{s}'" for s in system_schemas)
+                + ")"
+            ).fetchall()
+            return sorted([row[0].lower() for row in result])
+        return []
+
     # Try to get schemas - not all backends support this
     try:
         list_schemas_fn = getattr(con, "list_schemas", None)
         if list_schemas_fn:
             schemas = list(list_schemas_fn())
-            # Oracle returns UPPERCASE, normalize to lowercase and filter system schemas
-            if backend == "oracle":
-                schemas = [
-                    s.lower() for s in schemas if s.upper() not in system_schemas
-                ]
-            else:
-                schemas = [s for s in schemas if s not in system_schemas]
+            schemas = [s for s in schemas if s not in system_schemas]
             return schemas
         list_databases_fn = getattr(con, "list_databases", None)
         if list_databases_fn:
@@ -300,6 +308,7 @@ def scan_table(
         dataset_id=dataset_id,
         infer_stats=infer_stats,
         freq_threshold=freq_threshold,
+        backend=backend,
     )
 
     return variables, row_count, freq_table

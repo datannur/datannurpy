@@ -112,6 +112,7 @@ def build_variables(
     dataset_id: str | None = None,
     infer_stats: bool = True,
     freq_threshold: int | None = None,
+    backend: str | None = None,
 ) -> tuple[list[Variable], ibis.Table | None]:
     """Build Variable entities from Ibis Table, return (variables, freq_table)."""
     schema = table.schema()
@@ -121,18 +122,30 @@ def build_variables(
     stats: dict[str, tuple[int, int, int]] = {}
     if infer_stats and nb_rows > 0:
         # Build aggregation expressions for distinct and null counts
+        # Oracle doesn't support nunique() on string columns (CLOB error)
         agg_exprs = []
         for col in columns:
-            agg_exprs.append(table[col].nunique().name(f"{col}__distinct"))
+            col_type = schema[col]
+            # Skip nunique for string columns on Oracle (ORA-22849: CLOB not supported)
+            if backend == "oracle" and isinstance(col_type, dt.String):
+                # Use -1 as sentinel for "unknown" distinct count
+                pass
+            else:
+                agg_exprs.append(table[col].nunique().name(f"{col}__distinct"))
             # count() excludes nulls, so nb_rows - count = nb_missing
             agg_exprs.append(table[col].count().name(f"{col}__non_null"))
 
         stats_row = table.aggregate(agg_exprs).to_pyarrow().to_pylist()[0]
         for col in columns:
-            nb_distinct = int(stats_row[f"{col}__distinct"])
+            col_type = schema[col]
+            if backend == "oracle" and isinstance(col_type, dt.String):
+                # Can't compute distinct for Oracle string columns
+                nb_distinct = -1
+            else:
+                nb_distinct = int(stats_row[f"{col}__distinct"])
             nb_non_null = int(stats_row[f"{col}__non_null"])
             nb_missing = nb_rows - nb_non_null
-            nb_duplicate = nb_rows - nb_distinct
+            nb_duplicate = nb_rows - nb_distinct if nb_distinct >= 0 else -1
             stats[col] = (nb_distinct, nb_duplicate, nb_missing)
 
     # Compute freq if threshold is set
@@ -141,7 +154,7 @@ def build_variables(
         eligible_cols = [
             col
             for col, (nb_distinct, _, _) in stats.items()
-            if nb_distinct <= freq_threshold
+            if 0 <= nb_distinct <= freq_threshold
         ]
         if eligible_cols:
             freq_tables: list[ibis.Table] = []
@@ -157,15 +170,22 @@ def build_variables(
             if freq_tables:
                 freq_table = ibis.union(*freq_tables)
 
+    def get_stat(col: str, idx: int) -> int | None:
+        """Get stat value, returning None for -1 (unknown)."""
+        if not stats:
+            return None
+        val = stats[col][idx]
+        return val if val >= 0 else None
+
     variables = [
         Variable(
             id=col_name,
             name=col_name,
             dataset_id=dataset_id,
             type=ibis_type_to_str(schema[col_name]),
-            nb_distinct=stats[col_name][0] if stats else None,
-            nb_duplicate=stats[col_name][1] if stats else None,
-            nb_missing=stats[col_name][2] if stats else None,
+            nb_distinct=get_stat(col_name, 0),
+            nb_duplicate=get_stat(col_name, 1),
+            nb_missing=get_stat(col_name, 2),
         )
         for col_name in columns
     ]
