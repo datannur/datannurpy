@@ -2,6 +2,10 @@
 
 ## unreleased
 
+## 0.2.1 (2026-01-21)
+
+- add: oracle db support
+
 ## 0.2.0 (2026-01-20)
 
 - add: db scan support and use ibis instead of polars
