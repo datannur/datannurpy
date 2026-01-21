@@ -63,6 +63,19 @@ SYSTEM_SCHEMAS: dict[str, set[str]] = {
     },
 }
 
+# Oracle system table prefixes to exclude (these exist in user schemas like SYSTEM)
+ORACLE_SYSTEM_TABLE_PREFIXES: tuple[str, ...] = (
+    "mview$_",
+    "mview_",
+    "ol$",
+    "aq$_",
+    "scheduler_",
+    "redo_",
+    "sqlplus_",
+    "help",
+    "product_privs",
+)
+
 
 def _get_backend_name(con: ibis.BaseBackend) -> str:
     """Get backend name from connection object."""
@@ -188,14 +201,20 @@ def list_tables(
     tables: list[str] = []
 
     if raw_sql and backend == "oracle":
-        # Oracle: use ALL_TABLES/USER_TABLES to get only actual tables (not views)
-        # and normalize to lowercase
+        # Use USER_TABLES/ALL_TABLES to get only tables (excludes views)
+        # Normalize to lowercase since Oracle stores identifiers in UPPERCASE
         if db_schema:
             query = f"SELECT table_name FROM all_tables WHERE owner = '{db_schema}'"
         else:
             query = "SELECT table_name FROM user_tables"
         result = raw_sql(query).fetchall()
         tables = [row[0].lower() for row in result]
+        # Filter out Oracle system tables (MVIEW$_*, OL$*, SCHEDULER_*, etc.)
+        tables = [
+            t
+            for t in tables
+            if not any(t.startswith(prefix) for prefix in ORACLE_SYSTEM_TABLE_PREFIXES)
+        ]
     elif raw_sql and backend == "sqlite":
         result = raw_sql(
             "SELECT name FROM sqlite_master WHERE type='table' "
@@ -282,6 +301,30 @@ def scan_table(
         if schema:
             schema = schema.upper()
 
+    # Oracle: detect CLOB/NCLOB columns that don't support COUNT DISTINCT
+    skip_stats_columns: set[str] = set()
+    if backend == "oracle" and infer_stats:
+        raw_sql = getattr(con, "raw_sql", None)
+        if raw_sql:
+            try:
+                if schema:
+                    query = (
+                        f"SELECT column_name FROM all_tab_columns "
+                        f"WHERE owner = '{schema}' AND table_name = '{table_name}' "
+                        f"AND data_type IN ('CLOB', 'NCLOB', 'BLOB')"
+                    )
+                else:
+                    query = (
+                        f"SELECT column_name FROM user_tab_columns "
+                        f"WHERE table_name = '{table_name}' "
+                        f"AND data_type IN ('CLOB', 'NCLOB', 'BLOB')"
+                    )
+                result = raw_sql(query).fetchall()
+                # Convert to lowercase (we rename columns to lowercase later)
+                skip_stats_columns = {row[0].lower() for row in result}
+            except Exception:
+                pass  # If detection fails, fallback to try/except in build_variables
+
     # Get table reference
     if schema:
         table = con.table(table_name, database=schema)
@@ -308,7 +351,7 @@ def scan_table(
         dataset_id=dataset_id,
         infer_stats=infer_stats,
         freq_threshold=freq_threshold,
-        backend=backend,
+        skip_stats_columns=skip_stats_columns if skip_stats_columns else None,
     )
 
     return variables, row_count, freq_table

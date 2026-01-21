@@ -222,8 +222,8 @@ class Catalog:
             available_schemas = list_schemas(con)
             system_schemas = SYSTEM_SCHEMAS[backend_name]
             schemas_to_scan = [s for s in available_schemas if s not in system_schemas]
-            # For Oracle, also scan the current user's schema (None = user_tables)
-            # since the connected user might have their own tables
+            # For Oracle, list_schemas returns other users' schemas (excluding SYSTEM)
+            # but we also need to scan the connected user's own tables (via None)
             if backend_name == "oracle":
                 schemas_to_scan.append(None)
             elif not schemas_to_scan:
