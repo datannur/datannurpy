@@ -176,8 +176,8 @@ def build_variables(
                 freq_table = ibis.union(*freq_tables)
 
     def get_stat(col: str, idx: int) -> int | None:
-        """Get stat value, returning None for -1 (unknown)."""
-        if not stats:
+        """Get stat value, returning None if not computed or -1 (unknown)."""
+        if not stats or col not in stats:
             return None
         val = stats[col][idx]
         return val if val >= 0 else None
