@@ -117,18 +117,13 @@ class BaseDatabaseTests(ABC):
         self, db_with_employees: tuple[ibis.BaseBackend, str, str]
     ) -> None:
         """Test scanning with statistics."""
-        con, backend, _ = db_with_employees
+        con, _, _ = db_with_employees
         variables, _, _ = scan_table(con, "employees", infer_stats=True)
 
         var_by_name = {v.name: v for v in variables}
-        # Oracle doesn't support aggregations reliably (CLOB issues), so stats are None
-        if backend == "oracle":
-            assert var_by_name["department"].nb_distinct is None
-            assert var_by_name["department"].nb_missing is None
-        else:
-            # department has 3 distinct values
-            assert var_by_name["department"].nb_distinct == 3
-            assert var_by_name["department"].nb_missing == 0
+        # department has 3 distinct values
+        assert var_by_name["department"].nb_distinct == 3
+        assert var_by_name["department"].nb_missing == 0
 
     def test_scan_table_without_stats(
         self, db_with_employees: tuple[ibis.BaseBackend, str, str]
@@ -153,10 +148,8 @@ class BaseDatabaseTests(ABC):
 
         # Stats are computed on sample
         var_by_name = {v.name: v for v in variables}
-        # Oracle doesn't support nunique (CLOB issues)
-        if backend != "oracle":
-            assert var_by_name["name"].nb_distinct is not None
-            assert var_by_name["name"].nb_distinct <= 2
+        assert var_by_name["name"].nb_distinct is not None
+        assert var_by_name["name"].nb_distinct <= 2
 
     def test_catalog_add_database(
         self, db_with_employees: tuple[ibis.BaseBackend, str, str]
