@@ -122,24 +122,19 @@ def build_variables(
     stats: dict[str, tuple[int, int, int]] = {}
     if infer_stats and nb_rows > 0:
         # Build aggregation expressions for distinct and null counts
-        # Oracle doesn't support nunique() on string columns (CLOB error)
+        # Oracle doesn't support nunique() reliably (ORA-22849: CLOB not supported)
+        # So for Oracle, we skip nunique entirely and only compute null counts
         agg_exprs = []
         for col in columns:
-            col_type = schema[col]
-            # Skip nunique for string columns on Oracle (ORA-22849: CLOB not supported)
-            if backend == "oracle" and isinstance(col_type, dt.String):
-                # Use -1 as sentinel for "unknown" distinct count
-                pass
-            else:
+            if backend != "oracle":
                 agg_exprs.append(table[col].nunique().name(f"{col}__distinct"))
             # count() excludes nulls, so nb_rows - count = nb_missing
             agg_exprs.append(table[col].count().name(f"{col}__non_null"))
 
         stats_row = table.aggregate(agg_exprs).to_pyarrow().to_pylist()[0]
         for col in columns:
-            col_type = schema[col]
-            if backend == "oracle" and isinstance(col_type, dt.String):
-                # Can't compute distinct for Oracle string columns
+            if backend == "oracle":
+                # Can't compute distinct for Oracle (CLOB issues)
                 nb_distinct = -1
             else:
                 nb_distinct = int(stats_row[f"{col}__distinct"])
