@@ -38,8 +38,8 @@ Repository = "https://github.com/datannur/datannurpy"
 Documentation = "https://github.com/datannur/datannurpy#readme"
 Issues = "https://github.com/datannur/datannurpy/issues"
 
-[tool.uv]
-dev-dependencies = ["pytest", "ruff", "pyright>=1.1.400"]
+[dependency-groups]
+dev = ["pytest", "ruff", "pyright>=1.1.400"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -139,14 +139,46 @@ def create_schema_tables(con: ibis.BaseBackend, backend: str) -> None:
             except Exception:
                 pass
             raw_sql(f"CREATE USER {schema} IDENTIFIED BY test")
-            raw_sql(
-                f"GRANT CREATE SESSION, CREATE TABLE, UNLIMITED TABLESPACE TO {schema}"
+            raw_sql(f"GRANT CONNECT, RESOURCE, UNLIMITED TABLESPACE TO {schema}")
+        # Oracle: create tables via raw SQL in other users' schemas
+        raw_sql("""
+            CREATE TABLE sales.orders (
+                id NUMBER(10),
+                customer VARCHAR2(100),
+                amount NUMBER(10,2)
             )
+        """)
+        raw_sql("INSERT INTO sales.orders VALUES (1, 'Alice', 100.0)")
+        raw_sql("INSERT INTO sales.orders VALUES (2, 'Bob', 250.50)")
+        raw_sql("""
+            CREATE TABLE sales.customers (
+                id NUMBER(10),
+                name VARCHAR2(100)
+            )
+        """)
+        raw_sql("INSERT INTO sales.customers VALUES (1, 'Alice')")
+        raw_sql("INSERT INTO sales.customers VALUES (2, 'Bob')")
+        raw_sql("""
+            CREATE TABLE inventory.products (
+                id NUMBER(10),
+                name VARCHAR2(100),
+                stock NUMBER(10)
+            )
+        """)
+        raw_sql("INSERT INTO inventory.products VALUES (1, 'Widget', 100)")
+        raw_sql("COMMIT")
+        # Main table in current user schema
+        try:
+            con.drop_table("main_table", force=True)
+        except Exception:
+            pass
+        con.create_table("main_table", pa.table({"id": [1]}))
+        return
     else:
         raw_sql("CREATE SCHEMA IF NOT EXISTS sales")
         raw_sql("CREATE SCHEMA IF NOT EXISTS inventory")
 
-    # Drop then create tables (works on all backends)
+    # Drop then create tables (works on all backends except Oracle)
     for schema, table in [
         ("sales", "orders"),
         ("sales", "customers"),
