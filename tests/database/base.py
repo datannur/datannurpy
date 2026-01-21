@@ -121,13 +121,14 @@ class BaseDatabaseTests(ABC):
         variables, _, _ = scan_table(con, "employees", infer_stats=True)
 
         var_by_name = {v.name: v for v in variables}
-        # Oracle doesn't support nunique (CLOB issues), so nb_distinct is None
+        # Oracle doesn't support aggregations reliably (CLOB issues), so stats are None
         if backend == "oracle":
             assert var_by_name["department"].nb_distinct is None
+            assert var_by_name["department"].nb_missing is None
         else:
             # department has 3 distinct values
             assert var_by_name["department"].nb_distinct == 3
-        assert var_by_name["department"].nb_missing == 0
+            assert var_by_name["department"].nb_missing == 0
 
     def test_scan_table_without_stats(
         self, db_with_employees: tuple[ibis.BaseBackend, str, str]

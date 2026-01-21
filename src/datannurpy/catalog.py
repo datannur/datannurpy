@@ -221,9 +221,13 @@ class Catalog:
             # Scan all schemas, filtering out system ones
             available_schemas = list_schemas(con)
             system_schemas = SYSTEM_SCHEMAS[backend_name]
-            schemas_to_scan = [
-                s for s in available_schemas if s not in system_schemas
-            ] or [None]
+            schemas_to_scan = [s for s in available_schemas if s not in system_schemas]
+            # For Oracle, also scan the current user's schema (None = user_tables)
+            # since the connected user might have their own tables
+            if backend_name == "oracle":
+                schemas_to_scan.append(None)
+            elif not schemas_to_scan:
+                schemas_to_scan = [None]
         else:
             # SQLite doesn't have schemas
             schemas_to_scan = [None]
