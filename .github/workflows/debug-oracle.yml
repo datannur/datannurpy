@@ -59,7 +59,9 @@ jobs:
 
       - name: Create test table
         run: |
-          docker exec oracle sqlplus -s system/test@//localhost:1521/FREEPDB1 <<EOF
+          docker exec oracle sqlplus -s system/test@//localhost:1521/FREEPDB1 <<'SQLEOF'
+          WHENEVER SQLERROR EXIT SQL.SQLCODE;
+
           CREATE TABLE test_table (
             id NUMBER(10),
             name VARCHAR2(100),
@@ -75,7 +77,8 @@ jobs:
           -- Show table structure
           DESC test_table;
           SELECT * FROM test_table;
-          EOF
+          SELECT table_name FROM user_tables;
+          SQLEOF
 
       - name: Run debug test - ${{ inputs.test_name }}
         env:
@@ -100,7 +103,10 @@ jobs:
           print(f'Connected to Oracle')
           print(f'Backend: {type(con).__name__}')
 
-          # Get table
+          # List available tables first
+          print(f'\\nAvailable tables: {con.list_tables()}')
+
+          # Get table - Oracle stores identifiers in UPPERCASE
           table = con.table('TEST_TABLE')
           print(f'\\nTable columns: {table.columns}')
           print(f'Schema: {table.schema()}')
