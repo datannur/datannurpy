@@ -205,14 +205,15 @@ def list_tables(
                 actual_tables = {row[0] for row in result}
                 tables = [t for t in tables if t in actual_tables]
             elif backend == "oracle":
-                # Oracle uses ALL_TABLES or USER_TABLES
+                # Oracle uses ALL_TABLES or USER_TABLES, returns UPPERCASE
                 if schema:
                     query = f"SELECT table_name FROM all_tables WHERE owner = '{schema.upper()}'"
                 else:
                     query = "SELECT table_name FROM user_tables"
                 result = raw_sql(query).fetchall()
-                actual_tables = {row[0] for row in result}
-                tables = [t for t in tables if t in actual_tables]
+                # Oracle returns uppercase, normalize to lowercase
+                actual_tables = {row[0].lower() for row in result}
+                tables = [t.lower() for t in tables if t.lower() in actual_tables]
         except Exception:
             pass
 
@@ -233,7 +234,12 @@ def list_schemas(con: ibis.BaseBackend) -> list[str]:
     try:
         list_schemas_fn = getattr(con, "list_schemas", None)
         if list_schemas_fn:
-            return list(list_schemas_fn())
+            schemas = list(list_schemas_fn())
+            # Oracle returns UPPERCASE, normalize to lowercase
+            backend = _get_backend_name(con)
+            if backend == "oracle":
+                schemas = [s.lower() for s in schemas]
+            return schemas
         list_databases_fn = getattr(con, "list_databases", None)
         if list_databases_fn:
             return list(list_databases_fn())

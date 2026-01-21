@@ -51,10 +51,10 @@ class TestOracle(BaseDatabaseTests, BaseSchemaTests):
     ) -> Generator[tuple[ibis.BaseBackend, str, str], None, None]:
         """Create employees/departments tables in Oracle."""
         con, _ = connect(oracle_url)
-        drop_test_tables(con)
-        create_test_tables(con)
+        drop_test_tables(con, "oracle")
+        create_test_tables(con, "oracle")
         yield con, "oracle", "oracle"
-        drop_test_tables(con)
+        drop_test_tables(con, "oracle")
 
     @pytest.fixture
     def db_with_schemas(

@@ -73,9 +73,10 @@ EMPTY_TABLE_DATA = pa.table(
 )
 
 
-def create_test_tables(con: ibis.BaseBackend) -> None:
+def create_test_tables(con: ibis.BaseBackend, backend: str | None = None) -> None:
     """Create test tables and view using Ibis (backend-agnostic)."""
     raw_sql: Any = getattr(con, "raw_sql")
+    backend = backend or ""
 
     # Drop then create (works on all backends, avoids MySQL's lack of ALTER TABLE IF EXISTS)
     for table in ["employees", "departments", "empty_table"]:
@@ -88,11 +89,17 @@ def create_test_tables(con: ibis.BaseBackend) -> None:
     con.create_table("departments", DEPARTMENTS_DATA)
     con.create_table("empty_table", EMPTY_TABLE_DATA)
 
-    # Create a view (standard SQL, works on all backends)
-    try:
-        raw_sql("DROP VIEW IF EXISTS employee_summary")
-    except Exception:
-        pass
+    # Create a view (Oracle uses different syntax for DROP VIEW)
+    if backend == "oracle":
+        try:
+            raw_sql("DROP VIEW employee_summary")
+        except Exception:
+            pass
+    else:
+        try:
+            raw_sql("DROP VIEW IF EXISTS employee_summary")
+        except Exception:
+            pass
     raw_sql("""
         CREATE VIEW employee_summary AS
         SELECT department, COUNT(*) as count
@@ -101,14 +108,21 @@ def create_test_tables(con: ibis.BaseBackend) -> None:
     """)
 
 
-def drop_test_tables(con: ibis.BaseBackend) -> None:
+def drop_test_tables(con: ibis.BaseBackend, backend: str | None = None) -> None:
     """Drop test tables and view if they exist."""
     raw_sql: Any = getattr(con, "raw_sql")
+    backend = backend or ""
 
-    try:
-        raw_sql("DROP VIEW IF EXISTS employee_summary")
-    except Exception:
-        pass
+    if backend == "oracle":
+        try:
+            raw_sql("DROP VIEW employee_summary")
+        except Exception:
+            pass
+    else:
+        try:
+            raw_sql("DROP VIEW IF EXISTS employee_summary")
+        except Exception:
+            pass
 
     for table in ["employees", "departments", "empty_table"]:
         try:

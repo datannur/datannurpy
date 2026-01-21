@@ -69,22 +69,48 @@ jobs:
     name: Oracle
     runs-on: ubuntu-latest
 
-    services:
-      oracle:
-        image: gvenzl/oracle-free:slim-faststart
-        env:
-          ORACLE_PASSWORD: test
-        ports:
-          - 1521:1521
-        options: >-
-          --health-cmd "healthcheck.sh"
-          --health-interval 30s
-          --health-timeout 10s
-          --health-retries 10
-
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
+
+      - name: Cache Oracle Docker image
+        uses: actions/cache@v4
+        id: cache-oracle
+        with:
+          path: ~/oracle-image.tar
+          key: oracle-free-slim-faststart
+
+      - name: Load cached Oracle image
+        if: steps.cache-oracle.outputs.cache-hit == 'true'
+        run: docker load -i ~/oracle-image.tar
+
+      - name: Pull Oracle image
+        if: steps.cache-oracle.outputs.cache-hit != 'true'
+        run: |
+          docker pull gvenzl/oracle-free:slim-faststart
+          docker save gvenzl/oracle-free:slim-faststart -o ~/oracle-image.tar
+
+      - name: Start Oracle container
+        run: |
+          docker run -d --name oracle \
+            -e ORACLE_PASSWORD=test \
+            -p 1521:1521 \
+            gvenzl/oracle-free:slim-faststart
+
+      - name: Wait for Oracle to be ready
+        run: |
+          echo "Waiting for Oracle to be ready..."
+          for i in {1..30}; do
+            if docker exec oracle healthcheck.sh 2>/dev/null; then
+              echo "Oracle is ready!"
+              exit 0
+            fi
+            echo "Attempt $i/30 - Oracle not ready yet..."
+            sleep 10
+          done
+          echo "Oracle failed to start"
+          docker logs oracle
+          exit 1
 
       - name: Install dependencies
         run: uv sync --extra oracle
