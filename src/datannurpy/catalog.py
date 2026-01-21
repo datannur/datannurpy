@@ -21,7 +21,7 @@ from .readers._utils import (
     get_mtime_iso,
 )
 from .readers.database import (
-    BACKEND_FORMATS,
+    SYSTEM_SCHEMAS,
     connect,
     list_schemas,
     list_tables,
@@ -206,7 +206,6 @@ class Catalog:
         """Scan a database and add its tables to the catalog."""
         # Connect to database
         con, backend_name = connect(connection)
-        delivery_format = BACKEND_FORMATS.get(backend_name, backend_name)
 
         # Determine database name for folder
         db_name = self._get_database_name(connection, con, backend_name)
@@ -218,18 +217,10 @@ class Catalog:
         schemas_to_scan: list[str | None]
         if schema is not None:
             schemas_to_scan = [schema]
-        elif backend_name in ("postgres", "mysql", "duckdb"):
-            # For postgres/mysql/duckdb, scan all schemas
+        elif backend_name in SYSTEM_SCHEMAS:
+            # Scan all schemas, filtering out system ones
             available_schemas = list_schemas(con)
-            # Filter out system schemas
-            system_schemas = {
-                "information_schema",
-                "pg_catalog",
-                "pg_toast",
-                "mysql",
-                "performance_schema",
-                "sys",
-            }
+            system_schemas = SYSTEM_SCHEMAS[backend_name]
             schemas_to_scan = [
                 s for s in available_schemas if s not in system_schemas
             ] or [None]
@@ -278,7 +269,7 @@ class Catalog:
                     id=dataset_id,
                     name=table_name,
                     folder_id=current_folder_id,
-                    delivery_format=delivery_format,
+                    delivery_format=backend_name,
                     last_update_date=now_iso,
                 )
 

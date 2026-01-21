@@ -2,7 +2,7 @@
 
 from .csv import scan_csv
 from .database import (
-    BACKEND_FORMATS,
+    SYSTEM_SCHEMAS,
     connect,
     list_schemas,
     list_tables,
@@ -17,5 +17,5 @@ __all__ = [
     "connect",
     "list_tables",
     "list_schemas",
-    "BACKEND_FORMATS",
+    "SYSTEM_SCHEMAS",
 ]

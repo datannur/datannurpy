@@ -27,6 +27,7 @@ Supported connection strings:
 - `sqlite:///path/to/db.sqlite`
 - `postgresql://user:pass@host:port/database`
 - `mysql://user:pass@host:port/database`
+- `oracle://user:pass@host:port/service_name`
 
 Options:
 
@@ -34,7 +35,7 @@ Options:
 - `include/exclude`: table name patterns (supports wildcards)
 - `sample_size`: limit rows for stats on large tables
 
-Install extras: `pip install datannurpy[postgres]`, `datannurpy[mysql]`
+Install extras: `pip install datannurpy[postgres]`, `datannurpy[mysql]`, `datannurpy[oracle]`
 
 SQLite works out of the box (uses Python's built-in sqlite3).
 

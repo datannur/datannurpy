@@ -41,6 +41,17 @@ class TestParseConnectionString:
         assert kwargs["password"] == "secret"
         assert kwargs["database"] == "app"
 
+    def test_oracle_full(self) -> None:
+        backend, kwargs = parse_connection_string(
+            "oracle://system:secret@db.example.com:1521/ORCL"
+        )
+        assert backend == "oracle"
+        assert kwargs["host"] == "db.example.com"
+        assert kwargs["port"] == "1521"
+        assert kwargs["user"] == "system"
+        assert kwargs["password"] == "secret"
+        assert kwargs["database"] == "ORCL"
+
     def test_unsupported_scheme(self) -> None:
         with pytest.raises(ValueError, match="Unsupported database scheme"):
-            parse_connection_string("oracle://user:pass@host/db")
+            parse_connection_string("mssql://user:pass@host/db")

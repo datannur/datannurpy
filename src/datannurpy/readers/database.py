@@ -19,14 +19,48 @@ SCHEME_TO_BACKEND: dict[str, str] = {
     "postgresql": "postgres",
     "postgres": "postgres",
     "mysql": "mysql",
+    "oracle": "oracle",
 }
 
-# delivery_format values for each backend
-BACKEND_FORMATS: dict[str, str] = {
-    "sqlite": "sqlite",
-    "postgres": "postgres",
-    "mysql": "mysql",
-    "duckdb": "duckdb",
+# System schemas to exclude when scanning (per backend)
+SYSTEM_SCHEMAS: dict[str, set[str]] = {
+    "postgres": {
+        "information_schema",
+        "pg_catalog",
+        "pg_toast",
+    },
+    "mysql": {
+        "information_schema",
+        "mysql",
+        "performance_schema",
+        "sys",
+    },
+    "duckdb": {
+        "information_schema",
+    },
+    "oracle": {
+        "SYS",
+        "SYSTEM",
+        "OUTLN",
+        "DBSNMP",
+        "APPQOSSYS",
+        "DBSFWUSER",
+        "GGSYS",
+        "ANONYMOUS",
+        "CTXSYS",
+        "DVSYS",
+        "DVF",
+        "GSMADMIN_INTERNAL",
+        "MDSYS",
+        "OLAPSYS",
+        "LBACSYS",
+        "XDB",
+        "WMSYS",
+        "ORDDATA",
+        "ORDPLUGINS",
+        "ORDSYS",
+        "SI_INFORMTN_SCHEMA",
+    },
 }
 
 
@@ -56,7 +90,7 @@ def parse_connection_string(connection: str) -> tuple[str, dict[str, str]]:
         path = parsed.path[1:] if parsed.path.startswith("/") else parsed.path
         kwargs["path"] = path if path else ":memory:"
     else:
-        # PostgreSQL / MySQL
+        # PostgreSQL / MySQL / Oracle
         if parsed.hostname:
             kwargs["host"] = parsed.hostname
         if parsed.port:
@@ -105,6 +139,14 @@ def connect(connection: str | ibis.BaseBackend) -> tuple[ibis.BaseBackend, str]:
         con = ibis.mysql.connect(
             host=kwargs.get("host", "localhost"),
             port=int(kwargs.get("port", 3306)),
+            user=kwargs.get("user"),
+            password=kwargs.get("password"),
+            database=kwargs.get("database"),
+        )
+    elif backend == "oracle":
+        con = ibis.oracle.connect(
+            host=kwargs.get("host", "localhost"),
+            port=int(kwargs.get("port", 1521)),
             user=kwargs.get("user"),
             password=kwargs.get("password"),
             database=kwargs.get("database"),
@@ -159,6 +201,15 @@ def list_tables(
                 )
                 if schema:
                     query += f" AND table_schema = '{schema}'"
+                result = raw_sql(query).fetchall()
+                actual_tables = {row[0] for row in result}
+                tables = [t for t in tables if t in actual_tables]
+            elif backend == "oracle":
+                # Oracle uses ALL_TABLES or USER_TABLES
+                if schema:
+                    query = f"SELECT table_name FROM all_tables WHERE owner = '{schema.upper()}'"
+                else:
+                    query = "SELECT table_name FROM user_tables"
                 result = raw_sql(query).fetchall()
                 actual_tables = {row[0] for row in result}
                 tables = [t for t in tables if t in actual_tables]

@@ -29,7 +29,8 @@ dependencies = [
 [project.optional-dependencies]
 postgres = ["ibis-framework[postgres]>=11.0"]
 mysql = ["ibis-framework[mysql]>=11.0"]
-databases = ["ibis-framework[postgres,mysql]>=11.0"]
+oracle = ["ibis-framework[oracle]>=11.0"]
+databases = ["ibis-framework[postgres,mysql,oracle]>=11.0"]
 
 [project.urls]
 Homepage = "https://github.com/datannur/datannurpy"

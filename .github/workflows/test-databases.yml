@@ -64,3 +64,32 @@ jobs:
         run: uv run pytest tests/database/test_mysql.py -v
         env:
           TEST_MYSQL_URL: mysql://root:test@localhost:3306/testdb
+
+  test-oracle:
+    name: Oracle
+    runs-on: ubuntu-latest
+
+    services:
+      oracle:
+        image: gvenzl/oracle-free:slim-faststart
+        env:
+          ORACLE_PASSWORD: test
+        ports:
+          - 1521:1521
+        options: >-
+          --health-cmd "healthcheck.sh"
+          --health-interval 30s
+          --health-timeout 10s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync --extra oracle
+
+      - name: Run Oracle tests
+        run: uv run pytest tests/database/test_oracle.py -v
+        env:
+          TEST_ORACLE_URL: oracle://system:test@localhost:1521/FREEPDB1

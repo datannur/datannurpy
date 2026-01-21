@@ -18,6 +18,7 @@ For database support:
 ```bash
 pip install datannurpy[postgres]  # PostgreSQL
 pip install datannurpy[mysql]     # MySQL
+pip install datannurpy[oracle]    # Oracle
 # SQLite works out of the box
 ```
 
@@ -63,9 +64,10 @@ catalog.add_dataset("./data/sales.csv")
 # SQLite
 catalog.add_database("sqlite:///path/to/db.sqlite")
 
-# PostgreSQL / MySQL
+# PostgreSQL / MySQL / Oracle
 catalog.add_database("postgresql://user:pass@host:5432/mydb")
 catalog.add_database("mysql://user:pass@host:3306/mydb")
+catalog.add_database("oracle://user:pass@host:1521/service_name"))
 
 # With options
 catalog.add_database(

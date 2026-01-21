@@ -127,10 +127,21 @@ def create_schema_tables(con: ibis.BaseBackend, backend: str) -> None:
     """
     raw_sql: Any = getattr(con, "raw_sql")
 
-    # Schema creation (MySQL uses databases, others use schemas)
+    # Schema creation (MySQL uses databases, Oracle uses users as schemas)
     if backend == "mysql":
         raw_sql("CREATE DATABASE IF NOT EXISTS sales")
         raw_sql("CREATE DATABASE IF NOT EXISTS inventory")
+    elif backend == "oracle":
+        # Oracle: schemas are users, create them with DBA privileges
+        for schema in ["sales", "inventory"]:
+            try:
+                raw_sql(f"DROP USER {schema} CASCADE")
+            except Exception:
+                pass
+            raw_sql(f"CREATE USER {schema} IDENTIFIED BY test")
+            raw_sql(
+                f"GRANT CREATE SESSION, CREATE TABLE, UNLIMITED TABLESPACE TO {schema}"
+            )
     else:
         raw_sql("CREATE SCHEMA IF NOT EXISTS sales")
         raw_sql("CREATE SCHEMA IF NOT EXISTS inventory")
@@ -162,16 +173,18 @@ def drop_schema_tables(con: ibis.BaseBackend, backend: str) -> None:
     """Drop schema test tables and schemas."""
     raw_sql: Any = getattr(con, "raw_sql")
 
-    # Drop tables first
-    for schema, table in [
-        ("sales", "orders"),
-        ("sales", "customers"),
-        ("inventory", "products"),
-    ]:
-        try:
-            con.drop_table(table, database=schema, force=True)
-        except Exception:
-            pass
+    # Drop tables first (not needed for Oracle since DROP USER CASCADE removes them)
+    if backend != "oracle":
+        for schema, table in [
+            ("sales", "orders"),
+            ("sales", "customers"),
+            ("inventory", "products"),
+        ]:
+            try:
+                con.drop_table(table, database=schema, force=True)
+            except Exception:
+                pass
+
     try:
         con.drop_table("main_table", force=True)
     except Exception:
@@ -182,6 +195,12 @@ def drop_schema_tables(con: ibis.BaseBackend, backend: str) -> None:
         for schema in ["sales", "inventory"]:
             try:
                 raw_sql(f"DROP DATABASE IF EXISTS {schema}")
+            except Exception:
+                pass
+    elif backend == "oracle":
+        for schema in ["sales", "inventory"]:
+            try:
+                raw_sql(f"DROP USER {schema} CASCADE")
             except Exception:
                 pass
     else:
