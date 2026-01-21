@@ -122,26 +122,26 @@ def build_variables(
     stats: dict[str, tuple[int, int, int]] = {}
     if infer_stats and nb_rows > 0:
         # Build aggregation expressions for distinct and null counts
-        # Oracle doesn't support nunique() reliably (ORA-22849: CLOB not supported)
-        # So for Oracle, we skip nunique entirely and only compute null counts
-        agg_exprs = []
-        for col in columns:
-            if backend != "oracle":
+        # Oracle doesn't support many aggregations reliably (ORA-22849: CLOB not supported)
+        # So for Oracle, we skip stats entirely to avoid errors
+        if backend == "oracle":
+            # For Oracle, set all stats to unknown (-1 will become None)
+            for col in columns:
+                stats[col] = (-1, -1, -1)
+        else:
+            agg_exprs = []
+            for col in columns:
                 agg_exprs.append(table[col].nunique().name(f"{col}__distinct"))
-            # count() excludes nulls, so nb_rows - count = nb_missing
-            agg_exprs.append(table[col].count().name(f"{col}__non_null"))
+                # count() excludes nulls, so nb_rows - count = nb_missing
+                agg_exprs.append(table[col].count().name(f"{col}__non_null"))
 
-        stats_row = table.aggregate(agg_exprs).to_pyarrow().to_pylist()[0]
-        for col in columns:
-            if backend == "oracle":
-                # Can't compute distinct for Oracle (CLOB issues)
-                nb_distinct = -1
-            else:
+            stats_row = table.aggregate(agg_exprs).to_pyarrow().to_pylist()[0]
+            for col in columns:
                 nb_distinct = int(stats_row[f"{col}__distinct"])
-            nb_non_null = int(stats_row[f"{col}__non_null"])
-            nb_missing = nb_rows - nb_non_null
-            nb_duplicate = nb_rows - nb_distinct if nb_distinct >= 0 else -1
-            stats[col] = (nb_distinct, nb_duplicate, nb_missing)
+                nb_non_null = int(stats_row[f"{col}__non_null"])
+                nb_missing = nb_rows - nb_non_null
+                nb_duplicate = nb_rows - nb_distinct
+                stats[col] = (nb_distinct, nb_duplicate, nb_missing)
 
     # Compute freq if threshold is set
     freq_table: ibis.Table | None = None
