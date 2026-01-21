@@ -183,47 +183,40 @@ def list_tables(
     # Oracle stores unquoted identifiers in UPPERCASE
     db_schema = schema.upper() if schema and backend == "oracle" else schema
 
-    # Get all tables
-    tables = list(
-        con.list_tables(database=db_schema) if db_schema else con.list_tables()
-    )
-
-    # Filter out views (some backends include them in list_tables)
+    # Get tables - use backend-specific queries to filter views and system tables
     raw_sql = getattr(con, "raw_sql", None)
-    if raw_sql:
-        try:
-            if backend == "sqlite":
-                result = raw_sql(
-                    "SELECT name FROM sqlite_master WHERE type='table' "
-                    "AND name NOT LIKE 'sqlite_%'"
-                ).fetchall()
-                actual_tables = {row[0] for row in result}
-                tables = [t for t in tables if t in actual_tables]
-            elif backend in ("duckdb", "postgres", "mysql"):
-                # Use information_schema (standard SQL)
-                query = (
-                    "SELECT table_name FROM information_schema.tables "
-                    "WHERE table_type = 'BASE TABLE'"
-                )
-                if schema:
-                    query += f" AND table_schema = '{schema}'"
-                result = raw_sql(query).fetchall()
-                actual_tables = {row[0] for row in result}
-                tables = [t for t in tables if t in actual_tables]
-            elif backend == "oracle":
-                # Oracle uses ALL_TABLES or USER_TABLES, returns UPPERCASE
-                if db_schema:
-                    query = (
-                        f"SELECT table_name FROM all_tables WHERE owner = '{db_schema}'"
-                    )
-                else:
-                    query = "SELECT table_name FROM user_tables"
-                result = raw_sql(query).fetchall()
-                # Oracle returns uppercase, normalize to lowercase
-                actual_tables = {row[0].lower() for row in result}
-                tables = [t.lower() for t in tables if t.lower() in actual_tables]
-        except Exception:
-            pass
+    tables: list[str] = []
+
+    if raw_sql and backend == "oracle":
+        # Oracle: use ALL_TABLES/USER_TABLES to get only actual tables (not views)
+        # and normalize to lowercase
+        if db_schema:
+            query = f"SELECT table_name FROM all_tables WHERE owner = '{db_schema}'"
+        else:
+            query = "SELECT table_name FROM user_tables"
+        result = raw_sql(query).fetchall()
+        tables = [row[0].lower() for row in result]
+    elif raw_sql and backend == "sqlite":
+        result = raw_sql(
+            "SELECT name FROM sqlite_master WHERE type='table' "
+            "AND name NOT LIKE 'sqlite_%'"
+        ).fetchall()
+        tables = [row[0] for row in result]
+    elif raw_sql and backend in ("duckdb", "postgres", "mysql"):
+        # Use information_schema (standard SQL)
+        query = (
+            "SELECT table_name FROM information_schema.tables "
+            "WHERE table_type = 'BASE TABLE'"
+        )
+        if schema:
+            query += f" AND table_schema = '{schema}'"
+        result = raw_sql(query).fetchall()
+        tables = [row[0] for row in result]
+    else:
+        # Fallback to Ibis list_tables
+        tables = list(
+            con.list_tables(database=db_schema) if db_schema else con.list_tables()
+        )
 
     if include is not None:
         included = _match_patterns(tables, include)
@@ -238,15 +231,21 @@ def list_tables(
 
 def list_schemas(con: ibis.BaseBackend) -> list[str]:
     """List schemas in a database (postgres/mysql only)."""
+    backend = _get_backend_name(con)
+    system_schemas = SYSTEM_SCHEMAS.get(backend, set())
+
     # Try to get schemas - not all backends support this
     try:
         list_schemas_fn = getattr(con, "list_schemas", None)
         if list_schemas_fn:
             schemas = list(list_schemas_fn())
-            # Oracle returns UPPERCASE, normalize to lowercase
-            backend = _get_backend_name(con)
+            # Oracle returns UPPERCASE, normalize to lowercase and filter system schemas
             if backend == "oracle":
-                schemas = [s.lower() for s in schemas]
+                schemas = [
+                    s.lower() for s in schemas if s.upper() not in system_schemas
+                ]
+            else:
+                schemas = [s for s in schemas if s not in system_schemas]
             return schemas
         list_databases_fn = getattr(con, "list_databases", None)
         if list_databases_fn:
@@ -283,7 +282,7 @@ def scan_table(
 
     # Oracle returns UPPERCASE column names, normalize to lowercase
     if backend == "oracle":
-        table = table.rename({col: col.lower() for col in table.columns})
+        table = table.rename(str.lower)
 
     # Get exact row count (always full count, not sampled)
     row_count = int(table.count().to_pyarrow().as_py())
