@@ -42,14 +42,20 @@ jobs:
             gvenzl/oracle-free:slim-faststart
 
           echo "Waiting for Oracle to be ready..."
-          for i in {1..30}; do
-            if docker exec oracle sqlplus -s system/test@//localhost:1521/FREEPDB1 <<< "SELECT 1 FROM DUAL;" 2>/dev/null | grep -q "1"; then
+          # Wait for the container to report healthy via docker logs
+          for i in {1..60}; do
+            if docker logs oracle 2>&1 | grep -q "DATABASE IS READY TO USE"; then
               echo "Oracle is ready!"
               break
             fi
-            echo "Attempt $i/30 - waiting..."
-            sleep 10
+            echo "Attempt $i/60 - waiting..."
+            sleep 5
           done
+
+          # Additional wait and verify connection
+          sleep 10
+          echo "Verifying connection..."
+          docker exec oracle sqlplus -s system/test@//localhost:1521/FREEPDB1 <<< "SELECT 'CONNECTION OK' FROM DUAL;"
 
       - name: Create test table
         run: |
