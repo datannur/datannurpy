@@ -178,9 +178,15 @@ def list_tables(
     backend_name: str | None = None,
 ) -> list[str]:
     """List tables in a database, filtered by include/exclude patterns. Views excluded."""
-    # Get all tables
-    tables = list(con.list_tables(database=schema) if schema else con.list_tables())
     backend = backend_name or _get_backend_name(con)
+
+    # Oracle stores unquoted identifiers in UPPERCASE
+    db_schema = schema.upper() if schema and backend == "oracle" else schema
+
+    # Get all tables
+    tables = list(
+        con.list_tables(database=db_schema) if db_schema else con.list_tables()
+    )
 
     # Filter out views (some backends include them in list_tables)
     raw_sql = getattr(con, "raw_sql", None)
@@ -206,8 +212,10 @@ def list_tables(
                 tables = [t for t in tables if t in actual_tables]
             elif backend == "oracle":
                 # Oracle uses ALL_TABLES or USER_TABLES, returns UPPERCASE
-                if schema:
-                    query = f"SELECT table_name FROM all_tables WHERE owner = '{schema.upper()}'"
+                if db_schema:
+                    query = (
+                        f"SELECT table_name FROM all_tables WHERE owner = '{db_schema}'"
+                    )
                 else:
                     query = "SELECT table_name FROM user_tables"
                 result = raw_sql(query).fetchall()
@@ -259,11 +267,23 @@ def scan_table(
     sample_size: int | None = None,
 ) -> tuple[list[Variable], int, ibis.Table | None]:
     """Scan a database table and return (variables, row_count, freq_table)."""
+    backend = _get_backend_name(con)
+
+    # Oracle stores unquoted identifiers in UPPERCASE
+    if backend == "oracle":
+        table_name = table_name.upper()
+        if schema:
+            schema = schema.upper()
+
     # Get table reference
     if schema:
         table = con.table(table_name, database=schema)
     else:
         table = con.table(table_name)
+
+    # Oracle returns UPPERCASE column names, normalize to lowercase
+    if backend == "oracle":
+        table = table.rename({col: col.lower() for col in table.columns})
 
     # Get exact row count (always full count, not sampled)
     row_count = int(table.count().to_pyarrow().as_py())

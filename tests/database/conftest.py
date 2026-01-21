@@ -78,7 +78,71 @@ def create_test_tables(con: ibis.BaseBackend, backend: str | None = None) -> Non
     raw_sql: Any = getattr(con, "raw_sql")
     backend = backend or ""
 
-    # Drop then create (works on all backends, avoids MySQL's lack of ALTER TABLE IF EXISTS)
+    if backend == "oracle":
+        # Oracle: use raw SQL to control identifiers (avoid case-sensitivity issues)
+        # Drop existing objects (ignore errors if they don't exist)
+        for table in ["EMPLOYEES", "DEPARTMENTS", "EMPTY_TABLE"]:
+            try:
+                raw_sql(f"DROP TABLE {table} PURGE")
+            except Exception:
+                pass
+        try:
+            raw_sql("DROP VIEW EMPLOYEE_SUMMARY")
+        except Exception:
+            pass
+
+        # Create tables - don't catch errors here so we see what fails
+        raw_sql("""
+            CREATE TABLE EMPLOYEES (
+                id NUMBER(10),
+                name VARCHAR2(100),
+                department VARCHAR2(100),
+                salary NUMBER(10,2),
+                hire_date VARCHAR2(20)
+            )
+        """)
+        # Insert data
+        for row in [
+            (1, "Alice", "Engineering", 75000.0, "2020-01-15"),
+            (2, "Bob", "Engineering", 80000.0, "2019-06-01"),
+            (3, "Charlie", "Sales", 65000.0, "2021-03-20"),
+            (4, "Diana", "Sales", 70000.0, "2020-11-10"),
+            (5, "Eve", "HR", 60000.0, "2022-02-28"),
+        ]:
+            raw_sql(
+                f"INSERT INTO EMPLOYEES VALUES ({row[0]}, '{row[1]}', '{row[2]}', {row[3]}, '{row[4]}')"
+            )
+
+        raw_sql("""
+            CREATE TABLE DEPARTMENTS (
+                id NUMBER(10),
+                name VARCHAR2(100),
+                budget NUMBER(10,2)
+            )
+        """)
+        for row in [
+            (1, "Engineering", 500000.0),
+            (2, "Sales", 300000.0),
+            (3, "HR", 150000.0),
+        ]:
+            raw_sql(f"INSERT INTO DEPARTMENTS VALUES ({row[0]}, '{row[1]}', {row[2]})")
+
+        raw_sql("""
+            CREATE TABLE EMPTY_TABLE (
+                id NUMBER(10),
+                value VARCHAR2(100)
+            )
+        """)
+
+        raw_sql("""
+            CREATE VIEW EMPLOYEE_SUMMARY AS
+            SELECT department, COUNT(*) as count
+            FROM EMPLOYEES
+            GROUP BY department
+        """)
+        return
+
+    # Non-Oracle backends: use Ibis
     for table in ["employees", "departments", "empty_table"]:
         try:
             con.drop_table(table, force=True)
@@ -89,17 +153,10 @@ def create_test_tables(con: ibis.BaseBackend, backend: str | None = None) -> Non
     con.create_table("departments", DEPARTMENTS_DATA)
     con.create_table("empty_table", EMPTY_TABLE_DATA)
 
-    # Create a view (Oracle uses different syntax for DROP VIEW)
-    if backend == "oracle":
-        try:
-            raw_sql("DROP VIEW employee_summary")
-        except Exception:
-            pass
-    else:
-        try:
-            raw_sql("DROP VIEW IF EXISTS employee_summary")
-        except Exception:
-            pass
+    try:
+        raw_sql("DROP VIEW IF EXISTS employee_summary")
+    except Exception:
+        pass
     raw_sql("""
         CREATE VIEW employee_summary AS
         SELECT department, COUNT(*) as count
@@ -115,14 +172,20 @@ def drop_test_tables(con: ibis.BaseBackend, backend: str | None = None) -> None:
 
     if backend == "oracle":
         try:
-            raw_sql("DROP VIEW employee_summary")
+            raw_sql("DROP VIEW EMPLOYEE_SUMMARY")
         except Exception:
             pass
-    else:
-        try:
-            raw_sql("DROP VIEW IF EXISTS employee_summary")
-        except Exception:
-            pass
+        for table in ["EMPLOYEES", "DEPARTMENTS", "EMPTY_TABLE"]:
+            try:
+                raw_sql(f"DROP TABLE {table} PURGE")
+            except Exception:
+                pass
+        return
+
+    try:
+        raw_sql("DROP VIEW IF EXISTS employee_summary")
+    except Exception:
+        pass
 
     for table in ["employees", "departments", "empty_table"]:
         try:
@@ -180,13 +243,13 @@ def create_schema_tables(con: ibis.BaseBackend, backend: str) -> None:
             )
         """)
         raw_sql("INSERT INTO inventory.products VALUES (1, 'Widget', 100)")
-        raw_sql("COMMIT")
-        # Main table in current user schema
+        # Main table in current user schema (SYSTEM)
         try:
-            con.drop_table("main_table", force=True)
+            raw_sql("DROP TABLE MAIN_TABLE PURGE")
         except Exception:
             pass
-        con.create_table("main_table", pa.table({"id": [1]}))
+        raw_sql("CREATE TABLE MAIN_TABLE (id NUMBER(10))")
+        raw_sql("INSERT INTO MAIN_TABLE VALUES (1)")
         return
     else:
         raw_sql("CREATE SCHEMA IF NOT EXISTS sales")
@@ -220,7 +283,12 @@ def drop_schema_tables(con: ibis.BaseBackend, backend: str) -> None:
     raw_sql: Any = getattr(con, "raw_sql")
 
     # Drop tables first (not needed for Oracle since DROP USER CASCADE removes them)
-    if backend != "oracle":
+    if backend == "oracle":
+        try:
+            raw_sql("DROP TABLE MAIN_TABLE PURGE")
+        except Exception:
+            pass
+    else:
         for schema, table in [
             ("sales", "orders"),
             ("sales", "customers"),
@@ -230,11 +298,10 @@ def drop_schema_tables(con: ibis.BaseBackend, backend: str) -> None:
                 con.drop_table(table, database=schema, force=True)
             except Exception:
                 pass
-
-    try:
-        con.drop_table("main_table", force=True)
-    except Exception:
-        pass
+        try:
+            con.drop_table("main_table", force=True)
+        except Exception:
+            pass
 
     # Drop schemas
     if backend == "mysql":
