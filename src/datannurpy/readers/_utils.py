@@ -43,9 +43,16 @@ def find_files(
     else:
         candidates = []
         for pat in include:
-            if recursive and not pat.startswith("**"):
-                pat = f"**/{pat}"
-            candidates.extend(root.glob(pat))
+            # Handle patterns like "folder/**" - also match files directly in folder
+            if pat.endswith("/**"):
+                base = pat[:-3]  # Remove /**
+                # Match files in the directory and subdirectories
+                candidates.extend(root.glob(f"{base}/*"))
+                candidates.extend(root.glob(f"{base}/**/*"))
+            elif recursive and "**" not in pat:
+                candidates.extend(root.glob(f"**/{pat}"))
+            else:
+                candidates.extend(root.glob(pat))
 
     candidates = [f for f in candidates if f.is_file()]
 
