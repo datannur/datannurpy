@@ -4,14 +4,24 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import ibis
 import numpy as np
 import pandas as pd
-import pyreadstat
 
 from ..entities import Variable
 from ._utils import build_variables
+
+try:
+    import pyreadstat
+
+    HAS_PYREADSTAT = True
+except ImportError:
+    HAS_PYREADSTAT = False
+
+if TYPE_CHECKING:
+    import pyreadstat
 
 
 @dataclass
@@ -42,6 +52,12 @@ def scan_sas(
     freq_threshold: int | None = None,
 ) -> tuple[list[Variable], int, ibis.Table | None, SasMetadata]:
     """Scan a SAS file (.sas7bdat) and return (variables, row_count, freq_table, metadata)."""
+    if not HAS_PYREADSTAT:
+        raise ImportError(
+            "pyreadstat is required for SAS support. "
+            "Install it with: pip install datannurpy[sas]"
+        )
+
     file_path = Path(path)
 
     # Read data and metadata using pyreadstat
