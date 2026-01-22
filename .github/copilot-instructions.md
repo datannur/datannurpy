@@ -35,10 +35,11 @@ Supported connection strings:
 - `postgresql://user:pass@host:port/database`
 - `mysql://user:pass@host:port/database`
 - `oracle://user:pass@host:port/service_name`
+- `mssql://user:pass@host:port/database`
 
 Database-specific options: `schema`, `sample_size`, `group_by_prefix`, `prefix_min_tables`
 
-Install extras: `pip install datannurpy[postgres]`, `datannurpy[mysql]`, `datannurpy[oracle]`, `datannurpy[stat]`
+Install extras: `pip install datannurpy[postgres]`, `datannurpy[mysql]`, `datannurpy[oracle]`, `datannurpy[mssql]`, `datannurpy[stat]`
 
 ## ID Conventions
 

@@ -119,3 +119,50 @@ jobs:
         run: uv run pytest tests/database/test_oracle.py -v
         env:
           TEST_ORACLE_URL: oracle://system:test@localhost:1521/FREEPDB1
+
+  test-mssql:
+    name: SQL Server
+    runs-on: ubuntu-latest
+
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_SA_PASSWORD: Test@123!
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Test@123!' -C -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+
+      - name: Wait for SQL Server
+        run: |
+          echo "Waiting for SQL Server..."
+          for i in {1..30}; do
+            if docker exec ${{ job.services.mssql.id }} /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Test@123!' -C -Q "SELECT 1" 2>/dev/null; then
+              echo "SQL Server is ready!"
+              exit 0
+            fi
+            echo "Attempt $i/30..."
+            sleep 5
+          done
+          exit 1
+
+      - name: Create test database
+        run: |
+          docker exec ${{ job.services.mssql.id }} /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Test@123!' -C -Q "CREATE DATABASE testdb"
+
+      - name: Install dependencies
+        run: uv sync --extra mssql
+
+      - name: Run SQL Server tests
+        run: uv run pytest tests/database/test_mssql.py -v
+        env:
+          TEST_MSSQL_URL: mssql://sa:Test@123!@localhost:1433/testdb

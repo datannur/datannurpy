@@ -142,7 +142,69 @@ def create_test_tables(con: ibis.BaseBackend, backend: str | None = None) -> Non
         """)
         return
 
-    # Non-Oracle backends: use Ibis
+    if backend == "mssql":
+        # SQL Server: use raw SQL for proper table/view handling
+        # Drop existing objects (ignore errors if they don't exist)
+        try:
+            raw_sql("DROP VIEW IF EXISTS employee_summary")
+        except Exception:
+            pass
+        for table in ["employees", "departments", "empty_table"]:
+            try:
+                raw_sql(f"DROP TABLE IF EXISTS {table}")
+            except Exception:
+                pass
+
+        raw_sql("""
+            CREATE TABLE employees (
+                id INT,
+                name NVARCHAR(100),
+                department NVARCHAR(100),
+                salary DECIMAL(10,2),
+                hire_date NVARCHAR(20)
+            )
+        """)
+        for row in [
+            (1, "Alice", "Engineering", 75000.0, "2020-01-15"),
+            (2, "Bob", "Engineering", 80000.0, "2019-06-01"),
+            (3, "Charlie", "Sales", 65000.0, "2021-03-20"),
+            (4, "Diana", "Sales", 70000.0, "2020-11-10"),
+            (5, "Eve", "HR", 60000.0, "2022-02-28"),
+        ]:
+            raw_sql(
+                f"INSERT INTO employees VALUES ({row[0]}, '{row[1]}', '{row[2]}', {row[3]}, '{row[4]}')"
+            )
+
+        raw_sql("""
+            CREATE TABLE departments (
+                id INT,
+                name NVARCHAR(100),
+                budget DECIMAL(10,2)
+            )
+        """)
+        for row in [
+            (1, "Engineering", 500000.0),
+            (2, "Sales", 300000.0),
+            (3, "HR", 150000.0),
+        ]:
+            raw_sql(f"INSERT INTO departments VALUES ({row[0]}, '{row[1]}', {row[2]})")
+
+        raw_sql("""
+            CREATE TABLE empty_table (
+                id INT,
+                value NVARCHAR(100)
+            )
+        """)
+
+        raw_sql("""
+            CREATE VIEW employee_summary AS
+            SELECT department, COUNT(*) as count
+            FROM employees
+            GROUP BY department
+        """)
+        return
+
+    # Non-Oracle/MSSQL backends: use Ibis
     for table in ["employees", "departments", "empty_table"]:
         try:
             con.drop_table(table, force=True)
@@ -169,6 +231,18 @@ def drop_test_tables(con: ibis.BaseBackend, backend: str | None = None) -> None:
     """Drop test tables and view if they exist."""
     raw_sql: Any = getattr(con, "raw_sql")
     backend = backend or ""
+
+    if backend == "mssql":
+        try:
+            raw_sql("DROP VIEW IF EXISTS employee_summary")
+        except Exception:
+            pass
+        for table in ["employees", "departments", "empty_table"]:
+            try:
+                raw_sql(f"DROP TABLE IF EXISTS {table}")
+            except Exception:
+                pass
+        return
 
     if backend == "oracle":
         try:
@@ -208,6 +282,53 @@ def create_schema_tables(con: ibis.BaseBackend, backend: str) -> None:
     if backend == "mysql":
         raw_sql("CREATE DATABASE IF NOT EXISTS sales")
         raw_sql("CREATE DATABASE IF NOT EXISTS inventory")
+    elif backend == "mssql":
+        # SQL Server: create schemas within database
+        # Drop tables first, then schemas
+        for schema in ["sales", "inventory"]:
+            for table in ["orders", "customers", "products"]:
+                try:
+                    raw_sql(f"DROP TABLE IF EXISTS {schema}.{table}")
+                except Exception:
+                    pass
+            try:
+                raw_sql(f"DROP SCHEMA IF EXISTS {schema}")
+            except Exception:
+                pass
+            raw_sql(f"CREATE SCHEMA {schema}")
+        try:
+            raw_sql("DROP TABLE IF EXISTS main_table")
+        except Exception:
+            pass
+
+        raw_sql("""
+            CREATE TABLE sales.orders (
+                id INT,
+                customer NVARCHAR(100),
+                amount DECIMAL(10,2)
+            )
+        """)
+        raw_sql("INSERT INTO sales.orders VALUES (1, 'Alice', 100.0)")
+        raw_sql("INSERT INTO sales.orders VALUES (2, 'Bob', 250.50)")
+        raw_sql("""
+            CREATE TABLE sales.customers (
+                id INT,
+                name NVARCHAR(100)
+            )
+        """)
+        raw_sql("INSERT INTO sales.customers VALUES (1, 'Alice')")
+        raw_sql("INSERT INTO sales.customers VALUES (2, 'Bob')")
+        raw_sql("""
+            CREATE TABLE inventory.products (
+                id INT,
+                name NVARCHAR(100),
+                stock INT
+            )
+        """)
+        raw_sql("INSERT INTO inventory.products VALUES (1, 'Widget', 100)")
+        raw_sql("CREATE TABLE main_table (id INT)")
+        raw_sql("INSERT INTO main_table VALUES (1)")
+        return
     elif backend == "oracle":
         # Oracle: schemas are users, create them with DBA privileges
         for schema in ["sales", "inventory"]:
@@ -283,7 +404,28 @@ def drop_schema_tables(con: ibis.BaseBackend, backend: str) -> None:
     raw_sql: Any = getattr(con, "raw_sql")
 
     # Drop tables first (not needed for Oracle since DROP USER CASCADE removes them)
-    if backend == "oracle":
+    if backend == "mssql":
+        # SQL Server: drop tables then schemas
+        for schema, table in [
+            ("sales", "orders"),
+            ("sales", "customers"),
+            ("inventory", "products"),
+        ]:
+            try:
+                raw_sql(f"DROP TABLE IF EXISTS {schema}.{table}")
+            except Exception:
+                pass
+        try:
+            raw_sql("DROP TABLE IF EXISTS main_table")
+        except Exception:
+            pass
+        for schema in ["sales", "inventory"]:
+            try:
+                raw_sql(f"DROP SCHEMA IF EXISTS {schema}")
+            except Exception:
+                pass
+        return
+    elif backend == "oracle":
         try:
             raw_sql("DROP TABLE MAIN_TABLE PURGE")
         except Exception:

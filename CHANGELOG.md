@@ -6,6 +6,7 @@
 - add: folder based on db table prefix
 - add: support for parquet files and Delta/Hive/Iceberg directories
 - add: support for SAS, SPSS and Stata files
+- add: mssql db support
 
 ## 0.2.1 (2026-01-21)
 

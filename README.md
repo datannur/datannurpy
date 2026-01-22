@@ -16,7 +16,7 @@ A lightweight catalog compatible with most data sources:
 | **Flat files**  | CSV, Excel (.xlsx, .xls)                              |
 | **Columnar**    | Parquet, Delta Lake, Apache Iceberg, Hive partitioned |
 | **Statistical** | SAS (.sas7bdat), SPSS (.sav), Stata (.dta)            |
-| **Databases**   | PostgreSQL, MySQL, Oracle, SQLite, DuckDB             |
+| **Databases**   | PostgreSQL, MySQL, Oracle, SQL Server, SQLite, DuckDB |
 
 All formats support automatic schema inference and statistics computation.
 
@@ -32,6 +32,7 @@ For database support:
 pip install datannurpy[postgres]  # PostgreSQL
 pip install datannurpy[mysql]     # MySQL
 pip install datannurpy[oracle]    # Oracle
+pip install datannurpy[mssql]     # SQL Server
 # SQLite works out of the box
 ```
 
@@ -109,10 +110,11 @@ Metadata (name, description, column docs) is extracted from Delta/Iceberg when a
 # SQLite
 catalog.add_database("sqlite:///path/to/db.sqlite")
 
-# PostgreSQL / MySQL / Oracle
+# PostgreSQL / MySQL / Oracle / SQL Server
 catalog.add_database("postgresql://user:pass@host:5432/mydb")
 catalog.add_database("mysql://user:pass@host:3306/mydb")
 catalog.add_database("oracle://user:pass@host:1521/service_name")
+catalog.add_database("mssql://user:pass@host:1433/mydb")
 
 # With options
 catalog.add_database(

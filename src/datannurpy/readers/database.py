@@ -20,6 +20,7 @@ SCHEME_TO_BACKEND: dict[str, str] = {
     "postgres": "postgres",
     "mysql": "mysql",
     "oracle": "oracle",
+    "mssql": "mssql",
 }
 
 # System schemas to exclude when scanning (per backend)
@@ -37,6 +38,21 @@ SYSTEM_SCHEMAS: dict[str, set[str]] = {
     },
     "duckdb": {
         "information_schema",
+    },
+    "mssql": {
+        "information_schema",
+        "sys",
+        "guest",
+        "INFORMATION_SCHEMA",
+        "db_owner",
+        "db_accessadmin",
+        "db_securityadmin",
+        "db_ddladmin",
+        "db_backupoperator",
+        "db_datareader",
+        "db_datawriter",
+        "db_denydatareader",
+        "db_denydatawriter",
     },
     "oracle": {
         "SYS",
@@ -132,7 +148,7 @@ def connect(connection: str | ibis.BaseBackend) -> tuple[ibis.BaseBackend, str]:
         if backend_name in ("pyspark", "datafusion", "polars"):
             raise ValueError(
                 f"Backend {backend_name!r} is not supported for database scanning. "
-                "Use sqlite, postgres, mysql, or duckdb."
+                "Use sqlite, postgres, mysql, oracle, mssql, or duckdb."
             )
         return connection, backend_name
 
@@ -160,6 +176,14 @@ def connect(connection: str | ibis.BaseBackend) -> tuple[ibis.BaseBackend, str]:
         con = ibis.oracle.connect(
             host=kwargs.get("host", "localhost"),
             port=int(kwargs.get("port", 1521)),
+            user=kwargs.get("user"),
+            password=kwargs.get("password"),
+            database=kwargs.get("database"),
+        )
+    elif backend == "mssql":
+        con = ibis.mssql.connect(
+            host=kwargs.get("host", "localhost"),
+            port=int(kwargs.get("port", 1433)),
             user=kwargs.get("user"),
             password=kwargs.get("password"),
             database=kwargs.get("database"),
@@ -294,7 +318,7 @@ def list_tables(
             "AND name NOT LIKE 'sqlite_%'"
         ).fetchall()
         tables = [row[0] for row in result]
-    elif raw_sql and backend in ("duckdb", "postgres", "mysql"):
+    elif raw_sql and backend in ("duckdb", "postgres", "mysql", "mssql"):
         # Use information_schema (standard SQL)
         query = (
             "SELECT table_name FROM information_schema.tables "

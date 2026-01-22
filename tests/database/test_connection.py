@@ -52,6 +52,17 @@ class TestParseConnectionString:
         assert kwargs["password"] == "secret"
         assert kwargs["database"] == "ORCL"
 
+    def test_mssql_full(self) -> None:
+        backend, kwargs = parse_connection_string(
+            "mssql://sa:secret@db.example.com:1433/mydb"
+        )
+        assert backend == "mssql"
+        assert kwargs["host"] == "db.example.com"
+        assert kwargs["port"] == "1433"
+        assert kwargs["user"] == "sa"
+        assert kwargs["password"] == "secret"
+        assert kwargs["database"] == "mydb"
+
     def test_unsupported_scheme(self) -> None:
         with pytest.raises(ValueError, match="Unsupported database scheme"):
-            parse_connection_string("mssql://user:pass@host/db")
+            parse_connection_string("mongodb://user:pass@host/db")
