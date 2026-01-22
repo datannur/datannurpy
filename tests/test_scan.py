@@ -190,6 +190,14 @@ class TestAddFolder:
         assert catalog.folders[0].id == "data"
         assert catalog.folders[0].name == "data"
 
+    def test_add_folder_sets_type_filesystem(self):
+        """add_folder should set type='filesystem' on all folders."""
+        catalog = Catalog()
+        catalog.add_folder(DATA_DIR)
+        for folder in catalog.folders:
+            if folder.id != "_modalities":
+                assert folder.type == "filesystem"
+
 
 class TestSubfolders:
     """Test recursive subfolder scanning."""

@@ -3,6 +3,7 @@
 ## unreleased
 
 - add: modality support
+- add: folder based on db table prefix
 
 ## 0.2.1 (2026-01-21)
 

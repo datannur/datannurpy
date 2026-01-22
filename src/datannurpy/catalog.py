@@ -19,6 +19,7 @@ from ._ids import (
     make_id,
     sanitize_id,
 )
+from ._prefix import get_prefix_folders, get_table_prefix
 from .entities import Dataset, Folder, Modality, Value, Variable
 from .readers._utils import (
     SUPPORTED_FORMATS,
@@ -27,19 +28,15 @@ from .readers._utils import (
     get_mtime_iso,
 )
 from .readers.database import (
-    SYSTEM_SCHEMAS,
     connect,
-    list_schemas,
+    get_database_name,
+    get_database_path,
+    get_schemas_to_scan,
     list_tables,
     scan_table,
 )
 from .writers.app import copy_app
-from .writers.json import (
-    write_freq_json,
-    write_json,
-    write_table_registry,
-    write_values_json,
-)
+from .writers.json import write_catalog
 
 
 @dataclass
@@ -155,12 +152,6 @@ class Catalog:
         dataset.nb_row = nb_row
         self._finalize_variables(file_vars, dataset, freq_table)
 
-    def _get_freq_table(self) -> pa.Table | None:
-        """Get combined frequency table."""
-        if not self._freq_tables:
-            return None
-        return pa.concat_tables(self._freq_tables)
-
     def add_folder(
         self,
         path: str | Path,
@@ -186,6 +177,7 @@ class Catalog:
         # Set data_path for root folder
         folder.data_path = str(root)
         folder.last_update_date = get_mtime_iso(root)
+        folder.type = "filesystem"
 
         # Add root folder
         self.folders.append(folder)
@@ -213,6 +205,7 @@ class Catalog:
                 id=folder_id,
                 name=subdir.name,
                 parent_id=parent_id,
+                type="filesystem",
                 data_path=str(subdir),
                 last_update_date=get_mtime_iso(subdir),
             )
@@ -269,35 +262,21 @@ class Catalog:
         exclude: Sequence[str] | None = None,
         infer_stats: bool = True,
         sample_size: int | None = None,
+        group_by_prefix: bool | str = True,
+        prefix_min_tables: int = 2,
     ) -> None:
         """Scan a database and add its tables to the catalog."""
         # Connect to database
         con, backend_name = connect(connection)
 
         # Determine database name for folder
-        db_name = self._get_database_name(connection, con, backend_name)
+        db_name = get_database_name(connection, con, backend_name)
 
         # Get timestamp for folder/dataset
         now_iso = datetime.now(tz=timezone.utc).strftime("%Y/%m/%d")
 
         # Determine schemas to scan
-        schemas_to_scan: list[str | None]
-        if schema is not None:
-            schemas_to_scan = [schema]
-        elif backend_name in SYSTEM_SCHEMAS:
-            # Scan all schemas, filtering out system ones
-            available_schemas = list_schemas(con)
-            system_schemas = SYSTEM_SCHEMAS[backend_name]
-            schemas_to_scan = [s for s in available_schemas if s not in system_schemas]
-            # For Oracle, list_schemas returns other users' schemas (excluding SYSTEM)
-            # but we also need to scan the connected user's own tables (via None)
-            if backend_name == "oracle":
-                schemas_to_scan.append(None)
-            elif not schemas_to_scan:
-                schemas_to_scan = [None]
-        else:
-            # SQLite doesn't have schemas
-            schemas_to_scan = [None]
+        schemas_to_scan = get_schemas_to_scan(con, schema, backend_name)
 
         # Create root folder for database
         if folder is None:
@@ -307,6 +286,8 @@ class Catalog:
             root_folder_id = folder.id
 
         folder.last_update_date = now_iso
+        folder.data_path = get_database_path(connection, backend_name)
+        folder.type = backend_name
         self.folders.append(folder)
 
         freq_threshold = self.freq_threshold if self.freq_threshold else None
@@ -321,6 +302,7 @@ class Catalog:
                     id=schema_folder_id,
                     name=schema_name,
                     parent_id=root_folder_id,
+                    type="schema",
                     last_update_date=now_iso,
                 )
                 self.folders.append(schema_folder)
@@ -331,15 +313,57 @@ class Catalog:
             # Get tables
             tables = list_tables(con, schema_name, include, exclude, backend_name)
 
+            # Group tables by prefix if enabled
+            prefix_folder_ids: dict[str, str] = {}  # prefix → folder_id
+            valid_prefixes: set[str] = set()
+            prefix_sep = "_" if group_by_prefix is True else group_by_prefix or "_"
+
+            if group_by_prefix:
+                prefix_folders = get_prefix_folders(
+                    tables, sep=prefix_sep, min_count=prefix_min_tables
+                )
+                valid_prefixes = {pf.prefix for pf in prefix_folders}
+
+                # Create prefix folders
+                for pf in prefix_folders:
+                    if pf.parent_prefix is not None:
+                        parent_id = prefix_folder_ids[pf.parent_prefix]
+                    else:
+                        parent_id = current_folder_id
+
+                    folder_id = make_id(parent_id, sanitize_id(pf.prefix))
+                    prefix_folder_ids[pf.prefix] = folder_id
+
+                    prefix_folder = Folder(
+                        id=folder_id,
+                        name=pf.prefix,
+                        parent_id=parent_id,
+                        type="table_prefix",
+                        last_update_date=now_iso,
+                    )
+                    self.folders.append(prefix_folder)
+
             for table_name in tables:
+                # Determine folder for this table
+                table_prefix: str | None = None
+                if valid_prefixes:
+                    table_prefix = get_table_prefix(
+                        table_name, valid_prefixes, sep=prefix_sep
+                    )
+
+                if table_prefix:
+                    table_folder_id = prefix_folder_ids[table_prefix]
+                else:
+                    table_folder_id = current_folder_id
+
                 # Build dataset ID
-                dataset_id = make_id(current_folder_id, sanitize_id(table_name))
+                dataset_id = make_id(table_folder_id, sanitize_id(table_name))
 
                 # Create dataset
                 dataset = Dataset(
                     id=dataset_id,
                     name=table_name,
-                    folder_id=current_folder_id,
+                    folder_id=table_folder_id,
                     delivery_format=backend_name,
                     last_update_date=now_iso,
                 )
@@ -357,31 +381,6 @@ class Catalog:
                 dataset.nb_row = nb_row
                 self.datasets.append(dataset)
                 self._finalize_variables(table_vars, dataset, freq_table)
-
-    def _get_database_name(
-        self,
-        connection: str | ibis.BaseBackend,
-        con: ibis.BaseBackend,
-        backend_name: str,
-    ) -> str:
-        """Extract database name from connection."""
-        if isinstance(connection, str):
-            from urllib.parse import urlparse
-
-            parsed = urlparse(connection)
-            if backend_name == "sqlite":
-                # Use filename without extension
-                path = parsed.netloc + parsed.path if parsed.netloc else parsed.path
-                return Path(path).stem or "sqlite"
-            else:
-                # Use database name from path
-                return parsed.path.lstrip("/") or backend_name
-        else:
-            # Try to get name from connection object
-            db_attr = getattr(con, "database", None)
-            if db_attr:
-                return str(db_attr)
-            return backend_name
 
     def add_dataset(
         self,
@@ -479,38 +478,16 @@ class Catalog:
         write_js: bool = True,
     ) -> None:
         """Export catalog to JSON files."""
-        output_dir = Path(output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        tables: list[str] = []
-
-        if self.folders:
-            write_json(self.folders, "folder", output_dir, write_js=write_js)
-            tables.append("folder")
-
-        if self.datasets:
-            write_json(self.datasets, "dataset", output_dir, write_js=write_js)
-            tables.append("dataset")
-
-        if self.variables:
-            write_json(self.variables, "variable", output_dir, write_js=write_js)
-            tables.append("variable")
-
-        if self.modalities:
-            write_json(self.modalities, "modality", output_dir, write_js=write_js)
-            tables.append("modality")
-
-        if self.values:
-            write_values_json(self.values, output_dir, write_js=write_js)
-            tables.append("value")
-
-        freq_table = self._get_freq_table()
-        if freq_table is not None and len(freq_table) > 0:
-            write_freq_json(freq_table, output_dir, write_js=write_js)
-            tables.append("freq")
-
-        if tables:
-            write_table_registry(output_dir, tables, write_js=write_js)
+        write_catalog(
+            output_dir,
+            folders=self.folders,
+            datasets=self.datasets,
+            variables=self.variables,
+            modalities=self.modalities,
+            values=self.values,
+            freq_tables=self._freq_tables,
+            write_js=write_js,
+        )
 
     def export_app(
         self,

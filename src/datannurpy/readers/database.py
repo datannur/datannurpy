@@ -170,6 +170,79 @@ def connect(connection: str | ibis.BaseBackend) -> tuple[ibis.BaseBackend, str]:
     return con, backend
 
 
+def get_database_name(
+    connection: str | ibis.BaseBackend,
+    con: ibis.BaseBackend,
+    backend_name: str,
+) -> str:
+    """Extract database name from connection."""
+    from pathlib import Path
+    from urllib.parse import urlparse
+
+    if isinstance(connection, str):
+        parsed = urlparse(connection)
+        if backend_name == "sqlite":
+            path = parsed.netloc + parsed.path if parsed.netloc else parsed.path
+            return Path(path).stem or "sqlite"
+        else:
+            return parsed.path.lstrip("/") or backend_name
+    else:
+        db_attr = getattr(con, "database", None)
+        if db_attr:
+            return str(db_attr)
+        return backend_name
+
+
+def get_database_path(
+    connection: str | ibis.BaseBackend,
+    backend_name: str,
+) -> str | None:
+    """Get file path for file-based databases (SQLite, DuckDB)."""
+    from pathlib import Path
+    from urllib.parse import urlparse
+
+    if backend_name not in ("sqlite", "duckdb"):
+        return None
+
+    if isinstance(connection, str):
+        parsed = urlparse(connection)
+        path = parsed.netloc + parsed.path if parsed.netloc else parsed.path
+        if path and path != ":memory:":
+            return str(Path(path).resolve())
+    else:
+        # Try to get path from connection object
+        db_path = getattr(connection, "con", None)
+        if db_path is not None:
+            # SQLite connection has .con which is the sqlite3.Connection
+            db_file = getattr(db_path, "database", None)
+            if db_file and db_file != ":memory:":
+                return str(Path(db_file).resolve())
+
+    return None
+
+
+def get_schemas_to_scan(
+    con: ibis.BaseBackend,
+    schema: str | None,
+    backend_name: str,
+) -> list[str | None]:
+    """Determine which schemas to scan."""
+    if schema is not None:
+        return [schema]
+
+    if backend_name in SYSTEM_SCHEMAS:
+        available = list_schemas(con)
+        system = SYSTEM_SCHEMAS[backend_name]
+        schemas: list[str | None] = [s for s in available if s not in system]
+        if backend_name == "oracle":
+            schemas.append(None)
+        elif not schemas:
+            schemas = [None]
+        return schemas
+
+    return [None]
+
+
 def _match_patterns(items: list[str], patterns: Sequence[str]) -> set[str]:
     """Match items against glob patterns."""
     import fnmatch

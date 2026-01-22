@@ -25,6 +25,9 @@ class Folder(Entity):
     # Descriptive
     name: str | None = None
     description: str | None = None
+    type: str | None = (
+        None  # filesystem, sqlite, postgres, mysql, oracle, duckdb, schema, table_prefix
+    )
 
     # Location
     data_path: str | None = None

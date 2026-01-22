@@ -170,6 +170,10 @@ class BaseDatabaseTests(ABC):
         emp_dataset = next(d for d in catalog.datasets if d.name == "employees")
         assert emp_dataset.delivery_format == delivery_format
 
+        # Check folder type matches backend
+        root_folder = catalog.folders[0]
+        assert root_folder.type == delivery_format
+
     def test_catalog_with_include(
         self, db_with_employees: tuple[ibis.BaseBackend, str, str]
     ) -> None:

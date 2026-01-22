@@ -67,7 +67,7 @@ catalog.add_database("sqlite:///path/to/db.sqlite")
 # PostgreSQL / MySQL / Oracle
 catalog.add_database("postgresql://user:pass@host:5432/mydb")
 catalog.add_database("mysql://user:pass@host:3306/mydb")
-catalog.add_database("oracle://user:pass@host:1521/service_name"))
+catalog.add_database("oracle://user:pass@host:1521/service_name")
 
 # With options
 catalog.add_database(
@@ -76,6 +76,8 @@ catalog.add_database(
     include=["sales_*"],
     exclude=["*_tmp"],
     sample_size=10000,  # limit rows for stats on large tables
+    group_by_prefix=True,  # group tables by common prefix (default)
+    prefix_min_tables=2,  # minimum tables to form a group
 )
 ```
 
