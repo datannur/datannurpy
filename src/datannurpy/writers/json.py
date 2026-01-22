@@ -6,11 +6,14 @@ import json
 import time
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 import pyarrow as pa
 
 from ..entities.base import Entity
+
+if TYPE_CHECKING:
+    from ..catalog import Catalog
 
 
 class HasToDict(Protocol):
@@ -185,14 +188,9 @@ def write_table_registry(
 
 
 def write_catalog(
+    catalog: Catalog,
     output_dir: str | Path,
     *,
-    folders: Sequence[Entity],
-    datasets: Sequence[Entity],
-    variables: Sequence[Entity],
-    modalities: Sequence[Entity],
-    values: Sequence[HasToDict],
-    freq_tables: Sequence[pa.Table],
     write_js: bool = True,
 ) -> None:
     """Write all catalog entities to JSON files."""
@@ -200,26 +198,28 @@ def write_catalog(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     tables: list[str] = []
-    freq_table = pa.concat_tables(freq_tables) if freq_tables else None
+    freq_table = (
+        pa.concat_tables(catalog._freq_tables) if catalog._freq_tables else None
+    )
 
-    if folders:
-        write_json(folders, "folder", output_dir, write_js=write_js)
+    if catalog.folders:
+        write_json(catalog.folders, "folder", output_dir, write_js=write_js)
         tables.append("folder")
 
-    if datasets:
-        write_json(datasets, "dataset", output_dir, write_js=write_js)
+    if catalog.datasets:
+        write_json(catalog.datasets, "dataset", output_dir, write_js=write_js)
         tables.append("dataset")
 
-    if variables:
-        write_json(variables, "variable", output_dir, write_js=write_js)
+    if catalog.variables:
+        write_json(catalog.variables, "variable", output_dir, write_js=write_js)
         tables.append("variable")
 
-    if modalities:
-        write_json(modalities, "modality", output_dir, write_js=write_js)
+    if catalog.modalities:
+        write_json(catalog.modalities, "modality", output_dir, write_js=write_js)
         tables.append("modality")
 
-    if values:
-        write_values_json(values, output_dir, write_js=write_js)
+    if catalog.values:
+        write_values_json(catalog.values, output_dir, write_js=write_js)
         tables.append("value")
 
     if freq_table is not None and len(freq_table) > 0:

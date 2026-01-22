@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from pathlib import Path
 
 # Separator for path components (folder---dataset---variable)
 ID_SEPARATOR = "---"
@@ -61,3 +62,33 @@ def build_modality_name(values: set[str]) -> str:
         name += f"... (+{remaining})"
 
     return name
+
+
+def get_folder_id(
+    path: Path,
+    root: Path,
+    prefix: str,
+    subdir_ids: dict[Path, str],
+) -> str:
+    """Determine folder_id for a file or directory."""
+    parent_dir = path.parent
+    if parent_dir == root:
+        return prefix
+    return subdir_ids.get(parent_dir, prefix)
+
+
+def build_dataset_id_name(
+    path: Path,
+    root: Path,
+    prefix: str,
+) -> tuple[str, str]:
+    """Build dataset ID and name from path."""
+    rel_path = path.relative_to(root)
+    if path.is_file():
+        path_parts = [sanitize_id(p) for p in rel_path.parts]
+        return make_id(prefix, *path_parts), path.stem
+    # Directory (Delta/Hive)
+    if rel_path == Path("."):
+        return prefix, path.name
+    path_parts = [sanitize_id(p) for p in rel_path.parts]
+    return make_id(prefix, *path_parts), path.name

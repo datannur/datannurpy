@@ -170,6 +170,14 @@ class TestAddDataset:
             catalog.add_dataset(tmp_path / "subdir")
 
 
+@pytest.fixture(scope="module")
+def full_catalog():
+    """Scan DATA_DIR once, reuse across read-only tests."""
+    catalog = Catalog()
+    catalog.add_folder(DATA_DIR, Folder(id="test", name="Test"))
+    return catalog
+
+
 class TestAddFolder:
     """Test Catalog.add_folder method."""
 
@@ -343,23 +351,19 @@ class TestAddFolder:
         assert var_by_name["city"].description == "City of residence"
         assert var_by_name["amount"].description == "Transaction amount"
 
-    def test_add_folder_creates_datasets(self):
+    def test_add_folder_creates_datasets(self, full_catalog):
         """add_folder should create Dataset entities."""
-        catalog = Catalog()
-        catalog.add_folder(DATA_DIR, Folder(id="test", name="Test"))
         assert (
-            len(catalog.datasets) == 12
+            len(full_catalog.datasets) == 12
         )  # cars.sas7bdat, sample.sav, sample.dta, employees.csv, employees.xlsx, regions_france.csv, test.parquet, test.pq, test_with_metadata.parquet, test_delta, test_partitioned, iceberg_warehouse/default/test_table
 
-    def test_add_folder_assigns_folder_id(self):
+    def test_add_folder_assigns_folder_id(self, full_catalog):
         """add_folder should assign folder_id to datasets."""
-        catalog = Catalog()
-        catalog.add_folder(DATA_DIR, Folder(id="mydata", name="My Data"))
         # All datasets should have folder_id starting with root folder ID
         assert all(
             ds.folder_id is not None
-            and (ds.folder_id == "mydata" or ds.folder_id.startswith("mydata---"))
-            for ds in catalog.datasets
+            and (ds.folder_id == "test" or ds.folder_id.startswith("test---"))
+            for ds in full_catalog.datasets
         )
 
     def test_add_folder_prefixes_ids(self):
@@ -405,11 +409,9 @@ class TestAddFolder:
         assert catalog.folders[0].id == "data"
         assert catalog.folders[0].name == "data"
 
-    def test_add_folder_sets_type_filesystem(self):
+    def test_add_folder_sets_type_filesystem(self, full_catalog):
         """add_folder should set type='filesystem' on all folders."""
-        catalog = Catalog()
-        catalog.add_folder(DATA_DIR)
-        for folder in catalog.folders:
+        for folder in full_catalog.folders:
             if folder.id != "_modalities":
                 assert folder.type == "filesystem"
 

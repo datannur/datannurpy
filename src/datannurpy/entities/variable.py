@@ -15,6 +15,9 @@ class Variable(Entity):
     with optional statistics and metadata.
     """
 
+    # Required
+    name: str
+
     # Foreign key
     dataset_id: str | None = None
 
@@ -24,7 +27,6 @@ class Variable(Entity):
     source_var_ids: list[str] = field(default_factory=list)
 
     # Descriptive
-    name: str | None = None
     original_name: str | None = None
     description: str | None = None
     type: str | None = None

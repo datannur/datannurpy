@@ -2,6 +2,8 @@
 
 ## unreleased
 
+- refactor: make catalog.py as facade
+
 ## 0.3.0 (2026-01-22)
 
 - add: modality support

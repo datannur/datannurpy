@@ -47,6 +47,7 @@ Issues = "https://github.com/datannur/datannurpy/issues"
 [dependency-groups]
 dev = [
   "pytest",
+  "pytest-xdist",
   "ruff",
   "pyright>=1.1.400",
   "deltalake>=0.18.0",
@@ -56,6 +57,7 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-n auto"
 
 [tool.ruff]
 target-version = "py39"

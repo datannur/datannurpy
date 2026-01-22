@@ -1,0 +1,237 @@
+"""Add dataset to catalog."""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+from ._ids import make_id, sanitize_id
+from .entities import Dataset, Folder
+from .readers._utils import SUPPORTED_FORMATS, get_mtime_iso
+from .readers.parquet import (
+    DatasetType,
+    ParquetDatasetInfo,
+    scan_parquet_dataset,
+)
+from .readers.parquet._discovery import (
+    _is_delta_table,
+    _is_hive_partitioned,
+    _is_iceberg_table,
+)
+
+if TYPE_CHECKING:
+    from .catalog import Catalog
+
+
+def add_dataset(
+    catalog: Catalog,
+    path: str | Path,
+    folder: Folder | None = None,
+    *,
+    folder_id: str | None = None,
+    infer_stats: bool = True,
+    # Dataset metadata overrides
+    id: str | None = None,
+    name: str | None = None,
+    description: str | None = None,
+    type: str | None = None,
+    link: str | None = None,
+    localisation: str | None = None,
+    manager_id: str | None = None,
+    owner_id: str | None = None,
+    tag_ids: list[str] | None = None,
+    doc_ids: list[str] | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    updating_each: str | None = None,
+    no_more_update: str | None = None,
+) -> None:
+    """Add a single dataset file or partitioned directory to the catalog."""
+    dataset_path = Path(path).resolve()
+
+    if not dataset_path.exists():
+        raise FileNotFoundError(f"Path not found: {dataset_path}")
+
+    # Handle folder
+    resolved_folder_id: str | None = None
+    if folder is not None:
+        if folder_id is not None:
+            raise ValueError("Cannot specify both folder and folder_id")
+        # Add folder if not already present
+        if not any(f.id == folder.id for f in catalog.folders):
+            catalog.folders.append(folder)
+        resolved_folder_id = folder.id
+    elif folder_id is not None:
+        resolved_folder_id = folder_id
+
+    # Check if it's a partitioned Parquet directory
+    if dataset_path.is_dir():
+        _add_parquet_directory(
+            catalog,
+            dataset_path,
+            resolved_folder_id,
+            infer_stats=infer_stats,
+            id=id,
+            name=name,
+            description=description,
+            type=type,
+            link=link,
+            localisation=localisation,
+            manager_id=manager_id,
+            owner_id=owner_id,
+            tag_ids=tag_ids,
+            doc_ids=doc_ids,
+            start_date=start_date,
+            end_date=end_date,
+            updating_each=updating_each,
+            no_more_update=no_more_update,
+        )
+        return
+
+    # It's a file
+    suffix = dataset_path.suffix.lower()
+    delivery_format = SUPPORTED_FORMATS.get(suffix)
+    if delivery_format is None:
+        raise ValueError(
+            f"Unsupported format: {suffix}. "
+            f"Supported: {', '.join(SUPPORTED_FORMATS.keys())}"
+        )
+
+    # Build dataset ID and name
+    if id is not None:
+        dataset_id = id
+        dataset_name = name or dataset_path.stem
+    else:
+        base_name = sanitize_id(dataset_path.stem)
+        if resolved_folder_id:
+            dataset_id = make_id(resolved_folder_id, base_name)
+        else:
+            dataset_id = base_name
+        dataset_name = name or dataset_path.stem
+
+    # Create dataset
+    dataset = Dataset(
+        id=dataset_id,
+        name=dataset_name,
+        folder_id=resolved_folder_id,
+        data_path=str(dataset_path),
+        last_update_date=get_mtime_iso(dataset_path),
+        delivery_format=delivery_format,
+        description=description,
+        type=type,
+        link=link,
+        localisation=localisation,
+        manager_id=manager_id,
+        owner_id=owner_id,
+        tag_ids=tag_ids or [],
+        doc_ids=doc_ids or [],
+        start_date=start_date,
+        end_date=end_date,
+        updating_each=updating_each,
+        no_more_update=no_more_update,
+    )
+    catalog.datasets.append(dataset)
+
+    catalog._process_file(
+        dataset_path,
+        dataset,
+        infer_stats=infer_stats,
+        freq_threshold=catalog.freq_threshold if catalog.freq_threshold else None,
+    )
+
+
+def _add_parquet_directory(
+    catalog: Catalog,
+    dir_path: Path,
+    folder_id: str | None,
+    *,
+    infer_stats: bool,
+    id: str | None,
+    name: str | None,
+    description: str | None,
+    type: str | None,
+    link: str | None,
+    localisation: str | None,
+    manager_id: str | None,
+    owner_id: str | None,
+    tag_ids: list[str] | None,
+    doc_ids: list[str] | None,
+    start_date: str | None,
+    end_date: str | None,
+    updating_each: str | None,
+    no_more_update: str | None,
+) -> None:
+    """Add a partitioned Parquet directory (Delta, Hive, or Iceberg) to catalog."""
+    # Detect dataset type
+    if _is_delta_table(dir_path):
+        dataset_type = DatasetType.DELTA
+        delivery_format = "delta"
+    elif _is_iceberg_table(dir_path):
+        dataset_type = DatasetType.ICEBERG
+        delivery_format = "iceberg"
+    elif _is_hive_partitioned(dir_path):
+        dataset_type = DatasetType.HIVE
+        delivery_format = "parquet"
+    else:
+        raise ValueError(
+            f"Directory is not a recognized Parquet format "
+            f"(Delta, Hive, or Iceberg): {dir_path}"
+        )
+
+    # Create ParquetDatasetInfo for scanning
+    parquet_info = ParquetDatasetInfo(
+        path=dir_path,
+        type=dataset_type,
+    )
+
+    # Build dataset ID
+    if id is not None:
+        dataset_id = id
+    else:
+        base_name = sanitize_id(dir_path.name)
+        if folder_id:
+            dataset_id = make_id(folder_id, base_name)
+        else:
+            dataset_id = base_name
+
+    # Scan the dataset
+    freq_threshold = catalog.freq_threshold if catalog.freq_threshold else None
+    variables, nb_row, freq_table, metadata = scan_parquet_dataset(
+        parquet_info,
+        dataset_id=dataset_id,
+        infer_stats=infer_stats,
+        freq_threshold=freq_threshold,
+    )
+
+    # Build dataset name: user override > metadata > directory name
+    dataset_name = name or metadata.name or dir_path.name
+
+    # Use provided metadata or fall back to extracted metadata
+    final_description = description if description is not None else metadata.description
+
+    # Create dataset
+    dataset = Dataset(
+        id=dataset_id,
+        name=dataset_name,
+        folder_id=folder_id,
+        data_path=str(dir_path),
+        last_update_date=get_mtime_iso(dir_path),
+        delivery_format=delivery_format,
+        nb_row=nb_row,
+        description=final_description,
+        type=type,
+        link=link,
+        localisation=localisation,
+        manager_id=manager_id,
+        owner_id=owner_id,
+        tag_ids=tag_ids or [],
+        doc_ids=doc_ids or [],
+        start_date=start_date,
+        end_date=end_date,
+        updating_each=updating_each,
+        no_more_update=no_more_update,
+    )
+    catalog.datasets.append(dataset)
+
+    # Finalize variables and modalities
+    catalog._finalize_variables(variables, dataset, freq_table)
