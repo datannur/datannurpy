@@ -12,7 +12,7 @@ Python library for datannur catalog metadata management.
 
 ## Public API
 
-- `Catalog.add_folder(path, folder=None)` → scans CSV/Excel/Parquet files (auto-detects Delta/Hive/Iceberg)
+- `Catalog.add_folder(path, folder=None)` → scans CSV/Excel/Parquet/SAS files (auto-detects Delta/Hive/Iceberg)
 - `Catalog.add_dataset(path, folder=None)` → adds single file or partitioned directory (Delta/Hive/Iceberg)
 - `Catalog.add_database(connection, folder=None)` → scans database tables
 - `Catalog.write(output_dir)` → exports JSON + JSON.js files
@@ -38,7 +38,7 @@ Supported connection strings:
 
 Database-specific options: `schema`, `sample_size`, `group_by_prefix`, `prefix_min_tables`
 
-Install extras: `pip install datannurpy[postgres]`, `datannurpy[mysql]`, `datannurpy[oracle]`
+Install extras: `pip install datannurpy[postgres]`, `datannurpy[mysql]`, `datannurpy[oracle]`, `datannurpy[stat]`
 
 ## ID Conventions
 

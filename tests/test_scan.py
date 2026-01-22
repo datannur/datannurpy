@@ -348,8 +348,8 @@ class TestAddFolder:
         catalog = Catalog()
         catalog.add_folder(DATA_DIR, Folder(id="test", name="Test"))
         assert (
-            len(catalog.datasets) == 10
-        )  # cars.sas7bdat, employees.csv, employees.xlsx, regions_france.csv, test.parquet, test.pq, test_with_metadata.parquet, test_delta, test_partitioned, iceberg_warehouse/default/test_table
+            len(catalog.datasets) == 12
+        )  # cars.sas7bdat, sample.sav, sample.dta, employees.csv, employees.xlsx, regions_france.csv, test.parquet, test.pq, test_with_metadata.parquet, test_delta, test_partitioned, iceberg_warehouse/default/test_table
 
     def test_add_folder_assigns_folder_id(self):
         """add_folder should assign folder_id to datasets."""

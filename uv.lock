@@ -304,7 +304,7 @@ oracle = [
 postgres = [
     { name = "ibis-framework", extra = ["postgres"] },
 ]
-sas = [
+stat = [
     { name = "pyreadstat", version = "1.2.8", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "pyreadstat", version = "1.3.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
@@ -329,11 +329,11 @@ requires-dist = [
     { name = "ibis-framework", extras = ["oracle"], marker = "extra == 'oracle'", specifier = ">=11.0" },
     { name = "ibis-framework", extras = ["postgres"], marker = "extra == 'postgres'", specifier = ">=11.0" },
     { name = "ibis-framework", extras = ["postgres", "mysql", "oracle"], marker = "extra == 'databases'", specifier = ">=11.0" },
-    { name = "pyreadstat", marker = "python_full_version >= '3.10' and extra == 'sas'", specifier = ">=1.2.0" },
-    { name = "pyreadstat", marker = "python_full_version < '3.10' and extra == 'sas'", specifier = ">=1.2.0,<=1.2.8" },
+    { name = "pyreadstat", marker = "python_full_version >= '3.10' and extra == 'stat'", specifier = ">=1.2.0" },
+    { name = "pyreadstat", marker = "python_full_version < '3.10' and extra == 'stat'", specifier = ">=1.2.0,<=1.2.8" },
     { name = "typing-extensions", marker = "python_full_version < '3.11'", specifier = ">=4.0" },
 ]
-provides-extras = ["postgres", "mysql", "oracle", "databases", "delta", "sas"]
+provides-extras = ["postgres", "mysql", "oracle", "databases", "delta", "stat"]
 
 [package.metadata.requires-dev]
 dev = [

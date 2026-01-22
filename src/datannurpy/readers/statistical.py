@@ -1,4 +1,4 @@
-"""SAS reader using pyreadstat and Ibis/DuckDB."""
+"""Statistical file reader (SAS, SPSS, Stata) using pyreadstat and Ibis/DuckDB."""
 
 from __future__ import annotations
 
@@ -25,8 +25,8 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class SasMetadata:
-    """Metadata extracted from SAS file."""
+class StatisticalMetadata:
+    """Metadata extracted from statistical file."""
 
     description: str | None = None
 
@@ -44,28 +44,40 @@ def _convert_float_to_int(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def scan_sas(
+def scan_statistical(
     path: str | Path,
     *,
     dataset_id: str | None = None,
     infer_stats: bool = True,
     freq_threshold: int | None = None,
-) -> tuple[list[Variable], int, ibis.Table | None, SasMetadata]:
-    """Scan a SAS file (.sas7bdat) and return (variables, row_count, freq_table, metadata)."""
+) -> tuple[list[Variable], int, ibis.Table | None, StatisticalMetadata]:
+    """Scan a statistical file (SAS/SPSS/Stata) and return (variables, row_count, freq_table, metadata)."""
     if not HAS_PYREADSTAT:
         raise ImportError(
-            "pyreadstat is required for SAS support. "
-            "Install it with: pip install datannurpy[sas]"
+            "pyreadstat is required for SAS/SPSS/Stata support. "
+            "Install it with: pip install datannurpy[stat]"
         )
 
     file_path = Path(path)
+    suffix = file_path.suffix.lower()
+
+    # Select appropriate reader based on file extension
+    readers = {
+        ".sas7bdat": pyreadstat.read_sas7bdat,
+        ".sav": pyreadstat.read_sav,
+        ".dta": pyreadstat.read_dta,
+    }
+
+    reader = readers.get(suffix)
+    if reader is None:
+        raise ValueError(f"Unsupported statistical format: {suffix}")
 
     # Read data and metadata using pyreadstat
-    df, meta = pyreadstat.read_sas7bdat(file_path)
+    df, meta = reader(file_path)
     column_labels: dict[str, str | None] = meta.column_names_to_labels
 
     # Extract dataset-level metadata
-    sas_metadata = SasMetadata(description=meta.file_label or None)
+    stat_metadata = StatisticalMetadata(description=meta.file_label or None)
 
     # Convert float columns that are actually integers
     df = _convert_float_to_int(df)
@@ -84,10 +96,10 @@ def scan_sas(
         freq_threshold=freq_threshold,
     )
 
-    # Apply SAS labels as variable descriptions
+    # Apply labels as variable descriptions
     for var in variables:
         label = column_labels.get(var.name or var.id)
         if label:
             var.description = label
 
-    return variables, row_count, freq_table, sas_metadata
+    return variables, row_count, freq_table, stat_metadata

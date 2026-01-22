@@ -19,6 +19,8 @@ SUPPORTED_FORMATS: dict[str, str] = {
     ".parquet": "parquet",
     ".pq": "parquet",
     ".sas7bdat": "sas",
+    ".sav": "spss",
+    ".dta": "stata",
 }
 
 

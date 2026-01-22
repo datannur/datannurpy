@@ -7,6 +7,19 @@
 
 Python library for [datannur](https://github.com/datannur/datannur) catalog metadata management.
 
+## Supported formats
+
+A lightweight catalog compatible with most data sources:
+
+| Category        | Formats                                               |
+| --------------- | ----------------------------------------------------- |
+| **Flat files**  | CSV, Excel (.xlsx, .xls)                              |
+| **Columnar**    | Parquet, Delta Lake, Apache Iceberg, Hive partitioned |
+| **Statistical** | SAS (.sas7bdat), SPSS (.sav), Stata (.dta)            |
+| **Databases**   | PostgreSQL, MySQL, Oracle, SQLite, DuckDB             |
+
+All formats support automatic schema inference and statistics computation.
+
 ## Installation
 
 ```bash
@@ -22,13 +35,20 @@ pip install datannurpy[oracle]    # Oracle
 # SQLite works out of the box
 ```
 
+For statistical file support (SAS, SPSS, Stata):
+
+```bash
+pip install datannurpy[stat]
+```
+
 ## Quick start
 
 ```python
 from datannurpy import Catalog
 
 catalog = Catalog()
-catalog.add_folder("./data")
+catalog.add_folder("./data", include=["*.csv", "*.xlsx", "*.parquet"])
+catalog.add_database("sqlite:///mydb.sqlite")
 catalog.export_app("./my-catalog", open_browser=True)
 ```
 
@@ -39,7 +59,7 @@ from datannurpy import Catalog, Folder
 
 catalog = Catalog()
 
-# Scan a folder (CSV, Excel)
+# Scan a folder (CSV, Excel, SAS)
 catalog.add_folder("./data")
 
 # With custom folder metadata
