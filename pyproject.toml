@@ -32,7 +32,10 @@ mysql = ["ibis-framework[mysql]>=11.0"]
 oracle = ["ibis-framework[oracle]>=11.0"]
 databases = ["ibis-framework[postgres,mysql,oracle]>=11.0"]
 delta = ["deltalake>=0.18.0"]
-sas = ["pyreadstat>=1.2.0"]
+sas = [
+  "pyreadstat>=1.2.0,<=1.2.8; python_version < '3.10'",
+  "pyreadstat>=1.2.0; python_version >= '3.10'",
+]
 
 [project.urls]
 Homepage = "https://github.com/datannur/datannurpy"
@@ -46,7 +49,8 @@ dev = [
   "ruff",
   "pyright>=1.1.400",
   "deltalake>=0.18.0",
-  "pyreadstat>=1.2.0",
+  "pyreadstat>=1.2.0,<=1.2.8; python_version < '3.10'",
+  "pyreadstat>=1.2.0; python_version >= '3.10'",
 ]
 
 [tool.pytest.ini_options]
