@@ -16,6 +16,8 @@ SUPPORTED_FORMATS: dict[str, str] = {
     ".csv": "csv",
     ".xlsx": "excel",
     ".xls": "excel",
+    ".parquet": "parquet",
+    ".pq": "parquet",
 }
 
 

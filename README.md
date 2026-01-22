@@ -58,6 +58,25 @@ catalog.add_folder(
 catalog.add_dataset("./data/sales.csv")
 ```
 
+## Parquet formats
+
+Supports simple Parquet files and partitioned datasets (Delta, Hive, Iceberg):
+
+```python
+# add_folder auto-detects all formats
+catalog.add_folder("./data")  # scans *.parquet + Delta/Hive/Iceberg directories
+
+# add_dataset for a single partitioned directory with metadata override
+catalog.add_dataset(
+    "./data/sales_delta",
+    name="Sales Data",
+    description="Monthly sales",
+    folder=Folder(id="sales", name="Sales"),
+)
+```
+
+Metadata (name, description, column docs) is extracted from Delta/Iceberg when available.
+
 ## Scanning databases
 
 ```python

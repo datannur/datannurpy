@@ -12,13 +12,20 @@ Python library for datannur catalog metadata management.
 
 ## Public API
 
-- `Catalog.add_folder(path, folder=None)` → scans CSV/Excel files
+- `Catalog.add_folder(path, folder=None)` → scans CSV/Excel/Parquet files (auto-detects Delta/Hive/Iceberg)
+- `Catalog.add_dataset(path, folder=None)` → adds single file or partitioned directory (Delta/Hive/Iceberg)
 - `Catalog.add_database(connection, folder=None)` → scans database tables
 - `Catalog.write(output_dir)` → exports JSON + JSON.js files
 - `Catalog.export_app(output_dir)` → exports full datannur app with data
 - `Folder(id, name)` → optional, for custom folder metadata
 
 Common options: `include`, `exclude`, `infer_stats`
+
+### Parquet formats
+
+Auto-detection: Delta (`_delta_log/`), Iceberg (`metadata/*.metadata.json`), Hive (`key=value/`)
+
+Metadata extraction: Delta/Iceberg name, description, column docs
 
 ### Database connections
 
