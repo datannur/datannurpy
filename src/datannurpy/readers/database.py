@@ -92,6 +92,12 @@ ORACLE_SYSTEM_TABLE_PREFIXES: tuple[str, ...] = (
     "product_privs",
 )
 
+# SQLite system table prefixes to exclude (GeoPackage metadata, rtree indexes)
+SQLITE_SYSTEM_TABLE_PREFIXES: tuple[str, ...] = (
+    "gpkg_",  # GeoPackage metadata tables
+    "rtree_",  # R-tree spatial index tables
+)
+
 
 def _get_backend_name(con: ibis.BaseBackend) -> str:
     """Get backend name from connection object."""
@@ -330,6 +336,12 @@ def list_tables(
             "AND name NOT LIKE 'sqlite_%'"
         ).fetchall()
         tables = [row[0] for row in result]
+        # Filter out GeoPackage/rtree system tables
+        tables = [
+            t
+            for t in tables
+            if not any(t.startswith(prefix) for prefix in SQLITE_SYSTEM_TABLE_PREFIXES)
+        ]
     elif raw_sql and backend in ("duckdb", "postgres", "mysql", "mssql"):
         # Use information_schema (standard SQL)
         query = (

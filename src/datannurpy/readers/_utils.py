@@ -134,7 +134,13 @@ def build_variables(
     """
     schema = table.schema()
     columns = list(schema)
-    skip_cols = skip_stats_columns or set()
+    skip_cols = set(skip_stats_columns) if skip_stats_columns else set()
+
+    # Auto-detect columns that can't be aggregated or cast to string
+    # (Binary for BLOB, Unknown for geometry types like POINT/POLYGON, GeoSpatial for GEOMETRY)
+    for col_name, col_type in schema.items():
+        if isinstance(col_type, (dt.Binary, dt.Unknown, dt.GeoSpatial)):
+            skip_cols.add(col_name)
 
     # Compute stats only if needed
     stats: dict[str, tuple[int, int, int]] = {}

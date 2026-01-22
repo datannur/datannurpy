@@ -107,8 +107,9 @@ Metadata (name, description, column docs) is extracted from Delta/Iceberg when a
 ## Scanning databases
 
 ```python
-# SQLite
+# SQLite / GeoPackage
 catalog.add_database("sqlite:///path/to/db.sqlite")
+catalog.add_database("sqlite:///path/to/geodata.gpkg")  # GeoPackage is SQLite
 
 # PostgreSQL / MySQL / Oracle / SQL Server
 catalog.add_database("postgresql://user:pass@host:5432/mydb")
