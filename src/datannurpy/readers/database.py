@@ -181,13 +181,20 @@ def connect(connection: str | ibis.BaseBackend) -> tuple[ibis.BaseBackend, str]:
             database=kwargs.get("database"),
         )
     elif backend == "mssql":
-        con = ibis.mssql.connect(
-            host=kwargs.get("host", "localhost"),
-            port=int(kwargs.get("port", 1433)),
-            user=kwargs.get("user"),
-            password=kwargs.get("password"),
-            database=kwargs.get("database"),
-        )
+        # Build connection kwargs
+        mssql_kwargs: dict[str, str | int] = {
+            "host": kwargs.get("host", "localhost"),
+            "port": int(kwargs.get("port", 1433)),
+        }
+        if kwargs.get("user"):
+            mssql_kwargs["user"] = kwargs["user"]
+        if kwargs.get("password"):
+            mssql_kwargs["password"] = kwargs["password"]
+        if kwargs.get("database"):
+            mssql_kwargs["database"] = kwargs["database"]
+        if kwargs.get("driver"):
+            mssql_kwargs["driver"] = kwargs["driver"]
+        con = ibis.mssql.connect(**mssql_kwargs)  # type: ignore[arg-type]
     else:
         raise ValueError(f"Unsupported backend: {backend}")
 
