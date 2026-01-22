@@ -12,8 +12,14 @@ from pathlib import Path
 import ibis
 import pyarrow as pa
 
-from ._ids import make_id, sanitize_id
-from .entities import Dataset, Folder, Variable
+from ._ids import (
+    MODALITIES_FOLDER_ID,
+    build_modality_name,
+    compute_modality_hash,
+    make_id,
+    sanitize_id,
+)
+from .entities import Dataset, Folder, Modality, Value, Variable
 from .readers._utils import (
     SUPPORTED_FORMATS,
     find_files,
@@ -28,7 +34,12 @@ from .readers.database import (
     scan_table,
 )
 from .writers.app import copy_app
-from .writers.json import write_freq_json, write_json, write_table_registry
+from .writers.json import (
+    write_freq_json,
+    write_json,
+    write_table_registry,
+    write_values_json,
+)
 
 
 @dataclass
@@ -38,8 +49,45 @@ class Catalog:
     folders: list[Folder] = field(default_factory=list)
     datasets: list[Dataset] = field(default_factory=list)
     variables: list[Variable] = field(default_factory=list)
+    modalities: list[Modality] = field(default_factory=list)
+    values: list[Value] = field(default_factory=list)
     freq_threshold: int = 100  # 0 = disabled
     _freq_tables: list[pa.Table] = field(default_factory=list, repr=False)
+    _modality_index: dict[frozenset[str], str] = field(
+        default_factory=dict, repr=False
+    )  # signature → modality_id
+
+    def _ensure_modalities_folder(self) -> None:
+        """Create the _modalities folder if not already present."""
+        if not any(f.id == MODALITIES_FOLDER_ID for f in self.folders):
+            self.folders.append(Folder(id=MODALITIES_FOLDER_ID, name="Modalities"))
+
+    def _get_or_create_modality(self, values: set[str]) -> str:
+        """Get existing modality or create new one for the given values."""
+        signature = frozenset(values)
+
+        if signature in self._modality_index:
+            return self._modality_index[signature]
+
+        # Create new modality
+        self._ensure_modalities_folder()
+
+        hash_10 = compute_modality_hash(values)
+        modality_id = make_id(MODALITIES_FOLDER_ID, f"mod_{hash_10}")
+
+        modality = Modality(
+            id=modality_id,
+            folder_id=MODALITIES_FOLDER_ID,
+            name=build_modality_name(values),
+        )
+        self.modalities.append(modality)
+
+        # Create values
+        for val in sorted(values):
+            self.values.append(Value(modality_id=modality_id, value=val))
+
+        self._modality_index[signature] = modality_id
+        return modality_id
 
     def _finalize_variables(
         self,
@@ -55,6 +103,25 @@ class Catalog:
             var.dataset_id = dataset.id
             var.id = make_id(dataset.id, sanitize_id(var.name or old_col_name))
             var_id_mapping[old_col_name] = var.id
+
+        # Build modalities from freq table (before updating variable_id column)
+        freq_by_var: dict[str, set[str]] = {}
+        if freq_table is not None:
+            freq_data = freq_table.to_pyarrow().to_pylist()
+            for row in freq_data:
+                col_name = row["variable_id"]
+                val = row["value"]
+                if col_name not in freq_by_var:
+                    freq_by_var[col_name] = set()
+                if val is not None:
+                    freq_by_var[col_name].add(val)
+
+        # Assign modalities to variables
+        for var in variables:
+            old_col_name = next(k for k, v in var_id_mapping.items() if v == var.id)
+            if old_col_name in freq_by_var and freq_by_var[old_col_name]:
+                modality_id = self._get_or_create_modality(freq_by_var[old_col_name])
+                var.modality_ids = [modality_id]
 
         # Update freq table with final variable IDs and materialize to PyArrow
         if freq_table is not None:
@@ -429,6 +496,14 @@ class Catalog:
             write_json(self.variables, "variable", output_dir, write_js=write_js)
             tables.append("variable")
 
+        if self.modalities:
+            write_json(self.modalities, "modality", output_dir, write_js=write_js)
+            tables.append("modality")
+
+        if self.values:
+            write_values_json(self.values, output_dir, write_js=write_js)
+            tables.append("value")
+
         freq_table = self._get_freq_table()
         if freq_table is not None and len(freq_table) > 0:
             write_freq_json(freq_table, output_dir, write_js=write_js)
@@ -468,5 +543,6 @@ class Catalog:
         return (
             f"Catalog(folders={len(self.folders)}, "
             f"datasets={len(self.datasets)}, "
-            f"variables={len(self.variables)})"
+            f"variables={len(self.variables)}, "
+            f"modalities={len(self.modalities)})"
         )

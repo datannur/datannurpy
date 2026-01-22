@@ -28,7 +28,8 @@ class TestAddDataset:
             folder=Folder(id="hr", name="HR Data"),
         )
 
-        assert len(catalog.folders) == 1
+        # +1 for _modalities folder (auto-created)
+        assert len([f for f in catalog.folders if f.id != "_modalities"]) == 1
         assert catalog.folders[0].id == "hr"
         assert catalog.datasets[0].folder_id == "hr"
         assert catalog.datasets[0].id == "hr---employees"
@@ -48,7 +49,8 @@ class TestAddDataset:
         catalog.add_dataset(DATA_DIR / "employees.csv", folder=folder)
         catalog.add_dataset(DATA_DIR / "regions_france.csv", folder=folder)
 
-        assert len(catalog.folders) == 1
+        # +1 for _modalities folder (auto-created)
+        assert len([f for f in catalog.folders if f.id != "_modalities"]) == 1
         assert len(catalog.datasets) == 2
 
     def test_add_dataset_with_metadata(self):
@@ -214,8 +216,10 @@ class TestSubfolders:
         catalog = Catalog()
         catalog.add_folder(tmp_path, Folder(id="root", name="Root"))
 
-        assert len(catalog.folders) == 2  # root + 2024
-        subfolder = catalog.folders[1]
+        # +1 for _modalities folder (auto-created)
+        user_folders = [f for f in catalog.folders if f.id != "_modalities"]
+        assert len(user_folders) == 2  # root + 2024
+        subfolder = user_folders[1]
         assert subfolder.id == "root---2024"
         assert subfolder.parent_id == "root"
 
@@ -228,9 +232,10 @@ class TestSubfolders:
         catalog = Catalog()
         catalog.add_folder(tmp_path, Folder(id="x", name="X"))
 
-        # Should have: x, x---a, x---a---b, x---a---b---c
-        assert len(catalog.folders) == 4
-        folder_ids = [f.id for f in catalog.folders]
+        # Should have: x, x---a, x---a---b, x---a---b---c (+1 for _modalities)
+        user_folders = [f for f in catalog.folders if f.id != "_modalities"]
+        assert len(user_folders) == 4
+        folder_ids = [f.id for f in user_folders]
         assert "x" in folder_ids
         assert "x---a" in folder_ids
         assert "x---a---b" in folder_ids

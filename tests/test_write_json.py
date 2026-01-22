@@ -147,9 +147,11 @@ class TestCatalogWrite:
             data = json.load(f)
 
         assert isinstance(data, list)
-        assert len(data) == 1
-        assert data[0]["id"] == "test"
-        assert data[0]["name"] == "Test"
+        # Filter out auto-generated _modalities folder
+        user_folders = [f for f in data if f["id"] != "_modalities"]
+        assert len(user_folders) == 1
+        assert user_folders[0]["id"] == "test"
+        assert user_folders[0]["name"] == "Test"
 
     def test_write_jsonjs_format(self, tmp_path):
         """write should produce correct jsonjs format."""

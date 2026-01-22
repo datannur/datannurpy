@@ -2,13 +2,22 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 
 # Separator for path components (folder---dataset---variable)
 ID_SEPARATOR = "---"
 
+# Folder ID for auto-generated modalities
+MODALITIES_FOLDER_ID = "_modalities"
+
 # Valid ID pattern: a-zA-Z0-9_, - (and space)
 _INVALID_ID_CHARS = re.compile(r"[^a-zA-Z0-9_,\- ]")
+
+# Modality name settings
+_MODALITY_NAME_MAX_VALUES = 3
+_MODALITY_NAME_VALUE_MAX_LEN = 15
 
 
 def sanitize_id(value: str) -> str:
@@ -19,3 +28,36 @@ def sanitize_id(value: str) -> str:
 def make_id(*parts: str) -> str:
     """Join parts with ID_SEPARATOR."""
     return ID_SEPARATOR.join(parts)
+
+
+def compute_modality_hash(values: set[str]) -> str:
+    """Compute deterministic 10-char hash for a set of values."""
+    signature = json.dumps(sorted(values), ensure_ascii=False)
+    return hashlib.md5(signature.encode()).hexdigest()[:10]
+
+
+def build_modality_name(values: set[str]) -> str:
+    """Build human-readable name from values.
+
+    Rules:
+    - Sort values alphabetically (case-insensitive)
+    - Take first 3 values, truncate each to 15 chars
+    - Join with ", "
+    - Add "... (+N)" if more values
+    """
+    sorted_vals = sorted(values, key=str.lower)
+    display_vals: list[str] = []
+
+    for val in sorted_vals[:_MODALITY_NAME_MAX_VALUES]:
+        truncated = val[:_MODALITY_NAME_VALUE_MAX_LEN]
+        if len(val) > _MODALITY_NAME_VALUE_MAX_LEN:
+            truncated = truncated[:-3] + "..."
+        display_vals.append(truncated)
+
+    name = ", ".join(display_vals)
+
+    remaining = len(sorted_vals) - _MODALITY_NAME_MAX_VALUES
+    if remaining > 0:
+        name += f"... (+{remaining})"
+
+    return name

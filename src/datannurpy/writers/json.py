@@ -6,11 +6,17 @@ import json
 import time
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 import pyarrow as pa
 
 from ..entities.base import Entity
+
+
+class HasToDict(Protocol):
+    """Protocol for objects with to_dict method."""
+
+    def to_dict(self) -> dict[str, Any]: ...
 
 
 def write_json(
@@ -38,6 +44,31 @@ def write_json(
     if write_js and data:
         jsonjs_path = output_dir / f"{name}.json.js"
         jsonjs_content = _build_jsonjs(data, name)
+        _write_atomic(jsonjs_path, jsonjs_content)
+
+    return json_path
+
+
+def write_values_json(
+    values: Sequence[HasToDict],
+    output_dir: str | Path,
+    *,
+    write_js: bool = True,
+) -> Path:
+    """Write Value objects to value.json and value.json.js files."""
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    data = [v.to_dict() for v in values]
+
+    json_path = output_dir / "value.json"
+    _write_atomic(json_path, json.dumps(data, ensure_ascii=False, indent=2))
+
+    if write_js and data:
+        jsonjs_path = output_dir / "value.json.js"
+        jsonjs_content = _build_jsonjs(
+            data, "value", columns=["modality_id", "value", "description"]
+        )
         _write_atomic(jsonjs_path, jsonjs_content)
 
     return json_path

@@ -2,6 +2,8 @@
 
 ## unreleased
 
+- add: modality support
+
 ## 0.2.1 (2026-01-21)
 
 - add: oracle db support

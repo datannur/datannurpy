@@ -330,8 +330,10 @@ class BaseSchemaTests(ABC):
             schema="sales",
         )
 
-        assert len(catalog.folders) == 1
-        assert catalog.folders[0].id == "sales_db"
+        # +1 for _modalities folder (auto-created)
+        user_folders = [f for f in catalog.folders if f.id != "_modalities"]
+        assert len(user_folders) == 1
+        assert user_folders[0].id == "sales_db"
 
         dataset_names = {d.name for d in catalog.datasets}
         assert dataset_names == {"orders", "customers"}
