@@ -181,7 +181,8 @@ def connect(connection: str | ibis.BaseBackend) -> tuple[ibis.BaseBackend, str]:
             database=kwargs.get("database"),
         )
     elif backend == "mssql":
-        # Build connection kwargs
+        # Build connection kwargs - extract known params, pass rest as extras
+        known_params = {"host", "port", "user", "password", "database", "driver"}
         mssql_kwargs: dict[str, str | int] = {
             "host": kwargs.get("host", "localhost"),
             "port": int(kwargs.get("port", 1433)),
@@ -194,6 +195,10 @@ def connect(connection: str | ibis.BaseBackend) -> tuple[ibis.BaseBackend, str]:
             mssql_kwargs["database"] = kwargs["database"]
         if kwargs.get("driver"):
             mssql_kwargs["driver"] = kwargs["driver"]
+        # Pass additional params (e.g., TrustServerCertificate) to pyodbc
+        for key, value in kwargs.items():
+            if key not in known_params:
+                mssql_kwargs[key] = value
         con = ibis.mssql.connect(**mssql_kwargs)  # type: ignore[arg-type]
     else:
         raise ValueError(f"Unsupported backend: {backend}")
