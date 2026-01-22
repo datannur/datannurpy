@@ -2,6 +2,8 @@
 
 ## unreleased
 
+## 0.3.0 (2026-01-22)
+
 - add: modality support
 - add: folder based on db table prefix
 - add: support for parquet files and Delta/Hive/Iceberg directories
