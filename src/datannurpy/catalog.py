@@ -29,6 +29,7 @@ from .readers._utils import (
 )
 from .readers.csv import scan_csv
 from .readers.excel import scan_excel
+from .readers.sas import scan_sas
 from .readers.parquet import (
     DatasetType,
     ParquetDatasetInfo,
@@ -162,8 +163,17 @@ class Catalog:
             # Apply Parquet metadata to dataset (if not already set)
             if metadata and metadata.description and not dataset.description:
                 dataset.description = metadata.description
+        elif dataset.delivery_format == "sas":
+            file_vars, nb_row, freq_table, metadata = scan_sas(
+                file_path, infer_stats=infer_stats, freq_threshold=freq_threshold
+            )
+            # Apply SAS metadata to dataset (if not already set)
+            if metadata and metadata.description and not dataset.description:
+                dataset.description = metadata.description
         else:
-            scanner = scan_csv if dataset.delivery_format == "csv" else scan_excel
+            assert dataset.delivery_format is not None
+            scanners = {"csv": scan_csv, "excel": scan_excel}
+            scanner = scanners[dataset.delivery_format]
             file_vars, nb_row, freq_table = scanner(
                 file_path, infer_stats=infer_stats, freq_threshold=freq_threshold
             )

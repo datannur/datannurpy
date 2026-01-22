@@ -207,6 +207,41 @@ class TestAddFolder:
         assert catalog.datasets[0].delivery_format == "parquet"
         assert len(catalog.variables) == 3
 
+    def test_add_folder_scans_sas(self):
+        """add_folder should scan SAS files (.sas7bdat extension)."""
+        catalog = Catalog()
+        catalog.add_folder(
+            DATA_DIR, Folder(id="test", name="Test"), include=["cars.sas7bdat"]
+        )
+        assert len(catalog.datasets) == 1
+        assert catalog.datasets[0].delivery_format == "sas"
+        assert len(catalog.variables) == 4
+
+    def test_add_folder_extracts_sas_metadata(self):
+        """add_folder should extract metadata from SAS files."""
+        catalog = Catalog()
+        catalog.add_folder(
+            DATA_DIR, Folder(id="test", name="Test"), include=["cars.sas7bdat"]
+        )
+        # Dataset description from file label
+        assert catalog.datasets[0].description == "Written by SAS"
+        # Variable descriptions from column labels
+        var_by_name = {v.name: v for v in catalog.variables}
+        assert var_by_name["MPG"].description == "miles per gallon"
+        assert var_by_name["CYL"].description == "number of cylinders"
+
+    def test_add_folder_sas_integer_conversion(self):
+        """add_folder should convert SAS float columns with integer values to integer type."""
+        catalog = Catalog()
+        catalog.add_folder(
+            DATA_DIR, Folder(id="test", name="Test"), include=["cars.sas7bdat"]
+        )
+        var_by_name = {v.name: v for v in catalog.variables}
+        # CYL contains only integers (3, 4, 5, 6, 8)
+        assert var_by_name["CYL"].type == "integer"
+        # MPG contains decimals (14.5, 16.2, etc.)
+        assert var_by_name["MPG"].type == "float"
+
     def test_add_folder_extracts_parquet_metadata(self):
         """add_folder should extract metadata from Parquet files."""
         catalog = Catalog()
@@ -313,8 +348,8 @@ class TestAddFolder:
         catalog = Catalog()
         catalog.add_folder(DATA_DIR, Folder(id="test", name="Test"))
         assert (
-            len(catalog.datasets) == 9
-        )  # employees.csv, employees.xlsx, regions_france.csv, test.parquet, test.pq, test_with_metadata.parquet, test_delta, test_partitioned, iceberg_warehouse/default/test_table
+            len(catalog.datasets) == 10
+        )  # cars.sas7bdat, employees.csv, employees.xlsx, regions_france.csv, test.parquet, test.pq, test_with_metadata.parquet, test_delta, test_partitioned, iceberg_warehouse/default/test_table
 
     def test_add_folder_assigns_folder_id(self):
         """add_folder should assign folder_id to datasets."""

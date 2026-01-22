@@ -18,6 +18,7 @@ SUPPORTED_FORMATS: dict[str, str] = {
     ".xls": "excel",
     ".parquet": "parquet",
     ".pq": "parquet",
+    ".sas7bdat": "sas",
 }
 
 
