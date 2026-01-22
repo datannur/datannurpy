@@ -40,7 +40,7 @@ Documentation = "https://github.com/datannur/datannurpy#readme"
 Issues = "https://github.com/datannur/datannurpy/issues"
 
 [dependency-groups]
-dev = ["pytest", "ruff", "pyright>=1.1.400"]
+dev = ["pytest", "ruff", "pyright>=1.1.400", "deltalake>=0.18.0"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

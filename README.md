@@ -75,6 +75,12 @@ catalog.add_dataset(
 )
 ```
 
+For Delta Lake metadata extraction (name, description):
+
+```bash
+pip install datannurpy[delta]
+```
+
 Metadata (name, description, column docs) is extracted from Delta/Iceberg when available.
 
 ## Scanning databases
