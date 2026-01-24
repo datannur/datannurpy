@@ -1,10 +1,11 @@
-"""Excel reader using Ibis/DuckDB with spatial extension."""
+"""Excel reader using pandas + openpyxl/xlrd."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 import ibis
+import pandas as pd
 
 from ..entities import Variable
 from ._utils import build_variables
@@ -13,33 +14,26 @@ from ._utils import build_variables
 def scan_excel(
     path: str | Path,
     *,
-    sheet_name: str | None = None,
+    sheet_name: str | int = 0,
     dataset_id: str | None = None,
     infer_stats: bool = True,
     freq_threshold: int | None = None,
 ) -> tuple[list[Variable], int, ibis.Table | None]:
     """Scan an Excel file and return (variables, row_count, freq_table)."""
-    con = ibis.duckdb.connect()
-    # Load spatial extension for Excel support
-    con.raw_sql("INSTALL spatial; LOAD spatial;")
-
     file_path = Path(path)
-    # Escape path for SQL (replace single quotes)
-    escaped_path = str(file_path).replace("'", "''")
+    suffix = file_path.suffix.lower()
 
-    # Build st_read options
-    options: list[str] = []
-    if sheet_name is not None:
-        escaped_sheet = sheet_name.replace("'", "''")
-        options.append(f"layer='{escaped_sheet}'")
+    # Select engine based on file extension
+    # openpyxl for .xlsx (modern), xlrd for .xls (legacy)
+    engine = "xlrd" if suffix == ".xls" else "openpyxl"
 
-    options_str = ", ".join(options)
-    if options_str:
-        query = f"SELECT * FROM st_read('{escaped_path}', {options_str})"
-    else:
-        query = f"SELECT * FROM st_read('{escaped_path}')"
+    # Read Excel file with pandas
+    df = pd.read_excel(file_path, sheet_name=sheet_name, engine=engine)
 
-    table = con.sql(query)
+    # Convert to Ibis table via DuckDB for stats computation
+    con = ibis.duckdb.connect()
+    table = con.create_table("excel_data", df)
+
     row_count: int = table.count().execute()
 
     variables, freq_table = build_variables(

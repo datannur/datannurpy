@@ -2,6 +2,7 @@
 
 ## unreleased
 
+- fix: Excel reader no longer requires network access (removed DuckDB spatial dependency)
 - fix: resolve relative path before opening browser in export_app
 - fix: csv encoding fallback to handle utf-8, cp1252 and iso-8859-1
 - refactor: make catalog.py as facade

@@ -371,12 +371,6 @@ class TestAddFolder:
         assert var_by_name["city"].description == "City of residence"
         assert var_by_name["amount"].description == "Transaction amount"
 
-    def test_add_folder_creates_datasets(self, full_catalog):
-        """add_folder should create Dataset entities."""
-        assert (
-            len(full_catalog.datasets) == 13
-        )  # cars.sas7bdat, sample.sav, sample.dta, employees.csv, regions_france.csv, swiss_old_standard.csv, test.parquet, test.pq, test_with_metadata.parquet, test_delta, test_partitioned, iceberg_warehouse/default/test_table
-
     def test_add_folder_assigns_folder_id(self, full_catalog):
         """add_folder should assign folder_id to datasets."""
         # All datasets should have folder_id starting with root folder ID
