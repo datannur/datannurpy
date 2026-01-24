@@ -59,4 +59,4 @@ def export_app(
 
     if open_browser:
         index_path = output_dir / "index.html"
-        webbrowser.open(index_path.as_uri())
+        webbrowser.open(index_path.resolve().as_uri())

@@ -2,12 +2,13 @@
 
 ## unreleased
 
+- fix: resolve relative path before opening browser in export_app
 - fix: csv encoding fallback to handle utf-8, cp1252 and iso-8859-1
 - refactor: make catalog.py as facade
 
 ## 0.3.0 (2026-01-22)
 
-- add: modality support
+- add: modality supportou
 - add: folder based on db table prefix
 - add: support for parquet files and Delta/Hive/Iceberg directories
 - add: support for SAS, SPSS and Stata files
