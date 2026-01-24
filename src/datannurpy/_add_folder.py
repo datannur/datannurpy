@@ -37,6 +37,7 @@ def add_folder(
     exclude: Sequence[str] | None = None,
     recursive: bool = True,
     infer_stats: bool = True,
+    csv_encoding: str | None = None,
 ) -> None:
     """Scan a folder and add its contents to the catalog."""
     root = Path(path).resolve()
@@ -164,9 +165,15 @@ def add_folder(
         )
         catalog.datasets.append(dataset)
 
+        # Resolve csv_encoding: parameter > catalog default
+        resolved_encoding = (
+            csv_encoding if csv_encoding is not None else catalog.csv_encoding
+        )
+
         catalog._process_file(
             file_path,
             dataset,
             infer_stats=infer_stats,
             freq_threshold=freq_threshold,
+            csv_encoding=resolved_encoding,
         )

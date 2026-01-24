@@ -7,6 +7,26 @@ import pytest
 from datannurpy import Catalog, Folder
 
 DATA_DIR = Path(__file__).parent.parent / "data"
+CSV_DIR = DATA_DIR / "csv"
+
+
+class TestLegacyEncoding:
+    """Test scanning CSV files with legacy encodings and delimiters."""
+
+    def test_csv_latin1_semicolon_delimiter(self):
+        """CSV with latin1 encoding and semicolon delimiter should be scanned correctly."""
+        catalog = Catalog()
+        catalog.add_dataset(CSV_DIR / "legacy_encoding.csv")
+
+        # Should find 4 variables: nom, prénom, département, salaire
+        assert len(catalog.variables) == 4, (
+            f"Expected 4 variables, got {len(catalog.variables)}"
+        )
+
+        # Should have 3 data rows
+        assert catalog.datasets[0].nb_row == 3, (
+            f"Expected 3 rows, got {catalog.datasets[0].nb_row}"
+        )
 
 
 class TestAddDataset:
@@ -15,7 +35,7 @@ class TestAddDataset:
     def test_add_dataset_scans_file(self):
         """add_dataset should scan a single file."""
         catalog = Catalog()
-        catalog.add_dataset(DATA_DIR / "employees.csv")
+        catalog.add_dataset(CSV_DIR / "employees.csv")
 
         assert len(catalog.datasets) == 1
         assert len(catalog.variables) == 9
@@ -24,7 +44,7 @@ class TestAddDataset:
         """add_dataset with folder should create folder and link."""
         catalog = Catalog()
         catalog.add_dataset(
-            DATA_DIR / "employees.csv",
+            CSV_DIR / "employees.csv",
             folder=Folder(id="hr", name="HR Data"),
         )
 
@@ -37,8 +57,8 @@ class TestAddDataset:
     def test_add_dataset_with_folder_id(self):
         """add_dataset with folder_id should link to existing folder."""
         catalog = Catalog()
-        catalog.add_folder(DATA_DIR, Folder(id="data", name="Data"), include=[])
-        catalog.add_dataset(DATA_DIR / "employees.csv", folder_id="data")
+        catalog.add_folder(CSV_DIR, Folder(id="data", name="Data"), include=[])
+        catalog.add_dataset(CSV_DIR / "employees.csv", folder_id="data")
 
         assert catalog.datasets[0].folder_id == "data"
 
@@ -46,8 +66,8 @@ class TestAddDataset:
         """add_dataset should not duplicate folder."""
         catalog = Catalog()
         folder = Folder(id="src", name="Source")
-        catalog.add_dataset(DATA_DIR / "employees.csv", folder=folder)
-        catalog.add_dataset(DATA_DIR / "regions_france.csv", folder=folder)
+        catalog.add_dataset(CSV_DIR / "employees.csv", folder=folder)
+        catalog.add_dataset(CSV_DIR / "regions_france.csv", folder=folder)
 
         # +1 for _modalities folder (auto-created)
         assert len([f for f in catalog.folders if f.id != "_modalities"]) == 1
@@ -57,7 +77,7 @@ class TestAddDataset:
         """add_dataset should accept metadata overrides."""
         catalog = Catalog()
         catalog.add_dataset(
-            DATA_DIR / "employees.csv",
+            CSV_DIR / "employees.csv",
             name="Employés",
             description="Liste des employés",
             type="référentiel",
@@ -75,14 +95,14 @@ class TestAddDataset:
     def test_add_dataset_custom_id(self):
         """add_dataset with id should use custom ID."""
         catalog = Catalog()
-        catalog.add_dataset(DATA_DIR / "employees.csv", id="custom-id")
+        catalog.add_dataset(CSV_DIR / "employees.csv", id="custom-id")
 
         assert catalog.datasets[0].id == "custom-id"
 
     def test_add_dataset_standalone_id(self):
         """add_dataset without folder should use filename as ID."""
         catalog = Catalog()
-        catalog.add_dataset(DATA_DIR / "employees.csv")
+        catalog.add_dataset(CSV_DIR / "employees.csv")
 
         assert catalog.datasets[0].id == "employees"
 
@@ -105,7 +125,7 @@ class TestAddDataset:
         catalog = Catalog()
         with pytest.raises(ValueError, match="Cannot specify both"):
             catalog.add_dataset(
-                DATA_DIR / "employees.csv",
+                CSV_DIR / "employees.csv",
                 folder=Folder(id="a", name="A"),
                 folder_id="b",
             )
@@ -354,8 +374,8 @@ class TestAddFolder:
     def test_add_folder_creates_datasets(self, full_catalog):
         """add_folder should create Dataset entities."""
         assert (
-            len(full_catalog.datasets) == 12
-        )  # cars.sas7bdat, sample.sav, sample.dta, employees.csv, employees.xlsx, regions_france.csv, test.parquet, test.pq, test_with_metadata.parquet, test_delta, test_partitioned, iceberg_warehouse/default/test_table
+            len(full_catalog.datasets) == 13
+        )  # cars.sas7bdat, sample.sav, sample.dta, employees.csv, regions_france.csv, swiss_old_standard.csv, test.parquet, test.pq, test_with_metadata.parquet, test_delta, test_partitioned, iceberg_warehouse/default/test_table
 
     def test_add_folder_assigns_folder_id(self, full_catalog):
         """add_folder should assign folder_id to datasets."""
@@ -370,7 +390,7 @@ class TestAddFolder:
         """add_folder should prefix IDs with folder ID."""
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR, Folder(id="src", name="Source"), include=["employees.csv"]
+            CSV_DIR, Folder(id="src", name="Source"), include=["employees.csv"]
         )
         assert catalog.datasets[0].id == "src---employees_csv"
         assert catalog.variables[0].id.startswith("src---employees_csv---")
@@ -379,7 +399,7 @@ class TestAddFolder:
         """add_folder should compute stats by default."""
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+            CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
         assert all(v.nb_distinct is not None for v in catalog.variables)
         assert all(v.nb_missing is not None for v in catalog.variables)
@@ -388,7 +408,7 @@ class TestAddFolder:
         """add_folder with infer_stats=False should skip stats."""
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR,
+            CSV_DIR,
             Folder(id="test", name="Test"),
             include=["employees.csv"],
             infer_stats=False,

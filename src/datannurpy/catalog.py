@@ -32,6 +32,7 @@ class Catalog:
     modalities: list[Modality] = field(default_factory=list)
     values: list[Value] = field(default_factory=list)
     freq_threshold: int = 100  # 0 = disabled
+    csv_encoding: str | None = None  # Priority encoding for CSV (e.g., 'CP1252')
     _freq_tables: list[pa.Table] = field(default_factory=list, repr=False)
     _modality_manager: ModalityManager | None = field(default=None, repr=False)
 
@@ -73,6 +74,7 @@ class Catalog:
         *,
         infer_stats: bool,
         freq_threshold: int | None,
+        csv_encoding: str | None = None,
     ) -> None:
         """Scan file, update dataset with row count, add variables."""
         if dataset.delivery_format == "parquet":
@@ -91,11 +93,17 @@ class Catalog:
                 dataset.description = metadata.description
         else:
             assert dataset.delivery_format is not None
-            scanners = {"csv": scan_csv, "excel": scan_excel}
-            scanner = scanners[dataset.delivery_format]
-            file_vars, nb_row, freq_table = scanner(
-                file_path, infer_stats=infer_stats, freq_threshold=freq_threshold
-            )
+            if dataset.delivery_format == "csv":
+                file_vars, nb_row, freq_table = scan_csv(
+                    file_path,
+                    infer_stats=infer_stats,
+                    freq_threshold=freq_threshold,
+                    csv_encoding=csv_encoding,
+                )
+            else:
+                file_vars, nb_row, freq_table = scan_excel(
+                    file_path, infer_stats=infer_stats, freq_threshold=freq_threshold
+                )
 
         dataset.nb_row = nb_row
         self._finalize_variables(file_vars, dataset, freq_table)

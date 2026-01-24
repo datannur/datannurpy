@@ -30,6 +30,7 @@ def add_dataset(
     *,
     folder_id: str | None = None,
     infer_stats: bool = True,
+    csv_encoding: str | None = None,
     # Dataset metadata overrides
     id: str | None = None,
     name: str | None = None,
@@ -132,11 +133,17 @@ def add_dataset(
     )
     catalog.datasets.append(dataset)
 
+    # Resolve csv_encoding: parameter > catalog default
+    resolved_encoding = (
+        csv_encoding if csv_encoding is not None else catalog.csv_encoding
+    )
+
     catalog._process_file(
         dataset_path,
         dataset,
         infer_stats=infer_stats,
         freq_threshold=catalog.freq_threshold if catalog.freq_threshold else None,
+        csv_encoding=resolved_encoding,
     )
 
 

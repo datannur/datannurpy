@@ -2,6 +2,7 @@
 
 ## unreleased
 
+- fix: csv encoding fallback to handle utf-8, cp1252 and iso-8859-1
 - refactor: make catalog.py as facade
 
 ## 0.3.0 (2026-01-22)

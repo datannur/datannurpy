@@ -6,6 +6,7 @@ from pathlib import Path
 from datannurpy import Catalog, Folder
 
 DATA_DIR = Path(__file__).parent.parent / "data"
+CSV_DIR = DATA_DIR / "csv"
 
 
 class TestFreq:
@@ -84,7 +85,7 @@ class TestCatalogWrite:
         """write should create .json files for each entity type."""
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+            CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
         catalog.write(tmp_path)
 
@@ -96,7 +97,7 @@ class TestCatalogWrite:
         """write should create .json.js files by default."""
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+            CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
         catalog.write(tmp_path)
 
@@ -108,7 +109,7 @@ class TestCatalogWrite:
         """write should produce valid variable JSON."""
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+            CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
         catalog.write(tmp_path)
 
@@ -123,7 +124,7 @@ class TestCatalogWrite:
         """write should produce valid dataset JSON."""
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+            CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
         catalog.write(tmp_path)
 
@@ -139,7 +140,7 @@ class TestCatalogWrite:
         """write should produce valid folder JSON."""
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+            CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
         catalog.write(tmp_path)
 
@@ -157,7 +158,7 @@ class TestCatalogWrite:
         """write should produce correct jsonjs format."""
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+            CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
         catalog.write(tmp_path)
 
