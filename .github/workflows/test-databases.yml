@@ -31,7 +31,7 @@ jobs:
         run: uv sync --extra postgres
 
       - name: Run PostgreSQL tests
-        run: uv run pytest tests/database/test_postgres.py -v
+        run: uv run pytest tests/database/test_postgres.py -v -n 0
         env:
           TEST_POSTGRES_URL: postgresql://test:test@localhost:5432/testdb
 
@@ -61,7 +61,7 @@ jobs:
         run: uv sync --extra mysql
 
       - name: Run MySQL tests
-        run: uv run pytest tests/database/test_mysql.py -v
+        run: uv run pytest tests/database/test_mysql.py -v -n 0
         env:
           TEST_MYSQL_URL: mysql://root:test@localhost:3306/testdb
 
@@ -116,7 +116,7 @@ jobs:
         run: uv sync --extra oracle
 
       - name: Run Oracle tests
-        run: uv run pytest tests/database/test_oracle.py -v
+        run: uv run pytest tests/database/test_oracle.py -v -n 0
         env:
           TEST_ORACLE_URL: oracle://system:test@localhost:1521/FREEPDB1
 
@@ -171,6 +171,6 @@ jobs:
         run: uv sync --extra mssql
 
       - name: Run SQL Server tests
-        run: uv run pytest tests/database/test_mssql.py -v
+        run: uv run pytest tests/database/test_mssql.py -v -n 0
         env:
           TEST_MSSQL_URL: "mssql://sa:Test@123!@localhost:1433/testdb?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"
