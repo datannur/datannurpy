@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import shutil
+import sys
+import time
 import webbrowser
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -43,9 +45,15 @@ def export_app(
     output_dir: str | Path,
     *,
     open_browser: bool = False,
+    quiet: bool | None = None,
 ) -> None:
     """Export a standalone datannur visualization app with catalog data."""
+    q = quiet if quiet is not None else catalog.quiet
     output_dir = Path(output_dir)
+
+    start_time = time.perf_counter()
+    if not q:
+        print(f"\n[export_app] {output_dir}", file=sys.stderr)
 
     # Copy app files
     copy_app(output_dir)
@@ -55,7 +63,11 @@ def export_app(
     if db_dir.exists():
         shutil.rmtree(db_dir)
 
-    catalog.write(db_dir)
+    catalog.write(db_dir, quiet=True)  # Don't duplicate write logs
+
+    if not q:
+        elapsed = time.perf_counter() - start_time
+        print(f"  → app exported in {elapsed:.1f}s", file=sys.stderr)
 
     if open_browser:
         index_path = output_dir / "index.html"

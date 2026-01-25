@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import sys
 import time
 from collections.abc import Sequence
 from pathlib import Path
@@ -192,10 +193,16 @@ def write_catalog(
     output_dir: str | Path,
     *,
     write_js: bool = True,
+    quiet: bool | None = None,
 ) -> None:
     """Write all catalog entities to JSON files."""
+    q = quiet if quiet is not None else catalog.quiet
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    start_time = time.perf_counter()
+    if not q:
+        print(f"\n[write] {output_dir}", file=sys.stderr)
 
     tables: list[str] = []
     freq_table = (
@@ -228,3 +235,7 @@ def write_catalog(
 
     if tables:
         write_table_registry(output_dir, tables, write_js=write_js)
+
+    if not q:
+        elapsed = time.perf_counter() - start_time
+        print(f"  → {len(tables)} files written in {elapsed:.1f}s", file=sys.stderr)

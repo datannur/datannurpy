@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 import ibis
 
 from ._ids import make_id, sanitize_id
+from ._log import log_done, log_folder, log_section, log_start, log_summary
 from ._prefix import get_prefix_folders, get_table_prefix
 from .entities import Dataset, Folder
 from .readers.database import (
@@ -36,13 +37,19 @@ def add_database(
     sample_size: int | None = None,
     group_by_prefix: bool | str = True,
     prefix_min_tables: int = 2,
+    quiet: bool | None = None,
 ) -> None:
     """Scan a database and add its tables to the catalog."""
+    q = quiet if quiet is not None else catalog.quiet
     # Connect to database
     con, backend_name = connect(connection)
 
     # Determine database name for folder
     db_name = get_database_name(connection, con, backend_name)
+
+    start_time = log_section("add_database", f"{backend_name}://{db_name}", q)
+    datasets_before = len(catalog.datasets)
+    vars_before = len(catalog.variables)
 
     # Get timestamp for folder/dataset
     now_iso = datetime.now(tz=timezone.utc).strftime("%Y/%m/%d")
@@ -68,6 +75,7 @@ def add_database(
     for schema_name in schemas_to_scan:
         # Determine folder for this schema
         if schema_name is not None and len(schemas_to_scan) > 1:
+            log_folder(f"{schema_name} (schema)", q)
             # Multiple schemas: create sub-folder for each
             schema_folder_id = make_id(root_folder_id, sanitize_id(schema_name))
             schema_folder = Folder(
@@ -116,6 +124,7 @@ def add_database(
                 catalog.folders.append(prefix_folder)
 
         for table_name in tables:
+            log_start(table_name, q)
             # Determine folder for this table
             table_prefix: str | None = None
             if valid_prefixes:
@@ -153,3 +162,8 @@ def add_database(
             dataset.nb_row = nb_row
             catalog.datasets.append(dataset)
             catalog._finalize_variables(table_vars, dataset, freq_table)
+            log_done(f"{table_name} ({nb_row:,} rows, {len(table_vars)} vars)", q)
+
+    datasets_added = len(catalog.datasets) - datasets_before
+    vars_added = len(catalog.variables) - vars_before
+    log_summary(datasets_added, vars_added, q, start_time)

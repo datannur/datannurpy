@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ._ids import make_id, sanitize_id
+from ._log import log_done, log_section
 from .entities import Dataset, Folder
 from .readers._utils import SUPPORTED_FORMATS, get_mtime_iso
 from .readers.parquet import (
@@ -31,6 +32,7 @@ def add_dataset(
     folder_id: str | None = None,
     infer_stats: bool = True,
     csv_encoding: str | None = None,
+    quiet: bool | None = None,
     # Dataset metadata overrides
     id: str | None = None,
     name: str | None = None,
@@ -48,10 +50,13 @@ def add_dataset(
     no_more_update: str | None = None,
 ) -> None:
     """Add a single dataset file or partitioned directory to the catalog."""
+    q = quiet if quiet is not None else catalog.quiet
     dataset_path = Path(path).resolve()
 
     if not dataset_path.exists():
         raise FileNotFoundError(f"Path not found: {dataset_path}")
+
+    start_time = log_section("add_dataset", dataset_path.name, q)
 
     # Handle folder
     resolved_folder_id: str | None = None
@@ -72,6 +77,8 @@ def add_dataset(
             dataset_path,
             resolved_folder_id,
             infer_stats=infer_stats,
+            quiet=q,
+            start_time=start_time,
             id=id,
             name=name,
             description=description,
@@ -146,6 +153,15 @@ def add_dataset(
         csv_encoding=resolved_encoding,
     )
 
+    # Log result
+    if dataset.nb_row is not None:
+        var_count = sum(1 for v in catalog.variables if v.dataset_id == dataset.id)
+        log_done(
+            f"{dataset_path.name} ({dataset.nb_row:,} rows, {var_count} vars)",
+            q,
+            start_time,
+        )
+
 
 def _add_parquet_directory(
     catalog: Catalog,
@@ -153,6 +169,8 @@ def _add_parquet_directory(
     folder_id: str | None,
     *,
     infer_stats: bool,
+    quiet: bool,
+    start_time: float,
     id: str | None,
     name: str | None,
     description: str | None,
@@ -242,3 +260,6 @@ def _add_parquet_directory(
 
     # Finalize variables and modalities
     catalog._finalize_variables(variables, dataset, freq_table)
+
+    if not quiet:
+        log_done(dataset_id, quiet=False, start_time=start_time)

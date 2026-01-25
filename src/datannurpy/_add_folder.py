@@ -12,6 +12,7 @@ from ._ids import (
     make_id,
     sanitize_id,
 )
+from ._log import log_done, log_section, log_start, log_summary, log_warn
 from .entities import Dataset, Folder
 from .readers._utils import (
     SUPPORTED_FORMATS,
@@ -38,14 +39,20 @@ def add_folder(
     recursive: bool = True,
     infer_stats: bool = True,
     csv_encoding: str | None = None,
+    quiet: bool | None = None,
 ) -> None:
     """Scan a folder and add its contents to the catalog."""
+    q = quiet if quiet is not None else catalog.quiet
     root = Path(path).resolve()
 
     if not root.exists():
         raise FileNotFoundError(f"Folder not found: {root}")
     if not root.is_dir():
         raise NotADirectoryError(f"Not a directory: {root}")
+
+    start_time = log_section("add_folder", str(root), q)
+    datasets_before = len(catalog.datasets)
+    vars_before = len(catalog.variables)
 
     # Create default folder from directory name if not provided
     if folder is None:
@@ -105,6 +112,7 @@ def add_folder(
 
     # Process Parquet datasets (simple files, Delta tables, Hive partitioned)
     for info in parquet_result.datasets:
+        log_start(info.path.name, q)
         dataset_id, dataset_name = build_dataset_id_name(info.path, root, prefix)
         folder_id = get_folder_id(info.path, root, prefix, subdir_ids)
 
@@ -127,6 +135,7 @@ def add_folder(
 
         dataset.nb_row = nb_row
         catalog._finalize_variables(variables, dataset, freq_table)
+        log_done(f"{info.path.name} ({nb_row:,} rows, {len(variables)} vars)", q)
 
     # Process non-Parquet files (CSV, Excel)
     parquet_files = {f for ds in parquet_result.datasets for f in ds.files}
@@ -151,6 +160,7 @@ def add_folder(
         if delivery_format is None or delivery_format == "parquet":
             continue
 
+        log_start(file_path.name, q)
         dataset_id, dataset_name = build_dataset_id_name(file_path, root, prefix)
         folder_id = get_folder_id(file_path, root, prefix, subdir_ids)
 
@@ -177,3 +187,16 @@ def add_folder(
             freq_threshold=freq_threshold,
             csv_encoding=resolved_encoding,
         )
+
+        # Log result (nb_row set by _process_file, check if file was skipped)
+        if dataset.nb_row is not None and dataset.nb_row > 0:
+            var_count = sum(1 for v in catalog.variables if v.dataset_id == dataset.id)
+            log_done(f"{file_path.name} ({dataset.nb_row:,} rows, {var_count} vars)", q)
+        elif dataset.nb_row == 0:
+            log_warn(f"{file_path.name}: empty file", q)
+        else:
+            log_warn(f"{file_path.name}: could not read", q)
+
+    datasets_added = len(catalog.datasets) - datasets_before
+    vars_added = len(catalog.variables) - vars_before
+    log_summary(datasets_added, vars_added, q, start_time)

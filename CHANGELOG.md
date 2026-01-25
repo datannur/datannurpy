@@ -2,6 +2,9 @@
 
 ## unreleased
 
+## 0.3.1 (2026-01-25)
+
+- add: progress logging with quiet option
 - change: improve error messages
 - fix: Excel reader no longer requires network access (removed DuckDB spatial dependency)
 - fix: resolve relative path before opening browser in export_app

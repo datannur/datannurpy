@@ -33,6 +33,7 @@ class Catalog:
     values: list[Value] = field(default_factory=list)
     freq_threshold: int = 100  # 0 = disabled
     csv_encoding: str | None = None  # Priority encoding for CSV (e.g., 'CP1252')
+    quiet: bool = False  # Suppress progress output
     _freq_tables: list[pa.Table] = field(default_factory=list, repr=False)
     _modality_manager: ModalityManager | None = field(default=None, repr=False)
 

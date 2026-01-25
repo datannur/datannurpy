@@ -156,13 +156,14 @@ catalog.export_app("./my-catalog", open_browser=True)
 ### `Catalog`
 
 ```python
-Catalog(freq_threshold=100, csv_encoding=None)
+Catalog(freq_threshold=100, csv_encoding=None, quiet=False)
 ```
 
 | Attribute        | Type             | Description                                             |
 | ---------------- | ---------------- | ------------------------------------------------------- |
 | `freq_threshold` | `int`            | Max distinct values for modality detection (0=disabled) |
 | `csv_encoding`   | `str \| None`    | Default CSV encoding (`"utf-8"`, `"cp1252"`, etc.)      |
+| `quiet`          | `bool`           | Suppress progress logging (default: `False`)            |
 | `folders`        | `list[Folder]`   | All folders in catalog                                  |
 | `datasets`       | `list[Dataset]`  | All datasets in catalog                                 |
 | `variables`      | `list[Variable]` | All variables in catalog                                |
@@ -172,7 +173,7 @@ Catalog(freq_threshold=100, csv_encoding=None)
 
 ```python
 catalog.add_folder(path, folder=None, *, include=None, exclude=None,
-                   recursive=True, infer_stats=True, csv_encoding=None)
+                   recursive=True, infer_stats=True, csv_encoding=None, quiet=None)
 ```
 
 | Parameter      | Type                | Default  | Description                                |
@@ -184,12 +185,13 @@ catalog.add_folder(path, folder=None, *, include=None, exclude=None,
 | `recursive`    | `bool`              | `True`   | Scan subdirectories                        |
 | `infer_stats`  | `bool`              | `True`   | Compute distinct/missing/duplicate counts  |
 | `csv_encoding` | `str \| None`       | `None`   | Override CSV encoding                      |
+| `quiet`        | `bool \| None`      | `None`   | Override catalog quiet setting             |
 
 ### `Catalog.add_dataset()`
 
 ```python
 catalog.add_dataset(path, folder=None, *, folder_id=None, infer_stats=True,
-                    csv_encoding=None, id=None, name=None, description=None, ...)
+                    csv_encoding=None, quiet=None, id=None, name=None, description=None, ...)
 ```
 
 | Parameter     | Type             | Default  | Description                                |
@@ -198,6 +200,7 @@ catalog.add_dataset(path, folder=None, *, folder_id=None, infer_stats=True,
 | `folder`      | `Folder \| None` | `None`   | Parent folder                              |
 | `folder_id`   | `str \| None`    | `None`   | Parent folder ID (alternative to `folder`) |
 | `infer_stats` | `bool`           | `True`   | Compute statistics                         |
+| `quiet`       | `bool \| None`   | `None`   | Override catalog quiet setting             |
 | `id`          | `str \| None`    | `None`   | Override dataset ID                        |
 | `name`        | `str \| None`    | `None`   | Override dataset name                      |
 | `description` | `str \| None`    | `None`   | Override dataset description               |
@@ -209,7 +212,7 @@ Additional metadata parameters: `type`, `link`, `localisation`, `manager_id`, `o
 ```python
 catalog.add_database(connection, folder=None, *, schema=None, include=None,
                      exclude=None, infer_stats=True, sample_size=None,
-                     group_by_prefix=True, prefix_min_tables=2)
+                     group_by_prefix=True, prefix_min_tables=2, quiet=None)
 ```
 
 | Parameter           | Type                | Default  | Description                            |
@@ -223,6 +226,7 @@ catalog.add_database(connection, folder=None, *, schema=None, include=None,
 | `sample_size`       | `int \| None`       | `None`   | Limit rows for stats (large tables)    |
 | `group_by_prefix`   | `bool \| str`       | `True`   | Group tables by prefix into subfolders |
 | `prefix_min_tables` | `int`               | `2`      | Min tables to form a prefix group      |
+| `quiet`             | `bool \| None`      | `None`   | Override catalog quiet setting         |
 
 **Connection string formats:**
 
@@ -235,7 +239,7 @@ catalog.add_database(connection, folder=None, *, schema=None, include=None,
 ### `Catalog.write()`
 
 ```python
-catalog.write(output_dir)
+catalog.write(output_dir, quiet=None)
 ```
 
 Exports JSON metadata files to `output_dir` (for use with existing datannur instance).
@@ -243,7 +247,7 @@ Exports JSON metadata files to `output_dir` (for use with existing datannur inst
 ### `Catalog.export_app()`
 
 ```python
-catalog.export_app(output_dir, open_browser=False)
+catalog.export_app(output_dir, open_browser=False, quiet=None)
 ```
 
 Exports complete standalone datannur app with data to `output_dir`.

@@ -18,5 +18,3 @@ catalog.add_database(
     ),
 )
 catalog.export_app(HERE / "output", open_browser=True)
-
-print(f"✅ {catalog}")
