@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -73,7 +74,16 @@ def scan_statistical(
         raise ValueError(f"Unsupported statistical format: {suffix}")
 
     # Read data and metadata using pyreadstat
-    df, meta = reader(file_path)
+    try:
+        df, meta = reader(file_path)
+    except Exception as e:
+        error_msg = str(e).split("\n")[0]
+        warnings.warn(
+            f"Could not read statistical file '{file_path.name}': {error_msg}",
+            stacklevel=3,
+        )
+        return [], 0, None, StatisticalMetadata()
+
     column_labels: dict[str, str | None] = meta.column_names_to_labels
 
     # Extract dataset-level metadata

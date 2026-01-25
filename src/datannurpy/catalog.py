@@ -114,8 +114,11 @@ class Catalog:
 
     def __repr__(self) -> str:
         return (
-            f"Catalog(folders={len(self.folders)}, "
-            f"datasets={len(self.datasets)}, "
-            f"variables={len(self.variables)}, "
-            f"modalities={len(self.modalities)})"
+            f"Catalog(\n"
+            f"  folders={len(self.folders)},\n"
+            f"  datasets={len(self.datasets)},\n"
+            f"  variables={len(self.variables)},\n"
+            f"  modalities={len(self.modalities)},\n"
+            f"  values={len(self.values)}\n"
+            f")"
         )

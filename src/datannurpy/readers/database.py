@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NoReturn
 
 import ibis
 
@@ -104,6 +104,31 @@ def _get_backend_name(con: ibis.BaseBackend) -> str:
     return type(con).__module__.split(".")[-1]
 
 
+def _raise_driver_error(backend: str, original_error: Exception) -> NoReturn:
+    """Raise clear error message for missing database drivers."""
+    messages = {
+        "postgres": (
+            "PostgreSQL requires psycopg2. "
+            "Install with: pip install datannurpy[postgres]"
+        ),
+        "mysql": (
+            "MySQL requires PyMySQL. Install with: pip install datannurpy[mysql]"
+        ),
+        "oracle": (
+            "Oracle requires oracledb. Install with: pip install datannurpy[oracle]"
+        ),
+        "mssql": (
+            "SQL Server requires pyodbc and an ODBC driver. "
+            "Install with: pip install datannurpy[mssql]\n"
+            "ODBC driver: macOS: brew install freetds | "
+            "Linux: apt install tdsodbc | "
+            "Windows: install Microsoft ODBC Driver for SQL Server"
+        ),
+    }
+    msg = messages.get(backend, f"Missing driver for {backend}")
+    raise ImportError(msg) from original_error
+
+
 def parse_connection_string(connection: str) -> tuple[str, dict[str, str]]:
     """Parse a connection string into (backend_name, kwargs)."""
     from urllib.parse import parse_qs, urlparse
@@ -160,54 +185,57 @@ def connect(connection: str | ibis.BaseBackend) -> tuple[ibis.BaseBackend, str]:
 
     backend, kwargs = parse_connection_string(connection)
 
-    if backend == "sqlite":
-        con = ibis.sqlite.connect(kwargs.get("path", ":memory:"))
-    elif backend == "postgres":
-        con = ibis.postgres.connect(
-            host=kwargs.get("host", "localhost"),
-            port=int(kwargs.get("port", 5432)),
-            user=kwargs.get("user"),
-            password=kwargs.get("password"),
-            database=kwargs.get("database"),
-        )
-    elif backend == "mysql":
-        con = ibis.mysql.connect(
-            host=kwargs.get("host", "localhost"),
-            port=int(kwargs.get("port", 3306)),
-            user=kwargs.get("user"),
-            password=kwargs.get("password"),
-            database=kwargs.get("database"),
-        )
-    elif backend == "oracle":
-        con = ibis.oracle.connect(
-            host=kwargs.get("host", "localhost"),
-            port=int(kwargs.get("port", 1521)),
-            user=kwargs.get("user"),
-            password=kwargs.get("password"),
-            database=kwargs.get("database"),
-        )
-    elif backend == "mssql":
-        # Build connection kwargs - extract known params, pass rest as extras
-        known_params = {"host", "port", "user", "password", "database", "driver"}
-        mssql_kwargs: dict[str, str | int] = {
-            "host": kwargs.get("host", "localhost"),
-            "port": int(kwargs.get("port", 1433)),
-        }
-        if kwargs.get("user"):
-            mssql_kwargs["user"] = kwargs["user"]
-        if kwargs.get("password"):
-            mssql_kwargs["password"] = kwargs["password"]
-        if kwargs.get("database"):
-            mssql_kwargs["database"] = kwargs["database"]
-        if kwargs.get("driver"):
-            mssql_kwargs["driver"] = kwargs["driver"]
-        # Pass additional params (e.g., TrustServerCertificate) to pyodbc
-        for key, value in kwargs.items():
-            if key not in known_params:
-                mssql_kwargs[key] = value
-        con = ibis.mssql.connect(**mssql_kwargs)  # type: ignore[arg-type]
-    else:
-        raise ValueError(f"Unsupported backend: {backend}")
+    try:
+        if backend == "sqlite":
+            con = ibis.sqlite.connect(kwargs.get("path", ":memory:"))
+        elif backend == "postgres":
+            con = ibis.postgres.connect(
+                host=kwargs.get("host", "localhost"),
+                port=int(kwargs.get("port", 5432)),
+                user=kwargs.get("user"),
+                password=kwargs.get("password"),
+                database=kwargs.get("database"),
+            )
+        elif backend == "mysql":
+            con = ibis.mysql.connect(
+                host=kwargs.get("host", "localhost"),
+                port=int(kwargs.get("port", 3306)),
+                user=kwargs.get("user"),
+                password=kwargs.get("password"),
+                database=kwargs.get("database"),
+            )
+        elif backend == "oracle":
+            con = ibis.oracle.connect(
+                host=kwargs.get("host", "localhost"),
+                port=int(kwargs.get("port", 1521)),
+                user=kwargs.get("user"),
+                password=kwargs.get("password"),
+                database=kwargs.get("database"),
+            )
+        elif backend == "mssql":
+            # Build connection kwargs - extract known params, pass rest as extras
+            known_params = {"host", "port", "user", "password", "database", "driver"}
+            mssql_kwargs: dict[str, str | int] = {
+                "host": kwargs.get("host", "localhost"),
+                "port": int(kwargs.get("port", 1433)),
+            }
+            if kwargs.get("user"):
+                mssql_kwargs["user"] = kwargs["user"]
+            if kwargs.get("password"):
+                mssql_kwargs["password"] = kwargs["password"]
+            if kwargs.get("database"):
+                mssql_kwargs["database"] = kwargs["database"]
+            if kwargs.get("driver"):
+                mssql_kwargs["driver"] = kwargs["driver"]
+            # Pass additional params (e.g., TrustServerCertificate) to pyodbc
+            for key, value in kwargs.items():
+                if key not in known_params:
+                    mssql_kwargs[key] = value
+            con = ibis.mssql.connect(**mssql_kwargs)  # type: ignore[arg-type]
+        else:
+            raise ValueError(f"Unsupported backend: {backend}")
+    except ModuleNotFoundError as e:
+        _raise_driver_error(backend, e)
 
     return con, backend
 
