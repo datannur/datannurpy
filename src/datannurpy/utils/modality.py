@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ibis
+import pyarrow as pa
 
 from .ids import (
     MODALITIES_FOLDER_ID,
@@ -62,7 +63,7 @@ class ModalityManager:
     def assign_from_freq(
         self,
         variables: list[Variable],
-        freq_table: ibis.Table | None,
+        freq_table: pa.Table | None,
         var_id_mapping: dict[str, str],
     ) -> None:
         """Assign modalities to variables from freq table and store it."""
@@ -71,7 +72,7 @@ class ModalityManager:
 
         # Parse freq table to extract values by variable
         freq_by_var: dict[str, set[str]] = {}
-        for row in freq_table.to_pyarrow().to_pylist():
+        for row in freq_table.to_pylist():
             col_name = row["variable_id"]
             val = row["value"]
             if col_name not in freq_by_var:
@@ -91,14 +92,16 @@ class ModalityManager:
 
     def _store_freq_table(
         self,
-        freq_table: ibis.Table,
+        freq_table: pa.Table,
         var_id_mapping: dict[str, str],
     ) -> None:
         """Update freq table with final variable IDs and store it."""
+        # Convert to Ibis for transformation, then back to PyArrow
+        ibis_table = ibis.memtable(freq_table)
         cases_list = [
-            (freq_table["variable_id"] == old_id, new_id)
+            (ibis_table["variable_id"] == old_id, new_id)
             for old_id, new_id in var_id_mapping.items()
         ]
-        case_expr = ibis.cases(*cases_list, else_=freq_table["variable_id"])
-        freq_table = freq_table.mutate(variable_id=case_expr)
-        self._catalog._freq_tables.append(freq_table.to_pyarrow())
+        case_expr = ibis.cases(*cases_list, else_=ibis_table["variable_id"])
+        ibis_table = ibis_table.mutate(variable_id=case_expr)
+        self._catalog._freq_tables.append(ibis_table.to_pyarrow())

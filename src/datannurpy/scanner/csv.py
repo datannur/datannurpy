@@ -7,6 +7,7 @@ from pathlib import Path
 
 import duckdb
 import ibis
+import pyarrow as pa
 
 from ..entities import Variable
 from .utils import build_variables
@@ -32,7 +33,7 @@ def scan_csv(
     infer_stats: bool = True,
     freq_threshold: int | None = None,
     csv_encoding: str | None = None,
-) -> tuple[list[Variable], int, ibis.Table | None]:
+) -> tuple[list[Variable], int, pa.Table | None]:
     """Scan a CSV file and return (variables, row_count, freq_table)."""
     file_path = Path(path)
 
@@ -41,39 +42,42 @@ def scan_csv(
         return [], 0, None
 
     con = ibis.duckdb.connect()
-    encodings = _build_encoding_order(csv_encoding)
+    try:
+        encodings = _build_encoding_order(csv_encoding)
 
-    table = None
-    last_error: str | None = None
+        table = None
+        last_error: str | None = None
 
-    for encoding in encodings:
-        try:
-            if encoding is None:
-                table = con.read_csv(file_path)
-            else:
-                table = con.read_csv(file_path, encoding=encoding)
-            break  # Success
-        except duckdb.InvalidInputException as e:
-            last_error = str(e)
-            continue  # Try next encoding
+        for encoding in encodings:
+            try:
+                if encoding is None:
+                    table = con.read_csv(file_path)
+                else:
+                    table = con.read_csv(file_path, encoding=encoding)
+                break  # Success
+            except duckdb.InvalidInputException as e:
+                last_error = str(e)
+                continue  # Try next encoding
 
-    if table is None:
-        # All encodings failed - show warning with actual error
-        msg = f"Could not parse CSV file '{file_path.name}'"
-        if last_error:
-            # Extract first line of error message (most relevant)
-            first_line = last_error.split("\n")[0]
-            msg += f": {first_line}"
-        warnings.warn(msg, stacklevel=3)
-        return [], 0, None
+        if table is None:
+            # All encodings failed - show warning with actual error
+            msg = f"Could not parse CSV file '{file_path.name}'"
+            if last_error:
+                # Extract first line of error message (most relevant)
+                first_line = last_error.split("\n")[0]
+                msg += f": {first_line}"
+            warnings.warn(msg, stacklevel=3)
+            return [], 0, None
 
-    row_count: int = table.count().execute()
+        row_count: int = table.count().execute()
 
-    variables, freq_table = build_variables(
-        table,
-        nb_rows=row_count,
-        dataset_id=dataset_id,
-        infer_stats=infer_stats,
-        freq_threshold=freq_threshold,
-    )
-    return variables, row_count, freq_table
+        variables, freq_table = build_variables(
+            table,
+            nb_rows=row_count,
+            dataset_id=dataset_id,
+            infer_stats=infer_stats,
+            freq_threshold=freq_threshold,
+        )
+        return variables, row_count, freq_table
+    finally:
+        con.disconnect()

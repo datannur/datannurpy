@@ -8,13 +8,13 @@ Handles various Parquet-based formats:
 
 from __future__ import annotations
 
-from ._discovery import (
+from .discovery import (
     DatasetType,
     DiscoveryResult,
     ParquetDatasetInfo,
     discover_parquet_datasets,
 )
-from ._scanner import DatasetMetadata, scan_parquet, scan_parquet_dataset
+from .core import DatasetMetadata, scan_parquet, scan_parquet_dataset
 
 __all__ = [
     "DatasetType",

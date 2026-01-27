@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 import ibis
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 
 from ..entities import Variable
 from .utils import build_variables
@@ -51,7 +52,7 @@ def scan_statistical(
     dataset_id: str | None = None,
     infer_stats: bool = True,
     freq_threshold: int | None = None,
-) -> tuple[list[Variable], int, ibis.Table | None, StatisticalMetadata]:
+) -> tuple[list[Variable], int, pa.Table | None, StatisticalMetadata]:
     """Scan a statistical file (SAS/SPSS/Stata) and return (variables, row_count, freq_table, metadata)."""
     if not HAS_PYREADSTAT:
         raise ImportError(
@@ -94,22 +95,25 @@ def scan_statistical(
 
     # Convert to Ibis table via DuckDB for stats computation
     con = ibis.duckdb.connect()
-    table = con.create_table("sas_data", df)
+    try:
+        table = con.create_table("sas_data", df)
 
-    row_count: int = table.count().execute()
+        row_count: int = table.count().execute()
 
-    variables, freq_table = build_variables(
-        table,
-        nb_rows=row_count,
-        dataset_id=dataset_id,
-        infer_stats=infer_stats,
-        freq_threshold=freq_threshold,
-    )
+        variables, freq_table = build_variables(
+            table,
+            nb_rows=row_count,
+            dataset_id=dataset_id,
+            infer_stats=infer_stats,
+            freq_threshold=freq_threshold,
+        )
 
-    # Apply labels as variable descriptions
-    for var in variables:
-        label = column_labels.get(var.name or var.id)
-        if label:
-            var.description = label
+        # Apply labels as variable descriptions
+        for var in variables:
+            label = column_labels.get(var.name or var.id)
+            if label:
+                var.description = label
 
-    return variables, row_count, freq_table, stat_metadata
+        return variables, row_count, freq_table, stat_metadata
+    finally:
+        con.disconnect()

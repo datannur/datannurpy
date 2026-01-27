@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, NoReturn
 
 import ibis
+import pyarrow as pa
 
 from ..entities import Variable
 from .utils import build_variables
@@ -440,7 +441,7 @@ def scan_table(
     infer_stats: bool = True,
     freq_threshold: int | None = None,
     sample_size: int | None = None,
-) -> tuple[list[Variable], int, ibis.Table | None]:
+) -> tuple[list[Variable], int, pa.Table | None]:
     """Scan a database table and return (variables, row_count, freq_table)."""
     backend = _get_backend_name(con)
 

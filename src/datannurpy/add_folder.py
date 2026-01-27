@@ -29,6 +29,11 @@ from .scanner.parquet import (
     discover_parquet_datasets,
     scan_parquet_dataset,
 )
+from .scanner.parquet.discovery import (
+    is_delta_table,
+    is_hive_partitioned,
+    is_iceberg_table,
+)
 from .scanner.scan import scan_file
 
 if TYPE_CHECKING:
@@ -55,6 +60,12 @@ def add_folder(
         raise FileNotFoundError(f"Folder not found: {root}")
     if not root.is_dir():
         raise NotADirectoryError(f"Not a directory: {root}")
+
+    # Reject if path is a dataset (Delta/Hive/Iceberg) - use add_dataset instead
+    if is_delta_table(root) or is_hive_partitioned(root) or is_iceberg_table(root):
+        raise ValueError(
+            f"Path is a dataset, not a folder: {root}. Use add_dataset() instead."
+        )
 
     start_time = log_section("add_folder", str(root), q)
     datasets_before = len(catalog.datasets)

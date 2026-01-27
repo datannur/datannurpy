@@ -87,9 +87,7 @@ def build_dataset_id_name(
     if path.is_file():
         path_parts = [sanitize_id(p) for p in rel_path.parts]
         return make_id(prefix, *path_parts), path.stem
-    # Directory (Delta/Hive)
-    if rel_path == Path("."):
-        return prefix, path.name
+    # Directory (Delta/Hive) in subdirectory
     path_parts = [sanitize_id(p) for p in rel_path.parts]
     return make_id(prefix, *path_parts), path.name
 

@@ -8,6 +8,7 @@ from pathlib import Path
 
 import ibis
 import ibis.expr.datatypes as dt
+import pyarrow as pa
 
 from ..entities import Variable
 
@@ -125,8 +126,8 @@ def build_variables(
     infer_stats: bool = True,
     freq_threshold: int | None = None,
     skip_stats_columns: set[str] | None = None,
-) -> tuple[list[Variable], ibis.Table | None]:
-    """Build Variable entities from Ibis Table, return (variables, freq_table).
+) -> tuple[list[Variable], pa.Table | None]:
+    """Build Variable entities from Ibis Table, return (variables, freq_table as PyArrow).
 
     Args:
         skip_stats_columns: Column names to exclude from stats computation
@@ -172,7 +173,7 @@ def build_variables(
                     raise
 
     # Compute freq if threshold is set
-    freq_table: ibis.Table | None = None
+    freq_table: pa.Table | None = None
     if freq_threshold is not None and stats:
         eligible_cols = [
             col
@@ -191,7 +192,8 @@ def build_variables(
                 )
                 freq_tables.append(vc)
             if freq_tables:
-                freq_table = ibis.union(*freq_tables)
+                # Materialize to PyArrow to allow closing the connection
+                freq_table = ibis.union(*freq_tables).to_pyarrow()
 
     def get_stat(col: str, idx: int) -> int | None:
         """Get stat value, returning None if not computed or -1 (unknown)."""

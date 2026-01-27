@@ -13,10 +13,10 @@ from .scanner.parquet import (
     ParquetDatasetInfo,
     scan_parquet_dataset,
 )
-from .scanner.parquet._discovery import (
-    _is_delta_table,
-    _is_hive_partitioned,
-    _is_iceberg_table,
+from .scanner.parquet.discovery import (
+    is_delta_table,
+    is_hive_partitioned,
+    is_iceberg_table,
 )
 from .scanner.scan import scan_file
 
@@ -197,13 +197,13 @@ def _add_parquet_directory(
 ) -> None:
     """Add a partitioned Parquet directory (Delta, Hive, or Iceberg) to catalog."""
     # Detect dataset type
-    if _is_delta_table(dir_path):
+    if is_delta_table(dir_path):
         dataset_type = DatasetType.DELTA
         delivery_format = "delta"
-    elif _is_iceberg_table(dir_path):
+    elif is_iceberg_table(dir_path):
         dataset_type = DatasetType.ICEBERG
         delivery_format = "iceberg"
-    elif _is_hive_partitioned(dir_path):
+    elif is_hive_partitioned(dir_path):
         dataset_type = DatasetType.HIVE
         delivery_format = "parquet"
     else:

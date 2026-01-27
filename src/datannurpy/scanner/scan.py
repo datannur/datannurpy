@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-import ibis
+import pyarrow as pa
 
 from ..entities import Variable
 from .csv import scan_csv
@@ -20,7 +20,7 @@ class ScanResult:
 
     variables: list[Variable]
     nb_row: int
-    freq_table: ibis.Table | None = None
+    freq_table: pa.Table | None = None
     description: str | None = None
 
 
