@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -91,10 +92,11 @@ def _scan_delta(
     freq_threshold: int | None,
 ) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
     """Scan a Delta Lake table."""
-    # Extract metadata using deltalake if available
+    # Extract metadata using deltalake if available (optional, for metadata only)
+    # DuckDB reads the data via its own delta extension
     metadata = DatasetMetadata()
     try:
-        from deltalake import DeltaTable  # pyright: ignore[reportMissingImports]
+        from deltalake import DeltaTable
 
         dt = DeltaTable(str(path))
         meta = dt.metadata()
@@ -103,9 +105,16 @@ def _scan_delta(
             name=meta.name,
         )
     except ImportError:
-        pass
-    except Exception:
-        pass
+        warnings.warn(
+            "deltalake not installed. Delta table metadata (name, description) "
+            "will not be extracted. Install with: pip install datannurpy[delta]",
+            stacklevel=2,
+        )
+    except Exception as e:
+        warnings.warn(
+            f"Failed to extract Delta table metadata: {e}",
+            stacklevel=2,
+        )
 
     # Scan with Ibis
     con = ibis.duckdb.connect()
@@ -156,87 +165,63 @@ def _scan_hive(
         con.disconnect()
 
 
-def _extract_iceberg_metadata(path: Path) -> DatasetMetadata:
-    """Extract metadata from Iceberg table's metadata JSON."""
-    import json
-
-    metadata_dir = path / "metadata"
-    if not metadata_dir.exists():
-        return DatasetMetadata()
-
-    # Find the latest metadata file (highest version number)
-    metadata_files = sorted(metadata_dir.glob("*.metadata.json"), reverse=True)
-    if not metadata_files:
-        return DatasetMetadata()
-
-    with open(metadata_files[0]) as f:
-        meta = json.load(f)
-
-    # Extract table description from properties
-    description = meta.get("properties", {}).get("comment")
-
-    # Extract column descriptions from schema
-    column_descriptions: dict[str, str] = {}
-    schemas = meta.get("schemas", [])
-    current_schema_id = meta.get("current-schema-id", 0)
-
-    for schema in schemas:
-        if schema.get("schema-id") == current_schema_id:
-            for field in schema.get("fields", []):
-                if doc := field.get("doc"):
-                    column_descriptions[field["name"]] = doc
-            break
-
-    return DatasetMetadata(
-        description=description,
-        column_descriptions=column_descriptions if column_descriptions else None,
-    )
-
-
 def _scan_iceberg(
     path: Path,
     dataset_id: str | None,
     infer_stats: bool,
     freq_threshold: int | None,
 ) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
-    """Scan an Apache Iceberg table."""
-    import duckdb
-
-    # Extract metadata from Iceberg JSON
-    metadata = _extract_iceberg_metadata(path)
-
-    # Use DuckDB directly since Ibis doesn't have read_iceberg
-    con = duckdb.connect()
+    """Scan an Apache Iceberg table using PyIceberg."""
     try:
-        con.execute("LOAD iceberg")
-        con.execute("SET unsafe_enable_version_guessing = true")
+        from pyiceberg.table import StaticTable
+    except ImportError as e:
+        msg = "PyIceberg is required to scan Iceberg tables. Install with: pip install datannurpy[iceberg]"
+        raise ImportError(msg) from e
 
-        # Read table via iceberg_scan
-        result = con.execute(
-            f"SELECT * FROM iceberg_scan('{path}')"
-        ).fetch_arrow_table()
+    # Find the latest metadata file
+    metadata_dir = path / "metadata"
+    metadata_files = sorted(metadata_dir.glob("*.metadata.json"), reverse=True)
+    if not metadata_files:
+        msg = f"No Iceberg metadata found in {metadata_dir}"
+        raise ValueError(msg)
 
-        # Convert to Ibis for consistent processing
-        table = ibis.memtable(result)
-        row_count = len(result)
+    # Load table via PyIceberg
+    table = StaticTable.from_metadata(str(metadata_files[0]))
 
-        variables, freq_table = build_variables(
-            table,
-            nb_rows=row_count,
-            dataset_id=dataset_id,
-            infer_stats=infer_stats,
-            freq_threshold=freq_threshold,
-        )
+    # Extract metadata from PyIceberg schema
+    description = table.metadata.properties.get("comment")
+    column_descriptions: dict[str, str] = {}
+    for field in table.schema().fields:
+        if field.doc:
+            column_descriptions[field.name] = field.doc
 
-        # Apply column descriptions to variables
-        if metadata.column_descriptions:
-            for var in variables:
-                if var.name and var.name in metadata.column_descriptions:
-                    var.description = metadata.column_descriptions[var.name]
+    metadata = DatasetMetadata(
+        description=description,
+        column_descriptions=column_descriptions if column_descriptions else None,
+    )
 
-        return variables, row_count, freq_table, metadata
-    finally:
-        con.close()
+    # Read data as Arrow table
+    arrow_table = table.scan().to_arrow()
+    row_count = len(arrow_table)
+
+    # Convert to Ibis for consistent processing
+    ibis_table = ibis.memtable(arrow_table)
+
+    variables, freq_table = build_variables(
+        ibis_table,
+        nb_rows=row_count,
+        dataset_id=dataset_id,
+        infer_stats=infer_stats,
+        freq_threshold=freq_threshold,
+    )
+
+    # Apply column descriptions to variables
+    if metadata.column_descriptions:
+        for var in variables:
+            if var.name and var.name in metadata.column_descriptions:
+                var.description = metadata.column_descriptions[var.name]
+
+    return variables, row_count, freq_table, metadata
 
 
 def scan_parquet_dataset(

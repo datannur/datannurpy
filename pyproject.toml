@@ -35,6 +35,7 @@ oracle = ["ibis-framework[oracle]>=11.0"]
 mssql = ["ibis-framework[mssql]>=11.0"]
 databases = ["ibis-framework[postgres,mysql,oracle,mssql]>=11.0"]
 delta = ["deltalake>=0.18.0"]
+iceberg = ["pyiceberg>=0.10.0"]
 stat = [
   "pyreadstat>=1.2.0,<=1.2.8; python_version < '3.10'",
   "pyreadstat>=1.2.0; python_version >= '3.10'",
@@ -54,6 +55,7 @@ dev = [
   "ruff",
   "pyright>=1.1.400",
   "deltalake>=0.18.0",
+  "pyiceberg>=0.10.0",
   "pyreadstat>=1.2.0,<=1.2.8; python_version < '3.10'",
   "pyreadstat>=1.2.0; python_version >= '3.10'",
 ]
@@ -61,6 +63,10 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-n auto"
+filterwarnings = [
+  "ignore::DeprecationWarning:pyiceberg.*",
+  "ignore::DeprecationWarning:pydantic.*",
+]
 
 [tool.ruff]
 target-version = "py39"
