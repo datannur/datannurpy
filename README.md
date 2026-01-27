@@ -3,6 +3,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/datannurpy.svg)](https://pypi.org/project/datannurpy/)
 [![Python](https://img.shields.io/badge/python-≥3.9-blue.svg)](https://pypi.org/project/datannurpy/)
 [![CI](https://github.com/datannur/datannurpy/actions/workflows/ci.yml/badge.svg)](https://github.com/datannur/datannurpy/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/datannur/datannurpy/branch/main/graph/badge.svg)](https://codecov.io/gh/datannur/datannurpy)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Python library for [datannur](https://github.com/datannur/datannur) catalog metadata management.
@@ -145,7 +146,7 @@ catalog.add_database(
 
 ```python
 # JSON metadata only (for existing datannur instance)
-catalog.write("./output")
+catalog.export_db("./output")
 
 # Complete standalone app
 catalog.export_app("./my-catalog", open_browser=True)
@@ -236,10 +237,10 @@ catalog.add_database(connection, folder=None, *, schema=None, include=None,
 - Oracle: `oracle://user:pass@host:1521/service_name`
 - SQL Server: `mssql://user:pass@host:1433/database`
 
-### `Catalog.write()`
+### `Catalog.export_db()`
 
 ```python
-catalog.write(output_dir, quiet=None)
+catalog.export_db(output_dir, quiet=None)
 ```
 
 Exports JSON metadata files to `output_dir` (for use with existing datannur instance).

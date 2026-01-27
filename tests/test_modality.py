@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from datannurpy import Catalog
-from datannurpy._ids import build_modality_name, compute_modality_hash
+from datannurpy.utils import build_modality_name, compute_modality_hash
 
 
 class TestModalityHash:
@@ -189,7 +189,7 @@ class TestModalityExport:
 
         catalog = Catalog()
         catalog.add_folder(tmp_path)
-        catalog.write(tmp_path / "output")
+        catalog.export_db(tmp_path / "output")
 
         assert (tmp_path / "output" / "modality.json").exists()
         assert (tmp_path / "output" / "modality.json.js").exists()
@@ -200,7 +200,7 @@ class TestModalityExport:
 
         catalog = Catalog()
         catalog.add_folder(tmp_path)
-        catalog.write(tmp_path / "output")
+        catalog.export_db(tmp_path / "output")
 
         assert (tmp_path / "output" / "value.json").exists()
         assert (tmp_path / "output" / "value.json.js").exists()
@@ -211,7 +211,7 @@ class TestModalityExport:
 
         catalog = Catalog()
         catalog.add_folder(tmp_path)
-        catalog.write(tmp_path / "output")
+        catalog.export_db(tmp_path / "output")
 
         with open(tmp_path / "output" / "__table__.json") as f:
             registry = json.load(f)
@@ -226,7 +226,7 @@ class TestModalityExport:
 
         catalog = Catalog()
         catalog.add_folder(tmp_path)
-        catalog.write(tmp_path / "output")
+        catalog.export_db(tmp_path / "output")
 
         with open(tmp_path / "output" / "value.json") as f:
             data = json.load(f)
@@ -243,7 +243,7 @@ class TestModalityExport:
 
         catalog = Catalog()
         catalog.add_folder(tmp_path)
-        catalog.write(tmp_path / "output")
+        catalog.export_db(tmp_path / "output")
 
         with open(tmp_path / "output" / "variable.json") as f:
             variables = json.load(f)

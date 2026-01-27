@@ -8,6 +8,7 @@ on:
 
 jobs:
   test:
+    name: CI
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -20,3 +21,15 @@ jobs:
       - run: uv sync
       - run: make download-app
       - run: make check
+
+      - name: Generate coverage report
+        if: matrix.python-version == '3.14'
+        run: uv run pytest --cov=src/datannurpy --cov-report=xml
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.14'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+          fail_ci_if_error: false

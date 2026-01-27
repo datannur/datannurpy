@@ -87,8 +87,19 @@ def build_dataset_id_name(
     if path.is_file():
         path_parts = [sanitize_id(p) for p in rel_path.parts]
         return make_id(prefix, *path_parts), path.stem
-    # Directory (Delta/Hive)
-    if rel_path == Path("."):
-        return prefix, path.name
+    # Directory (Delta/Hive) in subdirectory
     path_parts = [sanitize_id(p) for p in rel_path.parts]
     return make_id(prefix, *path_parts), path.name
+
+
+def build_variable_ids(
+    variables: list,
+    dataset_id: str,
+) -> dict[str, str]:
+    """Build final IDs for variables and return name→id mapping."""
+    var_id_mapping: dict[str, str] = {}
+    for var in variables:
+        var.dataset_id = dataset_id
+        var.id = make_id(dataset_id, sanitize_id(var.name))
+        var_id_mapping[var.name] = var.id
+    return var_id_mapping

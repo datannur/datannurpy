@@ -58,7 +58,7 @@ class TestExportApp:
 
     def test_export_app_without_app_raises(self, tmp_path, monkeypatch):
         """export_app should raise FileNotFoundError if app not bundled."""
-        from datannurpy.writers import app
+        from datannurpy.exporter import app
 
         # Mock get_app_path to return nonexistent path
         monkeypatch.setattr(app, "get_app_path", lambda: Path("/nonexistent"))

@@ -188,7 +188,7 @@ def write_table_registry(
         _write_atomic(jsonjs_path, jsonjs_content)
 
 
-def write_catalog(
+def export_db(
     catalog: Catalog,
     output_dir: str | Path,
     *,
@@ -202,7 +202,7 @@ def write_catalog(
 
     start_time = time.perf_counter()
     if not q:
-        print(f"\n[write] {output_dir}", file=sys.stderr)
+        print(f"\n[export_db] {output_dir}", file=sys.stderr)
 
     tables: list[str] = []
     freq_table = (

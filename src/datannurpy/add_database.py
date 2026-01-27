@@ -8,11 +8,20 @@ from typing import TYPE_CHECKING
 
 import ibis
 
-from ._ids import make_id, sanitize_id
-from ._log import log_done, log_folder, log_section, log_start, log_summary
-from ._prefix import get_prefix_folders, get_table_prefix
+from .utils import (
+    build_variable_ids,
+    get_prefix_folders,
+    get_table_prefix,
+    log_done,
+    log_folder,
+    log_section,
+    log_start,
+    log_summary,
+    make_id,
+    sanitize_id,
+)
 from .entities import Dataset, Folder
-from .readers.database import (
+from .scanner.database import (
     connect,
     get_database_name,
     get_database_path,
@@ -161,7 +170,11 @@ def add_database(
 
             dataset.nb_row = nb_row
             catalog.datasets.append(dataset)
-            catalog._finalize_variables(table_vars, dataset, freq_table)
+            var_id_mapping = build_variable_ids(table_vars, dataset.id)
+            catalog.modality_manager.assign_from_freq(
+                table_vars, freq_table, var_id_mapping
+            )
+            catalog.variables.extend(table_vars)
             log_done(f"{table_name} ({nb_row:,} rows, {len(table_vars)} vars)", q)
 
     datasets_added = len(catalog.datasets) - datasets_before

@@ -1,0 +1,28 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 2%
+    patch:
+      default:
+        target: 80%
+
+# Merge coverage from multiple CI runs
+flag_management:
+  individual_flags:
+    - name: core
+      carryforward: true
+    - name: postgres
+      carryforward: true
+    - name: mysql
+      carryforward: true
+    - name: oracle
+      carryforward: true
+    - name: mssql
+      carryforward: true
+
+comment:
+  layout: "reach,diff,flags,files"
+  behavior: default
+  require_changes: true

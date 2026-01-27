@@ -2,6 +2,10 @@
 
 ## unreleased
 
+- add: test coverage with codecov
+- refactor: remove all methodes from catalog.py and rename writer to exporter
+- refactor: remove \_ prefix and close db and file connection
+
 ## 0.3.1 (2026-01-25)
 
 - add: progress logging with quiet option

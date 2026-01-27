@@ -1,7 +1,8 @@
 name: Database Integration Tests
 
 on:
-  workflow_dispatch: # Manual trigger from GitHub UI
+  workflow_dispatch:
+  workflow_call:
 
 jobs:
   test-postgres:
@@ -31,9 +32,16 @@ jobs:
         run: uv sync --extra postgres
 
       - name: Run PostgreSQL tests
-        run: uv run pytest tests/database/test_postgres.py -v -n 0
+        run: uv run pytest tests/database/test_postgres.py -v -n 0 --cov=src/datannurpy --cov-report=xml
         env:
           TEST_POSTGRES_URL: postgresql://test:test@localhost:5432/testdb
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.xml
+          flags: postgres
+          fail_ci_if_error: false
 
   test-mysql:
     name: MySQL
@@ -61,9 +69,16 @@ jobs:
         run: uv sync --extra mysql
 
       - name: Run MySQL tests
-        run: uv run pytest tests/database/test_mysql.py -v -n 0
+        run: uv run pytest tests/database/test_mysql.py -v -n 0 --cov=src/datannurpy --cov-report=xml
         env:
           TEST_MYSQL_URL: mysql://root:test@localhost:3306/testdb
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.xml
+          flags: mysql
+          fail_ci_if_error: false
 
   test-oracle:
     name: Oracle
@@ -116,9 +131,16 @@ jobs:
         run: uv sync --extra oracle
 
       - name: Run Oracle tests
-        run: uv run pytest tests/database/test_oracle.py -v -n 0
+        run: uv run pytest tests/database/test_oracle.py -v -n 0 --cov=src/datannurpy --cov-report=xml
         env:
           TEST_ORACLE_URL: oracle://system:test@localhost:1521/FREEPDB1
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.xml
+          flags: oracle
+          fail_ci_if_error: false
 
   test-mssql:
     name: SQL Server
@@ -171,6 +193,13 @@ jobs:
         run: uv sync --extra mssql
 
       - name: Run SQL Server tests
-        run: uv run pytest tests/database/test_mssql.py -v -n 0
+        run: uv run pytest tests/database/test_mssql.py -v -n 0 --cov=src/datannurpy --cov-report=xml
         env:
           TEST_MSSQL_URL: "mssql://sa:Test@123!@localhost:1433/testdb?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.xml
+          flags: mssql
+          fail_ci_if_error: false

@@ -5,3 +5,8 @@
 __pycache__/
 src/datannurpy/app/
 examples/output/
+
+# Coverage
+htmlcov/
+.coverage
+coverage.xml

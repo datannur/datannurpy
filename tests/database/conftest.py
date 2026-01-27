@@ -476,6 +476,7 @@ def sample_sqlite_db() -> Generator[Path, None, None]:
 
     con = ibis.sqlite.connect(db_path)
     create_test_tables(con)
+    con.disconnect()
 
     yield db_path
 

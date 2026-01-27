@@ -6,11 +6,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import ibis
+import pyarrow as pa
 import pyarrow.parquet as pq
 
 from ...entities import Variable
-from .._utils import build_variables
-from ._discovery import DatasetType, ParquetDatasetInfo
+from ..utils import build_variables
+from .discovery import DatasetType, ParquetDatasetInfo
 
 
 @dataclass
@@ -53,31 +54,34 @@ def _scan_simple(
     dataset_id: str | None,
     infer_stats: bool,
     freq_threshold: int | None,
-) -> tuple[list[Variable], int, ibis.Table | None, DatasetMetadata]:
+) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
     """Scan a simple Parquet file."""
     # Extract metadata
     metadata = _extract_parquet_metadata(path)
 
     # Scan with Ibis
     con = ibis.duckdb.connect()
-    table = con.read_parquet(path)
-    row_count: int = table.count().execute()
+    try:
+        table = con.read_parquet(path)
+        row_count: int = table.count().execute()
 
-    variables, freq_table = build_variables(
-        table,
-        nb_rows=row_count,
-        dataset_id=dataset_id,
-        infer_stats=infer_stats,
-        freq_threshold=freq_threshold,
-    )
+        variables, freq_table = build_variables(
+            table,
+            nb_rows=row_count,
+            dataset_id=dataset_id,
+            infer_stats=infer_stats,
+            freq_threshold=freq_threshold,
+        )
 
-    # Apply column descriptions to variables
-    if metadata.column_descriptions:
-        for var in variables:
-            if var.name and var.name in metadata.column_descriptions:
-                var.description = metadata.column_descriptions[var.name]
+        # Apply column descriptions to variables
+        if metadata.column_descriptions:
+            for var in variables:
+                if var.name and var.name in metadata.column_descriptions:
+                    var.description = metadata.column_descriptions[var.name]
 
-    return variables, row_count, freq_table, metadata
+        return variables, row_count, freq_table, metadata
+    finally:
+        con.disconnect()
 
 
 def _scan_delta(
@@ -85,7 +89,7 @@ def _scan_delta(
     dataset_id: str | None,
     infer_stats: bool,
     freq_threshold: int | None,
-) -> tuple[list[Variable], int, ibis.Table | None, DatasetMetadata]:
+) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
     """Scan a Delta Lake table."""
     # Extract metadata using deltalake if available
     metadata = DatasetMetadata()
@@ -105,18 +109,21 @@ def _scan_delta(
 
     # Scan with Ibis
     con = ibis.duckdb.connect()
-    table = con.read_delta(path)
-    row_count: int = table.count().execute()
+    try:
+        table = con.read_delta(path)
+        row_count: int = table.count().execute()
 
-    variables, freq_table = build_variables(
-        table,
-        nb_rows=row_count,
-        dataset_id=dataset_id,
-        infer_stats=infer_stats,
-        freq_threshold=freq_threshold,
-    )
+        variables, freq_table = build_variables(
+            table,
+            nb_rows=row_count,
+            dataset_id=dataset_id,
+            infer_stats=infer_stats,
+            freq_threshold=freq_threshold,
+        )
 
-    return variables, row_count, freq_table, metadata
+        return variables, row_count, freq_table, metadata
+    finally:
+        con.disconnect()
 
 
 def _scan_hive(
@@ -124,26 +131,29 @@ def _scan_hive(
     dataset_id: str | None,
     infer_stats: bool,
     freq_threshold: int | None,
-) -> tuple[list[Variable], int, ibis.Table | None, DatasetMetadata]:
+) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
     """Scan a Hive-partitioned Parquet dataset."""
     # Hive partitioned datasets don't have table-level metadata
     metadata = DatasetMetadata()
 
     # Scan with Ibis using glob pattern
     con = ibis.duckdb.connect()
-    glob_pattern = str(path / "**" / "*.parquet")
-    table = con.read_parquet(glob_pattern, hive_partitioning=True)
-    row_count: int = table.count().execute()
+    try:
+        glob_pattern = str(path / "**" / "*.parquet")
+        table = con.read_parquet(glob_pattern, hive_partitioning=True)
+        row_count: int = table.count().execute()
 
-    variables, freq_table = build_variables(
-        table,
-        nb_rows=row_count,
-        dataset_id=dataset_id,
-        infer_stats=infer_stats,
-        freq_threshold=freq_threshold,
-    )
+        variables, freq_table = build_variables(
+            table,
+            nb_rows=row_count,
+            dataset_id=dataset_id,
+            infer_stats=infer_stats,
+            freq_threshold=freq_threshold,
+        )
 
-    return variables, row_count, freq_table, metadata
+        return variables, row_count, freq_table, metadata
+    finally:
+        con.disconnect()
 
 
 def _extract_iceberg_metadata(path: Path) -> DatasetMetadata:
@@ -188,7 +198,7 @@ def _scan_iceberg(
     dataset_id: str | None,
     infer_stats: bool,
     freq_threshold: int | None,
-) -> tuple[list[Variable], int, ibis.Table | None, DatasetMetadata]:
+) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
     """Scan an Apache Iceberg table."""
     import duckdb
 
@@ -197,31 +207,36 @@ def _scan_iceberg(
 
     # Use DuckDB directly since Ibis doesn't have read_iceberg
     con = duckdb.connect()
-    con.execute("LOAD iceberg")
-    con.execute("SET unsafe_enable_version_guessing = true")
+    try:
+        con.execute("LOAD iceberg")
+        con.execute("SET unsafe_enable_version_guessing = true")
 
-    # Read table via iceberg_scan
-    result = con.execute(f"SELECT * FROM iceberg_scan('{path}')").fetch_arrow_table()
+        # Read table via iceberg_scan
+        result = con.execute(
+            f"SELECT * FROM iceberg_scan('{path}')"
+        ).fetch_arrow_table()
 
-    # Convert to Ibis for consistent processing
-    table = ibis.memtable(result)
-    row_count = len(result)
+        # Convert to Ibis for consistent processing
+        table = ibis.memtable(result)
+        row_count = len(result)
 
-    variables, freq_table = build_variables(
-        table,
-        nb_rows=row_count,
-        dataset_id=dataset_id,
-        infer_stats=infer_stats,
-        freq_threshold=freq_threshold,
-    )
+        variables, freq_table = build_variables(
+            table,
+            nb_rows=row_count,
+            dataset_id=dataset_id,
+            infer_stats=infer_stats,
+            freq_threshold=freq_threshold,
+        )
 
-    # Apply column descriptions to variables
-    if metadata.column_descriptions:
-        for var in variables:
-            if var.name and var.name in metadata.column_descriptions:
-                var.description = metadata.column_descriptions[var.name]
+        # Apply column descriptions to variables
+        if metadata.column_descriptions:
+            for var in variables:
+                if var.name and var.name in metadata.column_descriptions:
+                    var.description = metadata.column_descriptions[var.name]
 
-    return variables, row_count, freq_table, metadata
+        return variables, row_count, freq_table, metadata
+    finally:
+        con.close()
 
 
 def scan_parquet_dataset(
@@ -230,7 +245,7 @@ def scan_parquet_dataset(
     dataset_id: str | None = None,
     infer_stats: bool = True,
     freq_threshold: int | None = None,
-) -> tuple[list[Variable], int, ibis.Table | None, DatasetMetadata]:
+) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
     """Scan a Parquet dataset based on its type."""
     if info.type == DatasetType.SIMPLE:
         return _scan_simple(info.path, dataset_id, infer_stats, freq_threshold)
@@ -251,6 +266,6 @@ def scan_parquet(
     dataset_id: str | None = None,
     infer_stats: bool = True,
     freq_threshold: int | None = None,
-) -> tuple[list[Variable], int, ibis.Table | None, DatasetMetadata]:
+) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
     """Scan a simple Parquet file and return (variables, row_count, freq_table, metadata)."""
     return _scan_simple(Path(path), dataset_id, infer_stats, freq_threshold)

@@ -106,6 +106,20 @@ class TestAddDataset:
 
         assert catalog.datasets[0].id == "employees"
 
+    def test_add_dataset_inherits_file_description(self):
+        """add_dataset should use file metadata description when available."""
+        catalog = Catalog()
+        catalog.add_dataset(DATA_DIR / "cars.sas7bdat")
+
+        assert catalog.datasets[0].description == "Written by SAS"
+
+    def test_add_dataset_explicit_description_not_overwritten(self):
+        """add_dataset should keep explicit description over file metadata."""
+        catalog = Catalog()
+        catalog.add_dataset(DATA_DIR / "cars.sas7bdat", description="Custom desc")
+
+        assert catalog.datasets[0].description == "Custom desc"
+
     def test_add_dataset_not_found(self):
         """add_dataset should raise FileNotFoundError."""
         catalog = Catalog()
@@ -669,6 +683,12 @@ class TestEdgeCases:
         catalog = Catalog()
         with pytest.raises(NotADirectoryError):
             catalog.add_folder(file)
+
+    def test_add_folder_rejects_dataset_path(self):
+        """add_folder should raise for Delta/Hive/Iceberg paths."""
+        catalog = Catalog()
+        with pytest.raises(ValueError, match="Use add_dataset"):
+            catalog.add_folder(DATA_DIR / "test_delta")
 
     def test_unsupported_file_extension(self, tmp_path: Path):
         """Unsupported files should be ignored."""

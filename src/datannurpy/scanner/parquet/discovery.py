@@ -39,7 +39,7 @@ class DiscoveryResult:
 _HIVE_PARTITION_PATTERN = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*=.+$")
 
 
-def _is_delta_table(path: Path) -> bool:
+def is_delta_table(path: Path) -> bool:
     """Check if a directory is a Delta Lake table."""
     delta_log = path / "_delta_log"
     if not delta_log.is_dir():
@@ -47,7 +47,7 @@ def _is_delta_table(path: Path) -> bool:
     return any(delta_log.glob("*.json"))
 
 
-def _is_iceberg_table(path: Path) -> bool:
+def is_iceberg_table(path: Path) -> bool:
     """Check if a directory is an Apache Iceberg table."""
     metadata_dir = path / "metadata"
     if not metadata_dir.is_dir():
@@ -58,7 +58,7 @@ def _is_iceberg_table(path: Path) -> bool:
     )
 
 
-def _is_hive_partitioned(path: Path) -> bool:
+def is_hive_partitioned(path: Path) -> bool:
     """Check if a directory contains Hive-style partitions."""
     if not path.is_dir():
         return False
@@ -95,7 +95,7 @@ def _find_parquet_files(
     recursive: bool,
 ) -> list[Path]:
     """Find all parquet files matching the patterns."""
-    from .._utils import find_files
+    from ..utils import find_files
 
     # Get all files, then filter to parquet only
     all_files = find_files(root, include, exclude, recursive)
@@ -127,7 +127,7 @@ def discover_parquet_datasets(
     # First pass: detect Delta Lake tables
     delta_roots: set[Path] = set()
     for parent in files_by_parent:
-        if _is_delta_table(parent) and parent not in delta_roots:
+        if is_delta_table(parent) and parent not in delta_roots:
             delta_roots.add(parent)
             files_in_delta = list(parent.rglob("*.parquet")) + list(
                 parent.rglob("*.pq")
@@ -151,7 +151,7 @@ def discover_parquet_datasets(
         # Check parent and ancestors for Iceberg metadata
         check_path = parent
         while check_path >= root:
-            if _is_iceberg_table(check_path) and check_path not in iceberg_roots:
+            if is_iceberg_table(check_path) and check_path not in iceberg_roots:
                 # Check it's not inside a Delta table
                 if any(check_path == d or d in check_path.parents for d in delta_roots):
                     break

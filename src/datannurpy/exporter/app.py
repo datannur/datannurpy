@@ -63,7 +63,7 @@ def export_app(
     if db_dir.exists():
         shutil.rmtree(db_dir)
 
-    catalog.write(db_dir, quiet=True)  # Don't duplicate write logs
+    catalog.export_db(db_dir, quiet=True)  # Don't duplicate write logs
 
     if not q:
         elapsed = time.perf_counter() - start_time

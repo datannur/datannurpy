@@ -1,4 +1,4 @@
-"""Data readers for extracting metadata from files and databases."""
+"""File and database scanners for extracting metadata."""
 
 from .csv import scan_csv
 from .database import (
