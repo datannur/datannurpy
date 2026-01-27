@@ -50,6 +50,7 @@ Issues = "https://github.com/datannur/datannurpy/issues"
 dev = [
   "pytest",
   "pytest-xdist",
+  "pytest-cov",
   "ruff",
   "pyright>=1.1.400",
   "deltalake>=0.18.0",
