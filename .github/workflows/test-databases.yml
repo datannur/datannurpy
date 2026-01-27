@@ -1,7 +1,8 @@
 name: Database Integration Tests
 
 on:
-  workflow_dispatch: # Manual trigger from GitHub UI
+  workflow_dispatch:
+  workflow_call:
 
 jobs:
   test-postgres:
