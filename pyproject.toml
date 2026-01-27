@@ -80,3 +80,10 @@ ignore-vcs = true
 pythonVersion = "3.9"
 typeCheckingMode = "standard"
 exclude = ["src/datannurpy/app"]
+
+[tool.coverage.run]
+source = ["src/datannurpy"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:"]
