@@ -6,24 +6,30 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from ._ids import (
+from .utils import (
     build_dataset_id_name,
+    build_variable_ids,
     get_folder_id,
+    log_done,
+    log_section,
+    log_start,
+    log_summary,
+    log_warn,
     make_id,
     sanitize_id,
 )
-from ._log import log_done, log_section, log_start, log_summary, log_warn
 from .entities import Dataset, Folder
-from .readers._utils import (
+from .scanner.utils import (
     SUPPORTED_FORMATS,
     find_files,
     find_subdirs,
     get_mtime_iso,
 )
-from .readers.parquet import (
+from .scanner.parquet import (
     discover_parquet_datasets,
     scan_parquet_dataset,
 )
+from .scanner.scan import scan_file
 
 if TYPE_CHECKING:
     from .catalog import Catalog
@@ -134,7 +140,9 @@ def add_folder(
         catalog.datasets.append(dataset)
 
         dataset.nb_row = nb_row
-        catalog._finalize_variables(variables, dataset, freq_table)
+        var_id_mapping = build_variable_ids(variables, dataset.id)
+        catalog.modality_manager.assign_from_freq(variables, freq_table, var_id_mapping)
+        catalog.variables.extend(variables)
         log_done(f"{info.path.name} ({nb_row:,} rows, {len(variables)} vars)", q)
 
     # Process non-Parquet files (CSV, Excel)
@@ -180,15 +188,24 @@ def add_folder(
             csv_encoding if csv_encoding is not None else catalog.csv_encoding
         )
 
-        catalog._process_file(
+        # Scan file
+        result = scan_file(
             file_path,
-            dataset,
+            delivery_format,
             infer_stats=infer_stats,
             freq_threshold=freq_threshold,
             csv_encoding=resolved_encoding,
         )
+        dataset.nb_row = result.nb_row
+        if result.description and not dataset.description:
+            dataset.description = result.description
+        var_id_mapping = build_variable_ids(result.variables, dataset.id)
+        catalog.modality_manager.assign_from_freq(
+            result.variables, result.freq_table, var_id_mapping
+        )
+        catalog.variables.extend(result.variables)
 
-        # Log result (nb_row set by _process_file, check if file was skipped)
+        # Log result
         if dataset.nb_row is not None and dataset.nb_row > 0:
             var_count = sum(1 for v in catalog.variables if v.dataset_id == dataset.id)
             log_done(f"{file_path.name} ({dataset.nb_row:,} rows, {var_count} vars)", q)

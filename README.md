@@ -145,7 +145,7 @@ catalog.add_database(
 
 ```python
 # JSON metadata only (for existing datannur instance)
-catalog.write("./output")
+catalog.export_db("./output")
 
 # Complete standalone app
 catalog.export_app("./my-catalog", open_browser=True)
@@ -236,10 +236,10 @@ catalog.add_database(connection, folder=None, *, schema=None, include=None,
 - Oracle: `oracle://user:pass@host:1521/service_name`
 - SQL Server: `mssql://user:pass@host:1433/database`
 
-### `Catalog.write()`
+### `Catalog.export_db()`
 
 ```python
-catalog.write(output_dir, quiet=None)
+catalog.export_db(output_dir, quiet=None)
 ```
 
 Exports JSON metadata files to `output_dir` (for use with existing datannur instance).

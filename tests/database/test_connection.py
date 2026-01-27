@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from datannurpy.readers.database import parse_connection_string
+from datannurpy.scanner.database import parse_connection_string
 
 
 class TestParseConnectionString:

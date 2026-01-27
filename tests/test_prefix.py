@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datannurpy._prefix import get_prefix_folders, get_table_prefix
+from datannurpy.utils import get_prefix_folders, get_table_prefix
 
 
 class TestGetPrefixFolders:

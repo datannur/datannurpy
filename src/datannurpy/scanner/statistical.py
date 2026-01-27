@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 from ..entities import Variable
-from ._utils import build_variables
+from .utils import build_variables
 
 try:
     import pyreadstat

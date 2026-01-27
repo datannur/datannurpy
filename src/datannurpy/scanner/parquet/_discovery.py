@@ -95,7 +95,7 @@ def _find_parquet_files(
     recursive: bool,
 ) -> list[Path]:
     """Find all parquet files matching the patterns."""
-    from .._utils import find_files
+    from ..utils import find_files
 
     # Get all files, then filter to parquet only
     all_files = find_files(root, include, exclude, recursive)

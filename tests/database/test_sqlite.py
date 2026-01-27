@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from datannurpy.readers.database import connect, list_tables, scan_table
+from datannurpy.scanner.database import connect, list_tables, scan_table
 
 from .base import BaseDatabaseTests
 

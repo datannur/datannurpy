@@ -4,18 +4,24 @@ Python library for datannur catalog metadata management.
 
 ## Architecture
 
-3 layers:
-
-1. **Readers** (`src/datannurpy/readers/`): Ibis for CSV/Excel/Database scanning
-2. **Entities** (`src/datannurpy/entities/`): dataclasses (Folder, Dataset, Variable, Modality, Value)
-3. **Writers** (`src/datannurpy/writers/`): JSON stdlib for output (PyArrow for data conversion)
+```
+src/datannurpy/
+├── catalog.py           # Catalog class (delegates to add_* and exporter)
+├── add_folder.py        # Catalog.add_folder implementation
+├── add_dataset.py       # Catalog.add_dataset implementation
+├── add_database.py      # Catalog.add_database implementation
+├── utils/               # Internal utilities (ids, log, modality, prefix)
+├── entities/            # Dataclasses: Folder, Dataset, Variable, Modality, Value
+├── scanner/             # File/DB scanning → Variables + stats
+└── exporter/            # db.py (export_db), app.py (export_app)
+```
 
 ## Public API
 
 - `Catalog.add_folder(path, folder=None)` → scans CSV/Excel/Parquet/SAS files (auto-detects Delta/Hive/Iceberg)
 - `Catalog.add_dataset(path, folder=None)` → adds single file or partitioned directory (Delta/Hive/Iceberg)
 - `Catalog.add_database(connection, folder=None)` → scans database tables
-- `Catalog.write(output_dir)` → exports JSON + JSON.js files
+- `Catalog.export_db(output_dir)` → exports JSON + JSON.js files
 - `Catalog.export_app(output_dir)` → exports full datannur app with data
 - `Folder(id, name)` → optional, for custom folder metadata
 

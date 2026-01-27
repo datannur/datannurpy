@@ -1,4 +1,4 @@
-"""Common utilities for readers."""
+"""Common utilities for scanners."""
 
 from __future__ import annotations
 

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, NoReturn
 import ibis
 
 from ..entities import Variable
-from ._utils import build_variables
+from .utils import build_variables
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

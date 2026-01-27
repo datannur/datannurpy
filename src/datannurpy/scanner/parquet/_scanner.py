@@ -9,7 +9,7 @@ import ibis
 import pyarrow.parquet as pq
 
 from ...entities import Variable
-from .._utils import build_variables
+from ..utils import build_variables
 from ._discovery import DatasetType, ParquetDatasetInfo
 
 

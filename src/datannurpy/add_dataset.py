@@ -5,20 +5,20 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from ._ids import make_id, sanitize_id
-from ._log import log_done, log_section
+from .utils import build_variable_ids, log_done, log_section, make_id, sanitize_id
 from .entities import Dataset, Folder
-from .readers._utils import SUPPORTED_FORMATS, get_mtime_iso
-from .readers.parquet import (
+from .scanner.utils import SUPPORTED_FORMATS, get_mtime_iso
+from .scanner.parquet import (
     DatasetType,
     ParquetDatasetInfo,
     scan_parquet_dataset,
 )
-from .readers.parquet._discovery import (
+from .scanner.parquet._discovery import (
     _is_delta_table,
     _is_hive_partitioned,
     _is_iceberg_table,
 )
+from .scanner.scan import scan_file
 
 if TYPE_CHECKING:
     from .catalog import Catalog
@@ -145,13 +145,22 @@ def add_dataset(
         csv_encoding if csv_encoding is not None else catalog.csv_encoding
     )
 
-    catalog._process_file(
+    # Scan file
+    result = scan_file(
         dataset_path,
-        dataset,
+        delivery_format,
         infer_stats=infer_stats,
         freq_threshold=catalog.freq_threshold if catalog.freq_threshold else None,
         csv_encoding=resolved_encoding,
     )
+    dataset.nb_row = result.nb_row
+    if result.description and not dataset.description:
+        dataset.description = result.description
+    var_id_mapping = build_variable_ids(result.variables, dataset.id)
+    catalog.modality_manager.assign_from_freq(
+        result.variables, result.freq_table, var_id_mapping
+    )
+    catalog.variables.extend(result.variables)
 
     # Log result
     if dataset.nb_row is not None:
@@ -259,7 +268,9 @@ def _add_parquet_directory(
     catalog.datasets.append(dataset)
 
     # Finalize variables and modalities
-    catalog._finalize_variables(variables, dataset, freq_table)
+    var_id_mapping = build_variable_ids(variables, dataset.id)
+    catalog.modality_manager.assign_from_freq(variables, freq_table, var_id_mapping)
+    catalog.variables.extend(variables)
 
     if not quiet:
         log_done(dataset_id, quiet=False, start_time=start_time)

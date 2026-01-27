@@ -9,7 +9,7 @@ import duckdb
 import ibis
 
 from ..entities import Variable
-from ._utils import build_variables
+from .utils import build_variables
 
 # Default encoding fallback order
 DEFAULT_ENCODINGS = ("utf-8", "CP1252", "ISO_8859_1")

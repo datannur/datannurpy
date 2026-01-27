@@ -9,7 +9,7 @@ import ibis
 import pandas as pd
 
 from ..entities import Variable
-from ._utils import build_variables
+from .utils import build_variables
 
 
 def scan_excel(

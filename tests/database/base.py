@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from datannurpy import Catalog, Folder
-from datannurpy.readers.database import connect, list_schemas, list_tables, scan_table
+from datannurpy.scanner.database import connect, list_schemas, list_tables, scan_table
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -235,7 +235,7 @@ class BaseDatabaseTests(ABC):
         con, _, _ = db_with_employees
         catalog = Catalog()
         catalog.add_database(con)
-        catalog.write(tmp_path)
+        catalog.export_db(tmp_path)
 
         assert (tmp_path / "folder.json").exists()
         assert (tmp_path / "dataset.json").exists()

@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from datannurpy.readers.database import connect
+from datannurpy.scanner.database import connect
 
 from .base import BaseDatabaseTests, BaseSchemaTests
 from .conftest import (

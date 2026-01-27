@@ -6,16 +6,16 @@ from typing import TYPE_CHECKING
 
 import ibis
 
-from ._ids import (
+from .ids import (
     MODALITIES_FOLDER_ID,
     build_modality_name,
     compute_modality_hash,
     make_id,
 )
-from .entities import Folder, Modality, Value, Variable
+from ..entities import Folder, Modality, Value, Variable
 
 if TYPE_CHECKING:
-    from .catalog import Catalog
+    from ..catalog import Catalog
 
 
 class ModalityManager:

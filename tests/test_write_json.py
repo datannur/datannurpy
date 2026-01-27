@@ -18,7 +18,7 @@ class TestFreq:
 
         catalog = Catalog()
         catalog.add_folder(tmp_path)
-        catalog.write(tmp_path / "output")
+        catalog.export_db(tmp_path / "output")
 
         assert (tmp_path / "output" / "freq.json").exists()
 
@@ -28,7 +28,7 @@ class TestFreq:
 
         catalog = Catalog(freq_threshold=0)
         catalog.add_folder(tmp_path)
-        catalog.write(tmp_path / "output")
+        catalog.export_db(tmp_path / "output")
 
         assert not (tmp_path / "output" / "freq.json").exists()
 
@@ -38,7 +38,7 @@ class TestFreq:
 
         catalog = Catalog(freq_threshold=2)
         catalog.add_folder(tmp_path)
-        catalog.write(tmp_path / "output")
+        catalog.export_db(tmp_path / "output")
 
         # Both columns have 3 distinct > threshold 2
         assert not (tmp_path / "output" / "freq.json").exists()
@@ -49,7 +49,7 @@ class TestFreq:
 
         catalog = Catalog()
         catalog.add_folder(tmp_path)
-        catalog.write(tmp_path / "output")
+        catalog.export_db(tmp_path / "output")
 
         with open(tmp_path / "output" / "freq.json") as f:
             data = json.load(f)
@@ -66,7 +66,7 @@ class TestFreq:
 
         catalog = Catalog()
         catalog.add_folder(tmp_path)
-        catalog.write(tmp_path / "output")
+        catalog.export_db(tmp_path / "output")
 
         # Should not raise CatalogException about missing table
         assert (tmp_path / "output" / "freq.json").exists()
@@ -87,7 +87,7 @@ class TestCatalogWrite:
         catalog.add_folder(
             CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
-        catalog.write(tmp_path)
+        catalog.export_db(tmp_path)
 
         assert (tmp_path / "variable.json").exists()
         assert (tmp_path / "dataset.json").exists()
@@ -99,7 +99,7 @@ class TestCatalogWrite:
         catalog.add_folder(
             CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
-        catalog.write(tmp_path)
+        catalog.export_db(tmp_path)
 
         assert (tmp_path / "variable.json.js").exists()
         assert (tmp_path / "dataset.json.js").exists()
@@ -111,7 +111,7 @@ class TestCatalogWrite:
         catalog.add_folder(
             CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
-        catalog.write(tmp_path)
+        catalog.export_db(tmp_path)
 
         with open(tmp_path / "variable.json") as f:
             data = json.load(f)
@@ -126,7 +126,7 @@ class TestCatalogWrite:
         catalog.add_folder(
             CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
-        catalog.write(tmp_path)
+        catalog.export_db(tmp_path)
 
         with open(tmp_path / "dataset.json") as f:
             data = json.load(f)
@@ -142,7 +142,7 @@ class TestCatalogWrite:
         catalog.add_folder(
             CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
-        catalog.write(tmp_path)
+        catalog.export_db(tmp_path)
 
         with open(tmp_path / "folder.json") as f:
             data = json.load(f)
@@ -160,7 +160,7 @@ class TestCatalogWrite:
         catalog.add_folder(
             CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
-        catalog.write(tmp_path)
+        catalog.export_db(tmp_path)
 
         content = (tmp_path / "variable.json.js").read_text()
 
@@ -185,7 +185,7 @@ class TestCatalogWrite:
         catalog.add_folder(
             DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
-        catalog.write(tmp_path, write_js=False)
+        catalog.export_db(tmp_path, write_js=False)
 
         assert not (tmp_path / "variable.json.js").exists()
 
@@ -197,7 +197,7 @@ class TestCatalogWrite:
         )
         nested_dir = tmp_path / "nested" / "path"
 
-        catalog.write(nested_dir)
+        catalog.export_db(nested_dir)
 
         assert (nested_dir / "variable.json").exists()
 
@@ -207,7 +207,7 @@ class TestCatalogWrite:
         catalog.add_folder(
             DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
-        catalog.write(tmp_path)
+        catalog.export_db(tmp_path)
 
         with open(tmp_path / "variable.json") as f:
             data = json.load(f)
@@ -223,7 +223,7 @@ class TestCatalogWrite:
         catalog.add_folder(
             DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
-        catalog.write(tmp_path)
+        catalog.export_db(tmp_path)
 
         assert (tmp_path / "__table__.json").exists()
         assert (tmp_path / "__table__.json.js").exists()
