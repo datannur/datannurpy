@@ -191,9 +191,8 @@ def build_variables(
                     grouped["freq"],
                 )
                 freq_tables.append(vc)
-            if freq_tables:
-                # Materialize to PyArrow to allow closing the connection
-                freq_table = ibis.union(*freq_tables).to_pyarrow()
+            # Materialize to PyArrow to allow closing the connection
+            freq_table = ibis.union(*freq_tables).to_pyarrow()
 
     def get_stat(col: str, idx: int) -> int | None:
         """Get stat value, returning None if not computed or -1 (unknown)."""

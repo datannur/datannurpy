@@ -16,7 +16,7 @@ from .utils import build_variables
 DEFAULT_ENCODINGS = ("utf-8", "CP1252", "ISO_8859_1")
 
 
-def _build_encoding_order(csv_encoding: str | None) -> tuple[str | None, ...]:
+def build_encoding_order(csv_encoding: str | None) -> tuple[str | None, ...]:
     """Build encoding order with specified encoding first."""
     if csv_encoding is None:
         # Default: try without encoding (DuckDB default), then fallbacks
@@ -43,7 +43,7 @@ def scan_csv(
 
     con = ibis.duckdb.connect()
     try:
-        encodings = _build_encoding_order(csv_encoding)
+        encodings = build_encoding_order(csv_encoding)
 
         table = None
         last_error: str | None = None
@@ -61,11 +61,9 @@ def scan_csv(
 
         if table is None:
             # All encodings failed - show warning with actual error
-            msg = f"Could not parse CSV file '{file_path.name}'"
-            if last_error:
-                # Extract first line of error message (most relevant)
-                first_line = last_error.split("\n")[0]
-                msg += f": {first_line}"
+            # last_error is always set here since loop only exits via exception
+            first_line = last_error.split("\n")[0] if last_error else ""
+            msg = f"Could not parse CSV file '{file_path.name}': {first_line}"
             warnings.warn(msg, stacklevel=3)
             return [], 0, None
 

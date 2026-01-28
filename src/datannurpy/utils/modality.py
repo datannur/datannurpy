@@ -26,7 +26,7 @@ class ModalityManager:
         self._catalog = catalog
         self._modality_index: dict[frozenset[str], str] = {}
 
-    def _ensure_modalities_folder(self) -> None:
+    def ensure_modalities_folder(self) -> None:
         """Create the _modalities folder if not already present."""
         if not any(f.id == MODALITIES_FOLDER_ID for f in self._catalog.folders):
             self._catalog.folders.append(
@@ -41,7 +41,7 @@ class ModalityManager:
             return self._modality_index[signature]
 
         # Create new modality
-        self._ensure_modalities_folder()
+        self.ensure_modalities_folder()
 
         hash_10 = compute_modality_hash(values)
         modality_id = make_id(MODALITIES_FOLDER_ID, f"mod_{hash_10}")
@@ -88,9 +88,9 @@ class ModalityManager:
                 var.modality_ids = [modality_id]
 
         # Store freq table with updated IDs
-        self._store_freq_table(freq_table, var_id_mapping)
+        self.store_freq_table(freq_table, var_id_mapping)
 
-    def _store_freq_table(
+    def store_freq_table(
         self,
         freq_table: pa.Table,
         var_id_mapping: dict[str, str],

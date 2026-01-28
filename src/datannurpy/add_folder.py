@@ -174,9 +174,9 @@ def add_folder(
         ):
             continue
 
-        # Get format info (only CSV/Excel at this point)
+        # Get format info (only CSV/Excel/statistical at this point)
         delivery_format = SUPPORTED_FORMATS.get(suffix)
-        if delivery_format is None or delivery_format == "parquet":
+        if delivery_format is None:
             continue
 
         log_start(file_path.name, q)
@@ -217,13 +217,11 @@ def add_folder(
         catalog.variables.extend(result.variables)
 
         # Log result
-        if dataset.nb_row is not None and dataset.nb_row > 0:
+        if dataset.nb_row > 0:
             var_count = sum(1 for v in catalog.variables if v.dataset_id == dataset.id)
             log_done(f"{file_path.name} ({dataset.nb_row:,} rows, {var_count} vars)", q)
-        elif dataset.nb_row == 0:
-            log_warn(f"{file_path.name}: empty file", q)
         else:
-            log_warn(f"{file_path.name}: could not read", q)
+            log_warn(f"{file_path.name}: empty file", q)
 
     datasets_added = len(catalog.datasets) - datasets_before
     vars_added = len(catalog.variables) - vars_before

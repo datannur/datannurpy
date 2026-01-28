@@ -3,10 +3,10 @@ coverage:
     project:
       default:
         target: auto
-        threshold: 2%
+        threshold: 1%
     patch:
       default:
-        target: 50% # TODO: increase to 80% once coverage stabilizes
+        target: 90%
 
 # Merge coverage from multiple CI runs
 flag_management:

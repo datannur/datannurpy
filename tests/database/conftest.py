@@ -476,6 +476,11 @@ def sample_sqlite_db() -> Generator[Path, None, None]:
 
     con = ibis.sqlite.connect(db_path)
     create_test_tables(con)
+    # Add prefixed tables for prefix grouping tests (including nested prefixes)
+    con.raw_sql("CREATE TABLE dim_product_a (id INT)")
+    con.raw_sql("CREATE TABLE dim_product_b (id INT)")
+    con.raw_sql("CREATE TABLE dim_time_a (id INT)")
+    con.raw_sql("CREATE TABLE dim_time_b (id INT)")
     con.disconnect()
 
     yield db_path

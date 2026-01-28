@@ -71,7 +71,7 @@ def is_hive_partitioned(path: Path) -> bool:
     return False
 
 
-def _has_hive_partition_in_path(file_path: Path, root: Path) -> Path | None:
+def has_hive_partition_in_path(file_path: Path, root: Path) -> Path | None:
     """Check if a file's path contains Hive partitions. Returns the partition root."""
     rel_parts = file_path.relative_to(root).parts
 
@@ -88,7 +88,7 @@ def _has_hive_partition_in_path(file_path: Path, root: Path) -> Path | None:
     return None
 
 
-def _find_parquet_files(
+def find_parquet_files(
     root: Path,
     include: Sequence[str] | None,
     exclude: Sequence[str] | None,
@@ -112,7 +112,7 @@ def discover_parquet_datasets(
 
     Returns datasets and directories to exclude from folder creation.
     """
-    parquet_files = _find_parquet_files(root, include, exclude, recursive)
+    parquet_files = find_parquet_files(root, include, exclude, recursive)
 
     datasets: list[ParquetDatasetInfo] = []
     excluded_dirs: set[Path] = set()
@@ -152,9 +152,6 @@ def discover_parquet_datasets(
         check_path = parent
         while check_path >= root:
             if is_iceberg_table(check_path) and check_path not in iceberg_roots:
-                # Check it's not inside a Delta table
-                if any(check_path == d or d in check_path.parents for d in delta_roots):
-                    break
                 iceberg_roots.add(check_path)
                 files_in_iceberg = list(check_path.rglob("*.parquet")) + list(
                     check_path.rglob("*.pq")
@@ -177,14 +174,8 @@ def discover_parquet_datasets(
         if f in processed_files:
             continue
 
-        partition_root = _has_hive_partition_in_path(f, root)
+        partition_root = has_hive_partition_in_path(f, root)
         if partition_root and partition_root not in hive_roots:
-            # Check it's not inside a Delta or Iceberg table
-            if any(
-                partition_root == d or d in partition_root.parents
-                for d in delta_roots | iceberg_roots
-            ):
-                continue
             hive_roots.add(partition_root)
             files_in_hive = list(partition_root.rglob("*.parquet")) + list(
                 partition_root.rglob("*.pq")

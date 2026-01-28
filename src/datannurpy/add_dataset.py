@@ -34,7 +34,6 @@ def add_dataset(
     csv_encoding: str | None = None,
     quiet: bool | None = None,
     # Dataset metadata overrides
-    id: str | None = None,
     name: str | None = None,
     description: str | None = None,
     type: str | None = None,
@@ -72,14 +71,13 @@ def add_dataset(
 
     # Check if it's a partitioned Parquet directory
     if dataset_path.is_dir():
-        _add_parquet_directory(
+        add_parquet_directory(
             catalog,
             dataset_path,
             resolved_folder_id,
             infer_stats=infer_stats,
             quiet=q,
             start_time=start_time,
-            id=id,
             name=name,
             description=description,
             type=type,
@@ -106,16 +104,12 @@ def add_dataset(
         )
 
     # Build dataset ID and name
-    if id is not None:
-        dataset_id = id
-        dataset_name = name or dataset_path.stem
+    base_name = sanitize_id(dataset_path.stem)
+    if resolved_folder_id:
+        dataset_id = make_id(resolved_folder_id, base_name)
     else:
-        base_name = sanitize_id(dataset_path.stem)
-        if resolved_folder_id:
-            dataset_id = make_id(resolved_folder_id, base_name)
-        else:
-            dataset_id = base_name
-        dataset_name = name or dataset_path.stem
+        dataset_id = base_name
+    dataset_name = name or dataset_path.stem
 
     # Create dataset
     dataset = Dataset(
@@ -163,16 +157,15 @@ def add_dataset(
     catalog.variables.extend(result.variables)
 
     # Log result
-    if dataset.nb_row is not None:
-        var_count = sum(1 for v in catalog.variables if v.dataset_id == dataset.id)
-        log_done(
-            f"{dataset_path.name} ({dataset.nb_row:,} rows, {var_count} vars)",
-            q,
-            start_time,
-        )
+    var_count = sum(1 for v in catalog.variables if v.dataset_id == dataset.id)
+    log_done(
+        f"{dataset_path.name} ({dataset.nb_row:,} rows, {var_count} vars)",
+        q,
+        start_time,
+    )
 
 
-def _add_parquet_directory(
+def add_parquet_directory(
     catalog: Catalog,
     dir_path: Path,
     folder_id: str | None,
@@ -180,7 +173,6 @@ def _add_parquet_directory(
     infer_stats: bool,
     quiet: bool,
     start_time: float,
-    id: str | None,
     name: str | None,
     description: str | None,
     type: str | None,
@@ -219,14 +211,11 @@ def _add_parquet_directory(
     )
 
     # Build dataset ID
-    if id is not None:
-        dataset_id = id
+    base_name = sanitize_id(dir_path.name)
+    if folder_id:
+        dataset_id = make_id(folder_id, base_name)
     else:
-        base_name = sanitize_id(dir_path.name)
-        if folder_id:
-            dataset_id = make_id(folder_id, base_name)
-        else:
-            dataset_id = base_name
+        dataset_id = base_name
 
     # Scan the dataset
     freq_threshold = catalog.freq_threshold if catalog.freq_threshold else None

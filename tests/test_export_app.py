@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from datannurpy import Catalog, Folder
+from datannurpy.exporter import app
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 
@@ -56,10 +57,34 @@ class TestExportApp:
 
         assert not extra_file.exists()
 
+    def test_export_app_quiet(self, tmp_path):
+        """export_app with quiet=True should not print."""
+        catalog = Catalog()
+        catalog.add_folder(
+            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+        )
+
+        catalog.export_app(tmp_path, quiet=True)
+
+        assert (tmp_path / "index.html").exists()
+
+    def test_export_app_open_browser(self, tmp_path, monkeypatch):
+        """export_app with open_browser=True should open browser."""
+        opened_urls = []
+        monkeypatch.setattr("webbrowser.open", lambda url: opened_urls.append(url))
+
+        catalog = Catalog()
+        catalog.add_folder(
+            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+        )
+
+        catalog.export_app(tmp_path, open_browser=True, quiet=True)
+
+        assert len(opened_urls) == 1
+        assert "index.html" in opened_urls[0]
+
     def test_export_app_without_app_raises(self, tmp_path, monkeypatch):
         """export_app should raise FileNotFoundError if app not bundled."""
-        from datannurpy.exporter import app
-
         # Mock get_app_path to return nonexistent path
         monkeypatch.setattr(app, "get_app_path", lambda: Path("/nonexistent"))
 

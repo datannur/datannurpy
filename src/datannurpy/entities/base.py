@@ -26,8 +26,3 @@ class Entity:
                 result[key] = value
 
         return result
-
-    def __repr__(self) -> str:
-        """Readable representation."""
-        class_name = self.__class__.__name__
-        return f"{class_name}(id={self.id!r})"

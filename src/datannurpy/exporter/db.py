@@ -16,11 +16,10 @@ from ..entities.base import Entity
 if TYPE_CHECKING:
     from ..catalog import Catalog
 
+    class HasToDict(Protocol):
+        """Protocol for objects with to_dict method."""
 
-class HasToDict(Protocol):
-    """Protocol for objects with to_dict method."""
-
-    def to_dict(self) -> dict[str, Any]: ...
+        def to_dict(self) -> dict[str, Any]: ...
 
 
 def write_json(
@@ -38,17 +37,17 @@ def write_json(
     data = [entity.to_dict() for entity in entities]
 
     # Clean data (convert floats that are integers)
-    data = [_clean_record(record) for record in data]
+    data = [clean_record(record) for record in data]
 
     # Write .json (pretty-printed)
     json_path = output_dir / f"{name}.json"
-    _write_atomic(json_path, json.dumps(data, ensure_ascii=False, indent=2))
+    write_atomic(json_path, json.dumps(data, ensure_ascii=False, indent=2))
 
     # Write .json.js (compact array format for jsonjsdb)
     if write_js and data:
         jsonjs_path = output_dir / f"{name}.json.js"
-        jsonjs_content = _build_jsonjs(data, name)
-        _write_atomic(jsonjs_path, jsonjs_content)
+        jsonjs_content = build_jsonjs(data, name)
+        write_atomic(jsonjs_path, jsonjs_content)
 
     return json_path
 
@@ -66,27 +65,27 @@ def write_values_json(
     data = [v.to_dict() for v in values]
 
     json_path = output_dir / "value.json"
-    _write_atomic(json_path, json.dumps(data, ensure_ascii=False, indent=2))
+    write_atomic(json_path, json.dumps(data, ensure_ascii=False, indent=2))
 
     if write_js and data:
         jsonjs_path = output_dir / "value.json.js"
-        jsonjs_content = _build_jsonjs(
+        jsonjs_content = build_jsonjs(
             data, "value", columns=["modality_id", "value", "description"]
         )
-        _write_atomic(jsonjs_path, jsonjs_content)
+        write_atomic(jsonjs_path, jsonjs_content)
 
     return json_path
 
 
-def _clean_record(record: dict[str, Any]) -> dict[str, Any]:
+def clean_record(record: dict[str, Any]) -> dict[str, Any]:
     """Clean record for JSON output."""
     cleaned = {}
     for key, value in record.items():
-        cleaned[key] = _clean_value(value)
+        cleaned[key] = clean_value(value)
     return cleaned
 
 
-def _clean_value(value: Any) -> Any:
+def clean_value(value: Any) -> Any:
     """Clean value for JSON (convert whole floats to int)."""
     # Convert float to int if it's a whole number
     if isinstance(value, float) and value.is_integer():
@@ -94,7 +93,7 @@ def _clean_value(value: Any) -> Any:
     return value
 
 
-def _build_jsonjs(
+def build_jsonjs(
     data: list[dict[str, Any]], name: str, *, columns: list[str] | None = None
 ) -> str:
     """Build jsonjs format: [columns, row1, row2, ...]."""
@@ -123,7 +122,7 @@ def _build_jsonjs(
     return f"jsonjs.data['{name}'] = {json_minified}"
 
 
-def _write_atomic(path: Path, content: str) -> None:
+def write_atomic(path: Path, content: str) -> None:
     """Write file atomically (temp + rename)."""
     temp_path = path.with_suffix(path.suffix + ".temp")
     try:
@@ -151,16 +150,16 @@ def write_freq_json(
 
     # Write .json (pretty-printed)
     json_path = output_dir / "freq.json"
-    _write_atomic(json_path, json.dumps(data, ensure_ascii=False, indent=2))
+    write_atomic(json_path, json.dumps(data, ensure_ascii=False, indent=2))
 
     # Write .json.js (compact array format for jsonjsdb)
     if write_js and data:
         jsonjs_path = output_dir / "freq.json.js"
         # Fixed column order for freq table
-        jsonjs_content = _build_jsonjs(
+        jsonjs_content = build_jsonjs(
             data, "freq", columns=["variable_id", "value", "freq"]
         )
-        _write_atomic(jsonjs_path, jsonjs_content)
+        write_atomic(jsonjs_path, jsonjs_content)
 
     return json_path
 
@@ -177,15 +176,15 @@ def write_table_registry(
 
     # Write __table__.json
     json_path = output_dir / "__table__.json"
-    _write_atomic(json_path, json.dumps(registry, ensure_ascii=False, indent=2))
+    write_atomic(json_path, json.dumps(registry, ensure_ascii=False, indent=2))
 
     # Write __table__.json.js
     if write_js:
         jsonjs_path = output_dir / "__table__.json.js"
-        jsonjs_content = _build_jsonjs(
+        jsonjs_content = build_jsonjs(
             registry, "__table__", columns=["name", "last_modif"]
         )
-        _write_atomic(jsonjs_path, jsonjs_content)
+        write_atomic(jsonjs_path, jsonjs_content)
 
 
 def export_db(
