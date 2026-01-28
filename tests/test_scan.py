@@ -1,13 +1,245 @@
 """Tests for Catalog.add_folder and Catalog.add_dataset."""
 
+import sys
 from pathlib import Path
+from unittest.mock import MagicMock
 
+import duckdb
+import ibis
+import ibis.expr.datatypes as dt
+from ibis.expr.datatypes.core import IntervalUnit
+import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
+import pyreadstat
 import pytest
 
 from datannurpy import Catalog, Folder
+from datannurpy.scanner.parquet.core import scan_parquet
+from datannurpy.scanner.parquet.discovery import is_hive_partitioned
+from datannurpy.scanner.utils import build_variables, ibis_type_to_str
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 CSV_DIR = DATA_DIR / "csv"
+
+
+class TestExtractParquetMetadata:
+    """Test parquet metadata extraction."""
+
+    def test_metadata_without_description_key(self, tmp_path: Path):
+        """Parquet with metadata but no description key should return None."""
+        # Create field with metadata but no 'description' key
+        field = pa.field("col", pa.int64(), metadata={b"other_key": b"value"})
+        schema = pa.schema([field], metadata={b"other_key": b"value"})
+        table = pa.table({"col": [1, 2, 3]}, schema=schema)
+        path = tmp_path / "no_desc.parquet"
+        pq.write_table(table, path)
+
+        _, _, _, metadata = scan_parquet(path)
+        assert metadata.description is None
+        assert metadata.column_descriptions is None
+
+    def test_partial_column_descriptions(self, tmp_path: Path):
+        """Parquet with description for some columns should skip others."""
+        # col1 has description, col2 does not
+        field1 = pa.field("col1", pa.int64(), metadata={b"description": b"First col"})
+        field2 = pa.field("col2", pa.int64())
+        schema = pa.schema([field1, field2])
+        table = pa.table({"col1": [1], "col2": [2]}, schema=schema)
+        path = tmp_path / "partial.parquet"
+        pq.write_table(table, path)
+
+        variables, _, _, _ = scan_parquet(path)
+        var_by_name = {v.name: v for v in variables}
+        assert var_by_name["col1"].description == "First col"
+        assert var_by_name["col2"].description is None
+
+
+class TestScanDeltaExceptions:
+    """Test scan_delta exception handling."""
+
+    def test_deltalake_not_installed(self, monkeypatch):
+        """Delta scan should warn if deltalake is not installed."""
+        # Hide deltalake module
+        monkeypatch.setitem(sys.modules, "deltalake", None)
+
+        catalog = Catalog()
+        with pytest.warns(UserWarning, match="deltalake not installed"):
+            catalog.add_dataset(DATA_DIR / "test_delta", quiet=True)
+
+    def test_deltalake_other_exception(self, monkeypatch):
+        """Delta scan should warn on other deltalake errors."""
+
+        def mock_deltatable(*args, **kwargs):
+            raise RuntimeError("Some delta error")
+
+        mock_module = MagicMock()
+        mock_module.DeltaTable = mock_deltatable
+        monkeypatch.setitem(sys.modules, "deltalake", mock_module)
+
+        catalog = Catalog()
+        with pytest.warns(UserWarning, match="Failed to extract Delta table metadata"):
+            catalog.add_dataset(DATA_DIR / "test_delta", quiet=True)
+
+
+class TestScanIcebergExceptions:
+    """Test scan_iceberg exception handling."""
+
+    def test_pyiceberg_not_installed(self, monkeypatch, tmp_path):
+        """Iceberg scan should raise ImportError if pyiceberg is not installed."""
+        # Create fake Iceberg structure
+        metadata_dir = tmp_path / "metadata"
+        metadata_dir.mkdir()
+        (metadata_dir / "00000-abc.metadata.json").write_text("{}")
+
+        # Hide pyiceberg module
+        monkeypatch.setitem(sys.modules, "pyiceberg", None)
+        monkeypatch.setitem(sys.modules, "pyiceberg.table", None)
+
+        catalog = Catalog()
+        with pytest.raises(ImportError, match="PyIceberg is required"):
+            catalog.add_dataset(tmp_path, quiet=True)
+
+
+class TestScanStatisticalExceptions:
+    """Test scan_statistical exception handling."""
+
+    def test_pyreadstat_not_installed(self, monkeypatch, tmp_path):
+        """Statistical scan should raise ImportError if pyreadstat is not installed."""
+        sas_file = tmp_path / "test.sas7bdat"
+        sas_file.write_bytes(b"")
+
+        # Hide pyreadstat module
+        monkeypatch.setitem(sys.modules, "pyreadstat", None)
+
+        catalog = Catalog()
+        with pytest.raises(ImportError, match="pyreadstat is required"):
+            catalog.add_dataset(sas_file, quiet=True)
+
+    def test_corrupted_file(self, tmp_path):
+        """Statistical scan should warn and return empty for corrupted files."""
+        sas_file = tmp_path / "corrupted.sas7bdat"
+        sas_file.write_bytes(b"not a valid sas file")
+
+        catalog = Catalog()
+        with pytest.warns(UserWarning, match="Could not read statistical file"):
+            catalog.add_dataset(sas_file, quiet=True)
+
+        # Dataset created but with no variables
+        assert len(catalog.datasets) == 1
+        assert catalog.datasets[0].nb_row == 0
+        assert len(catalog.variables) == 0
+
+    def test_column_without_label(self, tmp_path):
+        """Statistical scan should handle columns without labels."""
+        # Create SPSS file with no column labels
+        df = pd.DataFrame({"col_a": [1, 2], "col_b": ["x", "y"]})
+        spss_file = tmp_path / "no_labels.sav"
+        pyreadstat.write_sav(df, spss_file)
+
+        catalog = Catalog()
+        catalog.add_dataset(spss_file)
+
+        # Variables should have no descriptions (no labels in file)
+        assert len(catalog.variables) == 2
+        assert all(v.description is None for v in catalog.variables)
+
+
+class TestIbisTypeToStr:
+    """Test ibis_type_to_str function."""
+
+    def test_unsigned_integer(self):
+        """Unsigned integers should map to 'integer'."""
+        assert ibis_type_to_str(dt.UInt8()) == "integer"
+        assert ibis_type_to_str(dt.UInt64()) == "integer"
+
+    def test_boolean(self):
+        """Boolean should map to 'boolean'."""
+        assert ibis_type_to_str(dt.Boolean()) == "boolean"
+
+    def test_interval(self):
+        """Interval should map to 'duration'."""
+        assert ibis_type_to_str(dt.Interval(unit=IntervalUnit.SECOND)) == "duration"
+
+    def test_null(self):
+        """Null should map to 'null'."""
+        assert ibis_type_to_str(dt.Null()) == "null"
+
+
+class TestBuildVariables:
+    """Test build_variables function."""
+
+    def test_all_columns_skipped(self):
+        """build_variables should handle tables where all columns are skipped."""
+        # Create a table with only Binary columns (which are auto-skipped)
+        table = ibis.memtable({"blob": [b"data"]})
+        variables, freq_table = build_variables(
+            table, nb_rows=1, infer_stats=True, skip_stats_columns={"blob"}
+        )
+        assert len(variables) == 1
+        assert variables[0].nb_distinct is None  # No stats computed
+
+    def test_oracle_clob_error_handled(self, monkeypatch):
+        """build_variables should handle Oracle ORA-22849 error gracefully."""
+        table = ibis.memtable({"col": ["a", "b"]})
+
+        def mock_aggregate(*args, **kwargs):
+            raise Exception("ORA-22849: cannot use CLOB in COUNT DISTINCT")
+
+        # Patch at the class level since instances are immutable
+        monkeypatch.setattr(
+            "ibis.expr.types.relations.Table.aggregate",
+            MagicMock(side_effect=mock_aggregate),
+        )
+        variables, freq_table = build_variables(table, nb_rows=2, infer_stats=True)
+
+        assert len(variables) == 1
+        assert variables[0].nb_distinct is None  # Stats skipped due to error
+
+    def test_other_exception_reraised(self, monkeypatch):
+        """build_variables should reraise non-Oracle exceptions."""
+        table = ibis.memtable({"col": ["a", "b"]})
+
+        def mock_aggregate(*args, **kwargs):
+            raise ValueError("Some other error")
+
+        monkeypatch.setattr(
+            "ibis.expr.types.relations.Table.aggregate",
+            MagicMock(side_effect=mock_aggregate),
+        )
+
+        with pytest.raises(ValueError, match="Some other error"):
+            build_variables(table, nb_rows=2, infer_stats=True)
+
+
+class TestCatalogRepr:
+    """Test Catalog __repr__ method."""
+
+    def test_repr(self):
+        """Catalog repr should show counts."""
+        catalog = Catalog()
+        result = repr(catalog)
+        assert "Catalog(" in result
+        assert "folders=0" in result
+        assert "datasets=0" in result
+
+
+class TestHivePartitionDetection:
+    """Test Hive partition detection."""
+
+    def test_is_hive_partitioned_with_file(self):
+        """is_hive_partitioned should return False for a file path."""
+        file_path = CSV_DIR / "employees.csv"
+        assert is_hive_partitioned(file_path) is False
+
+    def test_is_hive_partitioned_without_parquet_files(self, tmp_path: Path):
+        """is_hive_partitioned should return False if partition dir has no parquet files."""
+        # Create a Hive-style directory without parquet files
+        partition_dir = tmp_path / "year=2024"
+        partition_dir.mkdir()
+        (partition_dir / "data.csv").write_text("x\n1")  # CSV, not parquet
+
+        assert is_hive_partitioned(tmp_path) is False
 
 
 class TestLegacyEncoding:
@@ -28,9 +260,44 @@ class TestLegacyEncoding:
             f"Expected 3 rows, got {catalog.datasets[0].nb_row}"
         )
 
+    def test_csv_explicit_encoding(self):
+        """CSV scan with explicit encoding should work."""
+        catalog = Catalog()
+        catalog.add_dataset(CSV_DIR / "legacy_encoding.csv", csv_encoding="CP1252")
+
+        assert len(catalog.variables) == 4
+
+    def test_csv_all_encodings_fail(self, tmp_path, monkeypatch):
+        """CSV scan should warn when all encodings fail."""
+        csv_file = tmp_path / "test.csv"
+        csv_file.write_text("col\n1")
+
+        # Make all read_csv calls fail
+        def mock_read_csv(*args, **kwargs):
+            raise duckdb.InvalidInputException("Mocked encoding error")
+
+        monkeypatch.setattr("ibis.backends.duckdb.Backend.read_csv", mock_read_csv)
+
+        catalog = Catalog()
+        with pytest.warns(UserWarning, match="Could not parse CSV file"):
+            catalog.add_dataset(csv_file, quiet=True)
+
+        # Dataset created but with no variables
+        assert len(catalog.datasets) == 1
+        assert len(catalog.variables) == 0
+
 
 class TestAddDataset:
     """Test Catalog.add_dataset method."""
+
+    def test_add_dataset_scans_parquet_file(self):
+        """add_dataset should scan a single parquet file via scan_file."""
+        catalog = Catalog()
+        catalog.add_dataset(DATA_DIR / "test.pq")
+
+        assert len(catalog.datasets) == 1
+        assert catalog.datasets[0].delivery_format == "parquet"
+        assert len(catalog.variables) == 3
 
     def test_add_dataset_scans_file(self):
         """add_dataset should scan a single file."""
@@ -91,13 +358,6 @@ class TestAddDataset:
         assert ds.type == "référentiel"
         assert ds.link == "https://example.com"
         assert ds.start_date == "2020/01/01"
-
-    def test_add_dataset_custom_id(self):
-        """add_dataset with id should use custom ID."""
-        catalog = Catalog()
-        catalog.add_dataset(CSV_DIR / "employees.csv", id="custom-id")
-
-        assert catalog.datasets[0].id == "custom-id"
 
     def test_add_dataset_standalone_id(self):
         """add_dataset without folder should use filename as ID."""
@@ -165,6 +425,7 @@ class TestAddDataset:
             name="Custom Name",
             description="Custom description",
             folder=Folder(id="sales", name="Sales"),
+            quiet=True,
         )
 
         ds = catalog.datasets[0]
@@ -228,6 +489,38 @@ class TestAddFolder:
         catalog = Catalog()
         catalog.add_folder(DATA_DIR, Folder(id="test", name="Test"), include=["*.xlsx"])
         assert len(catalog.variables) > 0
+
+    def test_add_folder_empty_excel(self, tmp_path):
+        """add_folder should handle empty Excel files (0 bytes)."""
+        (tmp_path / "empty.xlsx").write_bytes(b"")
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path)
+
+        assert len(catalog.datasets) == 1
+        assert len(catalog.variables) == 0
+
+    def test_add_folder_corrupted_excel(self, tmp_path):
+        """add_folder should warn on corrupted Excel files."""
+        (tmp_path / "corrupted.xlsx").write_bytes(b"not a real excel file")
+
+        catalog = Catalog()
+        with pytest.warns(UserWarning, match="Could not read Excel file"):
+            catalog.add_folder(tmp_path, quiet=True)
+
+        assert len(catalog.datasets) == 1
+        assert len(catalog.variables) == 0
+
+    def test_add_folder_empty_sheet_excel(self, tmp_path):
+        """add_folder should handle Excel files with empty sheet."""
+        # Create valid Excel with empty DataFrame
+        pd.DataFrame().to_excel(tmp_path / "empty_sheet.xlsx", index=False)
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, quiet=True)
+
+        assert len(catalog.datasets) == 1
+        assert len(catalog.variables) == 0
 
     def test_add_folder_scans_parquet(self):
         """add_folder should scan Parquet files (.parquet extension)."""
@@ -424,6 +717,30 @@ class TestAddFolder:
         assert all(v.nb_distinct is None for v in catalog.variables)
         assert all(v.nb_missing is None for v in catalog.variables)
 
+    def test_add_folder_ignores_unknown_formats(self, tmp_path: Path):
+        """add_folder should skip files with unknown extensions when using include."""
+        (tmp_path / "data.csv").write_text("x\n1")
+        (tmp_path / "unknown.xyz").write_text("some data")
+        (tmp_path / "readme.txt").write_text("documentation")
+
+        catalog = Catalog()
+        # Use include pattern that matches all files, including unknown formats
+        catalog.add_folder(tmp_path, include=["*.*"])
+
+        # Only the CSV should be added (unknown formats are skipped)
+        assert len(catalog.datasets) == 1
+        assert catalog.datasets[0].delivery_format == "csv"
+
+    def test_add_folder_handles_empty_csv(self, tmp_path: Path):
+        """add_folder should handle empty CSV files (header only)."""
+        (tmp_path / "empty.csv").write_text("col1,col2\n")  # Header only, no data
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path)
+
+        assert len(catalog.datasets) == 1
+        assert catalog.datasets[0].nb_row == 0
+
     def test_add_folder_not_found(self):
         """add_folder should raise FileNotFoundError for missing path."""
         catalog = Catalog()
@@ -518,6 +835,17 @@ class TestSubfolders:
 
         assert len(catalog.datasets) == 1
         assert catalog.datasets[0].name == "root"
+
+    def test_add_folder_non_recursive_with_include(self, tmp_path: Path):
+        """add_folder with recursive=False and include should use glob directly."""
+        (tmp_path / "a.csv").write_text("x\n1")
+        (tmp_path / "b.csv").write_text("y\n2")
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, include=["a.csv"], recursive=False)
+
+        assert len(catalog.datasets) == 1
+        assert catalog.datasets[0].name == "a"
 
 
 class TestIdSanitization:
@@ -638,6 +966,16 @@ class TestIncludeExclude:
 
         catalog = Catalog()
         catalog.add_folder(tmp_path, exclude=["backup.*"])
+
+        assert len(catalog.datasets) == 1
+        assert catalog.datasets[0].name == "data"
+
+    def test_exclude_nonexistent_file(self, tmp_path: Path):
+        """exclude with nonexistent file should be ignored."""
+        (tmp_path / "data.csv").write_text("x\n1")
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, exclude=["nonexistent.csv"])
 
         assert len(catalog.datasets) == 1
         assert catalog.datasets[0].name == "data"

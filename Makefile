@@ -4,7 +4,7 @@ test:
 	uv run pytest
 
 test-cov:
-	uv run pytest --cov=src/datannurpy --cov-report=xml
+	uv run pytest --cov=src/datannurpy --cov-report=xml --cov-report=html --cov-fail-under=100
 
 coverage:
 	uv run pytest --cov=src/datannurpy --cov-report=term-missing --cov-report=html
@@ -15,7 +15,7 @@ lint:
 typecheck:
 	uv run pyright src/datannurpy tests
 
-check: lint typecheck test
+check: lint typecheck test-cov
 
 download-app:
 	uv run python scripts/download_app.py

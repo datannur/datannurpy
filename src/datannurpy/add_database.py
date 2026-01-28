@@ -74,7 +74,11 @@ def add_database(
         root_folder_id = folder.id
 
     folder.last_update_date = now_iso
-    folder.data_path = get_database_path(connection, backend_name)
+    folder.data_path = (
+        get_database_path(connection, backend_name)
+        if isinstance(connection, str)
+        else None
+    )
     folder.type = backend_name
     catalog.folders.append(folder)
 

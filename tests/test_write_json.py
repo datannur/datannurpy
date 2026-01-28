@@ -2,11 +2,62 @@
 
 import json
 from pathlib import Path
+from unittest.mock import patch
+
+import pytest
 
 from datannurpy import Catalog, Folder
+from datannurpy.exporter.db import build_jsonjs, clean_value, write_atomic
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 CSV_DIR = DATA_DIR / "csv"
+
+
+class TestCleanValue:
+    """Test clean_value helper function."""
+
+    def test_float_whole_number_to_int(self):
+        """Whole floats like 5.0 should be converted to int."""
+        assert clean_value(5.0) == 5
+        assert isinstance(clean_value(5.0), int)
+
+    def test_float_decimal_unchanged(self):
+        """Floats with decimals should remain floats."""
+        assert clean_value(5.5) == 5.5
+        assert isinstance(clean_value(5.5), float)
+
+    def test_int_unchanged(self):
+        """Integers should remain integers."""
+        assert clean_value(5) == 5
+        assert isinstance(clean_value(5), int)
+
+    def test_string_unchanged(self):
+        """Strings should remain strings."""
+        assert clean_value("hello") == "hello"
+
+
+class TestBuildJsonJs:
+    """Test build_jsonjs helper function."""
+
+    def test_empty_data(self):
+        """Empty data should return empty array assignment."""
+        result = build_jsonjs([], "test")
+        assert result == "jsonjs.data['test'] = []"
+
+
+class TestWriteAtomic:
+    """Test write_atomic helper function."""
+
+    def test_cleanup_on_error(self, tmp_path: Path):
+        """Temp file should be cleaned up on rename error."""
+        path = tmp_path / "test.json"
+
+        with patch("pathlib.Path.rename", side_effect=OSError("disk full")):
+            with pytest.raises(OSError, match="disk full"):
+                write_atomic(path, "content")
+
+        # Temp file should be cleaned up
+        assert not (tmp_path / "test.json.temp").exists()
 
 
 class TestFreq:
@@ -80,6 +131,17 @@ class TestFreq:
 
 class TestCatalogWrite:
     """Test Catalog.write method."""
+
+    def test_write_empty_catalog(self, tmp_path):
+        """export_db on empty catalog should not create any files."""
+        catalog = Catalog()
+        catalog.export_db(tmp_path)
+
+        # No entity files should be created
+        assert not (tmp_path / "folder.json").exists()
+        assert not (tmp_path / "dataset.json").exists()
+        assert not (tmp_path / "variable.json").exists()
+        assert not (tmp_path / "__table__.json").exists()
 
     def test_write_creates_json_files(self, tmp_path):
         """write should create .json files for each entity type."""

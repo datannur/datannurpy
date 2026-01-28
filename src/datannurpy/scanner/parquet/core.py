@@ -24,7 +24,18 @@ class DatasetMetadata:
     column_descriptions: dict[str, str] | None = None
 
 
-def _extract_parquet_metadata(path: Path) -> DatasetMetadata:
+def apply_column_descriptions(
+    variables: list[Variable], column_descriptions: dict[str, str] | None
+) -> None:
+    """Apply column descriptions from metadata to variables."""
+    if not column_descriptions:
+        return
+    for var in variables:
+        if var.name and var.name in column_descriptions:
+            var.description = column_descriptions[var.name]
+
+
+def extract_parquet_metadata(path: Path) -> DatasetMetadata:
     """Extract metadata from a Parquet file using PyArrow."""
     pq_file = pq.ParquetFile(path)
     schema = pq_file.schema_arrow
@@ -50,7 +61,7 @@ def _extract_parquet_metadata(path: Path) -> DatasetMetadata:
     )
 
 
-def _scan_simple(
+def scan_simple(
     path: Path,
     dataset_id: str | None,
     infer_stats: bool,
@@ -58,7 +69,7 @@ def _scan_simple(
 ) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
     """Scan a simple Parquet file."""
     # Extract metadata
-    metadata = _extract_parquet_metadata(path)
+    metadata = extract_parquet_metadata(path)
 
     # Scan with Ibis
     con = ibis.duckdb.connect()
@@ -74,18 +85,14 @@ def _scan_simple(
             freq_threshold=freq_threshold,
         )
 
-        # Apply column descriptions to variables
-        if metadata.column_descriptions:
-            for var in variables:
-                if var.name and var.name in metadata.column_descriptions:
-                    var.description = metadata.column_descriptions[var.name]
+        apply_column_descriptions(variables, metadata.column_descriptions)
 
         return variables, row_count, freq_table, metadata
     finally:
         con.disconnect()
 
 
-def _scan_delta(
+def scan_delta(
     path: Path,
     dataset_id: str | None,
     infer_stats: bool,
@@ -135,7 +142,7 @@ def _scan_delta(
         con.disconnect()
 
 
-def _scan_hive(
+def scan_hive(
     path: Path,
     dataset_id: str | None,
     infer_stats: bool,
@@ -165,7 +172,7 @@ def _scan_hive(
         con.disconnect()
 
 
-def _scan_iceberg(
+def scan_iceberg(
     path: Path,
     dataset_id: str | None,
     infer_stats: bool,
@@ -181,19 +188,15 @@ def _scan_iceberg(
     # Find the latest metadata file
     metadata_dir = path / "metadata"
     metadata_files = sorted(metadata_dir.glob("*.metadata.json"), reverse=True)
-    if not metadata_files:
-        msg = f"No Iceberg metadata found in {metadata_dir}"
-        raise ValueError(msg)
 
     # Load table via PyIceberg
     table = StaticTable.from_metadata(str(metadata_files[0]))
 
     # Extract metadata from PyIceberg schema
     description = table.metadata.properties.get("comment")
-    column_descriptions: dict[str, str] = {}
-    for field in table.schema().fields:
-        if field.doc:
-            column_descriptions[field.name] = field.doc
+    column_descriptions = {
+        field.name: field.doc for field in table.schema().fields if field.doc
+    }
 
     metadata = DatasetMetadata(
         description=description,
@@ -215,13 +218,17 @@ def _scan_iceberg(
         freq_threshold=freq_threshold,
     )
 
-    # Apply column descriptions to variables
-    if metadata.column_descriptions:
-        for var in variables:
-            if var.name and var.name in metadata.column_descriptions:
-                var.description = metadata.column_descriptions[var.name]
+    apply_column_descriptions(variables, metadata.column_descriptions)
 
     return variables, row_count, freq_table, metadata
+
+
+SCANNERS = {
+    DatasetType.SIMPLE: scan_simple,
+    DatasetType.DELTA: scan_delta,
+    DatasetType.HIVE: scan_hive,
+    DatasetType.ICEBERG: scan_iceberg,
+}
 
 
 def scan_parquet_dataset(
@@ -232,17 +239,8 @@ def scan_parquet_dataset(
     freq_threshold: int | None = None,
 ) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
     """Scan a Parquet dataset based on its type."""
-    if info.type == DatasetType.SIMPLE:
-        return _scan_simple(info.path, dataset_id, infer_stats, freq_threshold)
-    elif info.type == DatasetType.DELTA:
-        return _scan_delta(info.path, dataset_id, infer_stats, freq_threshold)
-    elif info.type == DatasetType.HIVE:
-        return _scan_hive(info.path, dataset_id, infer_stats, freq_threshold)
-    elif info.type == DatasetType.ICEBERG:
-        return _scan_iceberg(info.path, dataset_id, infer_stats, freq_threshold)
-    else:
-        msg = f"Unknown dataset type: {info.type}"
-        raise ValueError(msg)
+    scanner = SCANNERS[info.type]
+    return scanner(info.path, dataset_id, infer_stats, freq_threshold)
 
 
 def scan_parquet(
@@ -253,4 +251,4 @@ def scan_parquet(
     freq_threshold: int | None = None,
 ) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
     """Scan a simple Parquet file and return (variables, row_count, freq_table, metadata)."""
-    return _scan_simple(Path(path), dataset_id, infer_stats, freq_threshold)
+    return scan_simple(Path(path), dataset_id, infer_stats, freq_threshold)

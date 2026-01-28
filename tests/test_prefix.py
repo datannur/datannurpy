@@ -90,6 +90,15 @@ class TestGetPrefixFolders:
         assert len(result) == 1
         assert result[0].prefix == "hr"
 
+    def test_nested_prefix_without_parent_in_valid_set(self) -> None:
+        """Nested prefix with no valid parent should have parent_prefix=None."""
+        # dim_product appears twice (valid), dim appears in all 3 (excluded as universal)
+        tables = ["dim_product_a", "dim_product_b", "dim_other"]
+        result = get_prefix_folders(tables)
+        assert len(result) == 1
+        assert result[0].prefix == "dim_product"
+        assert result[0].parent_prefix is None  # dim excluded (common to all)
+
 
 class TestGetTablePrefix:
     """Tests for get_table_prefix function."""

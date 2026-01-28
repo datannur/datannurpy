@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING, NoReturn
+from urllib.parse import parse_qs, urlparse
 
 import ibis
 import pyarrow as pa
@@ -100,12 +102,12 @@ SQLITE_SYSTEM_TABLE_PREFIXES: tuple[str, ...] = (
 )
 
 
-def _get_backend_name(con: ibis.BaseBackend) -> str:
+def get_backend_name(con: ibis.BaseBackend) -> str:
     """Get backend name from connection object."""
     return type(con).__module__.split(".")[-1]
 
 
-def _raise_driver_error(backend: str, original_error: Exception) -> NoReturn:
+def raise_driver_error(backend: str, original_error: Exception) -> NoReturn:
     """Raise clear error message for missing database drivers."""
     messages = {
         "postgres": (
@@ -132,8 +134,6 @@ def _raise_driver_error(backend: str, original_error: Exception) -> NoReturn:
 
 def parse_connection_string(connection: str) -> tuple[str, dict[str, str]]:
     """Parse a connection string into (backend_name, kwargs)."""
-    from urllib.parse import parse_qs, urlparse
-
     parsed = urlparse(connection)
     scheme = parsed.scheme.lower()
 
@@ -167,16 +167,66 @@ def parse_connection_string(connection: str) -> tuple[str, dict[str, str]]:
         if parsed.query:
             query_params = parse_qs(parsed.query)
             for key, values in query_params.items():
-                if values:
-                    kwargs[key] = values[0]
+                kwargs[key] = values[0]
 
     return backend, kwargs
+
+
+def _connect_external_backend(
+    backend: str, kwargs: dict[str, str]
+) -> ibis.BaseBackend:  # pragma: no cover
+    """Connect to external database backends (requires drivers)."""
+    try:
+        if backend == "postgres":
+            return ibis.postgres.connect(
+                host=kwargs.get("host", "localhost"),
+                port=int(kwargs.get("port", 5432)),
+                user=kwargs.get("user"),
+                password=kwargs.get("password"),
+                database=kwargs.get("database"),
+            )
+        if backend == "mysql":
+            return ibis.mysql.connect(
+                host=kwargs.get("host", "localhost"),
+                port=int(kwargs.get("port", 3306)),
+                user=kwargs.get("user"),
+                password=kwargs.get("password"),
+                database=kwargs.get("database"),
+            )
+        if backend == "oracle":
+            return ibis.oracle.connect(
+                host=kwargs.get("host", "localhost"),
+                port=int(kwargs.get("port", 1521)),
+                user=kwargs.get("user"),
+                password=kwargs.get("password"),
+                database=kwargs.get("database"),
+            )
+        # mssql
+        known_params = {"host", "port", "user", "password", "database", "driver"}
+        mssql_kwargs: dict[str, str | int] = {
+            "host": kwargs.get("host", "localhost"),
+            "port": int(kwargs.get("port", 1433)),
+        }
+        if kwargs.get("user"):
+            mssql_kwargs["user"] = kwargs["user"]
+        if kwargs.get("password"):
+            mssql_kwargs["password"] = kwargs["password"]
+        if kwargs.get("database"):
+            mssql_kwargs["database"] = kwargs["database"]
+        if kwargs.get("driver"):
+            mssql_kwargs["driver"] = kwargs["driver"]
+        for key, value in kwargs.items():
+            if key not in known_params:
+                mssql_kwargs[key] = value
+        return ibis.mssql.connect(**mssql_kwargs)
+    except ModuleNotFoundError as e:
+        raise_driver_error(backend, e)
 
 
 def connect(connection: str | ibis.BaseBackend) -> tuple[ibis.BaseBackend, str]:
     """Connect to a database, return (connection, backend_name)."""
     if isinstance(connection, ibis.BaseBackend):
-        backend_name = _get_backend_name(connection)
+        backend_name = get_backend_name(connection)
         if backend_name in ("pyspark", "datafusion", "polars"):
             raise ValueError(
                 f"Backend {backend_name!r} is not supported for database scanning. "
@@ -186,57 +236,10 @@ def connect(connection: str | ibis.BaseBackend) -> tuple[ibis.BaseBackend, str]:
 
     backend, kwargs = parse_connection_string(connection)
 
-    try:
-        if backend == "sqlite":
-            con = ibis.sqlite.connect(kwargs.get("path", ":memory:"))
-        elif backend == "postgres":
-            con = ibis.postgres.connect(
-                host=kwargs.get("host", "localhost"),
-                port=int(kwargs.get("port", 5432)),
-                user=kwargs.get("user"),
-                password=kwargs.get("password"),
-                database=kwargs.get("database"),
-            )
-        elif backend == "mysql":
-            con = ibis.mysql.connect(
-                host=kwargs.get("host", "localhost"),
-                port=int(kwargs.get("port", 3306)),
-                user=kwargs.get("user"),
-                password=kwargs.get("password"),
-                database=kwargs.get("database"),
-            )
-        elif backend == "oracle":
-            con = ibis.oracle.connect(
-                host=kwargs.get("host", "localhost"),
-                port=int(kwargs.get("port", 1521)),
-                user=kwargs.get("user"),
-                password=kwargs.get("password"),
-                database=kwargs.get("database"),
-            )
-        elif backend == "mssql":
-            # Build connection kwargs - extract known params, pass rest as extras
-            known_params = {"host", "port", "user", "password", "database", "driver"}
-            mssql_kwargs: dict[str, str | int] = {
-                "host": kwargs.get("host", "localhost"),
-                "port": int(kwargs.get("port", 1433)),
-            }
-            if kwargs.get("user"):
-                mssql_kwargs["user"] = kwargs["user"]
-            if kwargs.get("password"):
-                mssql_kwargs["password"] = kwargs["password"]
-            if kwargs.get("database"):
-                mssql_kwargs["database"] = kwargs["database"]
-            if kwargs.get("driver"):
-                mssql_kwargs["driver"] = kwargs["driver"]
-            # Pass additional params (e.g., TrustServerCertificate) to pyodbc
-            for key, value in kwargs.items():
-                if key not in known_params:
-                    mssql_kwargs[key] = value
-            con = ibis.mssql.connect(**mssql_kwargs)  # type: ignore[arg-type]
-        else:
-            raise ValueError(f"Unsupported backend: {backend}")
-    except ModuleNotFoundError as e:
-        _raise_driver_error(backend, e)
+    if backend == "sqlite":
+        con = ibis.sqlite.connect(kwargs.get("path", ":memory:"))
+    else:
+        con = _connect_external_backend(backend, kwargs)
 
     return con, backend
 
@@ -247,9 +250,6 @@ def get_database_name(
     backend_name: str,
 ) -> str:
     """Extract database name from connection."""
-    from pathlib import Path
-    from urllib.parse import urlparse
-
     if isinstance(connection, str):
         parsed = urlparse(connection)
         if backend_name == "sqlite":
@@ -257,37 +257,27 @@ def get_database_name(
             return Path(path).stem or "sqlite"
         else:
             return parsed.path.lstrip("/") or backend_name
-    else:
-        db_attr = getattr(con, "database", None)
-        if db_attr:
-            return str(db_attr)
-        return backend_name
+    # For connection objects, use current_database or fallback to backend name
+    db_name = getattr(con, "current_database", None)
+    # SQLite returns "main" which isn't useful, use backend_name instead
+    if db_name and db_name != "main":
+        return str(db_name)
+    return backend_name
 
 
 def get_database_path(
-    connection: str | ibis.BaseBackend,
+    connection: str,
     backend_name: str,
 ) -> str | None:
     """Get file path for file-based databases (SQLite, DuckDB)."""
-    from pathlib import Path
-    from urllib.parse import urlparse
-
     if backend_name not in ("sqlite", "duckdb"):
         return None
 
-    if isinstance(connection, str):
-        parsed = urlparse(connection)
-        path = parsed.netloc + parsed.path if parsed.netloc else parsed.path
-        if path and path != ":memory:":
-            return str(Path(path).resolve())
-    else:
-        # Try to get path from connection object
-        db_path = getattr(connection, "con", None)
-        if db_path is not None:
-            # SQLite connection has .con which is the sqlite3.Connection
-            db_file = getattr(db_path, "database", None)
-            if db_file and db_file != ":memory:":
-                return str(Path(db_file).resolve())
+    _, kwargs = parse_connection_string(connection)
+    path = kwargs.get("path", "")
+
+    if path and path != ":memory:":
+        return str(Path(path).resolve())
 
     return None
 
@@ -301,20 +291,20 @@ def get_schemas_to_scan(
     if schema is not None:
         return [schema]
 
-    if backend_name in SYSTEM_SCHEMAS:
-        available = list_schemas(con)
-        system = SYSTEM_SCHEMAS[backend_name]
-        schemas: list[str | None] = [s for s in available if s not in system]
-        if backend_name == "oracle":
-            schemas.append(None)
-        elif not schemas:
-            schemas = [None]
-        return schemas
+    if backend_name not in SYSTEM_SCHEMAS:
+        return [None]
 
-    return [None]
+    available = list_schemas(con)
+    system = SYSTEM_SCHEMAS[backend_name]
+    schemas: list[str | None] = [s for s in available if s not in system]
+    if backend_name == "oracle":
+        schemas.append(None)
+    elif not schemas:
+        schemas = [None]
+    return schemas
 
 
-def _match_patterns(items: list[str], patterns: Sequence[str]) -> set[str]:
+def match_patterns(items: list[str], patterns: Sequence[str]) -> set[str]:
     """Match items against glob patterns."""
     import fnmatch
 
@@ -335,7 +325,7 @@ def list_tables(
     backend_name: str | None = None,
 ) -> list[str]:
     """List tables in a database, filtered by include/exclude patterns. Views excluded."""
-    backend = backend_name or _get_backend_name(con)
+    backend = backend_name or get_backend_name(con)
 
     # Oracle stores unquoted identifiers in UPPERCASE
     db_schema = schema.upper() if schema and backend == "oracle" else schema
@@ -388,11 +378,11 @@ def list_tables(
         )
 
     if include is not None:
-        included = _match_patterns(tables, include)
+        included = match_patterns(tables, include)
         tables = [t for t in tables if t in included]
 
     if exclude is not None:
-        excluded = _match_patterns(tables, exclude)
+        excluded = match_patterns(tables, exclude)
         tables = [t for t in tables if t not in excluded]
 
     return sorted(tables)
@@ -400,22 +390,20 @@ def list_tables(
 
 def list_schemas(con: ibis.BaseBackend) -> list[str]:
     """List schemas in a database (postgres/mysql only)."""
-    backend = _get_backend_name(con)
+    backend = get_backend_name(con)
     system_schemas = SYSTEM_SCHEMAS.get(backend, set())
 
     # Oracle: use raw SQL to list user schemas (more reliable than Ibis)
     if backend == "oracle":
         raw_sql = getattr(con, "raw_sql", None)
-        if raw_sql:
-            # List all users that have at least one table (user schemas)
-            result = raw_sql(
-                "SELECT DISTINCT owner FROM all_tables "
-                "WHERE owner NOT IN ("
-                + ",".join(f"'{s}'" for s in system_schemas)
-                + ")"
-            ).fetchall()
-            return sorted([row[0].lower() for row in result])
-        return []
+        if not raw_sql:
+            return []
+        # List all users that have at least one table (user schemas)
+        result = raw_sql(
+            "SELECT DISTINCT owner FROM all_tables "
+            "WHERE owner NOT IN (" + ",".join(f"'{s}'" for s in system_schemas) + ")"
+        ).fetchall()
+        return sorted([row[0].lower() for row in result])
 
     # Try to get schemas - not all backends support this
     try:
@@ -443,7 +431,7 @@ def scan_table(
     sample_size: int | None = None,
 ) -> tuple[list[Variable], int, pa.Table | None]:
     """Scan a database table and return (variables, row_count, freq_table)."""
-    backend = _get_backend_name(con)
+    backend = get_backend_name(con)
 
     # Oracle stores unquoted identifiers in UPPERCASE
     if backend == "oracle":

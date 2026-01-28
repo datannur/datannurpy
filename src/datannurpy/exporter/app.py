@@ -58,11 +58,8 @@ def export_app(
     # Copy app files
     copy_app(output_dir)
 
-    # Clear and write to data/db/
+    # Write to data/db/ (copy_app already cleared the data/ directory)
     db_dir = output_dir / "data" / "db"
-    if db_dir.exists():
-        shutil.rmtree(db_dir)
-
     catalog.export_db(db_dir, quiet=True)  # Don't duplicate write logs
 
     if not q:

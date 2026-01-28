@@ -5,7 +5,6 @@ from __future__ import annotations
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import ibis
 import numpy as np
@@ -15,16 +14,6 @@ import pyarrow as pa
 from ..entities import Variable
 from .utils import build_variables
 
-try:
-    import pyreadstat
-
-    HAS_PYREADSTAT = True
-except ImportError:
-    HAS_PYREADSTAT = False
-
-if TYPE_CHECKING:
-    import pyreadstat
-
 
 @dataclass
 class StatisticalMetadata:
@@ -33,7 +22,7 @@ class StatisticalMetadata:
     description: str | None = None
 
 
-def _convert_float_to_int(df: pd.DataFrame) -> pd.DataFrame:
+def convert_float_to_int(df: pd.DataFrame) -> pd.DataFrame:
     """Convert float columns that contain only integer values to int64."""
     df = df.copy()
     for col in df.columns:
@@ -54,11 +43,14 @@ def scan_statistical(
     freq_threshold: int | None = None,
 ) -> tuple[list[Variable], int, pa.Table | None, StatisticalMetadata]:
     """Scan a statistical file (SAS/SPSS/Stata) and return (variables, row_count, freq_table, metadata)."""
-    if not HAS_PYREADSTAT:
-        raise ImportError(
+    try:
+        import pyreadstat
+    except ImportError as e:
+        msg = (
             "pyreadstat is required for SAS/SPSS/Stata support. "
             "Install it with: pip install datannurpy[stat]"
         )
+        raise ImportError(msg) from e
 
     file_path = Path(path)
     suffix = file_path.suffix.lower()
@@ -70,9 +62,7 @@ def scan_statistical(
         ".dta": pyreadstat.read_dta,
     }
 
-    reader = readers.get(suffix)
-    if reader is None:
-        raise ValueError(f"Unsupported statistical format: {suffix}")
+    reader = readers[suffix]
 
     # Read data and metadata using pyreadstat
     try:
@@ -91,7 +81,7 @@ def scan_statistical(
     stat_metadata = StatisticalMetadata(description=meta.file_label or None)
 
     # Convert float columns that are actually integers
-    df = _convert_float_to_int(df)
+    df = convert_float_to_int(df)
 
     # Convert to Ibis table via DuckDB for stats computation
     con = ibis.duckdb.connect()

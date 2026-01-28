@@ -174,6 +174,23 @@ class BaseDatabaseTests(ABC):
         root_folder = catalog.folders[0]
         assert root_folder.type == delivery_format
 
+    def test_catalog_add_database_no_prefix_grouping(
+        self, db_with_employees: tuple[ibis.BaseBackend, str, str]
+    ) -> None:
+        """Test adding database without prefix grouping."""
+        con, _, _ = db_with_employees
+
+        catalog = Catalog()
+        catalog.add_database(
+            con,
+            folder=Folder(id="testdb", name="Test DB"),
+            group_by_prefix=False,
+        )
+
+        # No prefix folders should be created (only root + schema folders)
+        prefix_folders = [f for f in catalog.folders if f.type == "table_prefix"]
+        assert len(prefix_folders) == 0
+
     def test_catalog_with_include(
         self, db_with_employees: tuple[ibis.BaseBackend, str, str]
     ) -> None:

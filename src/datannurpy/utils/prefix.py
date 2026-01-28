@@ -45,13 +45,13 @@ def get_prefix_folders(
     # Build hierarchy: find parent for each prefix
     result: list[PrefixFolder] = []
     for prefix in sorted(valid_prefixes):
-        parent = _find_parent_prefix(prefix, valid_prefixes, sep)
+        parent = find_parent_prefix(prefix, valid_prefixes, sep)
         result.append(PrefixFolder(prefix=prefix, parent_prefix=parent))
 
     return result
 
 
-def _find_parent_prefix(
+def find_parent_prefix(
     prefix: str,
     valid_prefixes: set[str],
     sep: str,
