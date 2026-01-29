@@ -2,6 +2,8 @@
 
 ## unreleased
 
+## 0.4.0 (2026-01-29)
+
 - add: manual metadata merging with add_metadata
 
 ## 0.3.2 (2026-01-29)
