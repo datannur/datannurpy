@@ -2,6 +2,8 @@
 
 ## unreleased
 
+## 0.3.2 (2026-01-29)
+
 - add: test coverage with codecov and improve test coverage to 100%
 - fix: Iceberg scanner no longer requires network access (replaced DuckDB extension with PyIceberg)
 - refactor: remove all methodes from catalog.py and rename writer to exporter
