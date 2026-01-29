@@ -80,7 +80,7 @@ class TestGeoPackage:
         try:
             # Project has: id, geom (POINT/Unknown), ProjectName, etc.
             variables, row_count, freq_table = scan_table(
-                con, "Project", infer_stats=True, freq_threshold=100
+                con, "Project", dataset_id="test", infer_stats=True, freq_threshold=100
             )
             assert row_count == 29  # 29 photovoltaic projects
             var_dict = {v.id: v for v in variables}

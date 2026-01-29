@@ -135,7 +135,10 @@ def add_folder(
 
         # Scan dataset
         variables, nb_row, freq_table, metadata = scan_parquet_dataset(
-            info, infer_stats=infer_stats, freq_threshold=freq_threshold
+            info,
+            dataset_id=dataset_id,
+            infer_stats=infer_stats,
+            freq_threshold=freq_threshold,
         )
 
         # Create dataset
@@ -203,6 +206,7 @@ def add_folder(
         result = scan_file(
             file_path,
             delivery_format,
+            dataset_id=dataset_id,
             infer_stats=infer_stats,
             freq_threshold=freq_threshold,
             csv_encoding=resolved_encoding,
@@ -217,7 +221,7 @@ def add_folder(
         catalog.variables.extend(result.variables)
 
         # Log result
-        if dataset.nb_row > 0:
+        if dataset.nb_row and dataset.nb_row > 0:
             var_count = sum(1 for v in catalog.variables if v.dataset_id == dataset.id)
             log_done(f"{file_path.name} ({dataset.nb_row:,} rows, {var_count} vars)", q)
         else:

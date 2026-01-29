@@ -232,6 +232,18 @@ def export_db(
         write_freq_json(freq_table, output_dir, write_js=write_js)
         tables.append("freq")
 
+    if catalog.institutions:
+        write_json(catalog.institutions, "institution", output_dir, write_js=write_js)
+        tables.append("institution")
+
+    if catalog.tags:
+        write_json(catalog.tags, "tag", output_dir, write_js=write_js)
+        tables.append("tag")
+
+    if catalog.docs:
+        write_json(catalog.docs, "doc", output_dir, write_js=write_js)
+        tables.append("doc")
+
     if tables:
         write_table_registry(output_dir, tables, write_js=write_js)
 

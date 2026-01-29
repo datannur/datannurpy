@@ -27,13 +27,22 @@ All formats support automatic schema inference and statistics computation.
 pip install datannurpy
 ```
 
-For database support:
+### Optional extras
 
 ```bash
+# Databases
 pip install datannurpy[postgres]  # PostgreSQL
 pip install datannurpy[mysql]     # MySQL
 pip install datannurpy[oracle]    # Oracle
-pip install datannurpy[mssql]     # SQL Server (also requires ODBC driver, see below)
+pip install datannurpy[mssql]     # SQL Server
+
+# File formats
+pip install datannurpy[stat]      # SAS, SPSS, Stata
+pip install datannurpy[delta]     # Delta Lake metadata extraction
+pip install datannurpy[iceberg]   # Apache Iceberg metadata extraction
+
+# Multiple extras
+pip install datannurpy[postgres,stat,delta]
 ```
 
 **SQL Server note:** Requires an ODBC driver on the system:
@@ -41,12 +50,6 @@ pip install datannurpy[mssql]     # SQL Server (also requires ODBC driver, see b
 - macOS: `brew install unixodbc freetds`
 - Linux: `apt install unixodbc-dev tdsodbc`
 - Windows: [Microsoft ODBC Driver](https://learn.microsoft.com/sql/connect/odbc/download-odbc-driver-for-sql-server)
-
-For statistical file support (SAS, SPSS, Stata):
-
-```bash
-pip install datannurpy[stat]
-```
 
 ## Quick start
 
@@ -103,13 +106,7 @@ catalog.add_dataset(
 )
 ```
 
-For Delta Lake metadata extraction (name, description):
-
-```bash
-pip install datannurpy[delta]
-```
-
-Metadata (name, description, column docs) is extracted from Delta/Iceberg when available.
+With extras `[delta]` and `[iceberg]`, metadata (name, description, column docs) is extracted when available.
 
 ## Scanning databases
 
@@ -140,6 +137,60 @@ catalog.add_database(
     group_by_prefix=True,  # group tables by common prefix (default)
     prefix_min_tables=2,  # minimum tables to form a group
 )
+```
+
+## Manual metadata
+
+Load manually curated metadata from files or a database:
+
+```python
+# Load from a folder containing metadata files
+catalog.add_metadata("./metadata")
+
+# Load from a database
+catalog.add_metadata("sqlite:///metadata.db")
+```
+
+Can be used alone or combined with auto-scanned metadata (`add_folder`, `add_database`).
+
+**Expected structure:** One file/table per entity, named after the entity type:
+
+```
+metadata/
+├── variable.csv      # Variables (descriptions, tags...)
+├── dataset.xlsx      # Datasets
+├── institution.json  # Institutions (owners, managers)
+├── tag.csv           # Tags
+├── modality.csv      # Modalities
+├── value.csv         # Modality values
+└── ...
+```
+
+**Supported formats:** CSV, Excel (.xlsx), JSON, SAS (.sas7bdat), or database tables.
+
+**File format:** Standard tabular structure following [datannur schemas](https://github.com/datannur/datannur/tree/main/public/schemas). The `id` column is required for most entities (except `value` and `freq`).
+
+```csv
+# variable.csv
+id,description,tag_ids
+source---employees_csv---salary,"Monthly gross salary in euros","finance,hr"
+source---employees_csv---department,"Department code","hr"
+```
+
+**Merge behavior:**
+
+- Existing entities are updated (manual values override auto-scanned values)
+- New entities are created
+- List fields (`tag_ids`, `doc_ids`, etc.) are merged
+
+**Helper functions** for building IDs in preprocessing scripts:
+
+```python
+from datannurpy import sanitize_id, build_dataset_id, build_variable_id
+
+sanitize_id("My File (v2)")  # → "My_File_v2"
+build_dataset_id("source", "employees_csv")  # → "source---employees_csv"
+build_variable_id("source", "employees_csv", "salary")  # → "source---employees_csv---salary"
 ```
 
 ## Output
@@ -237,6 +288,19 @@ catalog.add_database(connection, folder=None, *, schema=None, include=None,
 - Oracle: `oracle://user:pass@host:1521/service_name`
 - SQL Server: `mssql://user:pass@host:1433/database`
 
+### `Catalog.add_metadata()`
+
+```python
+catalog.add_metadata(path, quiet=None)
+```
+
+| Parameter | Type           | Default  | Description                                  |
+| --------- | -------------- | -------- | -------------------------------------------- |
+| `path`    | `str \| Path`  | required | Folder or database containing metadata files |
+| `quiet`   | `bool \| None` | `None`   | Override catalog quiet setting               |
+
+**Supported entity files/tables:** `folder`, `dataset`, `variable`, `modality`, `value`, `freq`, `institution`, `tag`, `doc`
+
 ### `Catalog.export_db()`
 
 ```python
@@ -265,6 +329,18 @@ Folder(id, name=None, description=None, parent_id=None, type=None, data_path=Non
 | `name`        | `str \| None` | Display name      |
 | `description` | `str \| None` | Description       |
 | `parent_id`   | `str \| None` | Parent folder ID  |
+
+### ID Helpers
+
+```python
+from datannurpy import sanitize_id, build_dataset_id, build_variable_id
+```
+
+| Function                                               | Description                | Example                                                 |
+| ------------------------------------------------------ | -------------------------- | ------------------------------------------------------- |
+| `sanitize_id(s)`                                       | Clean string for use as ID | `"My File (v2)"` → `"My_File_v2"`                       |
+| `build_dataset_id(folder_id, dataset_name)`            | Build dataset ID           | `("src", "sales")` → `"src---sales"`                    |
+| `build_variable_id(folder_id, dataset_name, var_name)` | Build variable ID          | `("src", "sales", "amount")` → `"src---sales---amount"` |
 
 ## License
 

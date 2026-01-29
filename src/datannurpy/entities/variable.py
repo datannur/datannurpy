@@ -17,9 +17,7 @@ class Variable(Entity):
 
     # Required
     name: str
-
-    # Foreign key
-    dataset_id: str | None = None
+    dataset_id: str
 
     # Many-to-many relations
     modality_ids: list[str] = field(default_factory=list)

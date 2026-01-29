@@ -31,6 +31,16 @@ def make_id(*parts: str) -> str:
     return ID_SEPARATOR.join(parts)
 
 
+def build_dataset_id(folder_id: str, dataset_name: str) -> str:
+    """Build dataset ID from folder and dataset name."""
+    return make_id(folder_id, sanitize_id(dataset_name))
+
+
+def build_variable_id(folder_id: str, dataset_name: str, variable_name: str) -> str:
+    """Build variable ID from folder, dataset and variable name."""
+    return make_id(folder_id, sanitize_id(dataset_name), sanitize_id(variable_name))
+
+
 def compute_modality_hash(values: set[str]) -> str:
     """Compute deterministic 10-char hash for a set of values."""
     signature = json.dumps(sorted(values), ensure_ascii=False)

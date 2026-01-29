@@ -17,4 +17,5 @@ catalog.add_database(
         "Source: Office fédéral de l'énergie (OFEN) - opendata.swiss",
     ),
 )
+catalog.add_metadata(DATA / "metadata")
 catalog.export_app(HERE / "output", open_browser=True)

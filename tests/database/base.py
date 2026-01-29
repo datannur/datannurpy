@@ -92,7 +92,7 @@ class BaseDatabaseTests(ABC):
     ) -> None:
         """Test scanning a table."""
         con, _, _ = db_with_employees
-        variables, row_count, _ = scan_table(con, "employees")
+        variables, row_count, _ = scan_table(con, "employees", dataset_id="test")
 
         assert row_count == 5
         assert len(variables) == 5  # id, name, department, salary, hire_date
@@ -105,7 +105,7 @@ class BaseDatabaseTests(ABC):
     ) -> None:
         """Test that variable types are correctly inferred."""
         con, _, _ = db_with_employees
-        variables, _, _ = scan_table(con, "employees")
+        variables, _, _ = scan_table(con, "employees", dataset_id="test")
 
         var_by_name = {v.name: v for v in variables}
         assert var_by_name["id"].type == "integer"
@@ -118,7 +118,9 @@ class BaseDatabaseTests(ABC):
     ) -> None:
         """Test scanning with statistics."""
         con, _, _ = db_with_employees
-        variables, _, _ = scan_table(con, "employees", infer_stats=True)
+        variables, _, _ = scan_table(
+            con, "employees", dataset_id="test", infer_stats=True
+        )
 
         var_by_name = {v.name: v for v in variables}
         # department has 3 distinct values
@@ -130,7 +132,9 @@ class BaseDatabaseTests(ABC):
     ) -> None:
         """Test scanning without statistics."""
         con, _, _ = db_with_employees
-        variables, _, _ = scan_table(con, "employees", infer_stats=False)
+        variables, _, _ = scan_table(
+            con, "employees", dataset_id="test", infer_stats=False
+        )
 
         var_by_name = {v.name: v for v in variables}
         assert var_by_name["name"].nb_distinct is None
@@ -141,7 +145,9 @@ class BaseDatabaseTests(ABC):
     ) -> None:
         """Test scanning with sample size."""
         con, backend, _ = db_with_employees
-        variables, row_count, _ = scan_table(con, "employees", sample_size=2)
+        variables, row_count, _ = scan_table(
+            con, "employees", dataset_id="test", sample_size=2
+        )
 
         # Row count should still be the full count
         assert row_count == 5
@@ -239,7 +245,7 @@ class BaseDatabaseTests(ABC):
         """Test scanning a table with no rows."""
         con, _, _ = db_with_employees
         variables, row_count, freq_table = scan_table(
-            con, "empty_table", infer_stats=True
+            con, "empty_table", dataset_id="test", infer_stats=True
         )
         assert row_count == 0
         assert len(variables) == 2
@@ -308,7 +314,9 @@ class BaseSchemaTests(ABC):
     ) -> None:
         """Test scanning a table in a schema."""
         con, _ = db_with_schemas
-        variables, row_count, _ = scan_table(con, "orders", schema="sales")
+        variables, row_count, _ = scan_table(
+            con, "orders", schema="sales", dataset_id="test"
+        )
         assert row_count == 2
         var_names = {v.name for v in variables}
         assert var_names == {"id", "customer", "amount"}
