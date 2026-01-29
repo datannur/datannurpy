@@ -350,7 +350,7 @@ class TestScanTable:
         with patch(
             "datannurpy.scanner.database.build_variables", return_value=([], None)
         ):
-            scan_table(mock_con, "employees", schema="hr")
+            scan_table(mock_con, "employees", schema="hr", dataset_id="test")
 
         # Verify table was called with uppercased identifiers
         mock_con.table.assert_called_once_with("EMPLOYEES", database="HR")
@@ -368,7 +368,7 @@ class TestScanTable:
         with patch(
             "datannurpy.scanner.database.build_variables", return_value=([], None)
         ):
-            scan_table(mock_con, "employees")
+            scan_table(mock_con, "employees", dataset_id="test")
 
         mock_con.table.assert_called_once_with("EMPLOYEES")
 
@@ -386,7 +386,7 @@ class TestScanTable:
         with patch(
             "datannurpy.scanner.database.build_variables", return_value=([], None)
         ):
-            scan_table(mock_con, "employees")
+            scan_table(mock_con, "employees", dataset_id="test")
 
         mock_con.table.assert_called_once_with("EMPLOYEES")
 
@@ -405,6 +405,6 @@ class TestScanTable:
             "datannurpy.scanner.database.build_variables", return_value=([], None)
         ):
             # Should not raise, continues without skip_stats_columns
-            scan_table(mock_con, "employees")
+            scan_table(mock_con, "employees", dataset_id="test")
 
         mock_con.table.assert_called_once_with("EMPLOYEES")

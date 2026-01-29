@@ -299,3 +299,51 @@ class TestCatalogWrite:
         assert "variable" in table_names
         assert "__table__" in table_names
         assert all("last_modif" in t for t in data)
+
+    def test_write_institutions(self, tmp_path: Path):
+        """export_db should write institution.json when institutions exist."""
+        from datannurpy.entities import Institution
+
+        catalog = Catalog()
+        catalog.institutions.append(Institution(id="inst1", name="Institution 1"))
+        catalog.export_db(tmp_path)
+
+        assert (tmp_path / "institution.json").exists()
+        assert (tmp_path / "institution.json.js").exists()
+
+        with open(tmp_path / "institution.json") as f:
+            data = json.load(f)
+        assert len(data) == 1
+        assert data[0]["id"] == "inst1"
+
+    def test_write_tags(self, tmp_path: Path):
+        """export_db should write tag.json when tags exist."""
+        from datannurpy.entities import Tag
+
+        catalog = Catalog()
+        catalog.tags.append(Tag(id="tag1", name="Tag 1"))
+        catalog.export_db(tmp_path)
+
+        assert (tmp_path / "tag.json").exists()
+        assert (tmp_path / "tag.json.js").exists()
+
+        with open(tmp_path / "tag.json") as f:
+            data = json.load(f)
+        assert len(data) == 1
+        assert data[0]["id"] == "tag1"
+
+    def test_write_docs(self, tmp_path: Path):
+        """export_db should write doc.json when docs exist."""
+        from datannurpy.entities import Doc
+
+        catalog = Catalog()
+        catalog.docs.append(Doc(id="doc1", name="Doc 1"))
+        catalog.export_db(tmp_path)
+
+        assert (tmp_path / "doc.json").exists()
+        assert (tmp_path / "doc.json.js").exists()
+
+        with open(tmp_path / "doc.json") as f:
+            data = json.load(f)
+        assert len(data) == 1
+        assert data[0]["id"] == "doc1"

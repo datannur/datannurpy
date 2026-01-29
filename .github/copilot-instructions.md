@@ -21,6 +21,7 @@ src/datannurpy/
 - `Catalog.add_folder(path, folder=None)` → scans CSV/Excel/Parquet/SAS files (auto-detects Delta/Hive/Iceberg)
 - `Catalog.add_dataset(path, folder=None)` → adds single file or partitioned directory (Delta/Hive/Iceberg)
 - `Catalog.add_database(connection, folder=None)` → scans database tables
+- `Catalog.add_metadata(path)` → loads curated metadata from folder or database (merges with existing)
 - `Catalog.export_db(output_dir)` → exports JSON + JSON.js files
 - `Catalog.export_app(output_dir)` → exports full datannur app with data
 - `Folder(id, name)` → optional, for custom folder metadata
@@ -56,6 +57,12 @@ Example with `Folder(id="source")` scanning `data/sales.csv`:
 
 - Dataset: `source---sales_csv`
 - Variable: `source---sales_csv---amount`
+
+### ID Helpers
+
+- `sanitize_id(s)` → cleans string for use as ID
+- `build_dataset_id(folder_id, dataset_name)` → `folder_id---sanitized_name`
+- `build_variable_id(folder_id, dataset_name, var_name)` → `folder_id---dataset---var`
 
 ## Dev Commands
 

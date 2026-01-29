@@ -143,6 +143,7 @@ def add_dataset(
     result = scan_file(
         dataset_path,
         delivery_format,
+        dataset_id=dataset_id,
         infer_stats=infer_stats,
         freq_threshold=catalog.freq_threshold if catalog.freq_threshold else None,
         csv_encoding=resolved_encoding,

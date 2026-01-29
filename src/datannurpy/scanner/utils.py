@@ -122,7 +122,7 @@ def build_variables(
     table: ibis.Table,
     *,
     nb_rows: int,
-    dataset_id: str | None = None,
+    dataset_id: str,
     infer_stats: bool = True,
     freq_threshold: int | None = None,
     skip_stats_columns: set[str] | None = None,

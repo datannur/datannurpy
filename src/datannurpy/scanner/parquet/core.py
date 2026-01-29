@@ -63,7 +63,7 @@ def extract_parquet_metadata(path: Path) -> DatasetMetadata:
 
 def scan_simple(
     path: Path,
-    dataset_id: str | None,
+    dataset_id: str,
     infer_stats: bool,
     freq_threshold: int | None,
 ) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
@@ -94,7 +94,7 @@ def scan_simple(
 
 def scan_delta(
     path: Path,
-    dataset_id: str | None,
+    dataset_id: str,
     infer_stats: bool,
     freq_threshold: int | None,
 ) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
@@ -144,7 +144,7 @@ def scan_delta(
 
 def scan_hive(
     path: Path,
-    dataset_id: str | None,
+    dataset_id: str,
     infer_stats: bool,
     freq_threshold: int | None,
 ) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
@@ -174,7 +174,7 @@ def scan_hive(
 
 def scan_iceberg(
     path: Path,
-    dataset_id: str | None,
+    dataset_id: str,
     infer_stats: bool,
     freq_threshold: int | None,
 ) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
@@ -234,7 +234,7 @@ SCANNERS = {
 def scan_parquet_dataset(
     info: ParquetDatasetInfo,
     *,
-    dataset_id: str | None = None,
+    dataset_id: str,
     infer_stats: bool = True,
     freq_threshold: int | None = None,
 ) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
@@ -246,7 +246,7 @@ def scan_parquet_dataset(
 def scan_parquet(
     path: str | Path,
     *,
-    dataset_id: str | None = None,
+    dataset_id: str,
     infer_stats: bool = True,
     freq_threshold: int | None = None,
 ) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:

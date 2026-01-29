@@ -35,10 +35,47 @@ def convert_float_to_int(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def read_statistical(path: str | Path) -> pd.DataFrame | None:
+    """Read a statistical file (SAS/SPSS/Stata) into a pandas DataFrame."""
+    try:
+        import pyreadstat
+    except ImportError:
+        warnings.warn(
+            "pyreadstat is required for SAS/SPSS/Stata support. "
+            "Install it with: pip install datannurpy[stat]",
+            stacklevel=3,
+        )
+        return None
+
+    file_path = Path(path)
+    suffix = file_path.suffix.lower()
+
+    readers = {
+        ".sas7bdat": pyreadstat.read_sas7bdat,
+        ".sav": pyreadstat.read_sav,
+        ".dta": pyreadstat.read_dta,
+    }
+
+    reader = readers.get(suffix)
+    if reader is None:
+        return None
+
+    try:
+        df, _ = reader(file_path)
+        return convert_float_to_int(df)
+    except Exception as e:
+        error_msg = str(e).split("\n")[0]
+        warnings.warn(
+            f"Could not read statistical file '{file_path.name}': {error_msg}",
+            stacklevel=3,
+        )
+        return None
+
+
 def scan_statistical(
     path: str | Path,
     *,
-    dataset_id: str | None = None,
+    dataset_id: str,
     infer_stats: bool = True,
     freq_threshold: int | None = None,
 ) -> tuple[list[Variable], int, pa.Table | None, StatisticalMetadata]:

@@ -425,7 +425,7 @@ def scan_table(
     table_name: str,
     *,
     schema: str | None = None,
-    dataset_id: str | None = None,
+    dataset_id: str,
     infer_stats: bool = True,
     freq_threshold: int | None = None,
     sample_size: int | None = None,

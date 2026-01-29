@@ -3,8 +3,10 @@
 from .ids import (
     ID_SEPARATOR,
     MODALITIES_FOLDER_ID,
+    build_dataset_id,
     build_dataset_id_name,
     build_modality_name,
+    build_variable_id,
     build_variable_ids,
     compute_modality_hash,
     get_folder_id,
@@ -26,8 +28,10 @@ __all__ = [
     # ids
     "ID_SEPARATOR",
     "MODALITIES_FOLDER_ID",
+    "build_dataset_id",
     "build_dataset_id_name",
     "build_modality_name",
+    "build_variable_id",
     "build_variable_ids",
     "compute_modality_hash",
     "get_folder_id",

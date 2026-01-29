@@ -28,6 +28,7 @@ def scan_file(
     path: Path,
     delivery_format: str,
     *,
+    dataset_id: str,
     infer_stats: bool = True,
     freq_threshold: int | None = None,
     csv_encoding: str | None = None,
@@ -35,7 +36,10 @@ def scan_file(
     """Scan a file and return variables, row count, and optional metadata."""
     if delivery_format == "parquet":
         variables, nb_row, freq_table, metadata = scan_parquet(
-            path, infer_stats=infer_stats, freq_threshold=freq_threshold
+            path,
+            dataset_id=dataset_id,
+            infer_stats=infer_stats,
+            freq_threshold=freq_threshold,
         )
         return ScanResult(
             variables=variables,
@@ -46,7 +50,10 @@ def scan_file(
 
     if delivery_format in ("sas", "spss", "stata"):
         variables, nb_row, freq_table, metadata = scan_statistical(
-            path, infer_stats=infer_stats, freq_threshold=freq_threshold
+            path,
+            dataset_id=dataset_id,
+            infer_stats=infer_stats,
+            freq_threshold=freq_threshold,
         )
         return ScanResult(
             variables=variables,
@@ -58,6 +65,7 @@ def scan_file(
     if delivery_format == "csv":
         variables, nb_row, freq_table = scan_csv(
             path,
+            dataset_id=dataset_id,
             infer_stats=infer_stats,
             freq_threshold=freq_threshold,
             csv_encoding=csv_encoding,
@@ -66,6 +74,9 @@ def scan_file(
 
     # Excel (xls, xlsx)
     variables, nb_row, freq_table = scan_excel(
-        path, infer_stats=infer_stats, freq_threshold=freq_threshold
+        path,
+        dataset_id=dataset_id,
+        infer_stats=infer_stats,
+        freq_threshold=freq_threshold,
     )
     return ScanResult(variables=variables, nb_row=nb_row, freq_table=freq_table)

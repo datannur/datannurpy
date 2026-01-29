@@ -167,6 +167,7 @@ def add_database(
                 con,
                 table_name,
                 schema=schema_name,
+                dataset_id=dataset_id,
                 infer_stats=infer_stats,
                 freq_threshold=freq_threshold,
                 sample_size=sample_size,
