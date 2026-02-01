@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import fnmatch
+import hashlib
 from pathlib import Path
 from typing import TYPE_CHECKING, NoReturn
 from urllib.parse import parse_qs, urlparse
@@ -105,6 +107,17 @@ SQLITE_SYSTEM_TABLE_PREFIXES: tuple[str, ...] = (
 def get_backend_name(con: ibis.BaseBackend) -> str:
     """Get backend name from connection object."""
     return type(con).__module__.split(".")[-1]
+
+
+def close_connection(con: ibis.BaseBackend) -> None:
+    """Close an Ibis connection properly."""
+    # Try standard disconnect first
+    con.disconnect()
+    # SQLite backend doesn't implement disconnect(), close internal connection
+    if hasattr(con, "con"):
+        internal_con = getattr(con, "con")
+        if hasattr(internal_con, "close"):
+            internal_con.close()
 
 
 def raise_driver_error(backend: str, original_error: Exception) -> NoReturn:
@@ -306,8 +319,6 @@ def get_schemas_to_scan(
 
 def match_patterns(items: list[str], patterns: Sequence[str]) -> set[str]:
     """Match items against glob patterns."""
-    import fnmatch
-
     matched: set[str] = set()
     for pattern in patterns:
         if "*" in pattern or "?" in pattern:
@@ -418,6 +429,66 @@ def list_schemas(con: ibis.BaseBackend) -> list[str]:
     except Exception:
         pass
     return []
+
+
+def build_table_data_path(
+    backend_name: str,
+    db_name: str,
+    schema: str | None,
+    table_name: str,
+) -> str:
+    """Build a unique data_path for a database table."""
+    if schema:
+        return f"{backend_name}://{db_name}/{schema}/{table_name}"
+    return f"{backend_name}://{db_name}/{table_name}"
+
+
+def compute_schema_signature(
+    con: ibis.BaseBackend, table_name: str, schema: str | None
+) -> str:
+    """Compute a hash signature of the table schema (column names and types)."""
+    backend = get_backend_name(con)
+
+    # Oracle stores unquoted identifiers in UPPERCASE
+    if backend == "oracle":
+        table_name = table_name.upper()
+        if schema:
+            schema = schema.upper()
+
+    # Get table reference
+    if schema:
+        table = con.table(table_name, database=schema)
+    else:
+        table = con.table(table_name)
+
+    # Build schema string from column names and types
+    # Sort by column name for consistency
+    schema_parts = sorted(f"{col}:{dtype}" for col, dtype in table.schema().items())
+    schema_str = "|".join(schema_parts)
+
+    # Return MD5 hash (fast, collision-resistant enough for this use case)
+    return hashlib.md5(schema_str.encode()).hexdigest()
+
+
+def get_table_row_count(
+    con: ibis.BaseBackend, table_name: str, schema: str | None
+) -> int:
+    """Get row count for a table."""
+    backend = get_backend_name(con)
+
+    # Oracle stores unquoted identifiers in UPPERCASE
+    if backend == "oracle":
+        table_name = table_name.upper()
+        if schema:
+            schema = schema.upper()
+
+    # Get table reference
+    if schema:
+        table = con.table(table_name, database=schema)
+    else:
+        table = con.table(table_name)
+
+    return int(table.count().to_pyarrow().as_py())
 
 
 def scan_table(

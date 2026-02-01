@@ -1,6 +1,9 @@
 # datannurpy
 
-## unreleased
+## 0.4.1 (2026-02-01)
+
+- add: e2e test with demo data and db export
+- add: incrmental scan with db import
 
 ## 0.4.0 (2026-01-29)
 

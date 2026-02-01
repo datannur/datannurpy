@@ -347,3 +347,55 @@ class TestCatalogWrite:
             data = json.load(f)
         assert len(data) == 1
         assert data[0]["id"] == "doc1"
+
+
+class TestDatasetIncrementalFields:
+    """Test Dataset incremental scan fields export."""
+
+    def test_dataset_last_update_timestamp_exported(self, tmp_path: Path):
+        """last_update_timestamp should be exported to JSON when set."""
+        from datannurpy.entities import Dataset
+
+        catalog = Catalog()
+        ds = Dataset(
+            id="test",
+            name="Test",
+            last_update_timestamp=1706745600,  # 2024-02-01 00:00:00 UTC
+        )
+        catalog.datasets.append(ds)
+        catalog.export_db(tmp_path)
+
+        with open(tmp_path / "dataset.json") as f:
+            data = json.load(f)
+        assert data[0]["last_update_timestamp"] == 1706745600
+
+    def test_dataset_schema_signature_exported(self, tmp_path: Path):
+        """schema_signature should be exported to JSON when set."""
+        from datannurpy.entities import Dataset
+
+        catalog = Catalog()
+        ds = Dataset(
+            id="test",
+            name="Test",
+            schema_signature="abc123hash",
+        )
+        catalog.datasets.append(ds)
+        catalog.export_db(tmp_path)
+
+        with open(tmp_path / "dataset.json") as f:
+            data = json.load(f)
+        assert data[0]["schema_signature"] == "abc123hash"
+
+    def test_dataset_incremental_fields_not_exported_when_none(self, tmp_path: Path):
+        """Incremental fields should not appear in JSON when None."""
+        from datannurpy.entities import Dataset
+
+        catalog = Catalog()
+        ds = Dataset(id="test", name="Test")
+        catalog.datasets.append(ds)
+        catalog.export_db(tmp_path)
+
+        with open(tmp_path / "dataset.json") as f:
+            data = json.load(f)
+        assert "last_update_timestamp" not in data[0]
+        assert "schema_signature" not in data[0]

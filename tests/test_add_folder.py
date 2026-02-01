@@ -468,3 +468,31 @@ class TestEdgeCases:
         catalog.add_folder(tmp_path)
 
         assert len(catalog.datasets) == 1
+
+
+class TestIncrementalScanSubfolders:
+    """Test incremental scan with subdirectories."""
+
+    def test_rescan_marks_existing_subfolders_as_seen(self, tmp_path: Path):
+        """Rescanning should mark existing subfolders as _seen=True."""
+        db_dir = tmp_path / "db"
+        data_dir = tmp_path / "data"
+        sub_dir = data_dir / "subdir"
+        sub_dir.mkdir(parents=True)
+        (sub_dir / "file.csv").write_text("a,b\n1,2\n")
+
+        # First scan
+        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.export_db()
+
+        # Reload and rescan
+        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog2.finalize()
+
+        # All user folders should be kept (excluding _modalities system folder)
+        user_folders = [f for f in catalog2.folders if f.id != "_modalities"]
+        assert len(user_folders) == 2
+        assert any(f.id == "src" for f in user_folders)
+        assert any("subdir" in f.id for f in user_folders)

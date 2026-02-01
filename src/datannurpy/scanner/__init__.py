@@ -3,7 +3,10 @@
 from .csv import read_csv, scan_csv
 from .database import (
     SYSTEM_SCHEMAS,
+    build_table_data_path,
+    compute_schema_signature,
     connect,
+    get_table_row_count,
     list_schemas,
     list_tables,
     scan_table,
@@ -26,4 +29,7 @@ __all__ = [
     "list_tables",
     "list_schemas",
     "SYSTEM_SCHEMAS",
+    "build_table_data_path",
+    "compute_schema_signature",
+    "get_table_row_count",
 ]

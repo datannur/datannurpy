@@ -10,43 +10,23 @@ src/datannurpy/
 ├── add_folder.py        # Catalog.add_folder implementation
 ├── add_dataset.py       # Catalog.add_dataset implementation
 ├── add_database.py      # Catalog.add_database implementation
+├── finalize.py          # Cleanup of entities not seen during scan
 ├── utils/               # Internal utilities (ids, log, modality, prefix)
 ├── entities/            # Dataclasses: Folder, Dataset, Variable, Modality, Value
 ├── scanner/             # File/DB scanning → Variables + stats
+├── importer/            # db.py (load_db for incremental scan)
 └── exporter/            # db.py (export_db), app.py (export_app)
 ```
 
 ## Public API
 
-- `Catalog.add_folder(path, folder=None)` → scans CSV/Excel/Parquet/SAS files (auto-detects Delta/Hive/Iceberg)
-- `Catalog.add_dataset(path, folder=None)` → adds single file or partitioned directory (Delta/Hive/Iceberg)
-- `Catalog.add_database(connection, folder=None)` → scans database tables
-- `Catalog.add_metadata(path)` → loads curated metadata from folder or database (merges with existing)
-- `Catalog.export_db(output_dir)` → exports JSON + JSON.js files
-- `Catalog.export_app(output_dir)` → exports full datannur app with data
-- `Folder(id, name)` → optional, for custom folder metadata
+Main classes: `Catalog`, `Folder`
 
-Common options: `include`, `exclude`, `infer_stats`
+Methods: `add_folder`, `add_dataset`, `add_database`, `add_metadata`, `finalize`, `export_db`, `export_app`
 
-### Parquet formats
+Common options: `include`, `exclude`, `infer_stats`, `refresh`
 
-Auto-detection: Delta (`_delta_log/`), Iceberg (`metadata/*.metadata.json`), Hive (`key=value/`)
-
-Metadata extraction: Delta/Iceberg name, description, column docs
-
-### Database connections
-
-Supported connection strings:
-
-- `sqlite:///path/to/db.sqlite`
-- `postgresql://user:pass@host:port/database`
-- `mysql://user:pass@host:port/database`
-- `oracle://user:pass@host:port/service_name`
-- `mssql://user:pass@host:port/database`
-
-Database-specific options: `schema`, `sample_size`, `group_by_prefix`, `prefix_min_tables`
-
-Install extras: `pip install datannurpy[postgres]`, `datannurpy[mysql]`, `datannurpy[oracle]`, `datannurpy[mssql]`, `datannurpy[stat]`
+See README for full API reference.
 
 ## ID Conventions
 

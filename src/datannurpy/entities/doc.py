@@ -19,3 +19,6 @@ class Doc(Entity):
 
     # Temporal
     last_update: str | None = None
+
+    # Internal flag for incremental tracking (not exported)
+    _seen: bool = False

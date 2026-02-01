@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from datannurpy import Catalog, Folder
 from datannurpy.scanner.database import connect, list_tables, scan_table
 
 from .base import BaseDatabaseTests
@@ -34,6 +35,45 @@ class TestSQLite(BaseDatabaseTests):
         con, _ = connect(f"sqlite:////{sample_sqlite_db}")
         yield con, "sqlite", "sqlite"
         con.disconnect()
+
+
+class TestSQLiteIncrementalScan:
+    """Test incremental scan for SQLite with prefix folders."""
+
+    def test_rescan_marks_existing_prefix_folders_as_seen(
+        self, sample_sqlite_db: Path, tmp_path: Path
+    ) -> None:
+        """Rescanning database should mark existing prefix folders as _seen=True."""
+        db_dir = tmp_path / "db"
+        conn_str = f"sqlite:////{sample_sqlite_db}"
+
+        # First scan with prefix grouping
+        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1.add_database(
+            conn_str,
+            Folder(id="db", name="Database"),
+            group_by_prefix=True,
+            prefix_min_tables=2,
+        )
+        catalog1.export_db()
+
+        # Should have prefix folders (dim, dim_product, dim_time)
+        prefix_folders = [f for f in catalog1.folders if f.type == "table_prefix"]
+        assert len(prefix_folders) > 0
+
+        # Reload and rescan
+        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2.add_database(
+            conn_str,
+            Folder(id="db", name="Database"),
+            group_by_prefix=True,
+            prefix_min_tables=2,
+        )
+        catalog2.finalize()
+
+        # All prefix folders should be kept (marked as seen)
+        prefix_folders2 = [f for f in catalog2.folders if f.type == "table_prefix"]
+        assert len(prefix_folders2) == len(prefix_folders)
 
 
 class TestGeoPackage:

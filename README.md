@@ -62,6 +62,18 @@ catalog.add_database("sqlite:///mydb.sqlite")
 catalog.export_app("./my-catalog", open_browser=True)
 ```
 
+## Incremental scan
+
+Re-run with the same `db_path` to only rescan changed files (compares mtime) or tables (compares schema + row count):
+
+```python
+catalog = Catalog(db_path="./my-catalog")
+catalog.add_folder("./data")  # skips unchanged files
+catalog.export_db()           # removes deleted entities, exports to db_path
+```
+
+Use `refresh=True` to force a full rescan.
+
 ## Scanning files
 
 ```python
@@ -208,11 +220,13 @@ catalog.export_app("./my-catalog", open_browser=True)
 ### `Catalog`
 
 ```python
-Catalog(freq_threshold=100, csv_encoding=None, quiet=False)
+Catalog(db_path=None, refresh=False, freq_threshold=100, csv_encoding=None, quiet=False)
 ```
 
 | Attribute        | Type             | Description                                             |
 | ---------------- | ---------------- | ------------------------------------------------------- |
+| `db_path`        | `str \| None`    | Load existing catalog for incremental scan              |
+| `refresh`        | `bool`           | Force full rescan ignoring cache (default: `False`)     |
 | `freq_threshold` | `int`            | Max distinct values for modality detection (0=disabled) |
 | `csv_encoding`   | `str \| None`    | Default CSV encoding (`"utf-8"`, `"cp1252"`, etc.)      |
 | `quiet`          | `bool`           | Suppress progress logging (default: `False`)            |
@@ -225,7 +239,7 @@ Catalog(freq_threshold=100, csv_encoding=None, quiet=False)
 
 ```python
 catalog.add_folder(path, folder=None, *, include=None, exclude=None,
-                   recursive=True, infer_stats=True, csv_encoding=None, quiet=None)
+                   recursive=True, infer_stats=True, csv_encoding=None, refresh=None, quiet=None)
 ```
 
 | Parameter      | Type                | Default  | Description                                |
@@ -237,13 +251,14 @@ catalog.add_folder(path, folder=None, *, include=None, exclude=None,
 | `recursive`    | `bool`              | `True`   | Scan subdirectories                        |
 | `infer_stats`  | `bool`              | `True`   | Compute distinct/missing/duplicate counts  |
 | `csv_encoding` | `str \| None`       | `None`   | Override CSV encoding                      |
+| `refresh`      | `bool \| None`      | `None`   | Force rescan (overrides catalog setting)   |
 | `quiet`        | `bool \| None`      | `None`   | Override catalog quiet setting             |
 
 ### `Catalog.add_dataset()`
 
 ```python
 catalog.add_dataset(path, folder=None, *, folder_id=None, infer_stats=True,
-                    csv_encoding=None, quiet=None, id=None, name=None, description=None, ...)
+                    csv_encoding=None, refresh=None, quiet=None, id=None, name=None, description=None, ...)
 ```
 
 | Parameter     | Type             | Default  | Description                                |
@@ -252,6 +267,7 @@ catalog.add_dataset(path, folder=None, *, folder_id=None, infer_stats=True,
 | `folder`      | `Folder \| None` | `None`   | Parent folder                              |
 | `folder_id`   | `str \| None`    | `None`   | Parent folder ID (alternative to `folder`) |
 | `infer_stats` | `bool`           | `True`   | Compute statistics                         |
+| `refresh`     | `bool \| None`   | `None`   | Force rescan (overrides catalog setting)   |
 | `quiet`       | `bool \| None`   | `None`   | Override catalog quiet setting             |
 | `id`          | `str \| None`    | `None`   | Override dataset ID                        |
 | `name`        | `str \| None`    | `None`   | Override dataset name                      |
@@ -264,21 +280,22 @@ Additional metadata parameters: `type`, `link`, `localisation`, `manager_id`, `o
 ```python
 catalog.add_database(connection, folder=None, *, schema=None, include=None,
                      exclude=None, infer_stats=True, sample_size=None,
-                     group_by_prefix=True, prefix_min_tables=2, quiet=None)
+                     group_by_prefix=True, prefix_min_tables=2, refresh=None, quiet=None)
 ```
 
-| Parameter           | Type                | Default  | Description                            |
-| ------------------- | ------------------- | -------- | -------------------------------------- |
-| `connection`        | `str`               | required | Connection string (see formats below)  |
-| `folder`            | `Folder \| None`    | `None`   | Custom root folder                     |
-| `schema`            | `str \| None`       | `None`   | Specific schema to scan                |
-| `include`           | `list[str] \| None` | `None`   | Table name patterns to include         |
-| `exclude`           | `list[str] \| None` | `None`   | Table name patterns to exclude         |
-| `infer_stats`       | `bool`              | `True`   | Compute column statistics              |
-| `sample_size`       | `int \| None`       | `None`   | Limit rows for stats (large tables)    |
-| `group_by_prefix`   | `bool \| str`       | `True`   | Group tables by prefix into subfolders |
-| `prefix_min_tables` | `int`               | `2`      | Min tables to form a prefix group      |
-| `quiet`             | `bool \| None`      | `None`   | Override catalog quiet setting         |
+| Parameter           | Type                | Default  | Description                              |
+| ------------------- | ------------------- | -------- | ---------------------------------------- |
+| `connection`        | `str`               | required | Connection string (see formats below)    |
+| `folder`            | `Folder \| None`    | `None`   | Custom root folder                       |
+| `schema`            | `str \| None`       | `None`   | Specific schema to scan                  |
+| `include`           | `list[str] \| None` | `None`   | Table name patterns to include           |
+| `exclude`           | `list[str] \| None` | `None`   | Table name patterns to exclude           |
+| `infer_stats`       | `bool`              | `True`   | Compute column statistics                |
+| `sample_size`       | `int \| None`       | `None`   | Limit rows for stats (large tables)      |
+| `group_by_prefix`   | `bool \| str`       | `True`   | Group tables by prefix into subfolders   |
+| `prefix_min_tables` | `int`               | `2`      | Min tables to form a prefix group        |
+| `refresh`           | `bool \| None`      | `None`   | Force rescan (overrides catalog setting) |
+| `quiet`             | `bool \| None`      | `None`   | Override catalog quiet setting           |
 
 **Connection string formats:**
 
@@ -304,18 +321,26 @@ catalog.add_metadata(path, quiet=None)
 ### `Catalog.export_db()`
 
 ```python
-catalog.export_db(output_dir, quiet=None)
+catalog.export_db(output_dir=None, quiet=None)
 ```
 
-Exports JSON metadata files to `output_dir` (for use with existing datannur instance).
+Exports JSON metadata files. Uses `db_path` by default if set at init.
+
+### `Catalog.finalize()`
+
+```python
+catalog.finalize()
+```
+
+Removes entities no longer seen during scan. Called automatically by `export_db()`/`export_app()`.
 
 ### `Catalog.export_app()`
 
 ```python
-catalog.export_app(output_dir, open_browser=False, quiet=None)
+catalog.export_app(output_dir=None, open_browser=False, quiet=None)
 ```
 
-Exports complete standalone datannur app with data to `output_dir`.
+Exports complete standalone datannur app with data. Uses `db_path` by default if set at init.
 
 ### `Folder`
 

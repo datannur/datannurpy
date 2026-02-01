@@ -32,6 +32,11 @@ def get_mtime_iso(path: Path) -> str:
     return dt_obj.strftime("%Y/%m/%d")
 
 
+def get_mtime_timestamp(path: Path) -> int:
+    """Get file modification time as Unix timestamp (seconds)."""
+    return int(path.stat().st_mtime)
+
+
 def find_files(
     root: Path,
     include: Sequence[str] | None,

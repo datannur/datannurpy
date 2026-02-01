@@ -8,6 +8,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Sequence
 
+from ..utils import find_files
+
 
 class DatasetType(Enum):
     """Type of Parquet dataset."""
@@ -95,8 +97,6 @@ def find_parquet_files(
     recursive: bool,
 ) -> list[Path]:
     """Find all parquet files matching the patterns."""
-    from ..utils import find_files
-
     # Get all files, then filter to parquet only
     all_files = find_files(root, include, exclude, recursive)
     return [f for f in all_files if f.suffix.lower() in (".parquet", ".pq")]

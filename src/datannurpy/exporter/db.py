@@ -165,10 +165,14 @@ def write_freq_json(
 
 
 def write_table_registry(
-    output_dir: Path, tables: list[str], *, write_js: bool = True
+    output_dir: Path,
+    tables: list[str],
+    *,
+    write_js: bool = True,
+    now: int | None = None,
 ) -> None:
     """Write __table__.json registry for jsonjsdb."""
-    now = int(time.time())
+    now = now if now is not None else int(time.time())
 
     # Build table registry
     registry = [{"name": name, "last_modif": now} for name in tables]
@@ -189,12 +193,20 @@ def write_table_registry(
 
 def export_db(
     catalog: Catalog,
-    output_dir: str | Path,
+    output_dir: str | Path | None = None,
     *,
     write_js: bool = True,
     quiet: bool | None = None,
 ) -> None:
     """Write all catalog entities to JSON files."""
+    catalog.finalize()
+
+    if output_dir is None:
+        if catalog.db_path is None:
+            msg = "output_dir is required when db_path was not set at init"
+            raise ValueError(msg)
+        output_dir = catalog.db_path
+
     q = quiet if quiet is not None else catalog.quiet
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -245,7 +257,7 @@ def export_db(
         tables.append("doc")
 
     if tables:
-        write_table_registry(output_dir, tables, write_js=write_js)
+        write_table_registry(output_dir, tables, write_js=write_js, now=catalog._now)
 
     if not q:
         elapsed = time.perf_counter() - start_time

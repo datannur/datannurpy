@@ -5,9 +5,17 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from .utils import build_variable_ids, log_done, log_section, make_id, sanitize_id
+from .utils import (
+    build_variable_ids,
+    log_done,
+    log_section,
+    log_skip,
+    make_id,
+    sanitize_id,
+    upsert_folder,
+)
 from .entities import Dataset, Folder
-from .scanner.utils import SUPPORTED_FORMATS, get_mtime_iso
+from .scanner.utils import SUPPORTED_FORMATS, get_mtime_iso, get_mtime_timestamp
 from .scanner.parquet import (
     DatasetType,
     ParquetDatasetInfo,
@@ -33,6 +41,7 @@ def add_dataset(
     infer_stats: bool = True,
     csv_encoding: str | None = None,
     quiet: bool | None = None,
+    refresh: bool | None = None,
     # Dataset metadata overrides
     name: str | None = None,
     description: str | None = None,
@@ -50,6 +59,7 @@ def add_dataset(
 ) -> None:
     """Add a single dataset file or partitioned directory to the catalog."""
     q = quiet if quiet is not None else catalog.quiet
+    do_refresh = refresh if refresh is not None else catalog.refresh
     dataset_path = Path(path).resolve()
 
     if not dataset_path.exists():
@@ -62,9 +72,8 @@ def add_dataset(
     if folder is not None:
         if folder_id is not None:
             raise ValueError("Cannot specify both folder and folder_id")
-        # Add folder if not already present
-        if not any(f.id == folder.id for f in catalog.folders):
-            catalog.folders.append(folder)
+        # Add folder if not already present, otherwise mark as seen
+        upsert_folder(catalog, folder)
         resolved_folder_id = folder.id
     elif folder_id is not None:
         resolved_folder_id = folder_id
@@ -77,6 +86,7 @@ def add_dataset(
             resolved_folder_id,
             infer_stats=infer_stats,
             quiet=q,
+            refresh=do_refresh,
             start_time=start_time,
             name=name,
             description=description,
@@ -103,6 +113,23 @@ def add_dataset(
             f"Supported: {', '.join(SUPPORTED_FORMATS.keys())}"
         )
 
+    # Get current mtime
+    current_mtime = get_mtime_timestamp(dataset_path)
+    data_path_str = str(dataset_path)
+
+    # Check for existing dataset (incremental scan)
+    existing = catalog._dataset_index.get(data_path_str)
+    if existing is not None:
+        if not do_refresh and existing.last_update_timestamp == current_mtime:
+            # Unchanged - skip and mark as seen
+            existing._seen = True
+            catalog._mark_dataset_modalities_seen(existing)
+            log_skip(dataset_path.name, q)
+            return
+        else:
+            # Modified or refresh forced - remove old dataset cascade before rescan
+            catalog._remove_dataset_cascade(existing)
+
     # Build dataset ID and name
     base_name = sanitize_id(dataset_path.stem)
     if resolved_folder_id:
@@ -116,8 +143,9 @@ def add_dataset(
         id=dataset_id,
         name=dataset_name,
         folder_id=resolved_folder_id,
-        data_path=str(dataset_path),
+        data_path=data_path_str,
         last_update_date=get_mtime_iso(dataset_path),
+        last_update_timestamp=current_mtime,
         delivery_format=delivery_format,
         description=description,
         type=type,
@@ -132,7 +160,9 @@ def add_dataset(
         updating_each=updating_each,
         no_more_update=no_more_update,
     )
+    dataset._seen = True
     catalog.datasets.append(dataset)
+    catalog._dataset_index[data_path_str] = dataset
 
     # Resolve csv_encoding: parameter > catalog default
     resolved_encoding = (
@@ -155,10 +185,10 @@ def add_dataset(
     catalog.modality_manager.assign_from_freq(
         result.variables, result.freq_table, var_id_mapping
     )
-    catalog.variables.extend(result.variables)
+    catalog._add_variables(result.variables, dataset.id)
 
     # Log result
-    var_count = sum(1 for v in catalog.variables if v.dataset_id == dataset.id)
+    var_count = catalog._get_variable_count(dataset.id)
     log_done(
         f"{dataset_path.name} ({dataset.nb_row:,} rows, {var_count} vars)",
         q,
@@ -173,6 +203,7 @@ def add_parquet_directory(
     *,
     infer_stats: bool,
     quiet: bool,
+    refresh: bool,
     start_time: float,
     name: str | None,
     description: str | None,
@@ -189,6 +220,23 @@ def add_parquet_directory(
     no_more_update: str | None,
 ) -> None:
     """Add a partitioned Parquet directory (Delta, Hive, or Iceberg) to catalog."""
+    # Get current mtime
+    current_mtime = get_mtime_timestamp(dir_path)
+    data_path_str = str(dir_path)
+
+    # Check for existing dataset (incremental scan)
+    existing = catalog._dataset_index.get(data_path_str)
+    if existing is not None:
+        if not refresh and existing.last_update_timestamp == current_mtime:
+            # Unchanged - skip and mark as seen
+            existing._seen = True
+            catalog._mark_dataset_modalities_seen(existing)
+            log_skip(dir_path.name, quiet)
+            return
+        else:
+            # Modified or refresh forced - remove old dataset cascade before rescan
+            catalog._remove_dataset_cascade(existing)
+
     # Detect dataset type
     if is_delta_table(dir_path):
         dataset_type = DatasetType.DELTA
@@ -238,8 +286,9 @@ def add_parquet_directory(
         id=dataset_id,
         name=dataset_name,
         folder_id=folder_id,
-        data_path=str(dir_path),
+        data_path=data_path_str,
         last_update_date=get_mtime_iso(dir_path),
+        last_update_timestamp=current_mtime,
         delivery_format=delivery_format,
         nb_row=nb_row,
         description=final_description,
@@ -255,12 +304,14 @@ def add_parquet_directory(
         updating_each=updating_each,
         no_more_update=no_more_update,
     )
+    dataset._seen = True
     catalog.datasets.append(dataset)
+    catalog._dataset_index[data_path_str] = dataset
 
     # Finalize variables and modalities
     var_id_mapping = build_variable_ids(variables, dataset.id)
     catalog.modality_manager.assign_from_freq(variables, freq_table, var_id_mapping)
-    catalog.variables.extend(variables)
+    catalog._add_variables(variables, dataset.id)
 
     if not quiet:
         log_done(dataset_id, quiet=False, start_time=start_time)

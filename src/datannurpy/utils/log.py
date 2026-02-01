@@ -33,6 +33,13 @@ def log_warn(msg: str, quiet: bool) -> None:
     print(f"\r  ⚠ {msg}", file=sys.stderr)
 
 
+def log_skip(msg: str, quiet: bool) -> None:
+    """Log a skipped item (unchanged, no rescan needed)."""
+    if quiet:
+        return
+    print(f"  ⏭ {msg} (unchanged)", file=sys.stderr)
+
+
 def log_section(method: str, target: str, quiet: bool) -> float:
     """Log a section header with method name. Returns start time for timer."""
     if not quiet:

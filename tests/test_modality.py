@@ -251,3 +251,77 @@ class TestModalityExport:
         # modality_ids should be comma-separated string
         assert "modality_ids" in variables[0]
         assert variables[0]["modality_ids"].startswith("_modalities---mod_")
+
+
+class TestModalityIncremental:
+    """Test modality handling with incremental scan."""
+
+    def test_modality_index_rebuilt_on_load(self, tmp_path: Path):
+        """Modality index should be rebuilt when loading from db_path."""
+        db_dir = tmp_path / "db"
+        (tmp_path / "data.csv").write_text("color\nred\nblue\n")
+
+        # First scan
+        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1.add_folder(tmp_path, include=["data.csv"])
+        catalog1.export_db()
+
+        initial_modalities = len(catalog1.modalities)
+        assert initial_modalities == 1
+
+        # Second scan - should reuse existing modality
+        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2.add_folder(tmp_path, include=["data.csv"])
+
+        # Should not create duplicates
+        assert len(catalog2.modalities) == initial_modalities
+
+    def test_existing_modality_marked_seen(self, tmp_path: Path):
+        """Existing modality should be marked as _seen when reused."""
+        db_dir = tmp_path / "db"
+        (tmp_path / "data.csv").write_text("color\nred\nblue\n")
+
+        # First scan
+        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1.add_folder(tmp_path, include=["data.csv"])
+        catalog1.export_db()
+
+        # Reload and rescan
+        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2.add_folder(tmp_path, include=["data.csv"])
+        catalog2.finalize()
+
+        # Modality should be kept (marked as seen)
+        assert len(catalog2.modalities) == 1
+
+    def test_rebuild_index_with_none_value(self, tmp_path: Path):
+        """rebuild_index should handle None values in Value objects."""
+        from datannurpy.entities import Value
+
+        db_dir = tmp_path / "db"
+        (tmp_path / "data.csv").write_text("color\nred\nblue\n")
+
+        # First scan
+        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1.add_folder(tmp_path, include=["data.csv"])
+
+        # Manually add a value with None
+        catalog1.values.append(Value(modality_id="test_mod", value=None))
+        catalog1.export_db()
+
+        # Reload - rebuild_index should not crash
+        catalog2 = Catalog(db_path=db_dir, quiet=True)
+
+        # Should have loaded successfully
+        assert len(catalog2.modalities) >= 1
+
+    def test_get_or_create_modality_not_found_in_list(self):
+        """get_or_create should handle case where modality is in index but not in list."""
+        catalog = Catalog(quiet=True)
+
+        # Manually set up a broken state (index has id but modalities list doesn't)
+        catalog.modality_manager._modality_index[frozenset({"a", "b"})] = "missing_id"
+
+        # get_or_create should still work (won't find modality to mark, but returns id)
+        result = catalog.modality_manager.get_or_create({"a", "b"})
+        assert result == "missing_id"
