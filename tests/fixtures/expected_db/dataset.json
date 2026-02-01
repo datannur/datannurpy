@@ -6,7 +6,6 @@
     "data_path": "sqlite://company/config",
     "delivery_format": "sqlite",
     "nb_row": 2,
-    "last_update_date": "2025/01/01",
     "last_update_timestamp": 1735689600,
     "schema_signature": "68a17a3f78e1b4bb65aab4b538f3b5c2"
   },
@@ -17,7 +16,6 @@
     "data_path": "sqlite://company/hr_departments",
     "delivery_format": "sqlite",
     "nb_row": 3,
-    "last_update_date": "2025/01/01",
     "last_update_timestamp": 1735689600,
     "schema_signature": "d190d05c5a6e036edc7e09f87fc04735"
   },
@@ -28,7 +26,6 @@
     "data_path": "sqlite://company/hr_employees",
     "delivery_format": "sqlite",
     "nb_row": 3,
-    "last_update_date": "2025/01/01",
     "last_update_timestamp": 1735689600,
     "schema_signature": "a71bbf95ff567cb5ddfc28c2cd4e3176"
   },
@@ -39,7 +36,6 @@
     "data_path": "sqlite://company/hr_salaries",
     "delivery_format": "sqlite",
     "nb_row": 3,
-    "last_update_date": "2025/01/01",
     "last_update_timestamp": 1735689600,
     "schema_signature": "a156ec3b5480de529c8f6bda0e0be90f"
   },
@@ -50,7 +46,6 @@
     "data_path": "sqlite://company/inventory_products",
     "delivery_format": "sqlite",
     "nb_row": 2,
-    "last_update_date": "2025/01/01",
     "last_update_timestamp": 1735689600,
     "schema_signature": "5d793d6c30b7ae8ee538080190209385"
   },
@@ -61,7 +56,6 @@
     "data_path": "sqlite://company/inventory_warehouses",
     "delivery_format": "sqlite",
     "nb_row": 2,
-    "last_update_date": "2025/01/01",
     "last_update_timestamp": 1735689600,
     "schema_signature": "0141b4cc78ea4509237e9d051397ddc1"
   },
@@ -72,7 +66,6 @@
     "data_path": "sqlite://company/sales_customers",
     "delivery_format": "sqlite",
     "nb_row": 2,
-    "last_update_date": "2025/01/01",
     "last_update_timestamp": 1735689600,
     "schema_signature": "077a24aee1af8edf1081876fb3116065"
   },
@@ -83,7 +76,6 @@
     "data_path": "sqlite://company/sales_order_headers",
     "delivery_format": "sqlite",
     "nb_row": 3,
-    "last_update_date": "2025/01/01",
     "last_update_timestamp": 1735689600,
     "schema_signature": "390c696c251488a96eef59b77672eb73"
   },
@@ -94,7 +86,6 @@
     "data_path": "sqlite://company/sales_order_items",
     "delivery_format": "sqlite",
     "nb_row": 3,
-    "last_update_date": "2025/01/01",
     "last_update_timestamp": 1735689600,
     "schema_signature": "5506c8cbf460eddec8e5eefe528588a9"
   },
@@ -105,7 +96,6 @@
     "data_path": "sqlite://company/sales_order_returns",
     "delivery_format": "sqlite",
     "nb_row": 1,
-    "last_update_date": "2025/01/01",
     "last_update_timestamp": 1735689600,
     "schema_signature": "4326dbd21e1b6611b73aa6a635a48041"
   },
@@ -117,7 +107,6 @@
     "data_path": "cars.sas7bdat",
     "delivery_format": "sas",
     "nb_row": 392,
-    "last_update_date": "2026/01/22",
     "last_update_timestamp": 1769097695
   },
   {
@@ -127,7 +116,6 @@
     "data_path": "csv/employees.csv",
     "delivery_format": "csv",
     "nb_row": 20,
-    "last_update_date": "2026/02/01",
     "last_update_timestamp": 1769982888
   },
   {
@@ -137,7 +125,6 @@
     "data_path": "csv/legacy_encoding.csv",
     "delivery_format": "csv",
     "nb_row": 3,
-    "last_update_date": "2026/01/24",
     "last_update_timestamp": 1769294134
   },
   {
@@ -147,7 +134,6 @@
     "data_path": "csv/regions_france.csv",
     "delivery_format": "csv",
     "nb_row": 13,
-    "last_update_date": "2025/07/29",
     "last_update_timestamp": 1753825134
   },
   {
@@ -157,7 +143,6 @@
     "data_path": "datatypes_spss.sav",
     "delivery_format": "spss",
     "nb_row": 5,
-    "last_update_date": "2026/01/22",
     "last_update_timestamp": 1769100359
   },
   {
@@ -167,7 +152,6 @@
     "data_path": "datatypes_stata.dta",
     "delivery_format": "stata",
     "nb_row": 5,
-    "last_update_date": "2026/01/22",
     "last_update_timestamp": 1769100360
   },
   {
@@ -178,7 +162,6 @@
     "data_path": "iceberg_warehouse/default/test_table",
     "delivery_format": "iceberg",
     "nb_row": 5,
-    "last_update_date": "2026/01/22",
     "last_update_timestamp": 1769094684
   },
   {
@@ -188,7 +171,6 @@
     "data_path": "metadata/institution.csv",
     "delivery_format": "csv",
     "nb_row": 2,
-    "last_update_date": "2026/01/29",
     "last_update_timestamp": 1769705820
   },
   {
@@ -198,7 +180,6 @@
     "data_path": "metadata/tag.csv",
     "delivery_format": "csv",
     "nb_row": 2,
-    "last_update_date": "2026/01/29",
     "last_update_timestamp": 1769705820
   },
   {
@@ -208,7 +189,6 @@
     "data_path": "metadata/variable.csv",
     "delivery_format": "csv",
     "nb_row": 3,
-    "last_update_date": "2026/01/29",
     "last_update_timestamp": 1769705820
   },
   {
@@ -218,7 +198,6 @@
     "data_path": "subfolder1/employees_old.xls",
     "delivery_format": "excel",
     "nb_row": 20,
-    "last_update_date": "2026/01/24",
     "last_update_timestamp": 1769296955
   },
   {
@@ -228,7 +207,6 @@
     "data_path": "subfolder1/employees.xlsx",
     "delivery_format": "excel",
     "nb_row": 20,
-    "last_update_date": "2026/01/15",
     "last_update_timestamp": 1768488224
   },
   {
@@ -239,7 +217,6 @@
     "data_path": "test_delta",
     "delivery_format": "delta",
     "nb_row": 6,
-    "last_update_date": "2026/01/22",
     "last_update_timestamp": 1769090253
   },
   {
@@ -249,7 +226,6 @@
     "data_path": "test.parquet",
     "delivery_format": "parquet",
     "nb_row": 3,
-    "last_update_date": "2026/01/22",
     "last_update_timestamp": 1769086478
   },
   {
@@ -259,7 +235,6 @@
     "data_path": "test_partitioned",
     "delivery_format": "hive",
     "nb_row": 6,
-    "last_update_date": "2026/01/22",
     "last_update_timestamp": 1769097057
   },
   {
@@ -269,7 +244,6 @@
     "data_path": "test.pq",
     "delivery_format": "parquet",
     "nb_row": 3,
-    "last_update_date": "2026/01/22",
     "last_update_timestamp": 1769086478
   },
   {
@@ -280,7 +254,6 @@
     "data_path": "test_with_metadata.parquet",
     "delivery_format": "parquet",
     "nb_row": 3,
-    "last_update_date": "2026/01/22",
     "last_update_timestamp": 1769086861
   },
   {
@@ -290,7 +263,6 @@
     "data_path": "sqlite://photovoltaik/EnergySourceCatalogue",
     "delivery_format": "sqlite",
     "nb_row": 2,
-    "last_update_date": "2025/01/01",
     "last_update_timestamp": 1735689600,
     "schema_signature": "e08cbdceaa62e9ff43c8928f9b9f6b0a"
   },
@@ -301,7 +273,6 @@
     "data_path": "sqlite://photovoltaik/Project",
     "delivery_format": "sqlite",
     "nb_row": 29,
-    "last_update_date": "2025/01/01",
     "last_update_timestamp": 1735689600,
     "schema_signature": "7e4e2d94b92a0681124f6ac9191a765b"
   },
@@ -312,7 +283,6 @@
     "data_path": "sqlite://photovoltaik/ProjectStatus",
     "delivery_format": "sqlite",
     "nb_row": 53,
-    "last_update_date": "2025/01/01",
     "last_update_timestamp": 1735689600,
     "schema_signature": "e5f909c30cdb55eaf910652b30495ca6"
   },
@@ -323,7 +293,6 @@
     "data_path": "sqlite://photovoltaik/StatusCatalogue",
     "delivery_format": "sqlite",
     "nb_row": 8,
-    "last_update_date": "2025/01/01",
     "last_update_timestamp": 1735689600,
     "schema_signature": "dfc2a4bd199b5e33825c630612bcc2d8"
   }

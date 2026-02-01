@@ -7,90 +7,78 @@
     "id": "company",
     "name": "company",
     "type": "sqlite",
-    "data_path": "company.db",
-    "last_update_date": "2025/01/01"
+    "data_path": "company.db"
   },
   {
     "id": "company---hr",
     "parent_id": "company",
     "name": "hr",
-    "type": "table_prefix",
-    "last_update_date": "2025/01/01"
+    "type": "table_prefix"
   },
   {
     "id": "company---inventory",
     "parent_id": "company",
     "name": "inventory",
-    "type": "table_prefix",
-    "last_update_date": "2025/01/01"
+    "type": "table_prefix"
   },
   {
     "id": "company---sales",
     "parent_id": "company",
     "name": "sales",
-    "type": "table_prefix",
-    "last_update_date": "2025/01/01"
+    "type": "table_prefix"
   },
   {
     "id": "company---sales---sales_order",
     "parent_id": "company---sales",
     "name": "sales_order",
-    "type": "table_prefix",
-    "last_update_date": "2025/01/01"
+    "type": "table_prefix"
   },
   {
     "id": "data",
     "name": "data",
     "type": "filesystem",
-    "data_path": "/Users/bassim/code/datannur/package/datannurpy/data",
-    "last_update_date": "2026/01/29"
+    "data_path": ""
   },
   {
     "id": "data---csv",
     "parent_id": "data",
     "name": "csv",
     "type": "filesystem",
-    "data_path": "csv",
-    "last_update_date": "2026/01/24"
+    "data_path": "csv"
   },
   {
     "id": "data---iceberg_warehouse",
     "parent_id": "data",
     "name": "iceberg_warehouse",
     "type": "filesystem",
-    "data_path": "iceberg_warehouse",
-    "last_update_date": "2026/01/22"
+    "data_path": "iceberg_warehouse"
   },
   {
     "id": "data---iceberg_warehouse---default",
     "parent_id": "data---iceberg_warehouse",
     "name": "default",
     "type": "filesystem",
-    "data_path": "iceberg_warehouse/default",
-    "last_update_date": "2026/01/22"
+    "data_path": "iceberg_warehouse/default"
   },
   {
     "id": "data---metadata",
     "parent_id": "data",
     "name": "metadata",
     "type": "filesystem",
-    "data_path": "metadata",
-    "last_update_date": "2026/01/29"
+    "data_path": "metadata"
   },
   {
     "id": "data---subfolder1",
     "parent_id": "data",
     "name": "subfolder1",
     "type": "filesystem",
-    "data_path": "subfolder1",
-    "last_update_date": "2026/01/27"
+    "data_path": "subfolder1"
   },
   {
     "id": "photovoltaik",
     "name": "Grandes installations photovoltaïques",
     "description": "Installations photovoltaïques de haute altitude en Suisse. Source: Office fédéral de l'énergie (OFEN) - opendata.swiss",
     "type": "sqlite",
-    "data_path": "photovoltaik.gpkg",
-    "last_update_date": "2025/01/01"
+    "data_path": "photovoltaik.gpkg"
   }
 ]

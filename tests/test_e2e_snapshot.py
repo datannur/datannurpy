@@ -39,17 +39,23 @@ SNAPSHOT_FILES = [
 
 
 def normalize_data(data: Any) -> Any:
-    """Normalize data for stable comparison (remove absolute paths)."""
+    """Normalize data for stable comparison (remove absolute paths and volatile dates)."""
     if isinstance(data, dict):
         result = {}
         for key, value in data.items():
             # Normalize absolute paths to relative
             if key == "data_path" and isinstance(value, str):
-                # Extract relative path from DATA_DIR
+                # Extract relative path from DATA_DIR or normalize to just the tail
                 if "/data/" in value:
                     result[key] = value.split("/data/", 1)[-1]
+                elif "/datannurpy/data" in value:
+                    # Handle case where path ends with /data
+                    result[key] = ""
                 else:
                     result[key] = value
+            # Remove volatile date fields from folders (file mtime varies by machine)
+            elif key == "last_update_date":
+                continue  # Skip - depends on file system mtime
             else:
                 result[key] = normalize_data(value)
         return result
