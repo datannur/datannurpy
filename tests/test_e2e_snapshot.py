@@ -53,8 +53,8 @@ def normalize_data(data: Any) -> Any:
                     result[key] = ""
                 else:
                     result[key] = value
-            # Remove volatile date fields from folders (file mtime varies by machine)
-            elif key == "last_update_date":
+            # Remove volatile timestamp fields (file mtime varies by machine)
+            elif key in ("last_update_date", "last_update_timestamp"):
                 continue  # Skip - depends on file system mtime
             else:
                 result[key] = normalize_data(value)
