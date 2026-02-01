@@ -1,0 +1,12 @@
+[
+  {
+    "id": "finance",
+    "name": "Finance",
+    "description": "Données financières"
+  },
+  {
+    "id": "rh",
+    "name": "RH",
+    "description": "Ressources humaines"
+  }
+]

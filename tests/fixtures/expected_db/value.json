@@ -1,0 +1,4254 @@
+[
+  {
+    "modality_id": "_modalities---mod_01855ce71d",
+    "value": "André"
+  },
+  {
+    "modality_id": "_modalities---mod_01855ce71d",
+    "value": "François"
+  },
+  {
+    "modality_id": "_modalities---mod_01855ce71d",
+    "value": "José"
+  },
+  {
+    "modality_id": "_modalities---mod_06d1e3109c",
+    "value": "1583-01-01"
+  },
+  {
+    "modality_id": "_modalities---mod_06d1e3109c",
+    "value": "1880-05-06"
+  },
+  {
+    "modality_id": "_modalities---mod_06d1e3109c",
+    "value": "1960-01-01"
+  },
+  {
+    "modality_id": "_modalities---mod_06d1e3109c",
+    "value": "2018-05-06"
+  },
+  {
+    "modality_id": "_modalities---mod_0712b1b367",
+    "value": "Engineering"
+  },
+  {
+    "modality_id": "_modalities---mod_0712b1b367",
+    "value": "HR"
+  },
+  {
+    "modality_id": "_modalities---mod_0712b1b367",
+    "value": "Sales"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "505"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "527"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "533"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "539"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "541"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "562"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "567"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "571"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "572"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "587"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "600"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "613"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "615"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "631"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "632"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "637"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "638"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "646"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "667"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "673"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "677"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "696"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "714"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "716"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "745"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "751"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "761"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "873"
+  },
+  {
+    "modality_id": "_modalities---mod_0aff41590a",
+    "value": "903"
+  },
+  {
+    "modality_id": "_modalities---mod_182cfe8514",
+    "value": "Léger"
+  },
+  {
+    "modality_id": "_modalities---mod_182cfe8514",
+    "value": "Müller"
+  },
+  {
+    "modality_id": "_modalities---mod_182cfe8514",
+    "value": "Çelik"
+  },
+  {
+    "modality_id": "_modalities---mod_186dce4adb",
+    "value": "Lyon Depot"
+  },
+  {
+    "modality_id": "_modalities---mod_186dce4adb",
+    "value": "Paris Central"
+  },
+  {
+    "modality_id": "_modalities---mod_18a1b0c317",
+    "value": "BE"
+  },
+  {
+    "modality_id": "_modalities---mod_18a1b0c317",
+    "value": "BE "
+  },
+  {
+    "modality_id": "_modalities---mod_18a1b0c317",
+    "value": "GR"
+  },
+  {
+    "modality_id": "_modalities---mod_18a1b0c317",
+    "value": "SG"
+  },
+  {
+    "modality_id": "_modalities---mod_18a1b0c317",
+    "value": "TI"
+  },
+  {
+    "modality_id": "_modalities---mod_18a1b0c317",
+    "value": "UR"
+  },
+  {
+    "modality_id": "_modalities---mod_18a1b0c317",
+    "value": "VS"
+  },
+  {
+    "modality_id": "_modalities---mod_18a1b0c317",
+    "value": "Valais"
+  },
+  {
+    "modality_id": "_modalities---mod_18cda72a94",
+    "value": "25"
+  },
+  {
+    "modality_id": "_modalities---mod_18cda72a94",
+    "value": "30"
+  },
+  {
+    "modality_id": "_modalities---mod_18cda72a94",
+    "value": "35"
+  },
+  {
+    "modality_id": "_modalities---mod_18cda72a94",
+    "value": "40"
+  },
+  {
+    "modality_id": "_modalities---mod_18cda72a94",
+    "value": "45"
+  },
+  {
+    "modality_id": "_modalities---mod_18cda72a94",
+    "value": "50"
+  },
+  {
+    "modality_id": "_modalities---mod_1bf03e385e",
+    "value": "1"
+  },
+  {
+    "modality_id": "_modalities---mod_1bf03e385e",
+    "value": "2"
+  },
+  {
+    "modality_id": "_modalities---mod_1bf03e385e",
+    "value": "3"
+  },
+  {
+    "modality_id": "_modalities---mod_1bf03e385e",
+    "value": "4"
+  },
+  {
+    "modality_id": "_modalities---mod_1bf03e385e",
+    "value": "5"
+  },
+  {
+    "modality_id": "_modalities---mod_1bf03e385e",
+    "value": "6"
+  },
+  {
+    "modality_id": "_modalities---mod_1bf03e385e",
+    "value": "7"
+  },
+  {
+    "modality_id": "_modalities---mod_1bf03e385e",
+    "value": "8"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "41000"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "42000"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "43000"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "45000"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "46000"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "47000"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "48000"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "49000"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "50000"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "51000"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "52000"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "54000"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "55000"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "56000"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "58000"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "61000"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "62000"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "65000"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "68000"
+  },
+  {
+    "modality_id": "_modalities---mod_1d39ff883d",
+    "value": "72000"
+  },
+  {
+    "modality_id": "_modalities---mod_209e6cf0ea",
+    "value": "es1"
+  },
+  {
+    "modality_id": "_modalities---mod_209e6cf0ea",
+    "value": "es2"
+  },
+  {
+    "modality_id": "_modalities---mod_25465bed0b",
+    "value": "0"
+  },
+  {
+    "modality_id": "_modalities---mod_290b7fe59b",
+    "value": "finance,rh"
+  },
+  {
+    "modality_id": "_modalities---mod_290b7fe59b",
+    "value": "rh"
+  },
+  {
+    "modality_id": "_modalities---mod_2dc8eb7aad",
+    "value": "Eolien"
+  },
+  {
+    "modality_id": "_modalities---mod_2dc8eb7aad",
+    "value": "Solaire"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "1"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "10"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "15"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "18"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "19"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "2"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "27"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "28"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "29"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "3"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "32"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "42"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "43"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "44"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "45"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "46"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "47"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "48"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "49"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "5"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "50"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "51"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "52"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "53"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "54"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "55"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "56"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "7"
+  },
+  {
+    "modality_id": "_modalities---mod_31d8f08e11",
+    "value": "9"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "12.8"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "14.4"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "20.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "21.41"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "22.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "4.08"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "4.4"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "4.57"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "4.6"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "4.75"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "4.87"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "4.9"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "5.274"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "5.335"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "5.36"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "5.4"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "5.5"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "5.6"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "5.66"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "6.13"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "6.3"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "6.72"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "64.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "7.2"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "7.56"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "7.8246"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "8.6"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "8.602"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "8.733"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "8.92"
+  },
+  {
+    "modality_id": "_modalities---mod_3286dc76f0",
+    "value": "9.165"
+  },
+  {
+    "modality_id": "_modalities---mod_32d8c4d0c0",
+    "value": "Acme Corp"
+  },
+  {
+    "modality_id": "_modalities---mod_32d8c4d0c0",
+    "value": "TechStart"
+  },
+  {
+    "modality_id": "_modalities---mod_3429529c0e",
+    "value": "25.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3429529c0e",
+    "value": "26.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3429529c0e",
+    "value": "27.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3429529c0e",
+    "value": "28.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3429529c0e",
+    "value": "29.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3429529c0e",
+    "value": "30.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3429529c0e",
+    "value": "31.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3429529c0e",
+    "value": "32.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3429529c0e",
+    "value": "33.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3429529c0e",
+    "value": "34.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3429529c0e",
+    "value": "35.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3429529c0e",
+    "value": "36.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3429529c0e",
+    "value": "37.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3429529c0e",
+    "value": "39.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3429529c0e",
+    "value": "40.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3429529c0e",
+    "value": "41.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3429529c0e",
+    "value": "42.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3429529c0e",
+    "value": "44.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3429529c0e",
+    "value": "45.0"
+  },
+  {
+    "modality_id": "_modalities---mod_3515a63dfa",
+    "value": "Direction générale des Finances publiques"
+  },
+  {
+    "modality_id": "_modalities---mod_3515a63dfa",
+    "value": "Institut national de la statistique et des études économiques"
+  },
+  {
+    "modality_id": "_modalities---mod_36192d4ee6",
+    "value": "es1"
+  },
+  {
+    "modality_id": "_modalities---mod_36ee647ea7",
+    "value": "Belgium"
+  },
+  {
+    "modality_id": "_modalities---mod_36ee647ea7",
+    "value": "France"
+  },
+  {
+    "modality_id": "_modalities---mod_377b0126b2",
+    "value": "Berlin"
+  },
+  {
+    "modality_id": "_modalities---mod_377b0126b2",
+    "value": "London"
+  },
+  {
+    "modality_id": "_modalities---mod_377b0126b2",
+    "value": "Madrid"
+  },
+  {
+    "modality_id": "_modalities---mod_377b0126b2",
+    "value": "Paris"
+  },
+  {
+    "modality_id": "_modalities---mod_377b0126b2",
+    "value": "Rome"
+  },
+  {
+    "modality_id": "_modalities---mod_3890764482",
+    "value": "Finance"
+  },
+  {
+    "modality_id": "_modalities---mod_3890764482",
+    "value": "IT"
+  },
+  {
+    "modality_id": "_modalities---mod_3890764482",
+    "value": "Marketing"
+  },
+  {
+    "modality_id": "_modalities---mod_3890764482",
+    "value": "RH"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2018-07-30 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2018-12-11 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2019-05-17 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2019-09-05 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2019-11-08 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2020-03-22 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2020-04-29 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2020-08-21 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2020-11-12 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2020-12-03 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2021-04-18 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2021-06-10 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2021-09-06 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2021-10-25 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2022-01-15 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2022-03-14 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2022-08-14 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2023-01-09 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2023-02-28 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_393a31f31c",
+    "value": "2023-05-22 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_399fc66708",
+    "value": ""
+  },
+  {
+    "modality_id": "_modalities---mod_3eee4f2a23",
+    "value": "company_name"
+  },
+  {
+    "modality_id": "_modalities---mod_3eee4f2a23",
+    "value": "version"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "1250"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "1650"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "1693"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "1705"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "1768"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "1894"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "1962"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "1988"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "2003"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "2014"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "2029"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "2071"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "2127"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "2156"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "2189"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "2190"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "2240"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "2272"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "2342"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "2382"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "2425"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "2444"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "2481"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "2591"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "2718"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "2800"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "2897"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "3142"
+  },
+  {
+    "modality_id": "_modalities---mod_408c5f41d6",
+    "value": "454"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2023-10-30"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2023-11-06"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2023-11-08"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2024-01-03"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2024-01-04"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2024-01-09"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2024-01-22"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2024-02-09"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2024-05-07"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2024-05-28"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2024-06-03"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2024-06-07"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2024-06-12"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2024-06-14"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2024-06-21"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2024-07-01"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2024-08-15"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2024-09-05"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2024-09-06"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2024-10-04"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2024-10-11"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2024-10-18"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-01-20"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-01-24"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-02-20"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-02-28"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-03-13"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-03-21"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-03-28"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-04-04"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-04-18"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-04-30"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-06-12"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-08-22"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-08-26"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-08-29"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-09-24"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-10-01"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-10-17"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-10-20"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-11-04"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-11-07"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-11-14"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-11-24"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-12-04"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-12-12"
+  },
+  {
+    "modality_id": "_modalities---mod_42d79e60af",
+    "value": "2025-12-18"
+  },
+  {
+    "modality_id": "_modalities---mod_433535a949",
+    "value": "Lyon"
+  },
+  {
+    "modality_id": "_modalities---mod_433535a949",
+    "value": "Marseille"
+  },
+  {
+    "modality_id": "_modalities---mod_433535a949",
+    "value": "Paris"
+  },
+  {
+    "modality_id": "_modalities---mod_433535a949",
+    "value": "Toulouse"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "Andre"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "Bernard"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "Bertrand"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "Blanc"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "David"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "Dupont"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "Durand"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "Faure"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "Garnier"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "Girard"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "Leroy"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "Martin"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "Mercier"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "Michel"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "Moreau"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "Petit"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "Richard"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "Robert"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "Roux"
+  },
+  {
+    "modality_id": "_modalities---mod_4aa562f5c5",
+    "value": "Simon"
+  },
+  {
+    "modality_id": "_modalities---mod_4d8a15e3cc",
+    "value": "1"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "10.0"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "10.12"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "10.5"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "10.8"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "12.6"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "12.9"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "14.5"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "15.9"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "18.4"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "19.2"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "28.0"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "32.7"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "33.6"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "6.2"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "6.3"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "7.53"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "7.7"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "8.04"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "8.07"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "8.3"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "8.47"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "8.62"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "8.64"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "8.8"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "9.0"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "9.2"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "9.39"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "9.93"
+  },
+  {
+    "modality_id": "_modalities---mod_4d9304adb8",
+    "value": "92.0"
+  },
+  {
+    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "value": "1456789"
+  },
+  {
+    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "value": "223456"
+  },
+  {
+    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "value": "234567"
+  },
+  {
+    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "value": "289234"
+  },
+  {
+    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "value": "334567"
+  },
+  {
+    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "value": "34567"
+  },
+  {
+    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "value": "378901"
+  },
+  {
+    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "value": "445678"
+  },
+  {
+    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "value": "456123"
+  },
+  {
+    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "value": "456789"
+  },
+  {
+    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "value": "523456"
+  },
+  {
+    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "value": "567234"
+  },
+  {
+    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "value": "845123"
+  },
+  {
+    "modality_id": "_modalities---mod_51e321b770",
+    "value": "149.99"
+  },
+  {
+    "modality_id": "_modalities---mod_51e321b770",
+    "value": "99.99"
+  },
+  {
+    "modality_id": "_modalities---mod_5342f153b6",
+    "value": "38000"
+  },
+  {
+    "modality_id": "_modalities---mod_5342f153b6",
+    "value": "45000"
+  },
+  {
+    "modality_id": "_modalities---mod_5342f153b6",
+    "value": "52000"
+  },
+  {
+    "modality_id": "_modalities---mod_5cbe3d324b",
+    "value": "entrée en force de l'autorisation"
+  },
+  {
+    "modality_id": "_modalities---mod_5cbe3d324b",
+    "value": "exploitation après 3 ans"
+  },
+  {
+    "modality_id": "_modalities---mod_5cbe3d324b",
+    "value": "mise en service complète"
+  },
+  {
+    "modality_id": "_modalities---mod_5cbe3d324b",
+    "value": "mise en service partielle"
+  },
+  {
+    "modality_id": "_modalities---mod_5cbe3d324b",
+    "value": "mise à l'enquête publique"
+  },
+  {
+    "modality_id": "_modalities---mod_5cbe3d324b",
+    "value": "octroi de l'autorisation de première instance"
+  },
+  {
+    "modality_id": "_modalities---mod_5cbe3d324b",
+    "value": "refusé"
+  },
+  {
+    "modality_id": "_modalities---mod_5cbe3d324b",
+    "value": "retiré"
+  },
+  {
+    "modality_id": "_modalities---mod_5dc1df8b13",
+    "value": "GADGET-002"
+  },
+  {
+    "modality_id": "_modalities---mod_5dc1df8b13",
+    "value": "WIDGET-001"
+  },
+  {
+    "modality_id": "_modalities---mod_5e1931a693",
+    "value": "Auvergne-Rhône-Alpes"
+  },
+  {
+    "modality_id": "_modalities---mod_5e1931a693",
+    "value": "Bourgogne-Franche-Comté"
+  },
+  {
+    "modality_id": "_modalities---mod_5e1931a693",
+    "value": "Bretagne"
+  },
+  {
+    "modality_id": "_modalities---mod_5e1931a693",
+    "value": "Centre-Val de Loire"
+  },
+  {
+    "modality_id": "_modalities---mod_5e1931a693",
+    "value": "Corse"
+  },
+  {
+    "modality_id": "_modalities---mod_5e1931a693",
+    "value": "Grand Est"
+  },
+  {
+    "modality_id": "_modalities---mod_5e1931a693",
+    "value": "Hauts-de-France"
+  },
+  {
+    "modality_id": "_modalities---mod_5e1931a693",
+    "value": "Normandie"
+  },
+  {
+    "modality_id": "_modalities---mod_5e1931a693",
+    "value": "Nouvelle-Aquitaine"
+  },
+  {
+    "modality_id": "_modalities---mod_5e1931a693",
+    "value": "Occitanie"
+  },
+  {
+    "modality_id": "_modalities---mod_5e1931a693",
+    "value": "Pays de la Loire"
+  },
+  {
+    "modality_id": "_modalities---mod_5e1931a693",
+    "value": "Provence-Alpes-Côte d'Azur"
+  },
+  {
+    "modality_id": "_modalities---mod_5e1931a693",
+    "value": "Île-de-France"
+  },
+  {
+    "modality_id": "_modalities---mod_6188567694",
+    "value": "2023"
+  },
+  {
+    "modality_id": "_modalities---mod_6188567694",
+    "value": "2024"
+  },
+  {
+    "modality_id": "_modalities---mod_61a859a3a1",
+    "value": "Electronics"
+  },
+  {
+    "modality_id": "_modalities---mod_63eb5b6e11",
+    "value": "data---csv---employees_csv---nom"
+  },
+  {
+    "modality_id": "_modalities---mod_63eb5b6e11",
+    "value": "data---csv---employees_csv---salaire"
+  },
+  {
+    "modality_id": "_modalities---mod_63eb5b6e11",
+    "value": "data---csv---employees_csv---salaire2"
+  },
+  {
+    "modality_id": "_modalities---mod_649d7c0cd5",
+    "value": "st11"
+  },
+  {
+    "modality_id": "_modalities---mod_649d7c0cd5",
+    "value": "st12"
+  },
+  {
+    "modality_id": "_modalities---mod_649d7c0cd5",
+    "value": "st13"
+  },
+  {
+    "modality_id": "_modalities---mod_649d7c0cd5",
+    "value": "st14"
+  },
+  {
+    "modality_id": "_modalities---mod_68ee6ca832",
+    "value": "101"
+  },
+  {
+    "modality_id": "_modalities---mod_68ee6ca832",
+    "value": "102"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Airolo"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Amden"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Anniviers"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Davos"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Disentis/Mustér"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Gampel-Bratsch"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Grengiols"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Hérémence"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Klosters"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Laax"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Lenk und Adelboden"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Lütschental"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Mezzovico-Vira"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Naters"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Obergoms"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Oberwil im Simmental"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Poschiavo"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Saas-Grund"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Saint-Imier"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Samedan"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Scuol"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Spiringen"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Termen und Ried-Brig"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Tujetsch"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Törbel/ Embd/ Stalden"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Visperterminen"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Zermatt"
+  },
+  {
+    "modality_id": "_modalities---mod_6939a68d43",
+    "value": "Zwischbergen"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "10.69"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "11.2"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "11.38"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "11.45"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "11.46"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "12.0"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "12.1"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "12.2"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "12.4"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "12.6"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "12.62"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "12.9"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "13.8"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "14.3"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "14.43"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "14.6"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "148.0"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "15.3"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "16.9"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "18.25"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "18.8"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "18.83"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "19.1"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "19.5"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "22.1"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "28.6"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "31.0"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "44.0"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "45.0"
+  },
+  {
+    "modality_id": "_modalities---mod_6970c2b793",
+    "value": "48.13"
+  },
+  {
+    "modality_id": "_modalities---mod_69987225ba",
+    "value": "Betrieb nach 3 Jahren"
+  },
+  {
+    "modality_id": "_modalities---mod_69987225ba",
+    "value": "abgewiesen"
+  },
+  {
+    "modality_id": "_modalities---mod_69987225ba",
+    "value": "erstinstanzlich bewilligt"
+  },
+  {
+    "modality_id": "_modalities---mod_69987225ba",
+    "value": "rechtskräftig bewilligt"
+  },
+  {
+    "modality_id": "_modalities---mod_69987225ba",
+    "value": "teilweise in Betrieb"
+  },
+  {
+    "modality_id": "_modalities---mod_69987225ba",
+    "value": "vollständig in Betrieb"
+  },
+  {
+    "modality_id": "_modalities---mod_69987225ba",
+    "value": "zurückgezogen"
+  },
+  {
+    "modality_id": "_modalities---mod_69987225ba",
+    "value": "öffentlich aufgelegt"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "APV Sidenplangg AG (in Gründung), c/o EWA‑energieUri AG"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "Axpo Solutions AG"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "Azienda Comunale di Airolo e Azienda Multiservizi di Bellinzona5.5555"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "Bernina Solar AG"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "EnAlpin AG"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "EnBAG AG"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "Energia Alpina SA"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "Energia Solara Engiandinaisa SA"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "FMV SA"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "Felsenstrom AG"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "Genossenschaft Lenk Bergbahnen"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "Gondosolar c/o E.E.S"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "Grands Plans Solar SA"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "Grengiols Solar c/o FMV SA"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "Jungfraubahn AG"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "Madrisa Solar AG"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "MontSol SA"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "Morgeten Solar AG"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "NalpSolar AG"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "Ovra Solara Magriel SA (in Gründung), handelnd durch Axpo Solutions AG"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "Prafleuri Solaire SA"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "Projektträgerschaft PVA Hohsaas c/o FMV SA"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "S'ROK AG"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "ScuolSolar c/o Engadiner KraftwerkeAG"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "Swisspower AG"
+  },
+  {
+    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "value": "Weisse Arena Bergbahnen AG"
+  },
+  {
+    "modality_id": "_modalities---mod_6adc02e862",
+    "value": "Defective"
+  },
+  {
+    "modality_id": "_modalities---mod_6bc4c3e856",
+    "value": "0"
+  },
+  {
+    "modality_id": "_modalities---mod_6bc4c3e856",
+    "value": "1"
+  },
+  {
+    "modality_id": "_modalities---mod_6e1c74353a",
+    "value": "Alice"
+  },
+  {
+    "modality_id": "_modalities---mod_6e1c74353a",
+    "value": "Bob"
+  },
+  {
+    "modality_id": "_modalities---mod_6e1c74353a",
+    "value": "Charlie"
+  },
+  {
+    "modality_id": "_modalities---mod_6e1c74353a",
+    "value": "David"
+  },
+  {
+    "modality_id": "_modalities---mod_6e1c74353a",
+    "value": "Eve"
+  },
+  {
+    "modality_id": "_modalities---mod_6e1c74353a",
+    "value": "Frank"
+  },
+  {
+    "modality_id": "_modalities---mod_71409fff3c",
+    "value": "1"
+  },
+  {
+    "modality_id": "_modalities---mod_71409fff3c",
+    "value": "2"
+  },
+  {
+    "modality_id": "_modalities---mod_71409fff3c",
+    "value": "5"
+  },
+  {
+    "modality_id": "_modalities---mod_730f7b7bab",
+    "value": "1"
+  },
+  {
+    "modality_id": "_modalities---mod_730f7b7bab",
+    "value": "2"
+  },
+  {
+    "modality_id": "_modalities---mod_730f7b7bab",
+    "value": "3"
+  },
+  {
+    "modality_id": "_modalities---mod_730f7b7bab",
+    "value": "4"
+  },
+  {
+    "modality_id": "_modalities---mod_730f7b7bab",
+    "value": "5"
+  },
+  {
+    "modality_id": "_modalities---mod_730f7b7bab",
+    "value": "6"
+  },
+  {
+    "modality_id": "_modalities---mod_741f0d5c51",
+    "value": "dgfip"
+  },
+  {
+    "modality_id": "_modalities---mod_741f0d5c51",
+    "value": "insee"
+  },
+  {
+    "modality_id": "_modalities---mod_7973835a5d",
+    "value": "10000"
+  },
+  {
+    "modality_id": "_modalities---mod_7973835a5d",
+    "value": "5000"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "APV Sidenplangg"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Alpine Photovoltaik-Anlage Hintisberg"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Alpines Solarprojekt \"Morgeten\""
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Belalp Solar"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Bernina Solar AG"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Centrale photovoltaïque en cohabitation du Grand Chasseral"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Gibidum Solar"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Gletschersolar Matterhorn"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Hohsaas"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Impianto fotovoltaico alpino Pontino"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Madrisa Solar"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "NalpSolar"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "PV Alpin Parsenn"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "PV Anlage Grengiols Solar"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "PVA Gries"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "PVA Rosswald Solar"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "PVA Z Opmisch Hubil Gampel-Bratsch"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Parc solaire de Prafleuri"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Parc solaire des Grands Plans"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Parco Solare Alpino Duragno"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Photovoltaik-Grossanlage \"Felsenstrom\""
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Projekt Gondosolar"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "ScuolSolar"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "SedrunSolar"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Solara Magriel "
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Solaranlage Hanenmoosbärgli"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Solarfeld Mäsweide"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Solarkraftwerk Samedan"
+  },
+  {
+    "modality_id": "_modalities---mod_7a1f654122",
+    "value": "Vorab"
+  },
+  {
+    "modality_id": "_modalities---mod_802a13bf34",
+    "value": "data---csv---employees_csv"
+  },
+  {
+    "modality_id": "_modalities---mod_8394c5497a",
+    "value": "Côte d'Or"
+  },
+  {
+    "modality_id": "_modalities---mod_8394c5497a",
+    "value": "Rhône-Alpes"
+  },
+  {
+    "modality_id": "_modalities---mod_8394c5497a",
+    "value": "Île-de-France"
+  },
+  {
+    "modality_id": "_modalities---mod_87f94b760f",
+    "value": "25"
+  },
+  {
+    "modality_id": "_modalities---mod_87f94b760f",
+    "value": "30"
+  },
+  {
+    "modality_id": "_modalities---mod_87f94b760f",
+    "value": "35"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "1"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "10"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "11"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "12"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "13"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "14"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "15"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "16"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "17"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "18"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "19"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "2"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "20"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "21"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "22"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "23"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "24"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "25"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "26"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "27"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "28"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "29"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "3"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "30"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "31"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "32"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "33"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "34"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "35"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "36"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "37"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "38"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "39"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "4"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "40"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "41"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "42"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "43"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "44"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "45"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "46"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "47"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "48"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "49"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "5"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "50"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "51"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "52"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "53"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "6"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "7"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "8"
+  },
+  {
+    "modality_id": "_modalities---mod_89d629b09d",
+    "value": "9"
+  },
+  {
+    "modality_id": "_modalities---mod_8bcead3a0b",
+    "value": "Alice"
+  },
+  {
+    "modality_id": "_modalities---mod_8bcead3a0b",
+    "value": "Bob"
+  },
+  {
+    "modality_id": "_modalities---mod_8bcead3a0b",
+    "value": "Charlie"
+  },
+  {
+    "modality_id": "_modalities---mod_9164b880af",
+    "value": "Alice Martin"
+  },
+  {
+    "modality_id": "_modalities---mod_9164b880af",
+    "value": "Bob Dupont"
+  },
+  {
+    "modality_id": "_modalities---mod_9164b880af",
+    "value": "Claire Durand"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "101.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "104.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "105.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "107.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "108.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "110.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "111.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "112.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "113.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "114.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "115.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "116.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "119.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "120.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "121.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "122.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "130.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "131.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "134.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "135.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "140.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "141.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "144.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "145.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "146.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "151.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "155.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "156.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "163.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "168.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "171.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "173.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "181.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "183.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "198.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "199.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "200.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "225.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "231.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "232.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "250.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "258.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "260.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "262.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "267.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "302.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "304.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "305.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "307.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "318.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "340.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "350.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "351.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "360.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "383.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "390.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "400.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "429.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "440.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "454.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "455.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "68.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "70.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "71.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "72.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "76.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "78.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "79.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "80.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "81.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "83.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "85.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "86.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "88.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "89.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "90.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "91.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "96.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "97.0"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "97.5"
+  },
+  {
+    "modality_id": "_modalities---mod_92ae6bfb54",
+    "value": "98.0"
+  },
+  {
+    "modality_id": "_modalities---mod_9434755384",
+    "value": "full commissioning"
+  },
+  {
+    "modality_id": "_modalities---mod_9434755384",
+    "value": "granting of the first-instance authorisation"
+  },
+  {
+    "modality_id": "_modalities---mod_9434755384",
+    "value": "legally authorised"
+  },
+  {
+    "modality_id": "_modalities---mod_9434755384",
+    "value": "operation after 3 years"
+  },
+  {
+    "modality_id": "_modalities---mod_9434755384",
+    "value": "partial commissioning"
+  },
+  {
+    "modality_id": "_modalities---mod_9434755384",
+    "value": "public circulation"
+  },
+  {
+    "modality_id": "_modalities---mod_9434755384",
+    "value": "rejected"
+  },
+  {
+    "modality_id": "_modalities---mod_9434755384",
+    "value": "withdrawn"
+  },
+  {
+    "modality_id": "_modalities---mod_945de5144a",
+    "value": "2024-01-25"
+  },
+  {
+    "modality_id": "_modalities---mod_979ac80ce0",
+    "value": "completed"
+  },
+  {
+    "modality_id": "_modalities---mod_979ac80ce0",
+    "value": "pending"
+  },
+  {
+    "modality_id": "_modalities---mod_97cd29cff3",
+    "value": "Eolico"
+  },
+  {
+    "modality_id": "_modalities---mod_97cd29cff3",
+    "value": "Solare"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2018-07-30"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2018-12-11"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2019-05-17"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2019-09-05"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2019-11-08"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2020-03-22"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2020-04-29"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2020-08-21"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2020-11-12"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2020-12-03"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2021-04-18"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2021-06-10"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2021-09-06"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2021-10-25"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2022-01-15"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2022-03-14"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2022-08-14"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2023-01-09"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2023-02-28"
+  },
+  {
+    "modality_id": "_modalities---mod_9897c16df0",
+    "value": "2023-05-22"
+  },
+  {
+    "modality_id": "_modalities---mod_9a0e339ece",
+    "value": "104.2"
+  },
+  {
+    "modality_id": "_modalities---mod_9a0e339ece",
+    "value": "125.4"
+  },
+  {
+    "modality_id": "_modalities---mod_9a0e339ece",
+    "value": "159.7"
+  },
+  {
+    "modality_id": "_modalities---mod_9a0e339ece",
+    "value": "168.9"
+  },
+  {
+    "modality_id": "_modalities---mod_9a0e339ece",
+    "value": "172.1"
+  },
+  {
+    "modality_id": "_modalities---mod_9a0e339ece",
+    "value": "179.2"
+  },
+  {
+    "modality_id": "_modalities---mod_9a0e339ece",
+    "value": "189.3"
+  },
+  {
+    "modality_id": "_modalities---mod_9a0e339ece",
+    "value": "289.4"
+  },
+  {
+    "modality_id": "_modalities---mod_9a0e339ece",
+    "value": "69.8"
+  },
+  {
+    "modality_id": "_modalities---mod_9a0e339ece",
+    "value": "71.9"
+  },
+  {
+    "modality_id": "_modalities---mod_9a0e339ece",
+    "value": "765.8"
+  },
+  {
+    "modality_id": "_modalities---mod_9a0e339ece",
+    "value": "8.9"
+  },
+  {
+    "modality_id": "_modalities---mod_9a0e339ece",
+    "value": "91.8"
+  },
+  {
+    "modality_id": "_modalities---mod_9b5b9b2291",
+    "value": "6.2"
+  },
+  {
+    "modality_id": "_modalities---mod_9b5b9b2291",
+    "value": "6.8"
+  },
+  {
+    "modality_id": "_modalities---mod_9b5b9b2291",
+    "value": "6.9"
+  },
+  {
+    "modality_id": "_modalities---mod_9b5b9b2291",
+    "value": "7.1"
+  },
+  {
+    "modality_id": "_modalities---mod_9b5b9b2291",
+    "value": "7.2"
+  },
+  {
+    "modality_id": "_modalities---mod_9b5b9b2291",
+    "value": "7.4"
+  },
+  {
+    "modality_id": "_modalities---mod_9b5b9b2291",
+    "value": "7.5"
+  },
+  {
+    "modality_id": "_modalities---mod_9b5b9b2291",
+    "value": "7.8"
+  },
+  {
+    "modality_id": "_modalities---mod_9b5b9b2291",
+    "value": "8.1"
+  },
+  {
+    "modality_id": "_modalities---mod_9b5b9b2291",
+    "value": "8.3"
+  },
+  {
+    "modality_id": "_modalities---mod_9b5b9b2291",
+    "value": "8.7"
+  },
+  {
+    "modality_id": "_modalities---mod_9b5b9b2291",
+    "value": "8.9"
+  },
+  {
+    "modality_id": "_modalities---mod_9b5b9b2291",
+    "value": "9.2"
+  },
+  {
+    "modality_id": "_modalities---mod_9da81bde5f",
+    "value": "EU"
+  },
+  {
+    "modality_id": "_modalities---mod_9da81bde5f",
+    "value": "US"
+  },
+  {
+    "modality_id": "_modalities---mod_9f9f6910c1",
+    "value": ""
+  },
+  {
+    "modality_id": "_modalities---mod_9f9f6910c1",
+    "value": "https://grandsplanssolar.ch"
+  },
+  {
+    "modality_id": "_modalities---mod_9f9f6910c1",
+    "value": "https://www.ekz.ch/de/ueber-ekz/unternehmen/engagement/felsenstrom.html"
+  },
+  {
+    "modality_id": "_modalities---mod_9f9f6910c1",
+    "value": "https://www.energia-alpina.ch/"
+  },
+  {
+    "modality_id": "_modalities---mod_9f9f6910c1",
+    "value": "https://www.engadin.solar"
+  },
+  {
+    "modality_id": "_modalities---mod_9f9f6910c1",
+    "value": "https://www.gondosolar.ch/"
+  },
+  {
+    "modality_id": "_modalities---mod_9f9f6910c1",
+    "value": "https://www.grengiols-solar.ch/de"
+  },
+  {
+    "modality_id": "_modalities---mod_9f9f6910c1",
+    "value": "https://www.jungfrau.ch/de-ch/unternehmen/jungfraubahnen/jungfraubahn-holding-ag/kraftwerk-jungfraubahn/"
+  },
+  {
+    "modality_id": "_modalities---mod_9f9f6910c1",
+    "value": "https://www.morgeten.ch"
+  },
+  {
+    "modality_id": "_modalities---mod_9f9f6910c1",
+    "value": "https://www.pv-mont-soleil.ch/"
+  },
+  {
+    "modality_id": "_modalities---mod_9f9f6910c1",
+    "value": "https://www.scuolsolar.ch/"
+  },
+  {
+    "modality_id": "_modalities---mod_9ff855e637",
+    "value": "1583-01-01 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_9ff855e637",
+    "value": "1880-05-06 10:10:10"
+  },
+  {
+    "modality_id": "_modalities---mod_9ff855e637",
+    "value": "1960-01-01 00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_9ff855e637",
+    "value": "2018-05-06 10:10:10"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1247"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1279"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1297"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1324"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1343"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1345"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1346"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1390"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1393"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1415"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1430"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1432"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1435"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1446"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1448"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1453"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1458"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1481"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1521"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1522"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1554"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1565"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1568"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1607"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1609"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1617"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1622"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1636"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1663"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1794"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "1968"
+  },
+  {
+    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "value": "2081"
+  },
+  {
+    "modality_id": "_modalities---mod_a4750880c6",
+    "value": "a"
+  },
+  {
+    "modality_id": "_modalities---mod_a4750880c6",
+    "value": "b"
+  },
+  {
+    "modality_id": "_modalities---mod_a4750880c6",
+    "value": "c"
+  },
+  {
+    "modality_id": "_modalities---mod_a4750880c6",
+    "value": "d"
+  },
+  {
+    "modality_id": "_modalities---mod_a4750880c6",
+    "value": "e"
+  },
+  {
+    "modality_id": "_modalities---mod_a647a41f8d",
+    "value": "Anne"
+  },
+  {
+    "modality_id": "_modalities---mod_a647a41f8d",
+    "value": "Claire"
+  },
+  {
+    "modality_id": "_modalities---mod_a647a41f8d",
+    "value": "Céline"
+  },
+  {
+    "modality_id": "_modalities---mod_a647a41f8d",
+    "value": "Emma"
+  },
+  {
+    "modality_id": "_modalities---mod_a647a41f8d",
+    "value": "François"
+  },
+  {
+    "modality_id": "_modalities---mod_a647a41f8d",
+    "value": "Isabelle"
+  },
+  {
+    "modality_id": "_modalities---mod_a647a41f8d",
+    "value": "Jean"
+  },
+  {
+    "modality_id": "_modalities---mod_a647a41f8d",
+    "value": "Julie"
+  },
+  {
+    "modality_id": "_modalities---mod_a647a41f8d",
+    "value": "Julien"
+  },
+  {
+    "modality_id": "_modalities---mod_a647a41f8d",
+    "value": "Laura"
+  },
+  {
+    "modality_id": "_modalities---mod_a647a41f8d",
+    "value": "Luc"
+  },
+  {
+    "modality_id": "_modalities---mod_a647a41f8d",
+    "value": "Marc"
+  },
+  {
+    "modality_id": "_modalities---mod_a647a41f8d",
+    "value": "Marie"
+  },
+  {
+    "modality_id": "_modalities---mod_a647a41f8d",
+    "value": "Nicolas"
+  },
+  {
+    "modality_id": "_modalities---mod_a647a41f8d",
+    "value": "Paul"
+  },
+  {
+    "modality_id": "_modalities---mod_a647a41f8d",
+    "value": "Pierre"
+  },
+  {
+    "modality_id": "_modalities---mod_a647a41f8d",
+    "value": "Sophie"
+  },
+  {
+    "modality_id": "_modalities---mod_a647a41f8d",
+    "value": "Sylvie"
+  },
+  {
+    "modality_id": "_modalities---mod_a647a41f8d",
+    "value": "Thomas"
+  },
+  {
+    "modality_id": "_modalities---mod_a666ee0ac9",
+    "value": "Données financières"
+  },
+  {
+    "modality_id": "_modalities---mod_a666ee0ac9",
+    "value": "Ressources humaines"
+  },
+  {
+    "modality_id": "_modalities---mod_a814e33106",
+    "value": "48000.0"
+  },
+  {
+    "modality_id": "_modalities---mod_a814e33106",
+    "value": "55000.0"
+  },
+  {
+    "modality_id": "_modalities---mod_a814e33106",
+    "value": "60000.0"
+  },
+  {
+    "modality_id": "_modalities---mod_aabc56e083",
+    "value": "st11"
+  },
+  {
+    "modality_id": "_modalities---mod_aabc56e083",
+    "value": "st12"
+  },
+  {
+    "modality_id": "_modalities---mod_aabc56e083",
+    "value": "st13"
+  },
+  {
+    "modality_id": "_modalities---mod_aabc56e083",
+    "value": "st14"
+  },
+  {
+    "modality_id": "_modalities---mod_aabc56e083",
+    "value": "st15"
+  },
+  {
+    "modality_id": "_modalities---mod_aabc56e083",
+    "value": "st16"
+  },
+  {
+    "modality_id": "_modalities---mod_aabc56e083",
+    "value": "st17"
+  },
+  {
+    "modality_id": "_modalities---mod_aabc56e083",
+    "value": "st18"
+  },
+  {
+    "modality_id": "_modalities---mod_ae6d5a38cc",
+    "value": "contact@insee.fr"
+  },
+  {
+    "modality_id": "_modalities---mod_b2fef6eb8f",
+    "value": "1"
+  },
+  {
+    "modality_id": "_modalities---mod_b2fef6eb8f",
+    "value": "2"
+  },
+  {
+    "modality_id": "_modalities---mod_b71b2cc283",
+    "value": "00:00:00"
+  },
+  {
+    "modality_id": "_modalities---mod_b71b2cc283",
+    "value": "10:10:10"
+  },
+  {
+    "modality_id": "_modalities---mod_b71b2cc283",
+    "value": "16:10:10"
+  },
+  {
+    "modality_id": "_modalities---mod_b71b2cc283",
+    "value": "23:10:10"
+  },
+  {
+    "modality_id": "_modalities---mod_bda75bc83c",
+    "value": "Finance"
+  },
+  {
+    "modality_id": "_modalities---mod_bda75bc83c",
+    "value": "RH"
+  },
+  {
+    "modality_id": "_modalities---mod_c0e1a30973",
+    "value": "1"
+  },
+  {
+    "modality_id": "_modalities---mod_c0e1a30973",
+    "value": "2"
+  },
+  {
+    "modality_id": "_modalities---mod_c0e1a30973",
+    "value": "3"
+  },
+  {
+    "modality_id": "_modalities---mod_c0e1a30973",
+    "value": "4"
+  },
+  {
+    "modality_id": "_modalities---mod_c0e1a30973",
+    "value": "5"
+  },
+  {
+    "modality_id": "_modalities---mod_c83ffa1257",
+    "value": "Alice"
+  },
+  {
+    "modality_id": "_modalities---mod_c83ffa1257",
+    "value": "Bob"
+  },
+  {
+    "modality_id": "_modalities---mod_c83ffa1257",
+    "value": "Charlie"
+  },
+  {
+    "modality_id": "_modalities---mod_c83ffa1257",
+    "value": "Diana"
+  },
+  {
+    "modality_id": "_modalities---mod_c83ffa1257",
+    "value": "Eve"
+  },
+  {
+    "modality_id": "_modalities---mod_c8ab539531",
+    "value": "2024-01-10"
+  },
+  {
+    "modality_id": "_modalities---mod_c8ab539531",
+    "value": "2024-02-15"
+  },
+  {
+    "modality_id": "_modalities---mod_c8ab539531",
+    "value": "2024-03-01"
+  },
+  {
+    "modality_id": "_modalities---mod_cbc487e7ce",
+    "value": "Nom de famille de l'employé"
+  },
+  {
+    "modality_id": "_modalities---mod_cbc487e7ce",
+    "value": "Salaire mensuel brut en euros"
+  },
+  {
+    "modality_id": "_modalities---mod_ccaef67ab9",
+    "value": "alice@company.com"
+  },
+  {
+    "modality_id": "_modalities---mod_ccaef67ab9",
+    "value": "bob@company.com"
+  },
+  {
+    "modality_id": "_modalities---mod_ccaef67ab9",
+    "value": "claire@company.com"
+  },
+  {
+    "modality_id": "_modalities---mod_cd314db7df",
+    "value": "2"
+  },
+  {
+    "modality_id": "_modalities---mod_cdae6051e3",
+    "value": "concessione dell'autorizzazione di prima istanza"
+  },
+  {
+    "modality_id": "_modalities---mod_cdae6051e3",
+    "value": "deposito pubblico della domanda"
+  },
+  {
+    "modality_id": "_modalities---mod_cdae6051e3",
+    "value": "messa in esercizio completa"
+  },
+  {
+    "modality_id": "_modalities---mod_cdae6051e3",
+    "value": "messa in esercizio parziale"
+  },
+  {
+    "modality_id": "_modalities---mod_cdae6051e3",
+    "value": "operatività dopo 3 anni"
+  },
+  {
+    "modality_id": "_modalities---mod_cdae6051e3",
+    "value": "passaggio in giudicato dell'autorizzazione"
+  },
+  {
+    "modality_id": "_modalities---mod_cdae6051e3",
+    "value": "rifiutato"
+  },
+  {
+    "modality_id": "_modalities---mod_cdae6051e3",
+    "value": "ritirato"
+  },
+  {
+    "modality_id": "_modalities---mod_ceb2957b9e",
+    "value": "Gadget Plus"
+  },
+  {
+    "modality_id": "_modalities---mod_ceb2957b9e",
+    "value": "Widget Pro"
+  },
+  {
+    "modality_id": "_modalities---mod_db169b4a86",
+    "value": "100.5"
+  },
+  {
+    "modality_id": "_modalities---mod_db169b4a86",
+    "value": "150.75"
+  },
+  {
+    "modality_id": "_modalities---mod_db169b4a86",
+    "value": "200.0"
+  },
+  {
+    "modality_id": "_modalities---mod_db169b4a86",
+    "value": "250.0"
+  },
+  {
+    "modality_id": "_modalities---mod_db169b4a86",
+    "value": "300.25"
+  },
+  {
+    "modality_id": "_modalities---mod_de545e0867",
+    "value": "Solar"
+  },
+  {
+    "modality_id": "_modalities---mod_de545e0867",
+    "value": "Wind"
+  },
+  {
+    "modality_id": "_modalities---mod_e1151e6948",
+    "value": "Lyon"
+  },
+  {
+    "modality_id": "_modalities---mod_e1151e6948",
+    "value": "Paris"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "1"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "10"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "11"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "12"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "13"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "14"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "15"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "16"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "17"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "18"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "19"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "2"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "20"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "3"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "4"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "5"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "6"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "7"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "8"
+  },
+  {
+    "modality_id": "_modalities---mod_e168f98b9c",
+    "value": "9"
+  },
+  {
+    "modality_id": "_modalities---mod_e1bb7570d1",
+    "value": "2020-01-15"
+  },
+  {
+    "modality_id": "_modalities---mod_e1bb7570d1",
+    "value": "2021-03-20"
+  },
+  {
+    "modality_id": "_modalities---mod_e1bb7570d1",
+    "value": "2023-01-01"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "1"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "10"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "11"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "12"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "13"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "14"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "15"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "16"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "17"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "18"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "19"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "2"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "20"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "21"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "22"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "23"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "24"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "25"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "26"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "27"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "28"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "29"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "3"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "4"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "5"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "6"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "7"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "8"
+  },
+  {
+    "modality_id": "_modalities---mod_e6102166d6",
+    "value": "9"
+  },
+  {
+    "modality_id": "_modalities---mod_e6d37e1198",
+    "value": "1010.8"
+  },
+  {
+    "modality_id": "_modalities---mod_e6d37e1198",
+    "value": "111.1"
+  },
+  {
+    "modality_id": "_modalities---mod_e6d37e1198",
+    "value": "115.4"
+  },
+  {
+    "modality_id": "_modalities---mod_e6d37e1198",
+    "value": "119.5"
+  },
+  {
+    "modality_id": "_modalities---mod_e6d37e1198",
+    "value": "124.0"
+  },
+  {
+    "modality_id": "_modalities---mod_e6d37e1198",
+    "value": "162.2"
+  },
+  {
+    "modality_id": "_modalities---mod_e6d37e1198",
+    "value": "187.5"
+  },
+  {
+    "modality_id": "_modalities---mod_e6d37e1198",
+    "value": "39.5"
+  },
+  {
+    "modality_id": "_modalities---mod_e6d37e1198",
+    "value": "58.5"
+  },
+  {
+    "modality_id": "_modalities---mod_e6d37e1198",
+    "value": "65.7"
+  },
+  {
+    "modality_id": "_modalities---mod_e6d37e1198",
+    "value": "71.5"
+  },
+  {
+    "modality_id": "_modalities---mod_e6d37e1198",
+    "value": "81.4"
+  },
+  {
+    "modality_id": "_modalities---mod_e6d37e1198",
+    "value": "96.1"
+  },
+  {
+    "modality_id": "_modalities---mod_e6dbaef17d",
+    "value": "-1.4"
+  },
+  {
+    "modality_id": "_modalities---mod_e6dbaef17d",
+    "value": "-1000.3"
+  },
+  {
+    "modality_id": "_modalities---mod_e6dbaef17d",
+    "value": "1.1"
+  },
+  {
+    "modality_id": "_modalities---mod_e6dbaef17d",
+    "value": "1.2"
+  },
+  {
+    "modality_id": "_modalities---mod_e6dbaef17d",
+    "value": "1000.3"
+  },
+  {
+    "modality_id": "_modalities---mod_e728ada030",
+    "value": "12140526"
+  },
+  {
+    "modality_id": "_modalities---mod_e728ada030",
+    "value": "2573180"
+  },
+  {
+    "modality_id": "_modalities---mod_e728ada030",
+    "value": "2795301"
+  },
+  {
+    "modality_id": "_modalities---mod_e728ada030",
+    "value": "3322757"
+  },
+  {
+    "modality_id": "_modalities---mod_e728ada030",
+    "value": "3373835"
+  },
+  {
+    "modality_id": "_modalities---mod_e728ada030",
+    "value": "344679"
+  },
+  {
+    "modality_id": "_modalities---mod_e728ada030",
+    "value": "3832120"
+  },
+  {
+    "modality_id": "_modalities---mod_e728ada030",
+    "value": "5094283"
+  },
+  {
+    "modality_id": "_modalities---mod_e728ada030",
+    "value": "5518851"
+  },
+  {
+    "modality_id": "_modalities---mod_e728ada030",
+    "value": "5924858"
+  },
+  {
+    "modality_id": "_modalities---mod_e728ada030",
+    "value": "5962662"
+  },
+  {
+    "modality_id": "_modalities---mod_e728ada030",
+    "value": "6010289"
+  },
+  {
+    "modality_id": "_modalities---mod_e728ada030",
+    "value": "8042936"
+  },
+  {
+    "modality_id": "_modalities---mod_ecdfc6dc16",
+    "value": "DGFiP"
+  },
+  {
+    "modality_id": "_modalities---mod_ecdfc6dc16",
+    "value": "INSEE"
+  },
+  {
+    "modality_id": "_modalities---mod_ed49b8ba30",
+    "value": "finance"
+  },
+  {
+    "modality_id": "_modalities---mod_ed49b8ba30",
+    "value": "rh"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "1"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "127"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "128"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "144"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "145"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "146"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "147"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "148"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "149"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "150"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "151"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "152"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "153"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "155"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "156"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "157"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "159"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "160"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "161"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "162"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "163"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "164"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "165"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "166"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "167"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "168"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "169"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "170"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "171"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "172"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "173"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "176"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "177"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "178"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "179"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "180"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "181"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "182"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "183"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "184"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "185"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "186"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "187"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "188"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "191"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "192"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "193"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "194"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "46"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "71"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "72"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "83"
+  },
+  {
+    "modality_id": "_modalities---mod_edd0a3feca",
+    "value": "85"
+  },
+  {
+    "modality_id": "_modalities---mod_eed9cfed19",
+    "value": "2019-06-01"
+  },
+  {
+    "modality_id": "_modalities---mod_eed9cfed19",
+    "value": "2020-01-15"
+  },
+  {
+    "modality_id": "_modalities---mod_eed9cfed19",
+    "value": "2021-03-20"
+  },
+  {
+    "modality_id": "_modalities---mod_ef3ca99c8b",
+    "value": "1"
+  },
+  {
+    "modality_id": "_modalities---mod_ef3ca99c8b",
+    "value": "2"
+  },
+  {
+    "modality_id": "_modalities---mod_ef3ca99c8b",
+    "value": "3"
+  },
+  {
+    "modality_id": "_modalities---mod_ef932f614f",
+    "value": "contact@acme.com"
+  },
+  {
+    "modality_id": "_modalities---mod_ef932f614f",
+    "value": "info@techstart.com"
+  },
+  {
+    "modality_id": "_modalities---mod_f487e9e0e3",
+    "value": "3"
+  },
+  {
+    "modality_id": "_modalities---mod_f487e9e0e3",
+    "value": "4"
+  },
+  {
+    "modality_id": "_modalities---mod_f487e9e0e3",
+    "value": "5"
+  },
+  {
+    "modality_id": "_modalities---mod_f487e9e0e3",
+    "value": "6"
+  },
+  {
+    "modality_id": "_modalities---mod_f487e9e0e3",
+    "value": "8"
+  },
+  {
+    "modality_id": "_modalities---mod_f7f5210676",
+    "value": "12011"
+  },
+  {
+    "modality_id": "_modalities---mod_f7f5210676",
+    "value": "27208"
+  },
+  {
+    "modality_id": "_modalities---mod_f7f5210676",
+    "value": "29906"
+  },
+  {
+    "modality_id": "_modalities---mod_f7f5210676",
+    "value": "31400"
+  },
+  {
+    "modality_id": "_modalities---mod_f7f5210676",
+    "value": "31806"
+  },
+  {
+    "modality_id": "_modalities---mod_f7f5210676",
+    "value": "32082"
+  },
+  {
+    "modality_id": "_modalities---mod_f7f5210676",
+    "value": "39151"
+  },
+  {
+    "modality_id": "_modalities---mod_f7f5210676",
+    "value": "47784"
+  },
+  {
+    "modality_id": "_modalities---mod_f7f5210676",
+    "value": "57433"
+  },
+  {
+    "modality_id": "_modalities---mod_f7f5210676",
+    "value": "69711"
+  },
+  {
+    "modality_id": "_modalities---mod_f7f5210676",
+    "value": "72724"
+  },
+  {
+    "modality_id": "_modalities---mod_f7f5210676",
+    "value": "84061"
+  },
+  {
+    "modality_id": "_modalities---mod_f7f5210676",
+    "value": "8722"
+  },
+  {
+    "modality_id": "_modalities---mod_faeb83c5f5",
+    "value": "1.0"
+  },
+  {
+    "modality_id": "_modalities---mod_faeb83c5f5",
+    "value": "Demo Corp"
+  },
+  {
+    "modality_id": "_modalities---mod_fb91005117",
+    "value": "25"
+  },
+  {
+    "modality_id": "_modalities---mod_fb91005117",
+    "value": "26"
+  },
+  {
+    "modality_id": "_modalities---mod_fb91005117",
+    "value": "27"
+  },
+  {
+    "modality_id": "_modalities---mod_fb91005117",
+    "value": "28"
+  },
+  {
+    "modality_id": "_modalities---mod_fb91005117",
+    "value": "29"
+  },
+  {
+    "modality_id": "_modalities---mod_fb91005117",
+    "value": "30"
+  },
+  {
+    "modality_id": "_modalities---mod_fb91005117",
+    "value": "31"
+  },
+  {
+    "modality_id": "_modalities---mod_fb91005117",
+    "value": "32"
+  },
+  {
+    "modality_id": "_modalities---mod_fb91005117",
+    "value": "33"
+  },
+  {
+    "modality_id": "_modalities---mod_fb91005117",
+    "value": "34"
+  },
+  {
+    "modality_id": "_modalities---mod_fb91005117",
+    "value": "35"
+  },
+  {
+    "modality_id": "_modalities---mod_fb91005117",
+    "value": "36"
+  },
+  {
+    "modality_id": "_modalities---mod_fb91005117",
+    "value": "37"
+  },
+  {
+    "modality_id": "_modalities---mod_fb91005117",
+    "value": "39"
+  },
+  {
+    "modality_id": "_modalities---mod_fb91005117",
+    "value": "40"
+  },
+  {
+    "modality_id": "_modalities---mod_fb91005117",
+    "value": "41"
+  },
+  {
+    "modality_id": "_modalities---mod_fb91005117",
+    "value": "42"
+  },
+  {
+    "modality_id": "_modalities---mod_fb91005117",
+    "value": "44"
+  },
+  {
+    "modality_id": "_modalities---mod_fb91005117",
+    "value": "45"
+  }
+]
