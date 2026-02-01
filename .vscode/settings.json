@@ -4,5 +4,29 @@
   "editor.formatOnSave": true,
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "chat.tools.terminal.enableAutoApprove": true,
+  "chat.tools.terminal.autoApprove": {
+    "ls": true,
+    "cat": true,
+    "head": true,
+    "tail": true,
+    "grep": true,
+    "find": true,
+    "wc": true,
+    "make": true,
+    "pytest": true,
+    "ruff": true,
+    "pyright": true,
+    "uv": true,
+    "git status": true,
+    "git diff": true,
+    "git log": true,
+    "git show": true,
+    "git branch": true,
+    "rm": false,
+    "rmdir": false,
+    "chmod": false,
+    "chown": false
   }
 }
