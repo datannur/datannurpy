@@ -275,6 +275,10 @@ def _merge_entity(
     new_data: dict[str, Any],
 ) -> None:
     """Merge new data into existing entity (override + merge lists)."""
+    # Mark entity as seen for incremental scan
+    if hasattr(existing, "_seen"):
+        existing._seen = True
+
     for key, value in new_data.items():
         if key == "id":
             continue  # Never override id
@@ -354,6 +358,10 @@ def _process_entity_table(
                 )
                 catalog.values.append(new_value)
                 created += 1
+                # Mark parent modality as seen
+                modality = _find_entity_by_id(catalog.modalities, str(modality_id))
+                if modality and hasattr(modality, "_seen"):
+                    modality._seen = True
 
         else:
             # Standard entity with id
@@ -377,6 +385,9 @@ def _process_entity_table(
             else:
                 # Validation already done, just create the entity
                 new_entity = entity_class(**row_data)
+                # Mark new entity as seen for incremental scan
+                if hasattr(new_entity, "_seen"):
+                    new_entity._seen = True
                 catalog_list.append(new_entity)
                 created += 1
 

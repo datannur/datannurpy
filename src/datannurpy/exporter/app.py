@@ -42,12 +42,21 @@ def copy_app(output_dir: Path) -> None:
 
 def export_app(
     catalog: Catalog,
-    output_dir: str | Path,
+    output_dir: str | Path | None = None,
     *,
     open_browser: bool = False,
     quiet: bool | None = None,
 ) -> None:
     """Export a standalone datannur visualization app with catalog data."""
+    # Finalize catalog (remove unseen entities) before export
+    catalog.finalize()
+
+    if output_dir is None:
+        if catalog.db_path is None:
+            msg = "output_dir is required when db_path was not set at init"
+            raise ValueError(msg)
+        output_dir = catalog.db_path
+
     q = quiet if quiet is not None else catalog.quiet
     output_dir = Path(output_dir)
 

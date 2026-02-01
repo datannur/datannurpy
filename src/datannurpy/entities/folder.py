@@ -34,3 +34,6 @@ class Folder(Entity):
 
     # Temporal
     last_update_date: str | None = None
+
+    # Internal flag for incremental tracking (not exported)
+    _seen: bool = False

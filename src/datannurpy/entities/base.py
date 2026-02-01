@@ -17,6 +17,9 @@ class Entity:
         result: dict[str, Any] = {}
 
         for key, value in self.__dict__.items():
+            # Skip private attributes (e.g., _seen for incremental scan)
+            if key.startswith("_"):
+                continue
             if value is None:
                 continue
             if isinstance(value, list):

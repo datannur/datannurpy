@@ -1,0 +1,13 @@
+[
+  {
+    "id": "dgfip",
+    "name": "DGFiP",
+    "description": "Direction générale des Finances publiques"
+  },
+  {
+    "id": "insee",
+    "name": "INSEE",
+    "description": "Institut national de la statistique et des études économiques",
+    "email": "contact@insee.fr"
+  }
+]

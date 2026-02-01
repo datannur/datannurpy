@@ -44,3 +44,10 @@ class Dataset(Entity):
     last_update_date: str | None = None
     updating_each: str | None = None
     no_more_update: str | None = None
+
+    # Incremental scan
+    last_update_timestamp: int | None = None
+    schema_signature: str | None = None
+
+    # Internal flag for incremental tracking (not exported)
+    _seen: bool = False

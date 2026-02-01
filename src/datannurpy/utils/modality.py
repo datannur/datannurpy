@@ -26,19 +26,41 @@ class ModalityManager:
         self._catalog = catalog
         self._modality_index: dict[frozenset[str], str] = {}
 
+    def rebuild_index(self) -> None:
+        """Rebuild modality index from existing values (after loading from db)."""
+        # Group values by modality_id
+        values_by_modality: dict[str, set[str]] = {}
+        for v in self._catalog.values:
+            if v.modality_id not in values_by_modality:
+                values_by_modality[v.modality_id] = set()
+            if v.value is not None:
+                values_by_modality[v.modality_id].add(v.value)
+
+        # Build index: frozenset(values) -> modality_id
+        for modality_id, vals in values_by_modality.items():
+            self._modality_index[frozenset(vals)] = modality_id
+
     def ensure_modalities_folder(self) -> None:
         """Create the _modalities folder if not already present."""
-        if not any(f.id == MODALITIES_FOLDER_ID for f in self._catalog.folders):
-            self._catalog.folders.append(
-                Folder(id=MODALITIES_FOLDER_ID, name="Modalities")
-            )
+        existing = self._catalog._folder_index.get(MODALITIES_FOLDER_ID)
+        if existing is not None:
+            existing._seen = True
+            return
+        folder = Folder(id=MODALITIES_FOLDER_ID, name="Modalities", _seen=True)
+        self._catalog.folders.append(folder)
+        self._catalog._folder_index[MODALITIES_FOLDER_ID] = folder
 
     def get_or_create(self, values: set[str]) -> str:
         """Get existing modality or create new one for the given values."""
         signature = frozenset(values)
 
         if signature in self._modality_index:
-            return self._modality_index[signature]
+            modality_id = self._modality_index[signature]
+            # Mark existing modality as seen for incremental scan (O(1) lookup)
+            modality = self._catalog._modality_index.get(modality_id)
+            if modality is not None:
+                modality._seen = True
+            return modality_id
 
         # Create new modality
         self.ensure_modalities_folder()
@@ -50,8 +72,10 @@ class ModalityManager:
             id=modality_id,
             folder_id=MODALITIES_FOLDER_ID,
             name=build_modality_name(values),
+            _seen=True,
         )
         self._catalog.modalities.append(modality)
+        self._catalog._modality_index[modality_id] = modality
 
         # Create values
         for val in sorted(values):

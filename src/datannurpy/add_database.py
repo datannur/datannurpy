@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 import ibis
@@ -15,17 +14,24 @@ from .utils import (
     log_done,
     log_folder,
     log_section,
+    log_skip,
     log_start,
     log_summary,
     make_id,
     sanitize_id,
+    timestamp_to_iso,
+    upsert_folder,
 )
 from .entities import Dataset, Folder
 from .scanner.database import (
+    build_table_data_path,
+    close_connection,
+    compute_schema_signature,
     connect,
     get_database_name,
     get_database_path,
     get_schemas_to_scan,
+    get_table_row_count,
     list_tables,
     scan_table,
 )
@@ -47,9 +53,11 @@ def add_database(
     group_by_prefix: bool | str = True,
     prefix_min_tables: int = 2,
     quiet: bool | None = None,
+    refresh: bool | None = None,
 ) -> None:
     """Scan a database and add its tables to the catalog."""
     q = quiet if quiet is not None else catalog.quiet
+    do_refresh = refresh if refresh is not None else catalog.refresh
     # Connect to database
     con, backend_name = connect(connection)
 
@@ -61,7 +69,7 @@ def add_database(
     vars_before = len(catalog.variables)
 
     # Get timestamp for folder/dataset
-    now_iso = datetime.now(tz=timezone.utc).strftime("%Y/%m/%d")
+    now_iso = timestamp_to_iso(catalog._now)
 
     # Determine schemas to scan
     schemas_to_scan = get_schemas_to_scan(con, schema, backend_name)
@@ -80,7 +88,9 @@ def add_database(
         else None
     )
     folder.type = backend_name
-    catalog.folders.append(folder)
+
+    # Add or update root folder
+    upsert_folder(catalog, folder)
 
     freq_threshold = catalog.freq_threshold if catalog.freq_threshold else None
 
@@ -91,14 +101,17 @@ def add_database(
             log_folder(f"{schema_name} (schema)", q)
             # Multiple schemas: create sub-folder for each
             schema_folder_id = make_id(root_folder_id, sanitize_id(schema_name))
-            schema_folder = Folder(
-                id=schema_folder_id,
-                name=schema_name,
-                parent_id=root_folder_id,
-                type="schema",
-                last_update_date=now_iso,
+
+            upsert_folder(
+                catalog,
+                Folder(
+                    id=schema_folder_id,
+                    name=schema_name,
+                    parent_id=root_folder_id,
+                    type="schema",
+                    last_update_date=now_iso,
+                ),
             )
-            catalog.folders.append(schema_folder)
             current_folder_id = schema_folder_id
         else:
             current_folder_id = root_folder_id
@@ -127,17 +140,46 @@ def add_database(
                 folder_id = make_id(parent_id, sanitize_id(pf.prefix))
                 prefix_folder_ids[pf.prefix] = folder_id
 
-                prefix_folder = Folder(
-                    id=folder_id,
-                    name=pf.prefix,
-                    parent_id=parent_id,
-                    type="table_prefix",
-                    last_update_date=now_iso,
+                upsert_folder(
+                    catalog,
+                    Folder(
+                        id=folder_id,
+                        name=pf.prefix,
+                        parent_id=parent_id,
+                        type="table_prefix",
+                        last_update_date=now_iso,
+                    ),
                 )
-                catalog.folders.append(prefix_folder)
 
         for table_name in tables:
             log_start(table_name, q)
+
+            # Build data_path for incremental lookup
+            table_data_path = build_table_data_path(
+                backend_name, db_name, schema_name, table_name
+            )
+
+            # Compute signature and row count for comparison/storage
+            current_signature = compute_schema_signature(con, table_name, schema_name)
+            current_nb_row = get_table_row_count(con, table_name, schema_name)
+
+            # Check if table exists in cache
+            existing_dataset = catalog._dataset_index.get(table_data_path)
+
+            if existing_dataset is not None and not do_refresh:
+                if (
+                    existing_dataset.schema_signature == current_signature
+                    and existing_dataset.nb_row == current_nb_row
+                ):
+                    # Unchanged, skip
+                    existing_dataset._seen = True
+                    catalog._mark_dataset_modalities_seen(existing_dataset)
+                    log_skip(table_name, q)
+                    continue
+
+                # Modified, remove old dataset before rescan
+                catalog._remove_dataset_cascade(existing_dataset)
+
             # Determine folder for this table
             table_prefix: str | None = None
             if valid_prefixes:
@@ -153,15 +195,6 @@ def add_database(
             # Build dataset ID
             dataset_id = make_id(table_folder_id, sanitize_id(table_name))
 
-            # Create dataset
-            dataset = Dataset(
-                id=dataset_id,
-                name=table_name,
-                folder_id=table_folder_id,
-                delivery_format=backend_name,
-                last_update_date=now_iso,
-            )
-
             # Scan table
             table_vars, nb_row, freq_table = scan_table(
                 con,
@@ -173,14 +206,32 @@ def add_database(
                 sample_size=sample_size,
             )
 
-            dataset.nb_row = nb_row
+            # Create dataset with incremental fields
+            dataset = Dataset(
+                id=dataset_id,
+                name=table_name,
+                folder_id=table_folder_id,
+                delivery_format=backend_name,
+                last_update_date=now_iso,
+                data_path=table_data_path,
+                nb_row=nb_row,
+                schema_signature=current_signature,
+                last_update_timestamp=catalog._now,
+            )
+            dataset._seen = True
+
             catalog.datasets.append(dataset)
+            catalog._dataset_index[table_data_path] = dataset
             var_id_mapping = build_variable_ids(table_vars, dataset.id)
             catalog.modality_manager.assign_from_freq(
                 table_vars, freq_table, var_id_mapping
             )
-            catalog.variables.extend(table_vars)
+            catalog._add_variables(table_vars, dataset.id)
             log_done(f"{table_name} ({nb_row:,} rows, {len(table_vars)} vars)", q)
+
+    # Close connection if we created it (string connection)
+    if isinstance(connection, str):
+        close_connection(con)
 
     datasets_added = len(catalog.datasets) - datasets_before
     vars_added = len(catalog.variables) - vars_before

@@ -21,6 +21,9 @@ class Modality(Entity):
     description: str | None = None
     type: str | None = None
 
+    # Internal flag for incremental tracking (not exported)
+    _seen: bool = False
+
 
 @dataclass
 class Value:

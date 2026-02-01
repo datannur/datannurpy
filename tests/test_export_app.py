@@ -95,3 +95,26 @@ class TestExportApp:
 
         with pytest.raises(FileNotFoundError, match="datannur app not found"):
             catalog.export_app(tmp_path)
+
+    def test_export_app_uses_db_path_by_default(self, tmp_path):
+        """export_app() without args should use db_path."""
+        db_dir = tmp_path / "output"
+
+        catalog = Catalog(db_path=db_dir, quiet=True)
+        catalog.add_folder(
+            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+        )
+        catalog.export_app()
+
+        assert (db_dir / "index.html").exists()
+        assert (db_dir / "data" / "db" / "folder.json").exists()
+
+    def test_export_app_without_db_path_raises(self):
+        """export_app() without args and no db_path should raise."""
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(
+            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+        )
+
+        with pytest.raises(ValueError, match="output_dir is required"):
+            catalog.export_app()

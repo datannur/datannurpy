@@ -20,3 +20,6 @@ class Tag(Entity):
     # Descriptive
     name: str | None = None
     description: str | None = None
+
+    # Internal flag for incremental tracking (not exported)
+    _seen: bool = False

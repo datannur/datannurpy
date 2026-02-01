@@ -27,3 +27,6 @@ class Institution(Entity):
     # Temporal
     start_date: str | None = None
     end_date: str | None = None
+
+    # Internal flag for incremental tracking (not exported)
+    _seen: bool = False
