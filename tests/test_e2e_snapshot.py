@@ -183,28 +183,30 @@ class TestE2EStructure:
     def test_folders_count(self, catalog: Catalog) -> None:
         """Should have expected number of folders."""
         # data + subfolders + company_db + photovoltaik + _modalities
-        assert len(catalog.folders) >= 5
+        assert len(catalog.folder.all()) >= 5
 
     def test_datasets_count(self, catalog: Catalog) -> None:
         """Should have datasets from files and databases."""
-        assert len(catalog.datasets) >= 10
+        assert len(catalog.dataset.all()) >= 10
 
     def test_variables_count(self, catalog: Catalog) -> None:
         """Should have many variables across all datasets."""
-        assert len(catalog.variables) >= 50
+        assert len(catalog.variable.all()) >= 50
 
     def test_id_format(self, catalog: Catalog) -> None:
         """All IDs should follow the convention (separator: ---)."""
-        for ds in catalog.datasets:
+        for ds in catalog.dataset.all():
             assert "---" in ds.id or ds.folder_id == ds.id.rsplit("---", 1)[0]
 
-        for var in catalog.variables:
+        for var in catalog.variable.all():
             parts = var.id.split("---")
             assert len(parts) >= 2, f"Invalid variable ID: {var.id}"
 
     def test_photovoltaik_folder_metadata(self, catalog: Catalog) -> None:
         """Custom folder metadata should be preserved."""
-        pv_folder = next((f for f in catalog.folders if f.id == "photovoltaik"), None)
+        pv_folder = next(
+            (f for f in catalog.folder.all() if f.id == "photovoltaik"), None
+        )
         assert pv_folder is not None
         assert pv_folder.name == "Grandes installations photovoltaïques"
 
@@ -212,6 +214,6 @@ class TestE2EStructure:
         """Metadata from add_metadata should be merged."""
         # Check that some metadata file was applied
         # This depends on what's in data/metadata/
-        modalities = catalog.modalities
+        modalities = catalog.modality.all()
         # Should have at least some modalities from metadata
         assert len(modalities) >= 0  # Adjust based on actual metadata content

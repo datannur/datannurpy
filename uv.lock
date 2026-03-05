@@ -676,6 +676,7 @@ version = "0.4.1"
 source = { editable = "." }
 dependencies = [
     { name = "ibis-framework", extra = ["duckdb"] },
+    { name = "jsonjsdb" },
     { name = "openpyxl" },
     { name = "typing-extensions", marker = "python_full_version < '3.11'" },
     { name = "xlrd" },
@@ -713,7 +714,6 @@ stat = [
 dev = [
     { name = "deltalake", version = "1.2.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "deltalake", version = "1.3.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "jsonjsdb" },
     { name = "pyiceberg" },
     { name = "pyreadstat", version = "1.2.8", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "pyreadstat", version = "1.3.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
@@ -734,6 +734,7 @@ requires-dist = [
     { name = "ibis-framework", extras = ["oracle"], marker = "extra == 'oracle'", specifier = ">=11.0" },
     { name = "ibis-framework", extras = ["postgres"], marker = "extra == 'postgres'", specifier = ">=11.0" },
     { name = "ibis-framework", extras = ["postgres", "mysql", "oracle", "mssql"], marker = "extra == 'databases'", specifier = ">=11.0" },
+    { name = "jsonjsdb", specifier = ">=0.3.2" },
     { name = "openpyxl", specifier = ">=3.0" },
     { name = "pyiceberg", marker = "extra == 'iceberg'", specifier = ">=0.10.0" },
     { name = "pyreadstat", marker = "python_full_version >= '3.10' and extra == 'stat'", specifier = ">=1.2.0" },
@@ -746,7 +747,6 @@ provides-extras = ["postgres", "mysql", "oracle", "mssql", "databases", "delta",
 [package.metadata.requires-dev]
 dev = [
     { name = "deltalake", specifier = ">=0.18.0" },
-    { name = "jsonjsdb", specifier = ">=0.2.1" },
     { name = "pyiceberg", specifier = ">=0.10.0" },
     { name = "pyreadstat", marker = "python_full_version < '3.10'", specifier = ">=1.2.0,<=1.2.8" },
     { name = "pyreadstat", marker = "python_full_version >= '3.10'", specifier = ">=1.2.0" },
@@ -1032,15 +1032,15 @@ wheels = [
 
 [[package]]
 name = "jsonjsdb"
-version = "0.2.1"
+version = "0.3.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "polars", version = "1.36.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "polars", version = "1.38.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ce/52/f243e9873429e9ed7e7a2b44746e78571a04467449f5fd5f3ec4564c4e6c/jsonjsdb-0.2.1.tar.gz", hash = "sha256:96c910d45d7eabe0ed1a68bf281529ec50ad32b3f8532d2e1074a9281bfbeafd", size = 7758, upload-time = "2026-03-05T11:43:25.803Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3c/9d/9ebad2e333cf5cc2347d9ae90eec9993c6084dc81c099c75923070861906/jsonjsdb-0.3.2.tar.gz", hash = "sha256:9ba404871ad1737eef06acd454e774c168aeafb732c9f20ed3b105ae7847cb32", size = 8116, upload-time = "2026-03-05T13:26:55.188Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e6/1e/e1bf4c1a2024d8ffd70ea47cd8bc3cbe63e9962baa6db3876498f78efbf3/jsonjsdb-0.2.1-py3-none-any.whl", hash = "sha256:5d5543599f5401ffa0f0c6e159928c518bad1d736a4213c694004008278f5bc5", size = 9911, upload-time = "2026-03-05T11:43:24.809Z" },
+    { url = "https://files.pythonhosted.org/packages/2e/3d/db073d41a3507ab1ca6992629df62dca6ba8c3b0018c48b7377d4dcd90d0/jsonjsdb-0.3.2-py3-none-any.whl", hash = "sha256:fedf1780c413ce5da7f4eca93c75cc7fe923dba9c15682473b445cb946838c7a", size = 10279, upload-time = "2026-03-05T13:26:53.881Z" },
 ]
 
 [[package]]

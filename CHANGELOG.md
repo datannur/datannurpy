@@ -1,5 +1,12 @@
 # datannurpy
 
+## 0.4.2 (2026-03-05)
+
+- add: jsonjsdb as runtime dependency
+- refactor: migrate internal storage to jsonjsdb
+- remove: `entities/` module (consolidated into `schema.py`)
+- remove: `importer/db.py` and `exporter/db.py` (replaced by jsonjsdb)
+
 ## 0.4.1 (2026-02-01)
 
 - add: e2e test with demo data and db export

@@ -98,9 +98,9 @@ class TestScanStatisticalExceptions:
         with pytest.warns(UserWarning, match="Could not read statistical file"):
             catalog.add_dataset(sas_file, quiet=True)
 
-        assert len(catalog.datasets) == 1
-        assert catalog.datasets[0].nb_row == 0
-        assert len(catalog.variables) == 0
+        assert len(catalog.dataset.all()) == 1
+        assert catalog.dataset.all()[0].nb_row == 0
+        assert len(catalog.variable.all()) == 0
 
     def test_column_without_label(self, tmp_path: Path):
         """Statistical scan should handle columns without labels."""
@@ -111,8 +111,8 @@ class TestScanStatisticalExceptions:
         catalog = Catalog()
         catalog.add_dataset(spss_file)
 
-        assert len(catalog.variables) == 2
-        assert all(v.description is None for v in catalog.variables)
+        assert len(catalog.variable.all()) == 2
+        assert all(v.description is None for v in catalog.variable.all())
 
 
 class TestScanSasFiles:
@@ -124,9 +124,9 @@ class TestScanSasFiles:
         catalog.add_folder(
             DATA_DIR, Folder(id="test", name="Test"), include=["cars.sas7bdat"]
         )
-        assert len(catalog.datasets) == 1
-        assert catalog.datasets[0].delivery_format == "sas"
-        assert len(catalog.variables) == 4
+        assert len(catalog.dataset.all()) == 1
+        assert catalog.dataset.all()[0].delivery_format == "sas"
+        assert len(catalog.variable.all()) == 4
 
     def test_add_folder_extracts_sas_metadata(self):
         """add_folder should extract metadata from SAS files."""
@@ -134,8 +134,8 @@ class TestScanSasFiles:
         catalog.add_folder(
             DATA_DIR, Folder(id="test", name="Test"), include=["cars.sas7bdat"]
         )
-        assert catalog.datasets[0].description == "Written by SAS"
-        var_by_name = {v.name: v for v in catalog.variables}
+        assert catalog.dataset.all()[0].description == "Written by SAS"
+        var_by_name = {v.name: v for v in catalog.variable.all()}
         assert var_by_name["MPG"].description == "miles per gallon"
         assert var_by_name["CYL"].description == "number of cylinders"
 
@@ -145,7 +145,7 @@ class TestScanSasFiles:
         catalog.add_folder(
             DATA_DIR, Folder(id="test", name="Test"), include=["cars.sas7bdat"]
         )
-        var_by_name = {v.name: v for v in catalog.variables}
+        var_by_name = {v.name: v for v in catalog.variable.all()}
         # CYL contains only integers (3, 4, 5, 6, 8)
         assert var_by_name["CYL"].type == "integer"
         # MPG contains decimals (14.5, 16.2, etc.)

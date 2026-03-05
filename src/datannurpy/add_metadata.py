@@ -15,7 +15,7 @@ from urllib.parse import urlparse
 import ibis
 import pandas as pd
 
-from .entities import (
+from .schema import (
     Dataset,
     Doc,
     Folder,
@@ -27,6 +27,7 @@ from .entities import (
 )
 from .scanner import read_csv, read_excel, read_statistical
 from .utils import log_done, log_section, log_warn
+from .utils.ids import build_value_id
 
 if TYPE_CHECKING:
     from .catalog import Catalog
@@ -76,8 +77,8 @@ def _validate_entity_table(
     if entity_name in ENTITIES_WITHOUT_ID:
         return errors
 
-    catalog_list = _get_catalog_list(catalog, entity_name)
-    assert catalog_list is not None  # entity_name is always valid
+    catalog_table = _get_catalog_table(catalog, entity_name)
+    assert catalog_table is not None  # entity_name is always valid
     required = _get_required_fields(entity_class)
     csv_columns = set(df.columns)
 
@@ -103,7 +104,7 @@ def _validate_entity_table(
             continue
 
         # Check if entity already exists (will be updated, not created)
-        existing = _find_entity_by_id(catalog_list, str(entity_id))
+        existing = catalog_table.get(str(entity_id))
         if existing:
             continue
 
@@ -296,6 +297,34 @@ def _merge_entity(
             setattr(existing, key, value)
 
 
+def _compute_merge_updates(
+    existing: Any,
+    new_data: dict[str, Any],
+) -> dict[str, Any]:
+    """Compute update dict for Table.update() (override + merge lists)."""
+    updates: dict[str, Any] = {}
+
+    for key, value in new_data.items():
+        if key == "id":
+            continue  # Never override id
+
+        if key in LIST_FIELDS:
+            # Merge lists: new values first, then existing (deduplicated)
+            existing_list = getattr(existing, key, []) or []
+            new_list = value if isinstance(value, list) else []
+            merged = list(dict.fromkeys(new_list + existing_list))
+            updates[key] = merged
+        else:
+            # Override with new value
+            updates[key] = value
+
+    # Mark entity as seen for incremental scan
+    if hasattr(existing, "_seen"):
+        updates["_seen"] = True
+
+    return updates
+
+
 def _find_entity_by_id(
     entities: list[Any],
     entity_id: str,
@@ -329,9 +358,9 @@ def _process_entity_table(
     created = 0
     updated = 0
 
-    # Get the appropriate catalog list
-    catalog_list = _get_catalog_list(catalog, entity_name)
-    assert catalog_list is not None  # entity_name is always valid
+    # Get the appropriate catalog table
+    catalog_table = _get_catalog_table(catalog, entity_name)
+    assert catalog_table is not None  # entity_name is always valid
 
     # Convert DataFrame to list of dicts
     rows = df.to_dict(orient="records")
@@ -346,22 +375,29 @@ def _process_entity_table(
             if modality_id is None or value_str is None:
                 continue
 
-            existing = _find_value(catalog.values, str(modality_id), str(value_str))
+            value_id = build_value_id(str(modality_id), str(value_str))
+            existing = catalog.value.get(value_id)
             if existing:
-                _merge_entity(existing, row_data)
+                # Update using Table.update()
+                updates = {}
+                if row_data.get("description") is not None:
+                    updates["description"] = row_data["description"]
+                if updates:
+                    catalog.value.update(value_id, **updates)
                 updated += 1
             else:
                 new_value = Value(
+                    id=value_id,
                     modality_id=str(modality_id),
                     value=str(value_str),
                     description=row_data.get("description"),
                 )
-                catalog.values.append(new_value)
+                catalog.value.add(new_value)
                 created += 1
                 # Mark parent modality as seen
-                modality = _find_entity_by_id(catalog.modalities, str(modality_id))
+                modality = catalog.modality.get(str(modality_id))
                 if modality and hasattr(modality, "_seen"):
-                    modality._seen = True
+                    catalog.modality.update(str(modality_id), _seen=True)
 
         else:
             # Standard entity with id
@@ -378,9 +414,11 @@ def _process_entity_table(
                 parts = entity_id.split("---")
                 row_data["name"] = parts[-1]
 
-            existing = _find_entity_by_id(catalog_list, entity_id)
+            existing = catalog_table.get(entity_id)
             if existing:
-                _merge_entity(existing, row_data)
+                # Compute updates and use Table.update()
+                updates = _compute_merge_updates(existing, row_data)
+                catalog_table.update(entity_id, **updates)
                 updated += 1
             else:
                 # Validation already done, just create the entity
@@ -388,23 +426,23 @@ def _process_entity_table(
                 # Mark new entity as seen for incremental scan
                 if hasattr(new_entity, "_seen"):
                     new_entity._seen = True
-                catalog_list.append(new_entity)
+                catalog_table.add(new_entity)
                 created += 1
 
     return created, updated
 
 
-def _get_catalog_list(catalog: Catalog, entity_name: str) -> list[Any] | None:
-    """Get the appropriate list from catalog for an entity type."""
+def _get_catalog_table(catalog: Catalog, entity_name: str) -> Any | None:
+    """Get the appropriate jsonjsdb table from catalog for an entity type."""
     mapping = {
-        "folder": catalog.folders,
-        "dataset": catalog.datasets,
-        "variable": catalog.variables,
-        "modality": catalog.modalities,
-        "value": catalog.values,
-        "institution": catalog.institutions,
-        "tag": catalog.tags,
-        "doc": catalog.docs,
+        "folder": catalog.folder,
+        "dataset": catalog.dataset,
+        "variable": catalog.variable,
+        "modality": catalog.modality,
+        "value": catalog.value,
+        "institution": catalog.institution,
+        "tag": catalog.tag,
+        "doc": catalog.doc,
     }
     return mapping.get(entity_name)
 

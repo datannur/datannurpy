@@ -10,7 +10,7 @@ import ibis
 import ibis.expr.datatypes as dt
 import pyarrow as pa
 
-from ..entities import Variable
+from ..schema import Variable
 
 # Supported file formats: suffix -> delivery_format
 SUPPORTED_FORMATS: dict[str, str] = {

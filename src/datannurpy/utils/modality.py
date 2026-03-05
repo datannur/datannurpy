@@ -10,10 +10,11 @@ import pyarrow as pa
 from .ids import (
     MODALITIES_FOLDER_ID,
     build_modality_name,
+    build_value_id,
     compute_modality_hash,
     make_id,
 )
-from ..entities import Folder, Modality, Value, Variable
+from ..schema import Folder, Modality, Value, Variable
 
 if TYPE_CHECKING:
     from ..catalog import Catalog
@@ -30,7 +31,7 @@ class ModalityManager:
         """Rebuild modality index from existing values (after loading from db)."""
         # Group values by modality_id
         values_by_modality: dict[str, set[str]] = {}
-        for v in self._catalog.values:
+        for v in self._catalog.value.all():
             if v.modality_id not in values_by_modality:
                 values_by_modality[v.modality_id] = set()
             if v.value is not None:
@@ -42,13 +43,12 @@ class ModalityManager:
 
     def ensure_modalities_folder(self) -> None:
         """Create the _modalities folder if not already present."""
-        existing = self._catalog._folder_index.get(MODALITIES_FOLDER_ID)
+        existing = self._catalog.folder.get(MODALITIES_FOLDER_ID)
         if existing is not None:
-            existing._seen = True
+            self._catalog.folder.update(MODALITIES_FOLDER_ID, _seen=True)
             return
         folder = Folder(id=MODALITIES_FOLDER_ID, name="Modalities", _seen=True)
-        self._catalog.folders.append(folder)
-        self._catalog._folder_index[MODALITIES_FOLDER_ID] = folder
+        self._catalog.folder.add(folder)
 
     def get_or_create(self, values: set[str]) -> str:
         """Get existing modality or create new one for the given values."""
@@ -56,10 +56,10 @@ class ModalityManager:
 
         if signature in self._modality_index:
             modality_id = self._modality_index[signature]
-            # Mark existing modality as seen for incremental scan (O(1) lookup)
-            modality = self._catalog._modality_index.get(modality_id)
+            # Mark existing modality as seen for incremental scan
+            modality = self._catalog.modality.get(modality_id)
             if modality is not None:
-                modality._seen = True
+                self._catalog.modality.update(modality_id, _seen=True)
             return modality_id
 
         # Create new modality
@@ -74,12 +74,17 @@ class ModalityManager:
             name=build_modality_name(values),
             _seen=True,
         )
-        self._catalog.modalities.append(modality)
-        self._catalog._modality_index[modality_id] = modality
+        self._catalog.modality.add(modality)
 
         # Create values
         for val in sorted(values):
-            self._catalog.values.append(Value(modality_id=modality_id, value=val))
+            self._catalog.value.add(
+                Value(
+                    id=build_value_id(modality_id, val),
+                    modality_id=modality_id,
+                    value=val,
+                )
+            )
 
         self._modality_index[signature] = modality_id
         return modality_id

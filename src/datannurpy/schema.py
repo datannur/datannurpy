@@ -20,6 +20,8 @@ class Folder:
     type: str | None = None  # filesystem, sqlite, postgres, etc.
     data_path: str | None = None
     last_update_date: str | None = None
+    # Runtime field (not persisted)
+    _seen: bool = False
 
 
 @dataclass
@@ -47,6 +49,8 @@ class Dataset:
     no_more_update: str | None = None
     last_update_timestamp: int | None = None
     schema_signature: str | None = None
+    # Runtime field (not persisted)
+    _seen: bool = False
 
 
 @dataclass
@@ -79,12 +83,15 @@ class Modality:
     name: str | None = None
     description: str | None = None
     type: str | None = None
+    # Runtime field (not persisted)
+    _seen: bool = False
 
 
 @dataclass
 class Value:
-    """A value within a modality (no unique id)."""
+    """A value within a modality."""
 
+    id: str
     modality_id: str
     value: str | None = None
     description: str | None = None
@@ -92,8 +99,9 @@ class Value:
 
 @dataclass
 class Freq:
-    """Frequency count for a variable value (no unique id)."""
+    """Frequency count for a variable value."""
 
+    id: str
     variable_id: str
     value: str
     freq: int
@@ -113,6 +121,7 @@ class Institution:
     phone: str | None = None
     start_date: str | None = None
     end_date: str | None = None
+    _seen: bool = False  # Runtime field for incremental scan
 
 
 @dataclass
@@ -124,6 +133,7 @@ class Tag:
     doc_ids: list[str] = field(default_factory=list)
     name: str | None = None
     description: str | None = None
+    _seen: bool = False  # Runtime field for incremental scan
 
 
 @dataclass
@@ -136,6 +146,7 @@ class Doc:
     path: str | None = None
     type: str | None = None
     last_update: str | None = None
+    _seen: bool = False  # Runtime field for incremental scan
 
 
 class DatannurDB(Jsonjsdb):
@@ -153,6 +164,16 @@ class DatannurDB(Jsonjsdb):
 
     def __init__(self, path: str | None = None) -> None:
         super().__init__(path)
+        # Set entity types manually (jsonjsdb doesn't extract from type hints yet)
+        self.folder._entity_type = Folder
+        self.dataset._entity_type = Dataset
+        self.variable._entity_type = Variable
+        self.modality._entity_type = Modality
+        self.value._entity_type = Value
+        self.freq._entity_type = Freq
+        self.institution._entity_type = Institution
+        self.tag._entity_type = Tag
+        self.doc._entity_type = Doc
         # Set runtime fields (not persisted)
         self.folder.runtime_fields = {"_seen"}
         self.dataset.runtime_fields = {"_seen"}

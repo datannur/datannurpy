@@ -14,7 +14,7 @@ from .utils import (
     sanitize_id,
     upsert_folder,
 )
-from .entities import Dataset, Folder
+from .schema import Dataset, Folder
 from .scanner.utils import SUPPORTED_FORMATS, get_mtime_iso, get_mtime_timestamp
 from .scanner.parquet import (
     DatasetType,
@@ -118,11 +118,11 @@ def add_dataset(
     data_path_str = str(dataset_path)
 
     # Check for existing dataset (incremental scan)
-    existing = catalog._dataset_index.get(data_path_str)
+    existing = catalog._get_dataset_by_path(data_path_str)
     if existing is not None:
         if not do_refresh and existing.last_update_timestamp == current_mtime:
             # Unchanged - skip and mark as seen
-            existing._seen = True
+            catalog.dataset.update(existing.id, _seen=True)
             catalog._mark_dataset_modalities_seen(existing)
             log_skip(dataset_path.name, q)
             return
@@ -138,7 +138,22 @@ def add_dataset(
         dataset_id = base_name
     dataset_name = name or dataset_path.stem
 
-    # Create dataset
+    # Resolve csv_encoding: parameter > catalog default
+    resolved_encoding = (
+        csv_encoding if csv_encoding is not None else catalog.csv_encoding
+    )
+
+    # Scan file first to get nb_row and description
+    result = scan_file(
+        dataset_path,
+        delivery_format,
+        dataset_id=dataset_id,
+        infer_stats=infer_stats,
+        freq_threshold=catalog.freq_threshold if catalog.freq_threshold else None,
+        csv_encoding=resolved_encoding,
+    )
+
+    # Create dataset with all info
     dataset = Dataset(
         id=dataset_id,
         name=dataset_name,
@@ -147,7 +162,8 @@ def add_dataset(
         last_update_date=get_mtime_iso(dataset_path),
         last_update_timestamp=current_mtime,
         delivery_format=delivery_format,
-        description=description,
+        nb_row=result.nb_row,
+        description=description or result.description,
         type=type,
         link=link,
         localisation=localisation,
@@ -159,28 +175,10 @@ def add_dataset(
         end_date=end_date,
         updating_each=updating_each,
         no_more_update=no_more_update,
+        _seen=True,
     )
-    dataset._seen = True
-    catalog.datasets.append(dataset)
-    catalog._dataset_index[data_path_str] = dataset
+    catalog.dataset.add(dataset)
 
-    # Resolve csv_encoding: parameter > catalog default
-    resolved_encoding = (
-        csv_encoding if csv_encoding is not None else catalog.csv_encoding
-    )
-
-    # Scan file
-    result = scan_file(
-        dataset_path,
-        delivery_format,
-        dataset_id=dataset_id,
-        infer_stats=infer_stats,
-        freq_threshold=catalog.freq_threshold if catalog.freq_threshold else None,
-        csv_encoding=resolved_encoding,
-    )
-    dataset.nb_row = result.nb_row
-    if result.description and not dataset.description:
-        dataset.description = result.description
     var_id_mapping = build_variable_ids(result.variables, dataset.id)
     catalog.modality_manager.assign_from_freq(
         result.variables, result.freq_table, var_id_mapping
@@ -225,11 +223,11 @@ def add_parquet_directory(
     data_path_str = str(dir_path)
 
     # Check for existing dataset (incremental scan)
-    existing = catalog._dataset_index.get(data_path_str)
+    existing = catalog._get_dataset_by_path(data_path_str)
     if existing is not None:
         if not refresh and existing.last_update_timestamp == current_mtime:
             # Unchanged - skip and mark as seen
-            existing._seen = True
+            catalog.dataset.update(existing.id, _seen=True)
             catalog._mark_dataset_modalities_seen(existing)
             log_skip(dir_path.name, quiet)
             return
@@ -303,10 +301,9 @@ def add_parquet_directory(
         end_date=end_date,
         updating_each=updating_each,
         no_more_update=no_more_update,
+        _seen=True,
     )
-    dataset._seen = True
-    catalog.datasets.append(dataset)
-    catalog._dataset_index[data_path_str] = dataset
+    catalog.dataset.add(dataset)
 
     # Finalize variables and modalities
     var_id_mapping = build_variable_ids(variables, dataset.id)

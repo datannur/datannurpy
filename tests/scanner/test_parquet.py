@@ -116,10 +116,10 @@ class TestParquetFormats:
         catalog.add_folder(
             DATA_DIR, Folder(id="test", name="Test"), include=["test_delta/**"]
         )
-        assert len(catalog.datasets) == 1
-        assert catalog.datasets[0].delivery_format == "delta"
-        assert catalog.datasets[0].name == "Test Delta Table"
-        var_names = {v.name for v in catalog.variables}
+        assert len(catalog.dataset.all()) == 1
+        assert catalog.dataset.all()[0].delivery_format == "delta"
+        assert catalog.dataset.all()[0].name == "Test Delta Table"
+        var_names = {v.name for v in catalog.variable.all()}
         assert var_names == {"id", "name", "age"}
 
     def test_extract_delta_metadata(self):
@@ -128,7 +128,7 @@ class TestParquetFormats:
         catalog.add_folder(
             DATA_DIR, Folder(id="test", name="Test"), include=["test_delta/**"]
         )
-        ds = catalog.datasets[0]
+        ds = catalog.dataset.all()[0]
         assert ds.description == "A test Delta Lake table"
 
     def test_scan_hive_partitioned(self):
@@ -137,12 +137,12 @@ class TestParquetFormats:
         catalog.add_folder(
             DATA_DIR, Folder(id="test", name="Test"), include=["test_partitioned/**"]
         )
-        assert len(catalog.datasets) == 1
-        assert catalog.datasets[0].delivery_format == "hive"
-        var_names = {v.name for v in catalog.variables}
+        assert len(catalog.dataset.all()) == 1
+        assert catalog.dataset.all()[0].delivery_format == "hive"
+        var_names = {v.name for v in catalog.variable.all()}
         assert "year" in var_names
         assert "region" in var_names
-        assert catalog.datasets[0].nb_row == 6
+        assert catalog.dataset.all()[0].nb_row == 6
 
     def test_scan_iceberg_table(self):
         """add_folder should detect and scan Iceberg tables."""
@@ -156,7 +156,7 @@ class TestParquetFormats:
         )
 
         iceberg_datasets = [
-            d for d in catalog.datasets if d.delivery_format == "iceberg"
+            d for d in catalog.dataset.all() if d.delivery_format == "iceberg"
         ]
         assert len(iceberg_datasets) == 1
         assert iceberg_datasets[0].name == "test_table"
@@ -172,7 +172,7 @@ class TestParquetFormats:
             DATA_DIR / "iceberg_warehouse", Folder(id="test", name="Test")
         )
 
-        ds = catalog.datasets[0]
+        ds = catalog.dataset.all()[0]
         assert ds.description == "Sample Iceberg table for testing"
-        var_by_name = {v.name: v for v in catalog.variables}
+        var_by_name = {v.name: v for v in catalog.variable.all()}
         assert var_by_name["id"].description == "Unique identifier"

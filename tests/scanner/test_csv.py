@@ -43,15 +43,15 @@ class TestLegacyEncoding:
         catalog = Catalog()
         catalog.add_dataset(CSV_DIR / "legacy_encoding.csv")
 
-        assert len(catalog.variables) == 4
-        assert catalog.datasets[0].nb_row == 3
+        assert len(catalog.variable.all()) == 4
+        assert catalog.dataset.all()[0].nb_row == 3
 
     def test_explicit_encoding(self):
         """CSV scan with explicit encoding should work."""
         catalog = Catalog()
         catalog.add_dataset(CSV_DIR / "legacy_encoding.csv", csv_encoding="CP1252")
 
-        assert len(catalog.variables) == 4
+        assert len(catalog.variable.all()) == 4
 
     def test_all_encodings_fail(self, tmp_path: Path, monkeypatch):
         """CSV scan should warn when all encodings fail."""
@@ -67,5 +67,5 @@ class TestLegacyEncoding:
         with pytest.warns(UserWarning, match="Could not parse CSV file"):
             catalog.add_dataset(csv_file, quiet=True)
 
-        assert len(catalog.datasets) == 1
-        assert len(catalog.variables) == 0
+        assert len(catalog.dataset.all()) == 1
+        assert len(catalog.variable.all()) == 0

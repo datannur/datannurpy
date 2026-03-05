@@ -5,6 +5,7 @@ from pathlib import Path
 
 from datannurpy import Catalog
 from datannurpy.utils import build_modality_name, compute_modality_hash
+from datannurpy.utils.ids import build_value_id
 
 
 class TestModalityHash:
@@ -91,8 +92,8 @@ class TestModalityGeneration:
         catalog = Catalog()
         catalog.add_folder(tmp_path)
 
-        assert len(catalog.modalities) == 1
-        assert catalog.modalities[0].folder_id == "_modalities"
+        assert len(catalog.modality.all()) == 1
+        assert catalog.modality.all()[0].folder_id == "_modalities"
 
     def test_modalities_folder_created(self, tmp_path: Path):
         """_modalities folder should be created when modalities exist."""
@@ -101,7 +102,7 @@ class TestModalityGeneration:
         catalog = Catalog()
         catalog.add_folder(tmp_path)
 
-        folder_ids = [f.id for f in catalog.folders]
+        folder_ids = [f.id for f in catalog.folder.all()]
         assert "_modalities" in folder_ids
 
     def test_modalities_folder_not_created_when_empty(self, tmp_path: Path):
@@ -114,7 +115,7 @@ class TestModalityGeneration:
         catalog = Catalog()
         catalog.add_folder(tmp_path)
 
-        folder_ids = [f.id for f in catalog.folders]
+        folder_ids = [f.id for f in catalog.folder.all()]
         assert "_modalities" not in folder_ids
 
     def test_modality_values_created(self, tmp_path: Path):
@@ -124,8 +125,8 @@ class TestModalityGeneration:
         catalog = Catalog()
         catalog.add_folder(tmp_path)
 
-        assert len(catalog.values) == 3
-        values = {v.value for v in catalog.values}
+        assert len(catalog.value.all()) == 3
+        values = {v.value for v in catalog.value.all()}
         assert values == {"red", "blue", "green"}
 
     def test_modality_linked_to_variable(self, tmp_path: Path):
@@ -135,9 +136,9 @@ class TestModalityGeneration:
         catalog = Catalog()
         catalog.add_folder(tmp_path)
 
-        var = catalog.variables[0]
+        var = catalog.variable.all()[0]
         assert len(var.modality_ids) == 1
-        assert var.modality_ids[0] == catalog.modalities[0].id
+        assert var.modality_ids[0] == catalog.modality.all()[0].id
 
     def test_modality_reused_same_values(self, tmp_path: Path):
         """Same values in different files should reuse same modality."""
@@ -148,10 +149,10 @@ class TestModalityGeneration:
         catalog.add_folder(tmp_path)
 
         # Should have only 1 modality (reused)
-        assert len(catalog.modalities) == 1
+        assert len(catalog.modality.all()) == 1
 
         # Both variables should reference it
-        var1, var2 = catalog.variables
+        var1, var2 = catalog.variable.all()
         assert var1.modality_ids == var2.modality_ids
 
     def test_modality_different_values(self, tmp_path: Path):
@@ -163,7 +164,7 @@ class TestModalityGeneration:
         catalog.add_folder(tmp_path)
 
         # Should have 2 different modalities
-        assert len(catalog.modalities) == 2
+        assert len(catalog.modality.all()) == 2
 
     def test_modality_stable_id(self, tmp_path: Path):
         """Same values should produce same modality ID across runs."""
@@ -171,11 +172,11 @@ class TestModalityGeneration:
 
         catalog1 = Catalog()
         catalog1.add_folder(tmp_path)
-        id1 = catalog1.modalities[0].id
+        id1 = catalog1.modality.all()[0].id
 
         catalog2 = Catalog()
         catalog2.add_folder(tmp_path)
-        id2 = catalog2.modalities[0].id
+        id2 = catalog2.modality.all()[0].id
 
         assert id1 == id2
 
@@ -266,7 +267,7 @@ class TestModalityIncremental:
         catalog1.add_folder(tmp_path, include=["data.csv"])
         catalog1.export_db()
 
-        initial_modalities = len(catalog1.modalities)
+        initial_modalities = len(catalog1.modality.all())
         assert initial_modalities == 1
 
         # Second scan - should reuse existing modality
@@ -274,7 +275,7 @@ class TestModalityIncremental:
         catalog2.add_folder(tmp_path, include=["data.csv"])
 
         # Should not create duplicates
-        assert len(catalog2.modalities) == initial_modalities
+        assert len(catalog2.modality.all()) == initial_modalities
 
     def test_existing_modality_marked_seen(self, tmp_path: Path):
         """Existing modality should be marked as _seen when reused."""
@@ -292,11 +293,11 @@ class TestModalityIncremental:
         catalog2.finalize()
 
         # Modality should be kept (marked as seen)
-        assert len(catalog2.modalities) == 1
+        assert len(catalog2.modality.all()) == 1
 
     def test_rebuild_index_with_none_value(self, tmp_path: Path):
         """rebuild_index should handle None values in Value objects."""
-        from datannurpy.entities import Value
+        from datannurpy.schema import Value
 
         db_dir = tmp_path / "db"
         (tmp_path / "data.csv").write_text("color\nred\nblue\n")
@@ -306,14 +307,18 @@ class TestModalityIncremental:
         catalog1.add_folder(tmp_path, include=["data.csv"])
 
         # Manually add a value with None
-        catalog1.values.append(Value(modality_id="test_mod", value=None))
+        catalog1.value.add(
+            Value(
+                id=build_value_id("test_mod", None), modality_id="test_mod", value=None
+            )
+        )
         catalog1.export_db()
 
         # Reload - rebuild_index should not crash
         catalog2 = Catalog(db_path=db_dir, quiet=True)
 
         # Should have loaded successfully
-        assert len(catalog2.modalities) >= 1
+        assert len(catalog2.modality.all()) >= 1
 
     def test_get_or_create_modality_not_found_in_list(self):
         """get_or_create should handle case where modality is in index but not in list."""

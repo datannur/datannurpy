@@ -1,5 +1,5 @@
 """Exporters for catalog output."""
 
-from .db import write_json
+# write_json has been replaced by jsonjsdb's save() in Catalog.export_db
 
-__all__ = ["write_json"]
+__all__: list[str] = []

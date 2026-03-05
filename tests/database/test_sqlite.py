@@ -58,7 +58,7 @@ class TestSQLiteIncrementalScan:
         catalog1.export_db()
 
         # Should have prefix folders (dim, dim_product, dim_time)
-        prefix_folders = [f for f in catalog1.folders if f.type == "table_prefix"]
+        prefix_folders = [f for f in catalog1.folder.all() if f.type == "table_prefix"]
         assert len(prefix_folders) > 0
 
         # Reload and rescan
@@ -72,7 +72,7 @@ class TestSQLiteIncrementalScan:
         catalog2.finalize()
 
         # All prefix folders should be kept (marked as seen)
-        prefix_folders2 = [f for f in catalog2.folders if f.type == "table_prefix"]
+        prefix_folders2 = [f for f in catalog2.folder.all() if f.type == "table_prefix"]
         assert len(prefix_folders2) == len(prefix_folders)
 
 
