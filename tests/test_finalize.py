@@ -5,7 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from datannurpy import Catalog, Folder
-from datannurpy.entities import Doc, Institution, Modality, Tag, Value
+from datannurpy.schema import Doc, Institution, Modality, Tag, Value
+from datannurpy.utils.ids import build_value_id
 
 
 class TestFinalizeIdempotent:
@@ -28,25 +29,25 @@ class TestFinalizeIdempotent:
         catalog2.add_folder(data_dir, Folder(id="test", name="Test"))
 
         catalog2.finalize()
-        count_after_first = len(catalog2.folders) + len(catalog2.datasets)
+        count_after_first = len(catalog2.folder.all()) + len(catalog2.dataset.all())
 
         # Add more unseen entities after finalize
-        catalog2.folders.append(Folder(id="new", name="New"))
+        catalog2.folder.add(Folder(id="new", name="New"))
 
         catalog2.finalize()  # Should be no-op
-        count_after_second = len(catalog2.folders) + len(catalog2.datasets)
+        count_after_second = len(catalog2.folder.all()) + len(catalog2.dataset.all())
 
         assert count_after_second == count_after_first + 1  # New folder not removed
 
     def test_finalize_skipped_without_db_path(self):
         """Finalize should be a no-op when no db_path is set."""
         catalog = Catalog(quiet=True)
-        catalog.folders.append(Folder(id="test", name="Test"))
+        catalog.folder.add(Folder(id="test", name="Test"))
 
         catalog.finalize()
 
         # Entity should not be removed (no db_path = no cleanup)
-        assert len(catalog.folders) == 1
+        assert len(catalog.folder.all()) == 1
 
 
 class TestFinalizeUnseenFolders:
@@ -67,11 +68,11 @@ class TestFinalizeUnseenFolders:
         # Reload without scanning - entities loaded with _seen=False
         catalog2 = Catalog(db_path=db_dir, quiet=True)
 
-        initial_count = len(catalog2.folders)
+        initial_count = len(catalog2.folder.all())
         assert initial_count >= 1
 
         catalog2.finalize()
-        assert len(catalog2.folders) == 0
+        assert len(catalog2.folder.all()) == 0
 
     def test_seen_folder_is_kept(self, tmp_path: Path):
         """Folders with _seen=True should be kept."""
@@ -89,11 +90,11 @@ class TestFinalizeUnseenFolders:
         catalog2 = Catalog(db_path=db_dir, quiet=True)
         catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
 
-        initial_count = len([f for f in catalog2.folders if f.id == "src"])
+        initial_count = len([f for f in catalog2.folder.all() if f.id == "src"])
         catalog2.finalize()
 
         # src folder should be kept (it was scanned)
-        assert len([f for f in catalog2.folders if f.id == "src"]) == initial_count
+        assert len([f for f in catalog2.folder.all() if f.id == "src"]) == initial_count
 
     def test_unseen_folder_cascades_to_datasets(self, tmp_path: Path):
         """Removing unseen folder should also remove its datasets."""
@@ -107,7 +108,7 @@ class TestFinalizeUnseenFolders:
         catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
 
         # Verify before export
-        assert len(catalog1.datasets) >= 1
+        assert len(catalog1.dataset.all()) >= 1
         catalog1.export_db()
 
         # Reload without scanning
@@ -115,8 +116,8 @@ class TestFinalizeUnseenFolders:
 
         catalog2.finalize()
 
-        assert len([f for f in catalog2.folders if f.id == "src"]) == 0
-        assert len([ds for ds in catalog2.datasets if ds.folder_id == "src"]) == 0
+        assert len([f for f in catalog2.folder.all() if f.id == "src"]) == 0
+        assert len([ds for ds in catalog2.dataset.all() if ds.folder_id == "src"]) == 0
 
 
 class TestFinalizeUnseenDatasets:
@@ -134,7 +135,7 @@ class TestFinalizeUnseenDatasets:
         catalog1 = Catalog(db_path=db_dir, quiet=True)
         catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
 
-        assert len(catalog1.datasets) == 2
+        assert len(catalog1.dataset.all()) == 2
         catalog1.export_db()
 
         # Remove one file and rescan
@@ -144,8 +145,8 @@ class TestFinalizeUnseenDatasets:
         catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
         catalog2.finalize()
 
-        assert len([ds for ds in catalog2.datasets if ds.folder_id == "src"]) == 1
-        assert any("keep" in ds.id for ds in catalog2.datasets)
+        assert len([ds for ds in catalog2.dataset.all() if ds.folder_id == "src"]) == 1
+        assert any("keep" in ds.id for ds in catalog2.dataset.all())
 
     def test_unseen_dataset_removes_variables(self, tmp_path: Path):
         """Removing dataset should also remove its variables."""
@@ -158,7 +159,7 @@ class TestFinalizeUnseenDatasets:
         catalog1 = Catalog(db_path=db_dir, quiet=True)
         catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
 
-        assert len(catalog1.variables) >= 1
+        assert len(catalog1.variable.all()) >= 1
         catalog1.export_db()
 
         # Remove file and rescan
@@ -169,10 +170,11 @@ class TestFinalizeUnseenDatasets:
         catalog2.finalize()
 
         # No datasets from src folder
-        assert len([ds for ds in catalog2.datasets if ds.folder_id == "src"]) == 0
+        assert len([ds for ds in catalog2.dataset.all() if ds.folder_id == "src"]) == 0
         # No variables from src datasets
         assert (
-            len([v for v in catalog2.variables if v.dataset_id.startswith("src")]) == 0
+            len([v for v in catalog2.variable.all() if v.dataset_id.startswith("src")])
+            == 0
         )
 
 
@@ -187,7 +189,7 @@ class TestFinalizeUnseenModalities:
         catalog1 = Catalog(db_path=db_dir, quiet=True)
         mod = Modality(id="old_mod", name="Old Modality")
         mod._seen = True  # Mark as seen for export
-        catalog1.modalities.append(mod)
+        catalog1.modality.add(mod)
         catalog1.export_db()
 
         # Reload without marking as seen
@@ -195,7 +197,7 @@ class TestFinalizeUnseenModalities:
         # Modality loaded with _seen=False
 
         catalog2.finalize()
-        assert len(catalog2.modalities) == 0
+        assert len(catalog2.modality.all()) == 0
 
     def test_seen_modality_is_kept(self, tmp_path: Path):
         """Modalities with _seen=True should be kept."""
@@ -204,10 +206,10 @@ class TestFinalizeUnseenModalities:
         catalog = Catalog(db_path=db_dir, quiet=True)
         mod = Modality(id="kept_mod", name="Kept Modality")
         mod._seen = True
-        catalog.modalities.append(mod)
+        catalog.modality.add(mod)
 
         catalog.finalize()
-        assert len(catalog.modalities) == 1
+        assert len(catalog.modality.all()) == 1
 
     def test_removed_modality_removes_values(self, tmp_path: Path):
         """Values of removed modalities should also be removed."""
@@ -217,57 +219,32 @@ class TestFinalizeUnseenModalities:
         catalog1 = Catalog(db_path=db_dir, quiet=True)
         mod = Modality(id="old_mod", name="Old Modality")
         mod._seen = True
-        catalog1.modalities.append(mod)
-        catalog1.values.append(Value(modality_id="old_mod", value="A"))
-        catalog1.values.append(Value(modality_id="old_mod", value="B"))
+        catalog1.modality.add(mod)
+        catalog1.value.add(
+            Value(id=build_value_id("old_mod", "A"), modality_id="old_mod", value="A")
+        )
+        catalog1.value.add(
+            Value(id=build_value_id("old_mod", "B"), modality_id="old_mod", value="B")
+        )
 
         # Add another modality that will be kept
         kept_mod = Modality(id="kept_mod", name="Kept")
         kept_mod._seen = True
-        catalog1.modalities.append(kept_mod)
-        catalog1.values.append(Value(modality_id="kept_mod", value="X"))
+        catalog1.modality.add(kept_mod)
+        catalog1.value.add(
+            Value(id=build_value_id("kept_mod", "X"), modality_id="kept_mod", value="X")
+        )
         catalog1.export_db()
 
         # Reload and mark only kept_mod as seen
         catalog2 = Catalog(db_path=db_dir, quiet=True)
-        for m in catalog2.modalities:
-            if m.id == "kept_mod":
-                m._seen = True
+        catalog2.modality.update("kept_mod", _seen=True)
 
         catalog2.finalize()
 
-        assert len(catalog2.modalities) == 1
-        assert len(catalog2.values) == 1
-        assert catalog2.values[0].modality_id == "kept_mod"
-
-
-class TestFinalizeModalitiesIndexMissing:
-    """Tests for modalities missing from index."""
-
-    def test_mark_modalities_seen_with_missing_index_entry(self, tmp_path: Path):
-        """mark_dataset_modalities_seen should handle modality missing from index."""
-        db_dir = tmp_path / "db"
-        data_dir = tmp_path / "data"
-        data_dir.mkdir()
-        (data_dir / "test.csv").write_text("status\nactive\ninactive\n")
-
-        # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
-        catalog1.export_db()
-
-        # Reload
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
-
-        # Remove modality from index but keep in list (simulating inconsistent state)
-        if catalog2.modalities:
-            mod_id = catalog2.modalities[0].id
-            if mod_id in catalog2._modality_index:
-                del catalog2._modality_index[mod_id]
-
-        # Rescan - should not crash
-        catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
-        catalog2.finalize()
+        assert len(catalog2.modality.all()) == 1
+        assert len(catalog2.value.all()) == 1
+        assert catalog2.value.all()[0].modality_id == "kept_mod"
 
 
 class TestFinalizeModalitiesWithoutFolder:
@@ -289,19 +266,19 @@ class TestFinalizeModalitiesWithoutFolder:
         # Reload and rescan
         catalog2 = Catalog(db_path=db_dir, quiet=True)
 
-        # Remove _modalities folder (simulating broken state)
+        # Remove _modalities folder via the jsonjsdb API
         from datannurpy.utils.ids import MODALITIES_FOLDER_ID
 
-        catalog2.folders = [f for f in catalog2.folders if f.id != MODALITIES_FOLDER_ID]
-        if MODALITIES_FOLDER_ID in catalog2._folder_index:
-            del catalog2._folder_index[MODALITIES_FOLDER_ID]
+        mod_folder = catalog2.folder.get(MODALITIES_FOLDER_ID)
+        if mod_folder:
+            catalog2.folder.remove(MODALITIES_FOLDER_ID)
 
         # Now rescan - should not crash even without _modalities folder
         catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
         catalog2.finalize()
 
         # Modalities should still be present
-        assert len(catalog2.modalities) >= 0  # May or may not have modalities
+        assert len(catalog2.modality.all()) >= 0  # May or may not have modalities
 
 
 class TestFinalizeUnseenInstitutions:
@@ -314,12 +291,12 @@ class TestFinalizeUnseenInstitutions:
         catalog1 = Catalog(db_path=db_dir, quiet=True)
         inst = Institution(id="old_inst", name="Old")
         inst._seen = True
-        catalog1.institutions.append(inst)
+        catalog1.institution.add(inst)
         catalog1.export_db()
 
         catalog2 = Catalog(db_path=db_dir, quiet=True)
         catalog2.finalize()
-        assert len(catalog2.institutions) == 0
+        assert len(catalog2.institution.all()) == 0
 
     def test_seen_institution_is_kept(self, tmp_path: Path):
         """Institutions with _seen=True should be kept."""
@@ -328,10 +305,10 @@ class TestFinalizeUnseenInstitutions:
         catalog = Catalog(db_path=db_dir, quiet=True)
         inst = Institution(id="kept", name="Kept")
         inst._seen = True
-        catalog.institutions.append(inst)
+        catalog.institution.add(inst)
 
         catalog.finalize()
-        assert len(catalog.institutions) == 1
+        assert len(catalog.institution.all()) == 1
 
 
 class TestFinalizeUnseenTags:
@@ -344,12 +321,12 @@ class TestFinalizeUnseenTags:
         catalog1 = Catalog(db_path=db_dir, quiet=True)
         tag = Tag(id="old_tag", name="Old")
         tag._seen = True
-        catalog1.tags.append(tag)
+        catalog1.tag.add(tag)
         catalog1.export_db()
 
         catalog2 = Catalog(db_path=db_dir, quiet=True)
         catalog2.finalize()
-        assert len(catalog2.tags) == 0
+        assert len(catalog2.tag.all()) == 0
 
     def test_seen_tag_is_kept(self, tmp_path: Path):
         """Tags with _seen=True should be kept."""
@@ -358,10 +335,10 @@ class TestFinalizeUnseenTags:
         catalog = Catalog(db_path=db_dir, quiet=True)
         tag = Tag(id="kept", name="Kept")
         tag._seen = True
-        catalog.tags.append(tag)
+        catalog.tag.add(tag)
 
         catalog.finalize()
-        assert len(catalog.tags) == 1
+        assert len(catalog.tag.all()) == 1
 
 
 class TestFinalizeUnseenDocs:
@@ -374,12 +351,12 @@ class TestFinalizeUnseenDocs:
         catalog1 = Catalog(db_path=db_dir, quiet=True)
         doc = Doc(id="old_doc", name="Old")
         doc._seen = True
-        catalog1.docs.append(doc)
+        catalog1.doc.add(doc)
         catalog1.export_db()
 
         catalog2 = Catalog(db_path=db_dir, quiet=True)
         catalog2.finalize()
-        assert len(catalog2.docs) == 0
+        assert len(catalog2.doc.all()) == 0
 
     def test_seen_doc_is_kept(self, tmp_path: Path):
         """Docs with _seen=True should be kept."""
@@ -388,10 +365,10 @@ class TestFinalizeUnseenDocs:
         catalog = Catalog(db_path=db_dir, quiet=True)
         doc = Doc(id="kept", name="Kept")
         doc._seen = True
-        catalog.docs.append(doc)
+        catalog.doc.add(doc)
 
         catalog.finalize()
-        assert len(catalog.docs) == 1
+        assert len(catalog.doc.all()) == 1
 
 
 class TestFinalizeCalledByExport:
@@ -405,7 +382,7 @@ class TestFinalizeCalledByExport:
         catalog1 = Catalog(db_path=db_dir, quiet=True)
         mod = Modality(id="old_mod", name="Old")
         mod._seen = True
-        catalog1.modalities.append(mod)
+        catalog1.modality.add(mod)
         catalog1.export_db()
 
         # Reload and export without marking as seen
@@ -413,7 +390,7 @@ class TestFinalizeCalledByExport:
         catalog2.export_db()
 
         # Modality should be removed
-        assert len(catalog2.modalities) == 0
+        assert len(catalog2.modality.all()) == 0
         assert catalog2._finalized is True
 
     def test_export_app_calls_finalize(self, tmp_path: Path):
@@ -421,11 +398,27 @@ class TestFinalizeCalledByExport:
         db_dir = tmp_path / "db"
 
         catalog = Catalog(db_path=db_dir, quiet=True)
-        catalog.folders.append(Folder(id="old", name="Old"))
+        catalog.folder.add(Folder(id="old", name="Old"))
 
         # finalize via direct call (export_app needs app files)
         catalog.finalize()
 
         # Folder should be removed (db_path set, not seen)
-        assert len(catalog.folders) == 0
+        assert len(catalog.folder.all()) == 0
         assert catalog._finalized is True
+
+    def test_finalize_missing_modality_reference(self, tmp_path: Path):
+        """mark_dataset_modalities_seen should handle missing modality gracefully."""
+        from datannurpy.finalize import mark_dataset_modalities_seen
+        from datannurpy.schema import Dataset, Variable
+
+        db_dir = tmp_path / "db"
+        catalog = Catalog(db_path=db_dir, quiet=True)
+        catalog.dataset.add(Dataset(id="ds1", name="DS"))
+        catalog.variable.add(
+            Variable(
+                id="ds1---v1", name="v1", dataset_id="ds1", modality_ids=["nonexistent"]
+            )
+        )
+        mark_dataset_modalities_seen(catalog, catalog.dataset.all()[0])
+        # Should not raise — modality simply not found

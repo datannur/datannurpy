@@ -22,7 +22,7 @@ from .utils import (
     timestamp_to_iso,
     upsert_folder,
 )
-from .entities import Dataset, Folder
+from .schema import Dataset, Folder
 from .scanner.database import (
     build_table_data_path,
     close_connection,
@@ -65,8 +65,8 @@ def add_database(
     db_name = get_database_name(connection, con, backend_name)
 
     start_time = log_section("add_database", f"{backend_name}://{db_name}", q)
-    datasets_before = len(catalog.datasets)
-    vars_before = len(catalog.variables)
+    datasets_before = len(catalog.dataset.all())
+    vars_before = len(catalog.variable.all())
 
     # Get timestamp for folder/dataset
     now_iso = timestamp_to_iso(catalog._now)
@@ -164,7 +164,7 @@ def add_database(
             current_nb_row = get_table_row_count(con, table_name, schema_name)
 
             # Check if table exists in cache
-            existing_dataset = catalog._dataset_index.get(table_data_path)
+            existing_dataset = catalog._get_dataset_by_path(table_data_path)
 
             if existing_dataset is not None and not do_refresh:
                 if (
@@ -172,7 +172,7 @@ def add_database(
                     and existing_dataset.nb_row == current_nb_row
                 ):
                     # Unchanged, skip
-                    existing_dataset._seen = True
+                    catalog.dataset.update(existing_dataset.id, _seen=True)
                     catalog._mark_dataset_modalities_seen(existing_dataset)
                     log_skip(table_name, q)
                     continue
@@ -217,11 +217,10 @@ def add_database(
                 nb_row=nb_row,
                 schema_signature=current_signature,
                 last_update_timestamp=catalog._now,
+                _seen=True,
             )
-            dataset._seen = True
+            catalog.dataset.add(dataset)
 
-            catalog.datasets.append(dataset)
-            catalog._dataset_index[table_data_path] = dataset
             var_id_mapping = build_variable_ids(table_vars, dataset.id)
             catalog.modality_manager.assign_from_freq(
                 table_vars, freq_table, var_id_mapping
@@ -233,6 +232,6 @@ def add_database(
     if isinstance(connection, str):
         close_connection(con)
 
-    datasets_added = len(catalog.datasets) - datasets_before
-    vars_added = len(catalog.variables) - vars_before
+    datasets_added = len(catalog.dataset.all()) - datasets_before
+    vars_added = len(catalog.variable.all()) - vars_before
     log_summary(datasets_added, vars_added, q, start_time)

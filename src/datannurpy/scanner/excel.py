@@ -9,7 +9,7 @@ import ibis
 import pandas as pd
 import pyarrow as pa
 
-from ..entities import Variable
+from ..schema import Variable
 from .utils import build_variables
 
 

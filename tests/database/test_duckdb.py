@@ -64,7 +64,7 @@ class TestDuckDBIncrementalScan:
         catalog1.export_db()
 
         # Should have schema folders (sales, inventory)
-        schema_folders = [f for f in catalog1.folders if f.type == "schema"]
+        schema_folders = [f for f in catalog1.folder.all() if f.type == "schema"]
         assert len(schema_folders) >= 2  # at least sales and inventory
 
         # Reload and rescan
@@ -76,5 +76,5 @@ class TestDuckDBIncrementalScan:
         catalog2.finalize()
 
         # All schema folders should be kept (marked as seen) - same count
-        schema_folders2 = [f for f in catalog2.folders if f.type == "schema"]
+        schema_folders2 = [f for f in catalog2.folder.all() if f.type == "schema"]
         assert len(schema_folders2) == len(schema_folders)

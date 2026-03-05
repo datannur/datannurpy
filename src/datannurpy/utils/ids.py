@@ -74,6 +74,12 @@ def build_modality_name(values: set[str]) -> str:
     return name
 
 
+def build_value_id(modality_id: str, value: str | None) -> str:
+    """Build value ID from modality and value."""
+    safe_value = sanitize_id(value) if value is not None else "_null_"
+    return make_id(modality_id, safe_value)
+
+
 def get_folder_id(
     path: Path,
     root: Path,

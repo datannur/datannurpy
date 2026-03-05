@@ -30,13 +30,13 @@ class TestAddFolderFormats:
         catalog.add_folder(
             DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
-        assert len(catalog.variables) == 9
+        assert len(catalog.variable.all()) == 9
 
     def test_add_folder_scans_excel(self):
         """add_folder should scan Excel files."""
         catalog = Catalog()
         catalog.add_folder(DATA_DIR, Folder(id="test", name="Test"), include=["*.xlsx"])
-        assert len(catalog.variables) > 0
+        assert len(catalog.variable.all()) > 0
 
     def test_add_folder_empty_excel(self, tmp_path: Path):
         """add_folder should handle empty Excel files (0 bytes)."""
@@ -45,8 +45,8 @@ class TestAddFolderFormats:
         catalog = Catalog()
         catalog.add_folder(tmp_path)
 
-        assert len(catalog.datasets) == 1
-        assert len(catalog.variables) == 0
+        assert len(catalog.dataset.all()) == 1
+        assert len(catalog.variable.all()) == 0
 
     def test_add_folder_corrupted_excel(self, tmp_path: Path):
         """add_folder should warn on corrupted Excel files."""
@@ -56,8 +56,8 @@ class TestAddFolderFormats:
         with pytest.warns(UserWarning, match="Could not read Excel file"):
             catalog.add_folder(tmp_path, quiet=True)
 
-        assert len(catalog.datasets) == 1
-        assert len(catalog.variables) == 0
+        assert len(catalog.dataset.all()) == 1
+        assert len(catalog.variable.all()) == 0
 
     def test_add_folder_empty_sheet_excel(self, tmp_path: Path):
         """add_folder should handle Excel files with empty sheet."""
@@ -66,8 +66,8 @@ class TestAddFolderFormats:
         catalog = Catalog()
         catalog.add_folder(tmp_path, quiet=True)
 
-        assert len(catalog.datasets) == 1
-        assert len(catalog.variables) == 0
+        assert len(catalog.dataset.all()) == 1
+        assert len(catalog.variable.all()) == 0
 
     def test_add_folder_scans_parquet(self):
         """add_folder should scan Parquet files (.parquet extension)."""
@@ -75,9 +75,9 @@ class TestAddFolderFormats:
         catalog.add_folder(
             DATA_DIR, Folder(id="test", name="Test"), include=["test.parquet"]
         )
-        assert len(catalog.datasets) == 1
-        assert catalog.datasets[0].delivery_format == "parquet"
-        assert len(catalog.variables) == 3
+        assert len(catalog.dataset.all()) == 1
+        assert catalog.dataset.all()[0].delivery_format == "parquet"
+        assert len(catalog.variable.all()) == 3
 
     def test_add_folder_scans_pq(self):
         """add_folder should scan Parquet files (.pq extension)."""
@@ -85,9 +85,9 @@ class TestAddFolderFormats:
         catalog.add_folder(
             DATA_DIR, Folder(id="test", name="Test"), include=["test.pq"]
         )
-        assert len(catalog.datasets) == 1
-        assert catalog.datasets[0].delivery_format == "parquet"
-        assert len(catalog.variables) == 3
+        assert len(catalog.dataset.all()) == 1
+        assert catalog.dataset.all()[0].delivery_format == "parquet"
+        assert len(catalog.variable.all()) == 3
 
     def test_add_folder_extracts_parquet_metadata(self):
         """add_folder should extract metadata from Parquet files."""
@@ -97,8 +97,10 @@ class TestAddFolderFormats:
             Folder(id="test", name="Test"),
             include=["test_with_metadata.parquet"],
         )
-        assert catalog.datasets[0].description == "Table des employes de la societe"
-        var_by_name = {v.name: v for v in catalog.variables}
+        assert (
+            catalog.dataset.all()[0].description == "Table des employes de la societe"
+        )
+        var_by_name = {v.name: v for v in catalog.variable.all()}
         assert var_by_name["id"].description == "Identifiant unique"
         assert var_by_name["name"].description == "Nom complet de la personne"
         assert var_by_name["age"].description == "Age en annees"
@@ -112,7 +114,7 @@ class TestAddFolderIds:
         assert all(
             ds.folder_id is not None
             and (ds.folder_id == "test" or ds.folder_id.startswith("test---"))
-            for ds in full_catalog.datasets
+            for ds in full_catalog.dataset.all()
         )
 
     def test_add_folder_prefixes_ids(self):
@@ -121,8 +123,8 @@ class TestAddFolderIds:
         catalog.add_folder(
             CSV_DIR, Folder(id="src", name="Source"), include=["employees.csv"]
         )
-        assert catalog.datasets[0].id == "src---employees_csv"
-        assert catalog.variables[0].id.startswith("src---employees_csv---")
+        assert catalog.dataset.all()[0].id == "src---employees_csv"
+        assert catalog.variable.all()[0].id.startswith("src---employees_csv---")
 
 
 class TestAddFolderStats:
@@ -134,8 +136,8 @@ class TestAddFolderStats:
         catalog.add_folder(
             CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
-        assert all(v.nb_distinct is not None for v in catalog.variables)
-        assert all(v.nb_missing is not None for v in catalog.variables)
+        assert all(v.nb_distinct is not None for v in catalog.variable.all())
+        assert all(v.nb_missing is not None for v in catalog.variable.all())
 
     def test_add_folder_without_stats(self):
         """add_folder with infer_stats=False should skip stats."""
@@ -146,8 +148,8 @@ class TestAddFolderStats:
             include=["employees.csv"],
             infer_stats=False,
         )
-        assert all(v.nb_distinct is None for v in catalog.variables)
-        assert all(v.nb_missing is None for v in catalog.variables)
+        assert all(v.nb_distinct is None for v in catalog.variable.all())
+        assert all(v.nb_missing is None for v in catalog.variable.all())
 
 
 class TestAddFolderOther:
@@ -162,8 +164,8 @@ class TestAddFolderOther:
         catalog = Catalog()
         catalog.add_folder(tmp_path, include=["*.*"])
 
-        assert len(catalog.datasets) == 1
-        assert catalog.datasets[0].delivery_format == "csv"
+        assert len(catalog.dataset.all()) == 1
+        assert catalog.dataset.all()[0].delivery_format == "csv"
 
     def test_add_folder_handles_empty_csv(self, tmp_path: Path):
         """add_folder should handle empty CSV files (header only)."""
@@ -172,8 +174,8 @@ class TestAddFolderOther:
         catalog = Catalog()
         catalog.add_folder(tmp_path)
 
-        assert len(catalog.datasets) == 1
-        assert catalog.datasets[0].nb_row == 0
+        assert len(catalog.dataset.all()) == 1
+        assert catalog.dataset.all()[0].nb_row == 0
 
     def test_add_folder_not_found(self):
         """add_folder should raise FileNotFoundError for missing path."""
@@ -185,12 +187,12 @@ class TestAddFolderOther:
         """add_folder without folder arg should use directory name."""
         catalog = Catalog()
         catalog.add_folder(DATA_DIR, include=["employees.csv"])
-        assert catalog.folders[0].id == "data"
-        assert catalog.folders[0].name == "data"
+        assert catalog.folder.all()[0].id == "data"
+        assert catalog.folder.all()[0].name == "data"
 
     def test_add_folder_sets_type_filesystem(self, full_catalog):
         """add_folder should set type='filesystem' on all folders."""
-        for folder in full_catalog.folders:
+        for folder in full_catalog.folder.all():
             if folder.id != "_modalities":
                 assert folder.type == "filesystem"
 
@@ -207,8 +209,8 @@ class TestSubfolders:
         catalog = Catalog()
         catalog.add_folder(tmp_path, Folder(id="src", name="Source"))
 
-        assert len(catalog.datasets) == 1
-        assert catalog.datasets[0].id == "src---2024---january---sales_csv"
+        assert len(catalog.dataset.all()) == 1
+        assert catalog.dataset.all()[0].id == "src---2024---january---sales_csv"
 
     def test_add_folder_creates_subfolders(self, tmp_path: Path):
         """add_folder should create Folder entities for subdirectories."""
@@ -218,7 +220,7 @@ class TestSubfolders:
         catalog = Catalog()
         catalog.add_folder(tmp_path, Folder(id="root", name="Root"))
 
-        user_folders = [f for f in catalog.folders if f.id != "_modalities"]
+        user_folders = [f for f in catalog.folder.all() if f.id != "_modalities"]
         assert len(user_folders) == 2  # root + 2024
         subfolder = user_folders[1]
         assert subfolder.id == "root---2024"
@@ -233,7 +235,7 @@ class TestSubfolders:
         catalog = Catalog()
         catalog.add_folder(tmp_path, Folder(id="x", name="X"))
 
-        user_folders = [f for f in catalog.folders if f.id != "_modalities"]
+        user_folders = [f for f in catalog.folder.all() if f.id != "_modalities"]
         assert len(user_folders) == 4
         folder_ids = [f.id for f in user_folders]
         assert "x" in folder_ids
@@ -249,7 +251,7 @@ class TestSubfolders:
         catalog = Catalog()
         catalog.add_folder(tmp_path, Folder(id="root", name="Root"))
 
-        folders_by_id = {f.id: f for f in catalog.folders}
+        folders_by_id = {f.id: f for f in catalog.folder.all()}
         assert folders_by_id["root---a"].parent_id == "root"
         assert folders_by_id["root---a---b"].parent_id == "root---a"
 
@@ -263,8 +265,8 @@ class TestSubfolders:
         catalog = Catalog()
         catalog.add_folder(tmp_path, recursive=False)
 
-        assert len(catalog.datasets) == 1
-        assert catalog.datasets[0].name == "root"
+        assert len(catalog.dataset.all()) == 1
+        assert catalog.dataset.all()[0].name == "root"
 
     def test_add_folder_non_recursive_with_include(self, tmp_path: Path):
         """add_folder with recursive=False and include should use glob directly."""
@@ -274,8 +276,8 @@ class TestSubfolders:
         catalog = Catalog()
         catalog.add_folder(tmp_path, include=["a.csv"], recursive=False)
 
-        assert len(catalog.datasets) == 1
-        assert catalog.datasets[0].name == "a"
+        assert len(catalog.dataset.all()) == 1
+        assert catalog.dataset.all()[0].name == "a"
 
 
 class TestIdSanitization:
@@ -288,7 +290,7 @@ class TestIdSanitization:
         catalog = Catalog()
         catalog.add_folder(tmp_path, Folder(id="src", name="Source"))
 
-        assert catalog.datasets[0].id == "src---my file_csv"
+        assert catalog.dataset.all()[0].id == "src---my file_csv"
 
     def test_sanitize_special_chars(self, tmp_path: Path):
         """Special characters should be replaced with underscore."""
@@ -297,7 +299,7 @@ class TestIdSanitization:
         catalog = Catalog()
         catalog.add_folder(tmp_path, Folder(id="src", name="Source"))
 
-        assert catalog.datasets[0].id == "src---data_2024_v1_csv"
+        assert catalog.dataset.all()[0].id == "src---data_2024_v1_csv"
 
     def test_sanitize_folder_name_with_spaces(self, tmp_path: Path):
         """Folder names with spaces should be handled."""
@@ -308,7 +310,7 @@ class TestIdSanitization:
         catalog = Catalog()
         catalog.add_folder(tmp_path, Folder(id="root", name="Root"))
 
-        assert "root---Year 2024" in [f.id for f in catalog.folders]
+        assert "root---Year 2024" in [f.id for f in catalog.folder.all()]
 
     def test_sanitize_variable_name(self, tmp_path: Path):
         """Variable names with special chars should be sanitized."""
@@ -317,7 +319,7 @@ class TestIdSanitization:
         catalog = Catalog()
         catalog.add_folder(tmp_path, Folder(id="src", name="Source"))
 
-        var_ids = [v.id for v in catalog.variables]
+        var_ids = [v.id for v in catalog.variable.all()]
         assert "src---data_csv---col_name" in var_ids
         assert "src---data_csv---col_2" in var_ids
 
@@ -333,8 +335,8 @@ class TestIncludeExclude:
         catalog = Catalog()
         catalog.add_folder(tmp_path, include=["*.csv"])
 
-        assert len(catalog.datasets) == 1
-        assert catalog.datasets[0].name == "data"
+        assert len(catalog.dataset.all()) == 1
+        assert catalog.dataset.all()[0].name == "data"
 
     def test_include_multiple_patterns(self, tmp_path: Path):
         """include should accept multiple patterns."""
@@ -345,7 +347,7 @@ class TestIncludeExclude:
         catalog = Catalog()
         catalog.add_folder(tmp_path, include=["a.csv", "b.csv"])
 
-        assert len(catalog.datasets) == 2
+        assert len(catalog.dataset.all()) == 2
 
     def test_exclude_pattern(self, tmp_path: Path):
         """exclude should filter out matching files."""
@@ -355,8 +357,8 @@ class TestIncludeExclude:
         catalog = Catalog()
         catalog.add_folder(tmp_path, exclude=["skip.csv"])
 
-        assert len(catalog.datasets) == 1
-        assert catalog.datasets[0].name == "keep"
+        assert len(catalog.dataset.all()) == 1
+        assert catalog.dataset.all()[0].name == "keep"
 
     def test_exclude_subdirectory(self, tmp_path: Path):
         """exclude should filter out subdirectories."""
@@ -368,8 +370,8 @@ class TestIncludeExclude:
         catalog = Catalog()
         catalog.add_folder(tmp_path, exclude=["archive"])
 
-        assert len(catalog.datasets) == 1
-        assert catalog.datasets[0].name == "data"
+        assert len(catalog.dataset.all()) == 1
+        assert catalog.dataset.all()[0].name == "data"
 
     def test_exclude_nested_subdirectory(self, tmp_path: Path):
         """exclude should filter out nested subdirectories."""
@@ -384,8 +386,8 @@ class TestIncludeExclude:
         catalog = Catalog()
         catalog.add_folder(tmp_path, exclude=["archive/tmp"])
 
-        assert len(catalog.datasets) == 2
-        names = {d.name for d in catalog.datasets}
+        assert len(catalog.dataset.all()) == 2
+        names = {d.name for d in catalog.dataset.all()}
         assert names == {"data", "keep"}
 
     def test_exclude_glob_pattern(self, tmp_path: Path):
@@ -397,8 +399,8 @@ class TestIncludeExclude:
         catalog = Catalog()
         catalog.add_folder(tmp_path, exclude=["backup.*"])
 
-        assert len(catalog.datasets) == 1
-        assert catalog.datasets[0].name == "data"
+        assert len(catalog.dataset.all()) == 1
+        assert catalog.dataset.all()[0].name == "data"
 
     def test_exclude_nonexistent_file(self, tmp_path: Path):
         """exclude with nonexistent file should be ignored."""
@@ -407,8 +409,8 @@ class TestIncludeExclude:
         catalog = Catalog()
         catalog.add_folder(tmp_path, exclude=["nonexistent.csv"])
 
-        assert len(catalog.datasets) == 1
-        assert catalog.datasets[0].name == "data"
+        assert len(catalog.dataset.all()) == 1
+        assert catalog.dataset.all()[0].name == "data"
 
 
 class TestEdgeCases:
@@ -419,9 +421,9 @@ class TestEdgeCases:
         catalog = Catalog()
         catalog.add_folder(tmp_path, Folder(id="empty", name="Empty"))
 
-        assert len(catalog.folders) == 1
-        assert len(catalog.datasets) == 0
-        assert len(catalog.variables) == 0
+        assert len(catalog.folder.all()) == 1
+        assert len(catalog.dataset.all()) == 0
+        assert len(catalog.variable.all()) == 0
 
     def test_empty_csv_file(self, tmp_path: Path):
         """Empty CSV should create dataset with no variables."""
@@ -430,8 +432,8 @@ class TestEdgeCases:
         catalog = Catalog()
         catalog.add_folder(tmp_path)
 
-        assert len(catalog.datasets) == 1
-        assert len(catalog.variables) == 0
+        assert len(catalog.dataset.all()) == 1
+        assert len(catalog.variable.all()) == 0
 
     def test_csv_headers_only(self, tmp_path: Path):
         """CSV with headers but no data should create variables."""
@@ -440,8 +442,8 @@ class TestEdgeCases:
         catalog = Catalog()
         catalog.add_folder(tmp_path)
 
-        assert len(catalog.datasets) == 1
-        assert len(catalog.variables) == 3
+        assert len(catalog.dataset.all()) == 1
+        assert len(catalog.variable.all()) == 3
 
     def test_not_a_directory(self, tmp_path: Path):
         """add_folder should raise for file path."""
@@ -467,7 +469,7 @@ class TestEdgeCases:
         catalog = Catalog()
         catalog.add_folder(tmp_path)
 
-        assert len(catalog.datasets) == 1
+        assert len(catalog.dataset.all()) == 1
 
 
 class TestIncrementalScanSubfolders:
@@ -492,7 +494,7 @@ class TestIncrementalScanSubfolders:
         catalog2.finalize()
 
         # All user folders should be kept (excluding _modalities system folder)
-        user_folders = [f for f in catalog2.folders if f.id != "_modalities"]
+        user_folders = [f for f in catalog2.folder.all() if f.id != "_modalities"]
         assert len(user_folders) == 2
         assert any(f.id == "src" for f in user_folders)
         assert any("subdir" in f.id for f in user_folders)

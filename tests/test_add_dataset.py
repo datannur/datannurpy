@@ -20,17 +20,17 @@ class TestAddDataset:
         catalog = Catalog()
         catalog.add_dataset(DATA_DIR / "test.pq")
 
-        assert len(catalog.datasets) == 1
-        assert catalog.datasets[0].delivery_format == "parquet"
-        assert len(catalog.variables) == 3
+        assert len(catalog.dataset.all()) == 1
+        assert catalog.dataset.all()[0].delivery_format == "parquet"
+        assert len(catalog.variable.all()) == 3
 
     def test_add_dataset_scans_file(self):
         """add_dataset should scan a single file."""
         catalog = Catalog()
         catalog.add_dataset(CSV_DIR / "employees.csv")
 
-        assert len(catalog.datasets) == 1
-        assert len(catalog.variables) == 9
+        assert len(catalog.dataset.all()) == 1
+        assert len(catalog.variable.all()) == 9
 
     def test_add_dataset_with_folder(self):
         """add_dataset with folder should create folder and link."""
@@ -40,10 +40,10 @@ class TestAddDataset:
             folder=Folder(id="hr", name="HR Data"),
         )
 
-        assert len([f for f in catalog.folders if f.id != "_modalities"]) == 1
-        assert catalog.folders[0].id == "hr"
-        assert catalog.datasets[0].folder_id == "hr"
-        assert catalog.datasets[0].id == "hr---employees"
+        assert len([f for f in catalog.folder.all() if f.id != "_modalities"]) == 1
+        assert catalog.folder.all()[0].id == "hr"
+        assert catalog.dataset.all()[0].folder_id == "hr"
+        assert catalog.dataset.all()[0].id == "hr---employees"
 
     def test_add_dataset_with_folder_id(self):
         """add_dataset with folder_id should link to existing folder."""
@@ -51,7 +51,7 @@ class TestAddDataset:
         catalog.add_folder(CSV_DIR, Folder(id="data", name="Data"), include=[])
         catalog.add_dataset(CSV_DIR / "employees.csv", folder_id="data")
 
-        assert catalog.datasets[0].folder_id == "data"
+        assert catalog.dataset.all()[0].folder_id == "data"
 
     def test_add_dataset_reuses_folder(self):
         """add_dataset should not duplicate folder."""
@@ -60,8 +60,8 @@ class TestAddDataset:
         catalog.add_dataset(CSV_DIR / "employees.csv", folder=folder)
         catalog.add_dataset(CSV_DIR / "regions_france.csv", folder=folder)
 
-        assert len([f for f in catalog.folders if f.id != "_modalities"]) == 1
-        assert len(catalog.datasets) == 2
+        assert len([f for f in catalog.folder.all() if f.id != "_modalities"]) == 1
+        assert len(catalog.dataset.all()) == 2
 
     def test_add_dataset_with_metadata(self):
         """add_dataset should accept metadata overrides."""
@@ -75,7 +75,7 @@ class TestAddDataset:
             start_date="2020/01/01",
         )
 
-        ds = catalog.datasets[0]
+        ds = catalog.dataset.all()[0]
         assert ds.name == "Employés"
         assert ds.description == "Liste des employés"
         assert ds.type == "référentiel"
@@ -87,21 +87,21 @@ class TestAddDataset:
         catalog = Catalog()
         catalog.add_dataset(CSV_DIR / "employees.csv")
 
-        assert catalog.datasets[0].id == "employees"
+        assert catalog.dataset.all()[0].id == "employees"
 
     def test_add_dataset_inherits_file_description(self):
         """add_dataset should use file metadata description when available."""
         catalog = Catalog()
         catalog.add_dataset(DATA_DIR / "cars.sas7bdat")
 
-        assert catalog.datasets[0].description == "Written by SAS"
+        assert catalog.dataset.all()[0].description == "Written by SAS"
 
     def test_add_dataset_explicit_description_not_overwritten(self):
         """add_dataset should keep explicit description over file metadata."""
         catalog = Catalog()
         catalog.add_dataset(DATA_DIR / "cars.sas7bdat", description="Custom desc")
 
-        assert catalog.datasets[0].description == "Custom desc"
+        assert catalog.dataset.all()[0].description == "Custom desc"
 
     def test_add_dataset_not_found(self):
         """add_dataset should raise FileNotFoundError."""
@@ -136,8 +136,8 @@ class TestAddDatasetDelta:
         catalog = Catalog()
         catalog.add_dataset(DATA_DIR / "test_delta")
 
-        assert len(catalog.datasets) == 1
-        ds = catalog.datasets[0]
+        assert len(catalog.dataset.all()) == 1
+        ds = catalog.dataset.all()[0]
         assert ds.id == "test_delta"
         assert ds.delivery_format == "delta"
         assert ds.nb_row == 6
@@ -155,7 +155,7 @@ class TestAddDatasetDelta:
             quiet=True,
         )
 
-        ds = catalog.datasets[0]
+        ds = catalog.dataset.all()[0]
         assert ds.id == "sales---test_delta"
         assert ds.name == "Custom Name"
         assert ds.description == "Custom description"
@@ -170,8 +170,8 @@ class TestAddDatasetHive:
         catalog = Catalog()
         catalog.add_dataset(DATA_DIR / "test_partitioned")
 
-        assert len(catalog.datasets) == 1
-        ds = catalog.datasets[0]
+        assert len(catalog.dataset.all()) == 1
+        ds = catalog.dataset.all()[0]
         assert ds.id == "test_partitioned"
         assert ds.delivery_format == "parquet"
         assert ds.nb_row == 6
@@ -185,8 +185,8 @@ class TestAddDatasetIceberg:
         catalog = Catalog()
         catalog.add_dataset(DATA_DIR / "iceberg_warehouse" / "default" / "test_table")
 
-        assert len(catalog.datasets) == 1
-        ds = catalog.datasets[0]
+        assert len(catalog.dataset.all()) == 1
+        ds = catalog.dataset.all()[0]
         assert ds.id == "test_table"
         assert ds.delivery_format == "iceberg"
         assert ds.description == "Sample Iceberg table for testing"

@@ -20,7 +20,7 @@ from .utils import (
     sanitize_id,
     upsert_folder,
 )
-from .entities import Dataset, Folder
+from .schema import Dataset, Folder
 from .scanner.utils import (
     SUPPORTED_FORMATS,
     find_files,
@@ -73,8 +73,8 @@ def add_folder(
         )
 
     start_time = log_section("add_folder", str(root), q)
-    datasets_before = len(catalog.datasets)
-    vars_before = len(catalog.variables)
+    datasets_before = len(catalog.dataset.all())
+    vars_before = len(catalog.variable.all())
 
     # Create default folder from directory name if not provided
     if folder is None:
@@ -141,11 +141,11 @@ def add_folder(
         current_mtime = get_mtime_timestamp(info.path)
 
         # Check for existing dataset (incremental scan)
-        existing = catalog._dataset_index.get(data_path_str)
+        existing = catalog._get_dataset_by_path(data_path_str)
         if existing is not None:
             if not do_refresh and existing.last_update_timestamp == current_mtime:
                 # Unchanged - skip and mark as seen
-                existing._seen = True
+                catalog.dataset.update(existing.id, _seen=True)
                 catalog._mark_dataset_modalities_seen(existing)
                 log_skip(info.path.name, q)
                 continue
@@ -175,12 +175,11 @@ def add_folder(
             last_update_timestamp=current_mtime,
             delivery_format=info.type.value,
             description=metadata.description,
+            nb_row=nb_row,
+            _seen=True,
         )
-        dataset._seen = True
-        catalog.datasets.append(dataset)
-        catalog._dataset_index[data_path_str] = dataset
+        catalog.dataset.add(dataset)
 
-        dataset.nb_row = nb_row
         var_id_mapping = build_variable_ids(variables, dataset.id)
         catalog.modality_manager.assign_from_freq(variables, freq_table, var_id_mapping)
         catalog._add_variables(variables, dataset.id)
@@ -213,11 +212,11 @@ def add_folder(
         current_mtime = get_mtime_timestamp(file_path)
 
         # Check for existing dataset (incremental scan)
-        existing = catalog._dataset_index.get(data_path_str)
+        existing = catalog._get_dataset_by_path(data_path_str)
         if existing is not None:
             if not do_refresh and existing.last_update_timestamp == current_mtime:
                 # Unchanged - skip and mark as seen
-                existing._seen = True
+                catalog.dataset.update(existing.id, _seen=True)
                 catalog._mark_dataset_modalities_seen(existing)
                 log_skip(file_path.name, q)
                 continue
@@ -229,26 +228,12 @@ def add_folder(
         dataset_id, dataset_name = build_dataset_id_name(file_path, root, prefix)
         folder_id = get_folder_id(file_path, root, prefix, subdir_ids)
 
-        # Create dataset
-        dataset = Dataset(
-            id=dataset_id,
-            name=dataset_name,
-            folder_id=folder_id,
-            data_path=data_path_str,
-            last_update_date=get_mtime_iso(file_path),
-            last_update_timestamp=current_mtime,
-            delivery_format=delivery_format,
-        )
-        dataset._seen = True
-        catalog.datasets.append(dataset)
-        catalog._dataset_index[data_path_str] = dataset
-
         # Resolve csv_encoding: parameter > catalog default
         resolved_encoding = (
             csv_encoding if csv_encoding is not None else catalog.csv_encoding
         )
 
-        # Scan file
+        # Scan file first to get nb_row and description
         result = scan_file(
             file_path,
             delivery_format,
@@ -257,9 +242,22 @@ def add_folder(
             freq_threshold=freq_threshold,
             csv_encoding=resolved_encoding,
         )
-        dataset.nb_row = result.nb_row
-        if result.description and not dataset.description:
-            dataset.description = result.description
+
+        # Create dataset with all info
+        dataset = Dataset(
+            id=dataset_id,
+            name=dataset_name,
+            folder_id=folder_id,
+            data_path=data_path_str,
+            last_update_date=get_mtime_iso(file_path),
+            last_update_timestamp=current_mtime,
+            delivery_format=delivery_format,
+            nb_row=result.nb_row,
+            description=result.description,
+            _seen=True,
+        )
+        catalog.dataset.add(dataset)
+
         var_id_mapping = build_variable_ids(result.variables, dataset.id)
         catalog.modality_manager.assign_from_freq(
             result.variables, result.freq_table, var_id_mapping
@@ -273,6 +271,6 @@ def add_folder(
         else:
             log_warn(f"{file_path.name}: empty file", q)
 
-    datasets_added = len(catalog.datasets) - datasets_before
-    vars_added = len(catalog.variables) - vars_before
+    datasets_added = len(catalog.dataset.all()) - datasets_before
+    vars_added = len(catalog.variable.all()) - vars_before
     log_summary(datasets_added, vars_added, q, start_time)

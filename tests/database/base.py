@@ -167,17 +167,17 @@ class BaseDatabaseTests(ABC):
         catalog.add_database(con, folder=Folder(id="testdb", name="Test DB"))
 
         # Should have datasets
-        assert len(catalog.datasets) >= 2
-        dataset_names = {d.name for d in catalog.datasets}
+        assert len(catalog.dataset.all()) >= 2
+        dataset_names = {d.name for d in catalog.dataset.all()}
         assert "employees" in dataset_names
         assert "departments" in dataset_names
 
         # Check delivery_format
-        emp_dataset = next(d for d in catalog.datasets if d.name == "employees")
+        emp_dataset = next(d for d in catalog.dataset.all() if d.name == "employees")
         assert emp_dataset.delivery_format == delivery_format
 
         # Check folder type matches backend
-        root_folder = catalog.folders[0]
+        root_folder = catalog.folder.all()[0]
         assert root_folder.type == delivery_format
 
     def test_catalog_add_database_no_prefix_grouping(
@@ -194,7 +194,7 @@ class BaseDatabaseTests(ABC):
         )
 
         # No prefix folders should be created (only root + schema folders)
-        prefix_folders = [f for f in catalog.folders if f.type == "table_prefix"]
+        prefix_folders = [f for f in catalog.folder.all() if f.type == "table_prefix"]
         assert len(prefix_folders) == 0
 
     def test_catalog_with_include(
@@ -210,8 +210,8 @@ class BaseDatabaseTests(ABC):
             include=["employees"],
         )
 
-        assert len(catalog.datasets) == 1
-        assert catalog.datasets[0].name == "employees"
+        assert len(catalog.dataset.all()) == 1
+        assert catalog.dataset.all()[0].name == "employees"
 
     def test_catalog_with_exclude(
         self, db_with_employees: tuple[ibis.BaseBackend, str, str]
@@ -226,7 +226,7 @@ class BaseDatabaseTests(ABC):
             exclude=["departments", "empty_table"],
         )
 
-        dataset_names = {d.name for d in catalog.datasets}
+        dataset_names = {d.name for d in catalog.dataset.all()}
         assert "employees" in dataset_names
         assert "departments" not in dataset_names
 
@@ -333,18 +333,18 @@ class BaseSchemaTests(ABC):
         )
 
         # Should have root folder + schema folders
-        folder_ids = {f.id for f in catalog.folders}
+        folder_ids = {f.id for f in catalog.folder.all()}
         assert "mydb" in folder_ids
         assert "mydb---sales" in folder_ids
         assert "mydb---inventory" in folder_ids
 
         # Check schema folders have correct parent
-        sales_folder = next(f for f in catalog.folders if f.id == "mydb---sales")
+        sales_folder = next(f for f in catalog.folder.all() if f.id == "mydb---sales")
         assert sales_folder.parent_id == "mydb"
         assert sales_folder.name == "sales"
 
         # Check datasets are in correct folders
-        orders_dataset = next(d for d in catalog.datasets if d.name == "orders")
+        orders_dataset = next(d for d in catalog.dataset.all() if d.name == "orders")
         assert orders_dataset.folder_id == "mydb---sales"
 
     def test_catalog_single_schema(
@@ -360,9 +360,9 @@ class BaseSchemaTests(ABC):
         )
 
         # +1 for _modalities folder (auto-created)
-        user_folders = [f for f in catalog.folders if f.id != "_modalities"]
+        user_folders = [f for f in catalog.folder.all() if f.id != "_modalities"]
         assert len(user_folders) == 1
         assert user_folders[0].id == "sales_db"
 
-        dataset_names = {d.name for d in catalog.datasets}
+        dataset_names = {d.name for d in catalog.dataset.all()}
         assert dataset_names == {"orders", "customers"}

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pyarrow as pa
 
-from ..entities import Variable
+from ..schema import Variable
 from .csv import scan_csv
 from .excel import scan_excel
 from .parquet import scan_parquet

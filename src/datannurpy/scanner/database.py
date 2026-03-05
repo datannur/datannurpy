@@ -11,7 +11,7 @@ from urllib.parse import parse_qs, urlparse
 import ibis
 import pyarrow as pa
 
-from ..entities import Variable
+from ..schema import Variable
 from .utils import build_variables
 
 if TYPE_CHECKING:

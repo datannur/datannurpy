@@ -121,16 +121,16 @@ class TestIncrementalScanDatabase:
         catalog1.add_database(conn_str, Folder(id="db", name="Database"))
         catalog1.export_db()
 
-        assert len(catalog1.datasets) == 2
+        assert len(catalog1.dataset.all()) == 2
 
         # Second scan
         catalog2 = Catalog(db_path=db_dir, quiet=True)
         catalog2.add_database(conn_str, Folder(id="db", name="Database"))
 
         # Should still have 2 datasets (unchanged)
-        assert len(catalog2.datasets) == 2
+        assert len(catalog2.dataset.all()) == 2
         # All should be marked as seen
-        for ds in catalog2.datasets:
+        for ds in catalog2.dataset.all():
             assert ds._seen is True
 
     def test_modified_table_is_rescanned(self, sample_db: Path, tmp_path: Path):
@@ -143,7 +143,9 @@ class TestIncrementalScanDatabase:
         catalog1.add_database(conn_str, Folder(id="db", name="Database"))
         catalog1.export_db()
 
-        users_ds = next(ds for ds in catalog1.datasets if "users" in (ds.name or ""))
+        users_ds = next(
+            ds for ds in catalog1.dataset.all() if "users" in (ds.name or "")
+        )
         assert users_ds.nb_row == 2
 
         # Modify table (add row)
@@ -158,7 +160,9 @@ class TestIncrementalScanDatabase:
         catalog2.add_database(conn_str, Folder(id="db", name="Database"))
 
         # Should have rescanned with new row count
-        users_ds2 = next(ds for ds in catalog2.datasets if "users" in (ds.name or ""))
+        users_ds2 = next(
+            ds for ds in catalog2.dataset.all() if "users" in (ds.name or "")
+        )
         assert users_ds2.nb_row == 3
 
     def test_schema_change_triggers_rescan(self, sample_db: Path, tmp_path: Path):
@@ -171,7 +175,9 @@ class TestIncrementalScanDatabase:
         catalog1.add_database(conn_str, Folder(id="db", name="Database"))
         catalog1.export_db()
 
-        users_ds = next(ds for ds in catalog1.datasets if "users" in (ds.name or ""))
+        users_ds = next(
+            ds for ds in catalog1.dataset.all() if "users" in (ds.name or "")
+        )
         old_signature = users_ds.schema_signature
 
         # Modify schema (add column)
@@ -186,7 +192,9 @@ class TestIncrementalScanDatabase:
         catalog2.add_database(conn_str, Folder(id="db", name="Database"))
 
         # Should have new signature
-        users_ds2 = next(ds for ds in catalog2.datasets if "users" in (ds.name or ""))
+        users_ds2 = next(
+            ds for ds in catalog2.dataset.all() if "users" in (ds.name or "")
+        )
         assert users_ds2.schema_signature != old_signature
 
     def test_new_table_is_added(self, sample_db: Path, tmp_path: Path):
@@ -199,7 +207,7 @@ class TestIncrementalScanDatabase:
         catalog1.add_database(conn_str, Folder(id="db", name="Database"))
         catalog1.export_db()
 
-        assert len(catalog1.datasets) == 2
+        assert len(catalog1.dataset.all()) == 2
 
         # Add new table
         conn = sqlite3.connect(sample_db)
@@ -214,8 +222,8 @@ class TestIncrementalScanDatabase:
         catalog2.add_database(conn_str, Folder(id="db", name="Database"))
 
         # Should have 3 datasets
-        assert len(catalog2.datasets) == 3
-        assert any("products" in (ds.name or "") for ds in catalog2.datasets)
+        assert len(catalog2.dataset.all()) == 3
+        assert any("products" in (ds.name or "") for ds in catalog2.dataset.all())
 
     def test_refresh_forces_rescan(self, sample_db: Path, tmp_path: Path):
         """refresh=True should force rescan even if unchanged."""
@@ -227,7 +235,7 @@ class TestIncrementalScanDatabase:
         catalog1.add_database(conn_str, Folder(id="db", name="Database"))
         catalog1.export_db()
 
-        initial_vars = len(catalog1.variables)
+        initial_vars = len(catalog1.variable.all())
 
         # Second scan with refresh=True (without folder to add new datasets)
         catalog2 = Catalog(db_path=db_dir, quiet=True)
@@ -236,8 +244,8 @@ class TestIncrementalScanDatabase:
         # With refresh, all tables are rescanned and added again
         # Since we don't use the same folder, we get duplicate datasets
         # The key is that refresh=True doesn't skip the tables
-        assert len(catalog2.datasets) == 4  # 2 original + 2 rescanned
-        assert len(catalog2.variables) == initial_vars * 2
+        assert len(catalog2.dataset.all()) == 4  # 2 original + 2 rescanned
+        assert len(catalog2.variable.all()) == initial_vars * 2
 
     def test_refresh_false_skips_unchanged(self, sample_db: Path, tmp_path: Path):
         """refresh=False should skip unchanged tables."""
@@ -254,7 +262,7 @@ class TestIncrementalScanDatabase:
         catalog2.add_database(conn_str, Folder(id="db", name="Database"))
 
         # Should have same number of datasets (not duplicated)
-        assert len(catalog2.datasets) == 2
+        assert len(catalog2.dataset.all()) == 2
 
     def test_data_path_stored_for_tables(self, sample_db: Path, tmp_path: Path):
         """Tables should have data_path stored for incremental tracking."""
@@ -262,7 +270,7 @@ class TestIncrementalScanDatabase:
         conn_str = f"sqlite:////{sample_db}"
         catalog.add_database(conn_str, Folder(id="db", name="Database"))
 
-        for ds in catalog.datasets:
+        for ds in catalog.dataset.all():
             assert ds.data_path is not None
             assert ds.data_path.startswith("sqlite://")
 
@@ -272,7 +280,7 @@ class TestIncrementalScanDatabase:
         conn_str = f"sqlite:////{sample_db}"
         catalog.add_database(conn_str, Folder(id="db", name="Database"))
 
-        for ds in catalog.datasets:
+        for ds in catalog.dataset.all():
             assert ds.schema_signature is not None
             assert len(ds.schema_signature) == 32  # MD5 hex
 
@@ -282,7 +290,7 @@ class TestIncrementalScanDatabase:
         conn_str = f"sqlite:////{sample_db}"
         catalog.add_database(conn_str, Folder(id="db", name="Database"))
 
-        for ds in catalog.datasets:
+        for ds in catalog.dataset.all():
             assert ds.last_update_timestamp is not None
             assert ds.last_update_timestamp > 0
 

@@ -12,12 +12,13 @@ import pandas as pd
 import pytest
 
 from datannurpy import Catalog, Folder
-from datannurpy.entities import Value, Variable
+from datannurpy.schema import Value, Variable
+from datannurpy.utils.ids import build_value_id
 from datannurpy.add_metadata import (
     _convert_row_to_dict,
     _find_entity_by_id,
     _find_value,
-    _get_catalog_list,
+    _get_catalog_table,
     _get_required_fields,
     _is_database_connection,
     _load_tables_from_database,
@@ -53,11 +54,10 @@ class TestGetRequiredFields:
         assert "name" not in required
 
     def test_value_required_fields(self):
-        """Value should require modality_id (value has default)."""
+        """Value should require id and modality_id (value has default)."""
         required = _get_required_fields(Value)
+        assert "id" in required
         assert "modality_id" in required
-        # value has a default, so not strictly required by dataclass
-        assert "id" not in required
 
 
 class TestIsDatabaseConnection:
@@ -253,9 +253,9 @@ class TestFindValue:
     def test_find_existing(self):
         """Should find value by composite key."""
         values = [
-            Value(modality_id="m1", value="a"),
-            Value(modality_id="m1", value="b"),
-            Value(modality_id="m2", value="a"),
+            Value(id=build_value_id("m1", "a"), modality_id="m1", value="a"),
+            Value(id=build_value_id("m1", "b"), modality_id="m1", value="b"),
+            Value(id=build_value_id("m2", "a"), modality_id="m2", value="a"),
         ]
         result = _find_value(values, "m1", "b")
         assert result is not None
@@ -264,31 +264,31 @@ class TestFindValue:
 
     def test_not_found(self):
         """Should return None if not found."""
-        values = [Value(modality_id="m1", value="a")]
+        values = [Value(id=build_value_id("m1", "a"), modality_id="m1", value="a")]
         assert _find_value(values, "m1", "x") is None
         assert _find_value(values, "m2", "a") is None
 
 
-class TestGetCatalogList:
-    """Test _get_catalog_list function."""
+class TestGetCatalogTable:
+    """Test _get_catalog_table function."""
 
     def test_all_entity_types(self):
-        """Should return correct list for all entity types."""
+        """Should return correct table for all entity types."""
         catalog = Catalog()
 
-        assert _get_catalog_list(catalog, "folder") is catalog.folders
-        assert _get_catalog_list(catalog, "dataset") is catalog.datasets
-        assert _get_catalog_list(catalog, "variable") is catalog.variables
-        assert _get_catalog_list(catalog, "modality") is catalog.modalities
-        assert _get_catalog_list(catalog, "value") is catalog.values
-        assert _get_catalog_list(catalog, "institution") is catalog.institutions
-        assert _get_catalog_list(catalog, "tag") is catalog.tags
-        assert _get_catalog_list(catalog, "doc") is catalog.docs
+        assert _get_catalog_table(catalog, "folder") is catalog.folder
+        assert _get_catalog_table(catalog, "dataset") is catalog.dataset
+        assert _get_catalog_table(catalog, "variable") is catalog.variable
+        assert _get_catalog_table(catalog, "modality") is catalog.modality
+        assert _get_catalog_table(catalog, "value") is catalog.value
+        assert _get_catalog_table(catalog, "institution") is catalog.institution
+        assert _get_catalog_table(catalog, "tag") is catalog.tag
+        assert _get_catalog_table(catalog, "doc") is catalog.doc
 
     def test_unknown_entity(self):
         """Should return None for unknown entity type."""
         catalog = Catalog()
-        assert _get_catalog_list(catalog, "unknown") is None
+        assert _get_catalog_table(catalog, "unknown") is None
 
 
 class TestReadFile:
@@ -535,7 +535,7 @@ class TestValidateEntityTable:
         assert "line 3" in errors[0]  # Row index 1 + 2 = line 3
         assert "dataset_id" in errors[0]
         catalog = Catalog()
-        catalog.variables.append(Variable(id="v1", name="Existing", dataset_id="ds"))
+        catalog.variable.add(Variable(id="v1", name="Existing", dataset_id="ds"))
 
         # v1 exists, so empty name should be OK (will be updated)
         df = pd.DataFrame({"id": ["v1"], "dataset_id": ["ds"]})
@@ -587,13 +587,13 @@ class TestProcessEntityTable:
 
         assert created == 1
         assert updated == 0
-        assert len(catalog.folders) == 1
-        assert catalog.folders[0].id == "f1"
+        assert len(catalog.folder.all()) == 1
+        assert catalog.folder.all()[0].id == "f1"
 
     def test_update_existing_entity(self):
         """Should update existing entities."""
         catalog = Catalog()
-        catalog.folders.append(Folder(id="f1", name="Old"))
+        catalog.folder.add(Folder(id="f1", name="Old"))
 
         df = pd.DataFrame(
             {
@@ -607,8 +607,8 @@ class TestProcessEntityTable:
 
         assert created == 0
         assert updated == 1
-        assert catalog.folders[0].name == "New"
-        assert catalog.folders[0].description == "Updated"
+        assert catalog.folder.all()[0].name == "New"
+        assert catalog.folder.all()[0].description == "Updated"
 
     def test_create_value_entity(self):
         """Should create Value entities with composite key."""
@@ -625,13 +625,15 @@ class TestProcessEntityTable:
 
         assert created == 1
         assert updated == 0
-        assert len(catalog.values) == 1
-        assert catalog.values[0].modality_id == "m1"
+        assert len(catalog.value.all()) == 1
+        assert catalog.value.all()[0].modality_id == "m1"
 
     def test_update_value_entity(self):
         """Should update existing Value entities."""
         catalog = Catalog()
-        catalog.values.append(Value(modality_id="m1", value="a"))
+        catalog.value.add(
+            Value(id=build_value_id("m1", "a"), modality_id="m1", value="a")
+        )
 
         df = pd.DataFrame(
             {
@@ -645,7 +647,7 @@ class TestProcessEntityTable:
 
         assert created == 0
         assert updated == 1
-        assert catalog.values[0].description == "Updated"
+        assert catalog.value.all()[0].description == "Updated"
 
     def test_skip_value_without_required_fields(self):
         """Should skip Value without modality_id or value."""
@@ -673,7 +675,7 @@ class TestProcessEntityTable:
         created, _ = _process_entity_table(catalog, "variable", df)
 
         assert created == 1
-        assert catalog.variables[0].name == "my_var"
+        assert catalog.variable.all()[0].name == "my_var"
 
     def test_skip_entity_without_id(self):
         """Should skip entities without id."""
@@ -712,8 +714,8 @@ class TestAddMetadataIntegration:
         catalog = Catalog()
         catalog.add_metadata(tmp_path, quiet=True)
 
-        assert len(catalog.folders) == 1
-        assert len(catalog.tags) == 1
+        assert len(catalog.folder.all()) == 1
+        assert len(catalog.tag.all()) == 1
 
     def test_add_metadata_from_sqlite(self, tmp_path: Path):
         """Should load metadata from SQLite database."""
@@ -727,8 +729,8 @@ class TestAddMetadataIntegration:
         catalog = Catalog()
         catalog.add_metadata(f"sqlite:///{db_path}", quiet=True)
 
-        assert len(catalog.folders) == 1
-        assert catalog.folders[0].name == "Folder1"
+        assert len(catalog.folder.all()) == 1
+        assert catalog.folder.all()[0].name == "Folder1"
 
     def test_add_metadata_updates_existing(self, tmp_path: Path):
         """Should update existing entities."""
@@ -737,11 +739,11 @@ class TestAddMetadataIntegration:
         )
 
         catalog = Catalog()
-        catalog.variables.append(Variable(id="v1", name="Var1", dataset_id="ds1"))
+        catalog.variable.add(Variable(id="v1", name="Var1", dataset_id="ds1"))
 
         catalog.add_metadata(tmp_path, quiet=True)
 
-        assert catalog.variables[0].description == "New description"
+        assert catalog.variable.all()[0].description == "New description"
 
     def test_add_metadata_merges_list_fields(self, tmp_path: Path):
         """Should merge list fields."""
@@ -750,14 +752,14 @@ class TestAddMetadataIntegration:
         )
 
         catalog = Catalog()
-        catalog.variables.append(
+        catalog.variable.add(
             Variable(id="v1", name="Var1", dataset_id="ds1", tag_ids=["t1"])
         )
 
         catalog.add_metadata(tmp_path, quiet=True)
 
         # New values first, then existing
-        assert catalog.variables[0].tag_ids == ["t2", "t3", "t1"]
+        assert catalog.variable.all()[0].tag_ids == ["t2", "t3", "t1"]
 
     def test_add_metadata_folder_not_found(self):
         """Should raise FileNotFoundError for missing folder."""
@@ -793,7 +795,7 @@ class TestAddMetadataIntegration:
 
         captured = capsys.readouterr()
         assert "Invalid metadata" in captured.err
-        assert len(catalog.variables) == 0  # Not processed
+        assert len(catalog.variable.all()) == 0  # Not processed
 
     def test_add_metadata_quiet_mode(self, tmp_path: Path, capsys):
         """Should suppress output in quiet mode."""
@@ -831,14 +833,14 @@ class TestAddMetadataIntegration:
         catalog = Catalog()
         catalog.add_metadata(tmp_path, quiet=True)
 
-        assert len(catalog.folders) == 1
-        assert len(catalog.datasets) == 1
-        assert len(catalog.variables) == 1
-        assert len(catalog.modalities) == 1
-        assert len(catalog.values) == 1
-        assert len(catalog.institutions) == 1
-        assert len(catalog.tags) == 1
-        assert len(catalog.docs) == 1
+        assert len(catalog.folder.all()) == 1
+        assert len(catalog.dataset.all()) == 1
+        assert len(catalog.variable.all()) == 1
+        assert len(catalog.modality.all()) == 1
+        assert len(catalog.value.all()) == 1
+        assert len(catalog.institution.all()) == 1
+        assert len(catalog.tag.all()) == 1
+        assert len(catalog.doc.all()) == 1
 
     def test_add_metadata_with_output(self, tmp_path: Path, capsys):
         """Should print progress when not quiet."""
@@ -905,8 +907,54 @@ class TestEdgeCases:
         (tmp_path / "folder.csv").write_text("id,name,description\nf1,Folder,Updated\n")
 
         catalog = Catalog()
-        catalog.folders.append(Folder(id="f1", name="Folder"))
+        catalog.folder.add(Folder(id="f1", name="Folder"))
         catalog.add_metadata(tmp_path, quiet=False)
 
         captured = capsys.readouterr()
         assert "0 created, 1 updated" in captured.err
+
+    def test_merge_entity_marks_seen(self):
+        """_merge_entity should set _seen=True on entities with that attribute."""
+        folder = Folder(id="f1", name="Old")
+        assert folder._seen is False
+        _merge_entity(folder, {"name": "New"})
+        assert folder._seen is True
+
+    def test_value_update_with_description(self, tmp_path: Path):
+        """Updating existing value with description should apply it."""
+        from datannurpy.schema import Modality
+
+        (tmp_path / "value.csv").write_text(
+            "modality_id,value,description\nm1,A,Updated desc\n"
+        )
+
+        catalog = Catalog()
+        catalog.modality.add(Modality(id="m1", name="Mod"))
+        catalog.value.add(
+            Value(id=build_value_id("m1", "A"), modality_id="m1", value="A")
+        )
+
+        catalog.add_metadata(tmp_path, quiet=True)
+        val = catalog.value.all()[0]
+        assert val.description == "Updated desc"
+
+    def test_value_update_without_description(self, tmp_path: Path):
+        """Updating existing value without description should keep None."""
+        from datannurpy.schema import Modality
+
+        (tmp_path / "value.csv").write_text("modality_id,value\nm1,A\n")
+
+        catalog = Catalog()
+        catalog.modality.add(Modality(id="m1", name="Mod"))
+        catalog.value.add(
+            Value(
+                id=build_value_id("m1", "A"),
+                modality_id="m1",
+                value="A",
+                description="Old",
+            )
+        )
+
+        catalog.add_metadata(tmp_path, quiet=True)
+        val = catalog.value.all()[0]
+        assert val.description == "Old"

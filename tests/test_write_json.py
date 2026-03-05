@@ -1,63 +1,14 @@
-"""Tests for Catalog.write method."""
+"""Tests for Catalog.export_db method."""
 
 import json
 from pathlib import Path
-from unittest.mock import patch
 
-import pytest
+import polars as pl
 
 from datannurpy import Catalog, Folder
-from datannurpy.exporter.db import build_jsonjs, clean_value, write_atomic
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 CSV_DIR = DATA_DIR / "csv"
-
-
-class TestCleanValue:
-    """Test clean_value helper function."""
-
-    def test_float_whole_number_to_int(self):
-        """Whole floats like 5.0 should be converted to int."""
-        assert clean_value(5.0) == 5
-        assert isinstance(clean_value(5.0), int)
-
-    def test_float_decimal_unchanged(self):
-        """Floats with decimals should remain floats."""
-        assert clean_value(5.5) == 5.5
-        assert isinstance(clean_value(5.5), float)
-
-    def test_int_unchanged(self):
-        """Integers should remain integers."""
-        assert clean_value(5) == 5
-        assert isinstance(clean_value(5), int)
-
-    def test_string_unchanged(self):
-        """Strings should remain strings."""
-        assert clean_value("hello") == "hello"
-
-
-class TestBuildJsonJs:
-    """Test build_jsonjs helper function."""
-
-    def test_empty_data(self):
-        """Empty data should return empty array assignment."""
-        result = build_jsonjs([], "test")
-        assert result == "jsonjs.data['test'] = []"
-
-
-class TestWriteAtomic:
-    """Test write_atomic helper function."""
-
-    def test_cleanup_on_error(self, tmp_path: Path):
-        """Temp file should be cleaned up on rename error."""
-        path = tmp_path / "test.json"
-
-        with patch("pathlib.Path.rename", side_effect=OSError("disk full")):
-            with pytest.raises(OSError, match="disk full"):
-                write_atomic(path, "content")
-
-        # Temp file should be cleaned up
-        assert not (tmp_path / "test.json.temp").exists()
 
 
 class TestFreq:
@@ -133,15 +84,16 @@ class TestCatalogWrite:
     """Test Catalog.write method."""
 
     def test_write_empty_catalog(self, tmp_path):
-        """export_db on empty catalog should not create any files."""
+        """export_db on empty catalog should only create __table__.json."""
         catalog = Catalog()
         catalog.export_db(tmp_path)
 
-        # No entity files should be created
+        # No entity files should be created (only __table__.json registry)
         assert not (tmp_path / "folder.json").exists()
         assert not (tmp_path / "dataset.json").exists()
         assert not (tmp_path / "variable.json").exists()
-        assert not (tmp_path / "__table__.json").exists()
+        # jsonjsdb always creates __table__.json as table registry
+        assert (tmp_path / "__table__.json").exists()
 
     def test_write_creates_json_files(self, tmp_path):
         """write should create .json files for each entity type."""
@@ -302,10 +254,10 @@ class TestCatalogWrite:
 
     def test_write_institutions(self, tmp_path: Path):
         """export_db should write institution.json when institutions exist."""
-        from datannurpy.entities import Institution
+        from datannurpy.schema import Institution
 
         catalog = Catalog()
-        catalog.institutions.append(Institution(id="inst1", name="Institution 1"))
+        catalog.institution.add(Institution(id="inst1", name="Institution 1"))
         catalog.export_db(tmp_path)
 
         assert (tmp_path / "institution.json").exists()
@@ -318,10 +270,10 @@ class TestCatalogWrite:
 
     def test_write_tags(self, tmp_path: Path):
         """export_db should write tag.json when tags exist."""
-        from datannurpy.entities import Tag
+        from datannurpy.schema import Tag
 
         catalog = Catalog()
-        catalog.tags.append(Tag(id="tag1", name="Tag 1"))
+        catalog.tag.add(Tag(id="tag1", name="Tag 1"))
         catalog.export_db(tmp_path)
 
         assert (tmp_path / "tag.json").exists()
@@ -334,10 +286,10 @@ class TestCatalogWrite:
 
     def test_write_docs(self, tmp_path: Path):
         """export_db should write doc.json when docs exist."""
-        from datannurpy.entities import Doc
+        from datannurpy.schema import Doc
 
         catalog = Catalog()
-        catalog.docs.append(Doc(id="doc1", name="Doc 1"))
+        catalog.doc.add(Doc(id="doc1", name="Doc 1"))
         catalog.export_db(tmp_path)
 
         assert (tmp_path / "doc.json").exists()
@@ -354,7 +306,7 @@ class TestDatasetIncrementalFields:
 
     def test_dataset_last_update_timestamp_exported(self, tmp_path: Path):
         """last_update_timestamp should be exported to JSON when set."""
-        from datannurpy.entities import Dataset
+        from datannurpy.schema import Dataset
 
         catalog = Catalog()
         ds = Dataset(
@@ -362,7 +314,7 @@ class TestDatasetIncrementalFields:
             name="Test",
             last_update_timestamp=1706745600,  # 2024-02-01 00:00:00 UTC
         )
-        catalog.datasets.append(ds)
+        catalog.dataset.add(ds)
         catalog.export_db(tmp_path)
 
         with open(tmp_path / "dataset.json") as f:
@@ -371,7 +323,7 @@ class TestDatasetIncrementalFields:
 
     def test_dataset_schema_signature_exported(self, tmp_path: Path):
         """schema_signature should be exported to JSON when set."""
-        from datannurpy.entities import Dataset
+        from datannurpy.schema import Dataset
 
         catalog = Catalog()
         ds = Dataset(
@@ -379,7 +331,7 @@ class TestDatasetIncrementalFields:
             name="Test",
             schema_signature="abc123hash",
         )
-        catalog.datasets.append(ds)
+        catalog.dataset.add(ds)
         catalog.export_db(tmp_path)
 
         with open(tmp_path / "dataset.json") as f:
@@ -388,14 +340,52 @@ class TestDatasetIncrementalFields:
 
     def test_dataset_incremental_fields_not_exported_when_none(self, tmp_path: Path):
         """Incremental fields should not appear in JSON when None."""
-        from datannurpy.entities import Dataset
+        from datannurpy.schema import Dataset
 
         catalog = Catalog()
         ds = Dataset(id="test", name="Test")
-        catalog.datasets.append(ds)
+        catalog.dataset.add(ds)
         catalog.export_db(tmp_path)
 
         with open(tmp_path / "dataset.json") as f:
             data = json.load(f)
         assert "last_update_timestamp" not in data[0]
         assert "schema_signature" not in data[0]
+
+
+class TestSerializationEdgeCases:
+    """Test edge cases in catalog export serialization."""
+
+    def test_export_db_float_to_int_conversion(self, tmp_path: Path):
+        """Float values that are whole numbers should be converted to int."""
+        from datannurpy.catalog import _serialize_df
+
+        df = pl.DataFrame({"id": ["a"], "score": [3.0]})
+        rows = _serialize_df(df)
+        assert rows[0]["score"] == 3
+        assert isinstance(rows[0]["score"], int)
+
+    def test_write_jsonjs_raw_empty(self, tmp_path: Path):
+        """_write_jsonjs_raw with empty data should not write file."""
+        from datannurpy.catalog import _write_jsonjs_raw
+
+        path = tmp_path / "empty.json.js"
+        _write_jsonjs_raw([], "test", path)
+        assert not path.exists()
+
+    def test_export_empty_freq_tables(self, tmp_path: Path):
+        """export_db with empty freq tables should not create freq.json."""
+        import pyarrow as pa
+
+        catalog = Catalog()
+        catalog._freq_tables = [
+            pa.table(
+                {
+                    "variable_id": pa.array([], type=pa.string()),
+                    "value": pa.array([], type=pa.string()),
+                    "freq": pa.array([], type=pa.int64()),
+                }
+            )
+        ]
+        catalog.export_db(tmp_path)
+        assert not (tmp_path / "freq.json").exists()
