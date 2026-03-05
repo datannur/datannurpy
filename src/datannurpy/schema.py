@@ -1,132 +1,141 @@
-"""TypedDict schemas for datannur catalog (jsonjsdb integration)."""
+"""Dataclass schemas for datannur catalog (jsonjsdb integration)."""
 
 from __future__ import annotations
 
-from typing import TypedDict
+from dataclasses import dataclass, field
 
 from jsonjsdb import Jsonjsdb, Table
 
 
-class Folder(TypedDict, total=False):
+@dataclass
+class Folder:
     """A folder containing datasets and sub-folders."""
 
-    id: str  # Required
-    parent_id: str | None
-    tag_ids: list[str]
-    doc_ids: list[str]
-    name: str | None
-    description: str | None
-    type: str | None  # filesystem, sqlite, postgres, etc.
-    data_path: str | None
-    last_update_date: str | None
+    id: str
+    parent_id: str | None = None
+    tag_ids: list[str] = field(default_factory=list)
+    doc_ids: list[str] = field(default_factory=list)
+    name: str | None = None
+    description: str | None = None
+    type: str | None = None  # filesystem, sqlite, postgres, etc.
+    data_path: str | None = None
+    last_update_date: str | None = None
 
 
-class Dataset(TypedDict, total=False):
+@dataclass
+class Dataset:
     """A tabular data collection (table, file, etc.)."""
 
-    id: str  # Required
-    folder_id: str | None
-    manager_id: str | None
-    owner_id: str | None
-    tag_ids: list[str]
-    doc_ids: list[str]
-    name: str | None
-    description: str | None
-    type: str | None
-    data_path: str | None
-    link: str | None
-    localisation: str | None
-    delivery_format: str | None
-    nb_row: int | None
-    start_date: str | None
-    end_date: str | None
-    last_update_date: str | None
-    updating_each: str | None
-    no_more_update: str | None
-    last_update_timestamp: int | None
-    schema_signature: str | None
+    id: str
+    folder_id: str | None = None
+    manager_id: str | None = None
+    owner_id: str | None = None
+    tag_ids: list[str] = field(default_factory=list)
+    doc_ids: list[str] = field(default_factory=list)
+    name: str | None = None
+    description: str | None = None
+    type: str | None = None
+    data_path: str | None = None
+    link: str | None = None
+    localisation: str | None = None
+    delivery_format: str | None = None
+    nb_row: int | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    last_update_date: str | None = None
+    updating_each: str | None = None
+    no_more_update: str | None = None
+    last_update_timestamp: int | None = None
+    schema_signature: str | None = None
 
 
-class Variable(TypedDict, total=False):
+@dataclass
+class Variable:
     """A column in a tabular dataset."""
 
-    id: str  # Required
-    name: str  # Required
-    dataset_id: str  # Required
-    modality_ids: list[str]
-    tag_ids: list[str]
-    source_var_ids: list[str]
-    original_name: str | None
-    description: str | None
-    type: str | None
-    key: int | None
-    nb_distinct: int | None
-    nb_duplicate: int | None
-    nb_missing: int | None
-    start_date: str | None
-    end_date: str | None
+    id: str
+    name: str
+    dataset_id: str
+    modality_ids: list[str] = field(default_factory=list)
+    tag_ids: list[str] = field(default_factory=list)
+    source_var_ids: list[str] = field(default_factory=list)
+    original_name: str | None = None
+    description: str | None = None
+    type: str | None = None
+    key: int | None = None
+    nb_distinct: int | None = None
+    nb_duplicate: int | None = None
+    nb_missing: int | None = None
+    start_date: str | None = None
+    end_date: str | None = None
 
 
-class Modality(TypedDict, total=False):
+@dataclass
+class Modality:
     """A reusable set of categorical values."""
 
-    id: str  # Required
-    folder_id: str | None
-    name: str | None
-    description: str | None
-    type: str | None
+    id: str
+    folder_id: str | None = None
+    name: str | None = None
+    description: str | None = None
+    type: str | None = None
 
 
-class Value(TypedDict, total=False):
+@dataclass
+class Value:
     """A value within a modality (no unique id)."""
 
-    modality_id: str  # Required
-    value: str | None
-    description: str | None
+    modality_id: str
+    value: str | None = None
+    description: str | None = None
 
 
-class Freq(TypedDict, total=False):
+@dataclass
+class Freq:
     """Frequency count for a variable value (no unique id)."""
 
-    variable_id: str  # Required
-    value: str  # Required
-    freq: int  # Required
+    variable_id: str
+    value: str
+    freq: int
 
 
-class Institution(TypedDict, total=False):
+@dataclass
+class Institution:
     """An organization that manages data."""
 
-    id: str  # Required
-    parent_id: str | None
-    tag_ids: list[str]
-    doc_ids: list[str]
-    name: str | None
-    description: str | None
-    email: str | None
-    phone: str | None
-    start_date: str | None
-    end_date: str | None
+    id: str
+    parent_id: str | None = None
+    tag_ids: list[str] = field(default_factory=list)
+    doc_ids: list[str] = field(default_factory=list)
+    name: str | None = None
+    description: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
 
 
-class Tag(TypedDict, total=False):
+@dataclass
+class Tag:
     """A keyword/tag for categorization."""
 
-    id: str  # Required
-    parent_id: str | None
-    doc_ids: list[str]
-    name: str | None
-    description: str | None
+    id: str
+    parent_id: str | None = None
+    doc_ids: list[str] = field(default_factory=list)
+    name: str | None = None
+    description: str | None = None
 
 
-class Doc(TypedDict, total=False):
+@dataclass
+class Doc:
     """A document attached to entities."""
 
-    id: str  # Required
-    name: str | None
-    description: str | None
-    path: str | None
-    type: str | None
-    last_update: str | None
+    id: str
+    name: str | None = None
+    description: str | None = None
+    path: str | None = None
+    type: str | None = None
+    last_update: str | None = None
 
 
 class DatannurDB(Jsonjsdb):
