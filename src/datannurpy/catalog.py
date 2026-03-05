@@ -94,7 +94,7 @@ class Catalog(DatannurDB):
             ]:
                 if (
                     "_seen" in table.runtime_fields
-                    and not table.df.is_empty()
+                    and not table.is_empty
                     and "_seen" not in table.df.columns
                 ):
                     import polars as pl
@@ -155,14 +155,14 @@ class Catalog(DatannurDB):
     def __repr__(self) -> str:
         return (
             f"Catalog(\n"
-            f"  folders={len(self.folder.all())},\n"
-            f"  datasets={len(self.dataset.all())},\n"
-            f"  variables={len(self.variable.all())},\n"
-            f"  modalities={len(self.modality.all())},\n"
-            f"  values={len(self.value.all())},\n"
-            f"  institutions={len(self.institution.all())},\n"
-            f"  tags={len(self.tag.all())},\n"
-            f"  docs={len(self.doc.all())}\n"
+            f"  folders={self.folder.count},\n"
+            f"  datasets={self.dataset.count},\n"
+            f"  variables={self.variable.count},\n"
+            f"  modalities={self.modality.count},\n"
+            f"  values={self.value.count},\n"
+            f"  institutions={self.institution.count},\n"
+            f"  tags={self.tag.count},\n"
+            f"  docs={self.doc.count}\n"
             f")"
         )
 

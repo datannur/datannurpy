@@ -734,7 +734,7 @@ requires-dist = [
     { name = "ibis-framework", extras = ["oracle"], marker = "extra == 'oracle'", specifier = ">=11.0" },
     { name = "ibis-framework", extras = ["postgres"], marker = "extra == 'postgres'", specifier = ">=11.0" },
     { name = "ibis-framework", extras = ["postgres", "mysql", "oracle", "mssql"], marker = "extra == 'databases'", specifier = ">=11.0" },
-    { name = "jsonjsdb", specifier = ">=0.3.2" },
+    { name = "jsonjsdb", specifier = ">=0.6.0" },
     { name = "openpyxl", specifier = ">=3.0" },
     { name = "pyiceberg", marker = "extra == 'iceberg'", specifier = ">=0.10.0" },
     { name = "pyreadstat", marker = "python_full_version >= '3.10' and extra == 'stat'", specifier = ">=1.2.0" },
@@ -1032,15 +1032,15 @@ wheels = [
 
 [[package]]
 name = "jsonjsdb"
-version = "0.3.2"
+version = "0.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "polars", version = "1.36.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "polars", version = "1.38.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3c/9d/9ebad2e333cf5cc2347d9ae90eec9993c6084dc81c099c75923070861906/jsonjsdb-0.3.2.tar.gz", hash = "sha256:9ba404871ad1737eef06acd454e774c168aeafb732c9f20ed3b105ae7847cb32", size = 8116, upload-time = "2026-03-05T13:26:55.188Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a1/db/74051247208e894d579cc4df6ea7f970abebfe1f11f9e534a180d61bace0/jsonjsdb-0.6.0.tar.gz", hash = "sha256:88840cfbc7f5c67146b4b3dcfe407bc4e76c6eea3630d9524cf04880e8bdffe3", size = 9079, upload-time = "2026-03-05T15:41:39.593Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2e/3d/db073d41a3507ab1ca6992629df62dca6ba8c3b0018c48b7377d4dcd90d0/jsonjsdb-0.3.2-py3-none-any.whl", hash = "sha256:fedf1780c413ce5da7f4eca93c75cc7fe923dba9c15682473b445cb946838c7a", size = 10279, upload-time = "2026-03-05T13:26:53.881Z" },
+    { url = "https://files.pythonhosted.org/packages/55/88/8af78702264131c37bc79325990148a84e504d3b0b13d3575d2412a9f958/jsonjsdb-0.6.0-py3-none-any.whl", hash = "sha256:4ffae170f09a8739e753365c42735221fb12793e5a61354d0b38530cd0a06a04", size = 11235, upload-time = "2026-03-05T15:41:30.162Z" },
 ]
 
 [[package]]

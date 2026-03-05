@@ -23,48 +23,32 @@ def finalize(catalog: Catalog) -> None:
         return
 
     # 1. Remove unseen folders
-    unseen_folders = [f for f in catalog.folder.all() if not f._seen]
-    removed_folder_ids = [f.id for f in unseen_folders]
+    removed_folder_ids = catalog.folder.ids_where("_seen", "==", False)
     if removed_folder_ids:
         catalog.folder.remove_all(removed_folder_ids)
 
     # 2. Remove unseen datasets (cascade: variables, frequencies)
-    unseen_datasets = [ds for ds in catalog.dataset.all() if not ds._seen]
+    unseen_datasets = catalog.dataset.where("_seen", "==", False)
     for dataset in unseen_datasets:
         catalog._remove_dataset_cascade(dataset)
 
     # 3. Remove unseen modalities
-    unseen_modalities = [m for m in catalog.modality.all() if not m._seen]
-    removed_modality_ids = [m.id for m in unseen_modalities]
+    removed_modality_ids = catalog.modality.ids_where("_seen", "==", False)
     if removed_modality_ids:
         catalog.modality.remove_all(removed_modality_ids)
 
     # 4. Remove unseen institutions
-    unseen_institutions = [
-        i for i in catalog.institution.all() if not getattr(i, "_seen", True)
-    ]
-    if unseen_institutions:
-        catalog.institution.remove_all([i.id for i in unseen_institutions])
+    catalog.institution.remove_where("_seen", "==", False)
 
     # 5. Remove unseen tags
-    unseen_tags = [t for t in catalog.tag.all() if not getattr(t, "_seen", True)]
-    if unseen_tags:
-        catalog.tag.remove_all([t.id for t in unseen_tags])
+    catalog.tag.remove_where("_seen", "==", False)
 
     # 6. Remove unseen docs
-    unseen_docs = [d for d in catalog.doc.all() if not getattr(d, "_seen", True)]
-    if unseen_docs:
-        catalog.doc.remove_all([d.id for d in unseen_docs])
+    catalog.doc.remove_where("_seen", "==", False)
 
     # 7. Remove values of removed modalities
     if removed_modality_ids:
-        # Value doesn't have id, filter using DataFrame directly
-        import polars as pl
-
-        if not catalog.value._df.is_empty():
-            catalog.value._df = catalog.value._df.filter(
-                ~pl.col("modality_id").is_in(removed_modality_ids)
-            )
+        catalog.value.remove_where("modality_id", "in", removed_modality_ids)
 
     # Mark as finalized
     catalog._finalized = True
@@ -81,15 +65,11 @@ def mark_dataset_modalities_seen(catalog: Catalog, dataset: Dataset) -> None:
     if not referenced_modality_ids:
         return
 
-    # Mark those modalities as seen
-    for modality_id in referenced_modality_ids:
-        modality = catalog.modality.get(modality_id)
-        if modality is not None:
-            catalog.modality.update(modality_id, _seen=True)
+    # Mark those modalities as seen (batch update)
+    catalog.modality.update_many(list(referenced_modality_ids), _seen=True)
 
     # Also mark the _modalities folder as seen
-    folder = catalog.folder.get(MODALITIES_FOLDER_ID)
-    if folder is not None:
+    if catalog.folder.exists(MODALITIES_FOLDER_ID):
         catalog.folder.update(MODALITIES_FOLDER_ID, _seen=True)
 
 
