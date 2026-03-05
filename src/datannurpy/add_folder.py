@@ -73,8 +73,8 @@ def add_folder(
         )
 
     start_time = log_section("add_folder", str(root), q)
-    datasets_before = len(catalog.dataset.all())
-    vars_before = len(catalog.variable.all())
+    datasets_before = catalog.dataset.count
+    vars_before = catalog.variable.count
 
     # Create default folder from directory name if not provided
     if folder is None:
@@ -271,6 +271,6 @@ def add_folder(
         else:
             log_warn(f"{file_path.name}: empty file", q)
 
-    datasets_added = len(catalog.dataset.all()) - datasets_before
-    vars_added = len(catalog.variable.all()) - vars_before
+    datasets_added = catalog.dataset.count - datasets_before
+    vars_added = catalog.variable.count - vars_before
     log_summary(datasets_added, vars_added, q, start_time)

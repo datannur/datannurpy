@@ -65,8 +65,8 @@ def add_database(
     db_name = get_database_name(connection, con, backend_name)
 
     start_time = log_section("add_database", f"{backend_name}://{db_name}", q)
-    datasets_before = len(catalog.dataset.all())
-    vars_before = len(catalog.variable.all())
+    datasets_before = catalog.dataset.count
+    vars_before = catalog.variable.count
 
     # Get timestamp for folder/dataset
     now_iso = timestamp_to_iso(catalog._now)
@@ -232,6 +232,6 @@ def add_database(
     if isinstance(connection, str):
         close_connection(con)
 
-    datasets_added = len(catalog.dataset.all()) - datasets_before
-    vars_added = len(catalog.variable.all()) - vars_before
+    datasets_added = catalog.dataset.count - datasets_before
+    vars_added = catalog.variable.count - vars_before
     log_summary(datasets_added, vars_added, q, start_time)

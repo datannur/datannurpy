@@ -43,8 +43,7 @@ class ModalityManager:
 
     def ensure_modalities_folder(self) -> None:
         """Create the _modalities folder if not already present."""
-        existing = self._catalog.folder.get(MODALITIES_FOLDER_ID)
-        if existing is not None:
+        if self._catalog.folder.exists(MODALITIES_FOLDER_ID):
             self._catalog.folder.update(MODALITIES_FOLDER_ID, _seen=True)
             return
         folder = Folder(id=MODALITIES_FOLDER_ID, name="Modalities", _seen=True)
