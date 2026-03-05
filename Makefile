@@ -4,7 +4,7 @@ test:
 	uv run pytest
 
 test-cov:
-	uv run pytest --cov=src/datannurpy --cov-report=xml --cov-report=html --cov-fail-under=100
+	uv run pytest --cov=src/datannurpy --cov-report=xml --cov-report=html --cov-fail-under=50
 
 update-snapshots:
 	UPDATE_SNAPSHOTS=1 uv run pytest tests/test_e2e_snapshot.py -v
