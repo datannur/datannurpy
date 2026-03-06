@@ -6,8 +6,8 @@
 - add: Value.id and Freq.id are now runtime fields (not persisted)
 - fix: evolution stability - no spurious changes on successive runs
 - fix: preserve last_update_timestamp for unchanged database tables
-- fix: _modalities folder no longer deleted on incremental scan
-- refactor: _compute_runtime_id helper for id column computation
+- fix: \_modalities folder no longer deleted on incremental scan
+- refactor: \_compute_runtime_id helper for id column computation
 
 ## 0.4.2 (2026-03-05)
 
