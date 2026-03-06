@@ -1,11 +1,15 @@
 [
   {
     "id": "finance",
+    "parent_id": null,
+    "doc_ids": "",
     "name": "Finance",
     "description": "Données financières"
   },
   {
     "id": "rh",
+    "parent_id": null,
+    "doc_ids": "",
     "name": "RH",
     "description": "Ressources humaines"
   }

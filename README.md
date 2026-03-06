@@ -74,6 +74,22 @@ catalog.export_db()           # removes deleted entities, exports to db_path
 
 Use `refresh=True` to force a full rescan.
 
+## Evolution tracking
+
+Changes between exports are automatically tracked in `evolution.json`:
+
+- **add**: new folder, dataset, variable, modality, etc.
+- **update**: modified field (shows old and new value)
+- **delete**: removed entity
+
+Cascade filtering: when a parent entity is added or deleted, its children are automatically filtered out to reduce noise. For example, adding a new dataset won't generate separate entries for each variable.
+
+Disable tracking with `track_evolution=False`:
+
+```python
+catalog.export_db(track_evolution=False)
+```
+
 ## Scanning files
 
 ```python

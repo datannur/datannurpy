@@ -54,10 +54,10 @@ class TestGetRequiredFields:
         assert "name" not in required
 
     def test_value_required_fields(self):
-        """Value should require id and modality_id (value has default)."""
+        """Value has no required fields (all have defaults, id is computed)."""
         required = _get_required_fields(Value)
-        assert "id" in required
-        assert "modality_id" in required
+        assert "id" not in required  # id is a runtime field
+        assert "modality_id" not in required  # has default ""
 
 
 class TestIsDatabaseConnection:

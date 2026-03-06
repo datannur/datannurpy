@@ -4,17 +4,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import ibis
 import pyarrow as pa
 
 from .ids import (
     MODALITIES_FOLDER_ID,
+    build_freq_id,
     build_modality_name,
     build_value_id,
     compute_modality_hash,
     make_id,
 )
-from ..schema import Folder, Modality, Value, Variable
+from ..schema import Folder, Freq, Modality, Value, Variable
 
 if TYPE_CHECKING:
     from ..catalog import Catalog
@@ -59,6 +59,8 @@ class ModalityManager:
             modality = self._catalog.modality.get(modality_id)
             if modality is not None:
                 self._catalog.modality.update(modality_id, _seen=True)
+            # Also mark the _modalities folder as seen
+            self.ensure_modalities_folder()
             return modality_id
 
         # Create new modality
@@ -123,13 +125,18 @@ class ModalityManager:
         freq_table: pa.Table,
         var_id_mapping: dict[str, str],
     ) -> None:
-        """Update freq table with final variable IDs and store it."""
-        # Convert to Ibis for transformation, then back to PyArrow
-        ibis_table = ibis.memtable(freq_table)
-        cases_list = [
-            (ibis_table["variable_id"] == old_id, new_id)
-            for old_id, new_id in var_id_mapping.items()
-        ]
-        case_expr = ibis.cases(*cases_list, else_=ibis_table["variable_id"])
-        ibis_table = ibis_table.mutate(variable_id=case_expr)
-        self._catalog._freq_tables.append(ibis_table.to_pyarrow())
+        """Convert freq table to Freq objects and add to catalog."""
+        freqs: list[Freq] = []
+        for row in freq_table.to_pylist():
+            old_var_id: str = row["variable_id"]
+            new_var_id = var_id_mapping.get(old_var_id, old_var_id)
+            value: str | None = row["value"]
+            freq = Freq(
+                id=build_freq_id(new_var_id, value),
+                variable_id=new_var_id,
+                value=value,
+                freq=int(row["freq"]),
+            )
+            freqs.append(freq)
+        if freqs:
+            self._catalog.freq.add_all(freqs)

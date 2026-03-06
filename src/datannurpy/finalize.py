@@ -81,18 +81,12 @@ def remove_dataset_cascade(self: Catalog, dataset: Dataset) -> None:
         self.variable.remove_all([v.id for v in vars_to_remove])
 
     # Remove frequencies for this dataset's variables
-    if self._freq_tables:
-        new_freq_tables = []
-        var_id_prefix = f"{dataset.id}---"
-        for table in self._freq_tables:
-            var_ids = table["variable_id"].to_pylist()
-            keep_indices = [
-                i for i, vid in enumerate(var_ids) if not vid.startswith(var_id_prefix)
-            ]
-            if keep_indices:
-                filtered = table.take(keep_indices)
-                new_freq_tables.append(filtered)
-        self._freq_tables = new_freq_tables
+    var_id_prefix = f"{dataset.id}---"
+    freqs_to_remove = [
+        f for f in self.freq.all() if f.variable_id.startswith(var_id_prefix)
+    ]
+    if freqs_to_remove:
+        self.freq.remove_all([f.id for f in freqs_to_remove])
 
     # Remove dataset
     self.dataset.remove(dataset.id)

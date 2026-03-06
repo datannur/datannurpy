@@ -56,6 +56,7 @@ def add_database(
     refresh: bool | None = None,
 ) -> None:
     """Scan a database and add its tables to the catalog."""
+    catalog._has_scanned = True
     q = quiet if quiet is not None else catalog.quiet
     do_refresh = refresh if refresh is not None else catalog.refresh
     # Connect to database
@@ -166,18 +167,28 @@ def add_database(
             # Check if table exists in cache
             existing_dataset = catalog._get_dataset_by_path(table_data_path)
 
-            if existing_dataset is not None and not do_refresh:
-                if (
+            # Preserve timestamp if data unchanged (for stable evolution tracking)
+            preserved_timestamp: int | None = None
+
+            if existing_dataset is not None:
+                # Check if data actually changed
+                data_unchanged = (
                     existing_dataset.schema_signature == current_signature
                     and existing_dataset.nb_row == current_nb_row
-                ):
+                )
+
+                if not do_refresh and data_unchanged:
                     # Unchanged, skip
                     catalog.dataset.update(existing_dataset.id, _seen=True)
                     catalog._mark_dataset_modalities_seen(existing_dataset)
                     log_skip(table_name, q)
                     continue
 
-                # Modified, remove old dataset before rescan
+                # Preserve timestamp if data unchanged (even with refresh)
+                if data_unchanged:
+                    preserved_timestamp = existing_dataset.last_update_timestamp
+
+                # Modified or refresh forced - remove old dataset before rescan
                 catalog._remove_dataset_cascade(existing_dataset)
 
             # Determine folder for this table
@@ -206,17 +217,27 @@ def add_database(
                 sample_size=sample_size,
             )
 
+            # Use preserved timestamp if available, otherwise current time
+            effective_timestamp = (
+                preserved_timestamp if preserved_timestamp is not None else catalog._now
+            )
+            effective_date = (
+                timestamp_to_iso(preserved_timestamp)
+                if preserved_timestamp is not None
+                else now_iso
+            )
+
             # Create dataset with incremental fields
             dataset = Dataset(
                 id=dataset_id,
                 name=table_name,
                 folder_id=table_folder_id,
                 delivery_format=backend_name,
-                last_update_date=now_iso,
+                last_update_date=effective_date,
                 data_path=table_data_path,
                 nb_row=nb_row,
                 schema_signature=current_signature,
-                last_update_timestamp=catalog._now,
+                last_update_timestamp=effective_timestamp,
                 _seen=True,
             )
             catalog.dataset.add(dataset)

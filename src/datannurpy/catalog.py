@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-import json
 import time
 from pathlib import Path
-from typing import Any
 
 import polars as pl
-import pyarrow as pa
 
 from .add_database import add_database
 from .add_dataset import add_dataset
@@ -16,7 +13,7 @@ from .add_folder import add_folder
 from .add_metadata import add_metadata
 from .exporter.app import export_app
 from .finalize import finalize, mark_dataset_modalities_seen, remove_dataset_cascade
-from .schema import DatannurDB, Dataset, Variable
+from .schema import DatannurDB, Dataset, Table, Variable
 from .utils import ModalityManager
 
 
@@ -45,34 +42,44 @@ class Catalog(DatannurDB):
         results = self.dataset.where("data_path", "==", data_path)
         return results[0] if results else None
 
+    @staticmethod
+    def _compute_runtime_id(table: Table, cols: list[str]) -> None:
+        """Compute runtime id column by concatenating cols with '---'."""
+        if table.is_empty or "id" in table.df.columns:
+            return
+        expr = pl.col(cols[0])
+        for col in cols[1:]:
+            expr = expr + "---" + pl.col(col).fill_null("_null_")
+        table._df = table._df.with_columns(expr.alias("id"))
+
     def __init__(
         self,
         *,
-        db_path: str | Path | None = None,
+        app_path: str | Path | None = None,
         refresh: bool = False,
         freq_threshold: int = 100,
         csv_encoding: str | None = None,
         quiet: bool = False,
         _now: int | None = None,
     ) -> None:
+        # Derive db_path from app_path (db is stored in app_path/data/db/)
+        self.app_path = Path(app_path) if app_path is not None else None
+        self.db_path = self.app_path / "data" / "db" if self.app_path else None
+
         # Only pass path to DatannurDB if it exists (otherwise create empty)
-        resolved_path = Path(db_path) if db_path is not None else None
         load_path: str | None = None
-        if resolved_path is not None and resolved_path.exists():
-            table_index = resolved_path / "__table__.json"
+        if self.db_path is not None and self.db_path.exists():
+            table_index = self.db_path / "__table__.json"
             if table_index.exists():
-                load_path = str(resolved_path)
+                load_path = str(self.db_path)
 
         # Initialize DatannurDB (loads existing data if path provided and exists)
         super().__init__(load_path)
-
-        self.db_path = resolved_path
         self.refresh = refresh
         self._now = _now if _now is not None else int(time.time())
         self.freq_threshold = freq_threshold
         self.csv_encoding = csv_encoding
         self.quiet = quiet
-        self._freq_tables: list[pa.Table] = []
         self.modality_manager = ModalityManager(self)
 
         # Flag to track if finalize() has been called (idempotent)
@@ -80,6 +87,10 @@ class Catalog(DatannurDB):
 
         # Track whether data was loaded from existing db (for finalize cleanup)
         self._loaded_from_db: bool = load_path is not None
+
+        # Track whether a scan (add_folder/add_dataset/add_database) was performed
+        # Only run finalize cleanup if scanning was done
+        self._has_scanned: bool = False
 
         # Add _seen column to tables that have it as runtime field (defaults to False)
         # Only add if the table has data (not empty)
@@ -97,60 +108,44 @@ class Catalog(DatannurDB):
                     and not table.is_empty
                     and "_seen" not in table.df.columns
                 ):
-                    import polars as pl
-
                     table._df = table._df.with_columns(pl.lit(False).alias("_seen"))
             # Rebuild modality index from loaded values
             self.modality_manager.rebuild_index()
+
+            # Compute runtime id columns (not persisted)
+            self._compute_runtime_id(self.value, ["modality_id", "value"])
+            self._compute_runtime_id(self.freq, ["variable_id", "value"])
 
     def export_db(
         self,
         output_dir: str | Path | None = None,
         *,
-        write_js: bool = True,
+        track_evolution: bool = True,
         quiet: bool | None = None,
     ) -> None:
         """Write all catalog entities to JSON files."""
-        self.finalize()
+        # Only finalize (cleanup unseen entities) if a scan was performed
+        if self._has_scanned:
+            self.finalize()
 
-        if output_dir is None:
-            if self.db_path is None:
-                msg = "output_dir is required when db_path was not set at init"
-                raise ValueError(msg)
-            output_dir = self.db_path
+        path = output_dir or self.db_path
+        if path is None:
+            msg = "output_dir is required when app_path was not set at init"
+            raise ValueError(msg)
 
-        output_dir = Path(output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        table_names: list[str] = []
-
-        for name, table in self._tables.items():
-            df = table.get_persistable_df()
-            if df.is_empty():
-                continue
-            rows = _serialize_df(df)
-            _write_json(rows, output_dir / f"{name}.json")
-            if write_js:
-                _write_jsonjs(df, name, output_dir / f"{name}.json.js")
-            table_names.append(name)
-
-        # freq from pyarrow _freq_tables
-        if self._freq_tables:
-            freq_pa = pa.concat_tables(self._freq_tables)
-            if len(freq_pa) > 0:
-                freq_df = pl.DataFrame(freq_pa.to_pydict())
-                rows = _serialize_df(freq_df)
-                _write_json(rows, output_dir / "freq.json")
-                if write_js:
-                    _write_jsonjs(freq_df, "freq", output_dir / "freq.json.js")
-                table_names.append("freq")
-
-        # table registry
-        registry = [{"name": n, "last_modif": self._now} for n in sorted(table_names)]
-        registry.append({"name": "__table__", "last_modif": self._now})
-        _write_json(registry, output_dir / "__table__.json")
-        if write_js and table_names:
-            _write_jsonjs_raw(registry, "__table__", output_dir / "__table__.json.js")
+        # Parent relations for cascade suppression in evolution tracking
+        parent_relations = {
+            "dataset": "folder",
+            "variable": "dataset",
+            "freq": "variable",
+            "value": "modality",
+        }
+        self.save(
+            path,
+            track_evolution=track_evolution,
+            timestamp=self._now,
+            parent_relations=parent_relations,
+        )
 
     def __repr__(self) -> str:
         return (
@@ -165,50 +160,3 @@ class Catalog(DatannurDB):
             f"  docs={self.doc.count}\n"
             f")"
         )
-
-
-def _serialize_df(df: pl.DataFrame) -> list[dict[str, Any]]:
-    """Convert DataFrame to JSON-ready dicts (None and empty lists excluded)."""
-    list_cols = {col for col in df.columns if isinstance(df.schema[col], pl.List)}
-    rows: list[dict[str, Any]] = []
-    for row in df.iter_rows(named=True):
-        cleaned: dict[str, Any] = {}
-        for key, value in row.items():
-            if value is None:
-                continue
-            if key in list_cols:
-                if value:
-                    cleaned[key] = ",".join(str(v) for v in value)
-            elif isinstance(value, float) and value.is_integer():
-                cleaned[key] = int(value)
-            else:
-                cleaned[key] = value
-        rows.append(cleaned)
-    return rows
-
-
-def _write_json(data: list[dict[str, Any]], path: Path) -> None:
-    """Write list of dicts to JSON file."""
-    with open(path, "w") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-        f.write("\n")
-
-
-def _write_jsonjs(df: pl.DataFrame, table_name: str, path: Path) -> None:
-    """Write DataFrame to JSON.js file (array-of-arrays format)."""
-    from jsonjsdb.writer import write_table_jsonjs
-
-    write_table_jsonjs(df, table_name, path)
-
-
-def _write_jsonjs_raw(data: list[dict[str, Any]], table_name: str, path: Path) -> None:
-    """Write list of dicts to JSON.js file."""
-    if not data:
-        return
-    columns = list(data[0].keys())
-    rows: list[list[Any]] = [columns]
-    for record in data:
-        rows.append([record.get(key) for key in columns])
-    json_array = json.dumps(rows, ensure_ascii=False, separators=(",", ":"))
-    with open(path, "w") as f:
-        f.write(f"jsonjs.data['{table_name}'] = {json_array}\n")

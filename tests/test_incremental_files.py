@@ -14,14 +14,14 @@ class TestIncrementalScanFiles:
 
     def test_unchanged_file_is_skipped(self, tmp_path: Path):
         """Unchanged file should be skipped on second scan."""
-        db_dir = tmp_path / "db"
+        app_dir = tmp_path
         data_dir = tmp_path / "data"
         data_dir.mkdir()
         csv_file = data_dir / "test.csv"
         csv_file.write_text("a,b\n1,2\n3,4\n")
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
         catalog1.export_db()
 
@@ -29,7 +29,7 @@ class TestIncrementalScanFiles:
         assert len(catalog1.variable.all()) == 2
 
         # Second scan (same file, same mtime)
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
         initial_datasets = len(catalog2.dataset.all())
         catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
 
@@ -41,14 +41,14 @@ class TestIncrementalScanFiles:
 
     def test_modified_file_is_rescanned(self, tmp_path: Path):
         """Modified file should be rescanned."""
-        db_dir = tmp_path / "db"
+        app_dir = tmp_path
         data_dir = tmp_path / "data"
         data_dir.mkdir()
         csv_file = data_dir / "test.csv"
         csv_file.write_text("a,b\n1,2\n")
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
         catalog1.export_db()
 
@@ -62,7 +62,7 @@ class TestIncrementalScanFiles:
         os.utime(csv_file, (new_mtime, new_mtime))
 
         # Second scan
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
 
         # Should have rescanned with new data
@@ -74,13 +74,13 @@ class TestIncrementalScanFiles:
 
     def test_new_file_is_added(self, tmp_path: Path):
         """New file should be added on second scan."""
-        db_dir = tmp_path / "db"
+        app_dir = tmp_path
         data_dir = tmp_path / "data"
         data_dir.mkdir()
         (data_dir / "file1.csv").write_text("a,b\n1,2\n")
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
         catalog1.export_db()
 
@@ -90,7 +90,7 @@ class TestIncrementalScanFiles:
         (data_dir / "file2.csv").write_text("x,y,z\n1,2,3\n")
 
         # Second scan
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
 
         # Should have both datasets
@@ -98,19 +98,19 @@ class TestIncrementalScanFiles:
 
     def test_refresh_true_forces_rescan(self, tmp_path: Path):
         """refresh=True should force rescan even if unchanged."""
-        db_dir = tmp_path / "db"
+        app_dir = tmp_path
         data_dir = tmp_path / "data"
         data_dir.mkdir()
         csv_file = data_dir / "test.csv"
         csv_file.write_text("a,b\n1,2\n")
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
         catalog1.export_db()
 
         # Second scan with refresh=True (global)
-        catalog2 = Catalog(db_path=db_dir, refresh=True, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, refresh=True, quiet=True)
         catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
 
         # Should have rescanned (dataset recreated)
@@ -120,19 +120,19 @@ class TestIncrementalScanFiles:
 
     def test_refresh_override_per_method(self, tmp_path: Path):
         """refresh parameter can be overridden per method."""
-        db_dir = tmp_path / "db"
+        app_dir = tmp_path
         data_dir = tmp_path / "data"
         data_dir.mkdir()
         csv_file = data_dir / "test.csv"
         csv_file.write_text("a,b\n1,2\n")
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
         catalog1.export_db()
 
         # Second scan with refresh=False global but refresh=True on method
-        catalog2 = Catalog(db_path=db_dir, refresh=False, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, refresh=False, quiet=True)
         catalog2.add_folder(data_dir, Folder(id="src", name="Source"), refresh=True)
 
         # Should have rescanned
@@ -144,17 +144,17 @@ class TestIncrementalScanAddDataset:
 
     def test_add_dataset_unchanged_skipped(self, tmp_path: Path):
         """add_dataset should skip unchanged file."""
-        db_dir = tmp_path / "db"
+        app_dir = tmp_path
         csv_file = tmp_path / "test.csv"
         csv_file.write_text("a,b\n1,2\n")
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_dataset(csv_file)
         catalog1.export_db()
 
         # Second scan
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_dataset(csv_file)
 
         # Should be skipped
@@ -164,12 +164,12 @@ class TestIncrementalScanAddDataset:
 
     def test_add_dataset_modified_rescanned(self, tmp_path: Path):
         """add_dataset should rescan modified file."""
-        db_dir = tmp_path / "db"
+        app_dir = tmp_path
         csv_file = tmp_path / "test.csv"
         csv_file.write_text("a,b\n1,2\n")
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_dataset(csv_file)
         catalog1.export_db()
 
@@ -182,7 +182,7 @@ class TestIncrementalScanAddDataset:
         os.utime(csv_file, (new_mtime, new_mtime))
 
         # Second scan
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_dataset(csv_file)
 
         # Should have rescanned
@@ -217,14 +217,13 @@ class TestRemoveDatasetCascade:
         csv_file.write_text("color\nred\nblue\nred\n")
         catalog.add_dataset(csv_file)
 
-        assert len(catalog._freq_tables) == 1
+        assert len(catalog.freq.all()) > 0
 
         # Remove dataset cascade
         catalog._remove_dataset_cascade(catalog.dataset.all()[0])
 
-        # Freq table should be empty or removed
-        total_freq_rows = sum(t.num_rows for t in catalog._freq_tables)
-        assert total_freq_rows == 0
+        # Freq table should be empty
+        assert len(catalog.freq.all()) == 0
 
 
 class TestLastUpdateTimestamp:
@@ -247,11 +246,12 @@ class TestLastUpdateTimestamp:
 
     def test_timestamp_exported_to_json(self, tmp_path: Path):
         """last_update_timestamp should be exported to JSON."""
-        db_dir = tmp_path / "db"
+        app_dir = tmp_path
+        db_dir = app_dir / "data" / "db"
         csv_file = tmp_path / "test.csv"
         csv_file.write_text("a,b\n1,2\n")
 
-        catalog = Catalog(db_path=db_dir, quiet=True)
+        catalog = Catalog(app_path=app_dir, quiet=True)
         catalog.add_dataset(csv_file)
         catalog.export_db()
 
@@ -281,7 +281,7 @@ class TestIncrementalParquetDirectory:
 
     def test_parquet_directory_unchanged_skipped(self, tmp_path: Path):
         """Unchanged Parquet directory should be skipped."""
-        db_dir = tmp_path / "db"
+        app_dir = tmp_path
         data_dir = tmp_path / "data"
 
         # Create a Hive-partitioned dataset
@@ -294,14 +294,14 @@ class TestIncrementalParquetDirectory:
         pq.write_table(table, part_dir / "year=2024" / "data.parquet")
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_dataset(part_dir)
         catalog1.export_db()
 
         assert len(catalog1.dataset.all()) == 1
 
         # Second scan (unchanged)
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_dataset(part_dir)
 
         # Should be skipped
@@ -310,7 +310,7 @@ class TestIncrementalParquetDirectory:
 
     def test_parquet_directory_modified_rescanned(self, tmp_path: Path):
         """Modified Parquet directory should be rescanned."""
-        db_dir = tmp_path / "db"
+        app_dir = tmp_path
         data_dir = tmp_path / "data"
 
         # Create a Hive-partitioned dataset
@@ -323,7 +323,7 @@ class TestIncrementalParquetDirectory:
         pq.write_table(table, part_dir / "year=2024" / "data.parquet")
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_dataset(part_dir)
         catalog1.export_db()
 
@@ -335,7 +335,7 @@ class TestIncrementalParquetDirectory:
         os.utime(part_dir, (new_mtime, new_mtime))
 
         # Second scan
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_dataset(part_dir)
 
         # Should have rescanned
@@ -360,10 +360,7 @@ class TestRemoveDatasetCascadeWithMultipleDatasets:
         catalog.add_dataset(csv2)
 
         assert len(catalog.dataset.all()) == 2
-        assert len(catalog._freq_tables) == 2
-
-        # Get total freq rows
-        total_before = sum(t.num_rows for t in catalog._freq_tables)
+        total_before = len(catalog.freq.all())
         assert total_before > 0
 
         # Remove first dataset
@@ -371,7 +368,7 @@ class TestRemoveDatasetCascadeWithMultipleDatasets:
 
         # Should still have second dataset's frequencies
         assert len(catalog.dataset.all()) == 1
-        total_after = sum(t.num_rows for t in catalog._freq_tables)
+        total_after = len(catalog.freq.all())
         assert total_after > 0
         assert total_after < total_before
 
@@ -386,14 +383,14 @@ class TestRemoveDatasetCascadeWithMultipleDatasets:
         catalog.add_dataset(csv1)
 
         assert len(catalog.dataset.all()) == 1
-        assert len(catalog._freq_tables) == 1
+        assert len(catalog.freq.all()) > 0
 
         # Remove the only dataset
         catalog._remove_dataset_cascade(catalog.dataset.all()[0])
 
-        # All frequencies should be removed (empty table dropped)
+        # All frequencies should be removed
         assert len(catalog.dataset.all()) == 0
-        assert len(catalog._freq_tables) == 0
+        assert len(catalog.freq.all()) == 0
 
     def test_removes_dataset_without_freq_tables(self, tmp_path: Path):
         """_remove_dataset_cascade handles dataset without frequencies."""
@@ -407,7 +404,7 @@ class TestRemoveDatasetCascadeWithMultipleDatasets:
         catalog.dataset.add(ds)
 
         assert len(catalog.dataset.all()) == 1
-        assert len(catalog._freq_tables) == 0
+        assert len(catalog.freq.all()) == 0
 
         # Remove it
         catalog._remove_dataset_cascade(ds)
@@ -437,7 +434,7 @@ class TestIncrementalFolderWithParquet:
 
     def test_parquet_in_folder_unchanged_skipped(self, tmp_path: Path):
         """Unchanged Parquet dataset in folder should be skipped."""
-        db_dir = tmp_path / "db"
+        app_dir = tmp_path
         data_dir = tmp_path / "data"
         data_dir.mkdir()
 
@@ -451,14 +448,14 @@ class TestIncrementalFolderWithParquet:
         pq.write_table(table, part_dir / "year=2024" / "data.parquet")
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
         catalog1.export_db()
 
         assert len(catalog1.dataset.all()) == 1
 
         # Second scan (unchanged)
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
 
         # Should be skipped
@@ -467,7 +464,7 @@ class TestIncrementalFolderWithParquet:
 
     def test_parquet_in_folder_modified_rescanned(self, tmp_path: Path):
         """Modified Parquet dataset in folder should be rescanned."""
-        db_dir = tmp_path / "db"
+        app_dir = tmp_path
         data_dir = tmp_path / "data"
         data_dir.mkdir()
 
@@ -481,7 +478,7 @@ class TestIncrementalFolderWithParquet:
         pq.write_table(table, part_dir / "year=2024" / "data.parquet")
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
         catalog1.export_db()
 
@@ -493,7 +490,7 @@ class TestIncrementalFolderWithParquet:
         os.utime(part_dir, (new_mtime, new_mtime))
 
         # Second scan
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
 
         # Should have rescanned

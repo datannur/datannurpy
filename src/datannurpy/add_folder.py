@@ -57,6 +57,7 @@ def add_folder(
     refresh: bool | None = None,
 ) -> None:
     """Scan a folder and add its contents to the catalog."""
+    catalog._has_scanned = True
     q = quiet if quiet is not None else catalog.quiet
     do_refresh = refresh if refresh is not None else catalog.refresh
     root = Path(path).resolve()

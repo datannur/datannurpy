@@ -1,93 +1,5 @@
 [
   {
-    "variable_id": "data---csv---employees_csv---prenom",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---age",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---departement",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---datatypes_spss_sav---mytime",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---datatypes_spss_sav---mydate",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---datatypes_spss_sav---dtime",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---datatypes_stata_dta---mytime",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---datatypes_stata_dta---mydate",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---datatypes_stata_dta---dtime",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---metadata---institution_csv---email",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---subfolder1---employees_xlsx---prenom",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---subfolder1---employees_xlsx---age",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---subfolder1---employees_xlsx---departement",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---subfolder1---employees_old_xls---prenom",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "freq": 1
-  },
-  {
-    "variable_id": "photovoltaik---Project---ProjectWeb",
-    "freq": 10
-  },
-  {
-    "variable_id": "photovoltaik---Project---GeometrySurface",
-    "freq": 29
-  },
-  {
-    "variable_id": "photovoltaik---Project---GeometryMultipoint",
-    "freq": 29
-  },
-  {
-    "variable_id": "photovoltaik---Project---FinalNonRecurrentRemuneration",
-    "freq": 29
-  },
-  {
-    "variable_id": "photovoltaik---Project---ShareOfSubsidisedCosts",
-    "freq": 29
-  },
-  {
-    "variable_id": "photovoltaik---ProjectStatus---NumberOfPlants",
-    "freq": 11
-  },
-  {
-    "variable_id": "photovoltaik---ProjectStatus---PlantType",
-    "freq": 11
-  },
-  {
     "variable_id": "company---config---key",
     "value": "company_name",
     "freq": 1
@@ -1053,6 +965,11 @@
     "freq": 1
   },
   {
+    "variable_id": "data---csv---employees_csv---age",
+    "value": null,
+    "freq": 1
+  },
+  {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2018-07-30",
     "freq": 1
@@ -1166,6 +1083,11 @@
     "variable_id": "data---csv---employees_csv---departement",
     "value": "Marketing",
     "freq": 5
+  },
+  {
+    "variable_id": "data---csv---employees_csv---departement",
+    "value": null,
+    "freq": 1
   },
   {
     "variable_id": "data---csv---employees_csv---departement",
@@ -1450,6 +1372,11 @@
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Nicolas",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---csv---employees_csv---prenom",
+    "value": null,
     "freq": 1
   },
   {
@@ -2133,6 +2060,11 @@
     "freq": 1
   },
   {
+    "variable_id": "data---datatypes_spss_sav---dtime",
+    "value": null,
+    "freq": 1
+  },
+  {
     "variable_id": "data---datatypes_spss_sav---mychar",
     "value": "a",
     "freq": 1
@@ -2175,6 +2107,11 @@
   {
     "variable_id": "data---datatypes_spss_sav---mydate",
     "value": "2018-05-06",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---datatypes_spss_sav---mydate",
+    "value": null,
     "freq": 1
   },
   {
@@ -2245,6 +2182,11 @@
   {
     "variable_id": "data---datatypes_spss_sav---mytime",
     "value": "23:10:10",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---datatypes_spss_sav---mytime",
+    "value": null,
     "freq": 1
   },
   {
@@ -2268,6 +2210,11 @@
     "freq": 1
   },
   {
+    "variable_id": "data---datatypes_stata_dta---dtime",
+    "value": null,
+    "freq": 1
+  },
+  {
     "variable_id": "data---datatypes_stata_dta---mychar",
     "value": "a",
     "freq": 1
@@ -2310,6 +2257,11 @@
   {
     "variable_id": "data---datatypes_stata_dta---mydate",
     "value": "2018-05-06",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---datatypes_stata_dta---mydate",
+    "value": null,
     "freq": 1
   },
   {
@@ -2380,6 +2332,11 @@
   {
     "variable_id": "data---datatypes_stata_dta---mytime",
     "value": "23:10:10",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---datatypes_stata_dta---mytime",
+    "value": null,
     "freq": 1
   },
   {
@@ -2490,6 +2447,11 @@
   {
     "variable_id": "data---metadata---institution_csv---description",
     "value": "Institut national de la statistique et des études économiques",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---metadata---institution_csv---email",
+    "value": null,
     "freq": 1
   },
   {
@@ -2680,6 +2642,11 @@
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "45.0",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---subfolder1---employees_old_xls---age2",
+    "value": null,
     "freq": 1
   },
   {
@@ -2954,6 +2921,11 @@
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
+    "value": null,
+    "freq": 1
+  },
+  {
+    "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "Paul",
     "freq": 1
   },
@@ -3073,6 +3045,11 @@
     "freq": 1
   },
   {
+    "variable_id": "data---subfolder1---employees_xlsx---age",
+    "value": null,
+    "freq": 1
+  },
+  {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2018-07-30 00:00:00",
     "freq": 1
@@ -3186,6 +3163,11 @@
     "variable_id": "data---subfolder1---employees_xlsx---departement",
     "value": "Marketing",
     "freq": 5
+  },
+  {
+    "variable_id": "data---subfolder1---employees_xlsx---departement",
+    "value": null,
+    "freq": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---departement",
@@ -3470,6 +3452,11 @@
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "Nicolas",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---subfolder1---employees_xlsx---prenom",
+    "value": null,
     "freq": 1
   },
   {
@@ -4173,6 +4160,21 @@
     "freq": 29
   },
   {
+    "variable_id": "photovoltaik---Project---FinalNonRecurrentRemuneration",
+    "value": null,
+    "freq": 29
+  },
+  {
+    "variable_id": "photovoltaik---Project---GeometryMultipoint",
+    "value": null,
+    "freq": 29
+  },
+  {
+    "variable_id": "photovoltaik---Project---GeometrySurface",
+    "value": null,
+    "freq": 29
+  },
+  {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Airolo",
     "freq": 1
@@ -4594,6 +4596,11 @@
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
+    "value": null,
+    "freq": 10
+  },
+  {
+    "variable_id": "photovoltaik---Project---ProjectWeb",
     "value": "https://grandsplanssolar.ch",
     "freq": 1
   },
@@ -4641,6 +4648,11 @@
     "variable_id": "photovoltaik---Project---ProjectWeb",
     "value": "https://www.scuolsolar.ch/",
     "freq": 1
+  },
+  {
+    "variable_id": "photovoltaik---Project---ShareOfSubsidisedCosts",
+    "value": null,
+    "freq": 29
   },
   {
     "variable_id": "photovoltaik---Project---id",
@@ -5323,9 +5335,19 @@
     "freq": 42
   },
   {
+    "variable_id": "photovoltaik---ProjectStatus---NumberOfPlants",
+    "value": null,
+    "freq": 11
+  },
+  {
     "variable_id": "photovoltaik---ProjectStatus---PlantType",
     "value": "",
     "freq": 42
+  },
+  {
+    "variable_id": "photovoltaik---ProjectStatus---PlantType",
+    "value": null,
+    "freq": 11
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",

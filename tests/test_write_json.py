@@ -3,8 +3,6 @@
 import json
 from pathlib import Path
 
-import polars as pl
-
 from datannurpy import Catalog, Folder
 
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -193,16 +191,6 @@ class TestCatalogWrite:
         # Remaining elements should be data rows
         assert len(data) == 10  # 1 header + 9 variables
 
-    def test_write_skip_jsonjs(self, tmp_path):
-        """write with write_js=False should skip .json.js."""
-        catalog = Catalog()
-        catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
-        )
-        catalog.export_db(tmp_path, write_js=False)
-
-        assert not (tmp_path / "variable.json.js").exists()
-
     def test_write_creates_output_dir(self, tmp_path):
         """write should create output directory if needed."""
         catalog = Catalog()
@@ -240,7 +228,6 @@ class TestCatalogWrite:
         catalog.export_db(tmp_path)
 
         assert (tmp_path / "__table__.json").exists()
-        assert (tmp_path / "__table__.json.js").exists()
 
         with open(tmp_path / "__table__.json") as f:
             data = json.load(f)
@@ -249,7 +236,6 @@ class TestCatalogWrite:
         assert "folder" in table_names
         assert "dataset" in table_names
         assert "variable" in table_names
-        assert "__table__" in table_names
         assert all("last_modif" in t for t in data)
 
     def test_write_institutions(self, tmp_path: Path):
@@ -349,43 +335,78 @@ class TestDatasetIncrementalFields:
 
         with open(tmp_path / "dataset.json") as f:
             data = json.load(f)
-        assert "last_update_timestamp" not in data[0]
-        assert "schema_signature" not in data[0]
+        # Fields should be null when not set (jsonjsdb includes all fields)
+        assert data[0]["last_update_timestamp"] is None
+        assert data[0]["schema_signature"] is None
 
 
 class TestSerializationEdgeCases:
     """Test edge cases in catalog export serialization."""
 
-    def test_export_db_float_to_int_conversion(self, tmp_path: Path):
-        """Float values that are whole numbers should be converted to int."""
-        from datannurpy.catalog import _serialize_df
-
-        df = pl.DataFrame({"id": ["a"], "score": [3.0]})
-        rows = _serialize_df(df)
-        assert rows[0]["score"] == 3
-        assert isinstance(rows[0]["score"], int)
-
-    def test_write_jsonjs_raw_empty(self, tmp_path: Path):
-        """_write_jsonjs_raw with empty data should not write file."""
-        from datannurpy.catalog import _write_jsonjs_raw
-
-        path = tmp_path / "empty.json.js"
-        _write_jsonjs_raw([], "test", path)
-        assert not path.exists()
-
     def test_export_empty_freq_tables(self, tmp_path: Path):
-        """export_db with empty freq tables should not create freq.json."""
-        import pyarrow as pa
-
+        """export_db with empty freq table should not create freq.json."""
         catalog = Catalog()
-        catalog._freq_tables = [
-            pa.table(
-                {
-                    "variable_id": pa.array([], type=pa.string()),
-                    "value": pa.array([], type=pa.string()),
-                    "freq": pa.array([], type=pa.int64()),
-                }
-            )
-        ]
+        # No freq entries added
         catalog.export_db(tmp_path)
         assert not (tmp_path / "freq.json").exists()
+
+
+class TestEvolutionTracking:
+    """Test evolution tracking in export_db."""
+
+    def test_track_evolution_disabled(self, tmp_path: Path):
+        """export_db(track_evolution=False) should not create evolution.json."""
+        catalog = Catalog()
+        catalog.folder.add(Folder(id="test", name="Test"))
+        catalog.export_db(tmp_path, track_evolution=False)
+
+        assert not (tmp_path / "evolution.json").exists()
+        assert (tmp_path / "folder.json").exists()
+
+    def test_track_evolution_no_changes(self, tmp_path: Path):
+        """export_db should not create evolution.json when no changes detected."""
+        app_dir = tmp_path / "app"
+        db_dir = app_dir / "data" / "db"
+
+        # First export - no evolution.json should be created (initial state)
+        catalog1 = Catalog(app_path=app_dir)
+        catalog1.folder.add(Folder(id="test", name="Test"))
+        catalog1.export_db()
+        assert not (db_dir / "evolution.json").exists()
+
+        # Load the same data and export again (no changes)
+        catalog2 = Catalog(app_path=app_dir)
+        catalog2.export_db()
+
+        # No changes = no evolution.json created
+        assert not (db_dir / "evolution.json").exists()
+
+    def test_track_evolution_with_changes(self, tmp_path: Path):
+        """export_db should create evolution.json when changes are detected."""
+        app_dir = tmp_path / "app"
+        db_dir = app_dir / "data" / "db"
+
+        # First export
+        catalog1 = Catalog(app_path=app_dir)
+        catalog1.folder.add(Folder(id="test", name="Original"))
+        catalog1.export_db()
+        assert not (db_dir / "evolution.json").exists()
+
+        # Load, modify, and export again
+        catalog2 = Catalog(app_path=app_dir)
+        catalog2.folder.update("test", name="Modified")
+        catalog2.export_db()
+
+        # Modification should create evolution.json
+        assert (db_dir / "evolution.json").exists()
+        import json
+
+        with open(db_dir / "evolution.json") as f:
+            evolution = json.load(f)
+        assert len(evolution) == 1
+        assert evolution[0]["type"] == "update"
+        assert evolution[0]["entity"] == "folder"
+        assert evolution[0]["entity_id"] == "test"
+        assert evolution[0]["variable"] == "name"
+        assert evolution[0]["old_value"] == "Original"
+        assert evolution[0]["new_value"] == "Modified"

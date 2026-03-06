@@ -80,6 +80,12 @@ def build_value_id(modality_id: str, value: str | None) -> str:
     return make_id(modality_id, safe_value)
 
 
+def build_freq_id(variable_id: str, value: str | None) -> str:
+    """Build freq ID from variable and value."""
+    safe_value = sanitize_id(value) if value is not None else "_null_"
+    return make_id(variable_id, safe_value)
+
+
 def get_folder_id(
     path: Path,
     root: Path,

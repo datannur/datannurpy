@@ -84,9 +84,9 @@ def sort_by_id(data: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(data, key=sort_key)
 
 
-def build_demo_catalog(output_dir: Path) -> None:
-    """Build the catalog exactly like demo.py does."""
-    catalog = Catalog(db_path=output_dir, refresh=True, _now=FIXED_TIMESTAMP)
+def build_demo_catalog(app_dir: Path) -> Path:
+    """Build the catalog exactly like demo.py does. Returns db_dir."""
+    catalog = Catalog(app_path=app_dir, refresh=True, _now=FIXED_TIMESTAMP)
     catalog.add_folder(DATA_DIR)
     catalog.add_database(f"sqlite:///{DATA_DIR}/company.db")
     catalog.add_database(
@@ -100,6 +100,7 @@ def build_demo_catalog(output_dir: Path) -> None:
     )
     catalog.add_metadata(DATA_DIR / "metadata")
     catalog.export_db(quiet=True)
+    return app_dir / "data" / "db"
 
 
 class TestE2ESnapshot:
@@ -108,9 +109,8 @@ class TestE2ESnapshot:
     @pytest.fixture(scope="class")
     def generated_db(self, tmp_path_factory: pytest.TempPathFactory) -> Path:
         """Generate the catalog output once for all tests in this class."""
-        output_dir = tmp_path_factory.mktemp("e2e_output")
-        build_demo_catalog(output_dir)
-        return output_dir
+        app_dir = tmp_path_factory.mktemp("e2e_output")
+        return build_demo_catalog(app_dir)
 
     @pytest.mark.parametrize("filename", SNAPSHOT_FILES)
     def test_snapshot_matches(self, generated_db: Path, filename: str) -> None:
@@ -166,8 +166,8 @@ class TestE2EStructure:
     @pytest.fixture(scope="class")
     def catalog(self, tmp_path_factory: pytest.TempPathFactory) -> Catalog:
         """Build and return the catalog for structural tests."""
-        output_dir = tmp_path_factory.mktemp("e2e_structure")
-        catalog = Catalog(db_path=output_dir, refresh=True, _now=FIXED_TIMESTAMP)
+        app_dir = tmp_path_factory.mktemp("e2e_structure")
+        catalog = Catalog(app_path=app_dir, refresh=True, _now=FIXED_TIMESTAMP)
         catalog.add_folder(DATA_DIR)
         catalog.add_database(f"sqlite:///{DATA_DIR}/company.db")
         catalog.add_database(

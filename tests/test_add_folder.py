@@ -477,19 +477,19 @@ class TestIncrementalScanSubfolders:
 
     def test_rescan_marks_existing_subfolders_as_seen(self, tmp_path: Path):
         """Rescanning should mark existing subfolders as _seen=True."""
-        db_dir = tmp_path / "db"
+        app_dir = tmp_path / "app"
         data_dir = tmp_path / "data"
         sub_dir = data_dir / "subdir"
         sub_dir.mkdir(parents=True)
         (sub_dir / "file.csv").write_text("a,b\n1,2\n")
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
         catalog1.export_db()
 
         # Reload and rescan
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
         catalog2.finalize()
 
