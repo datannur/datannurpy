@@ -41,6 +41,9 @@ stat = [
   "pyreadstat>=1.2.0,<=1.2.8; python_version < '3.10'",
   "pyreadstat>=1.2.0; python_version >= '3.10'",
 ]
+remote = [
+    "fsspec>=2025.10.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/datannur/datannurpy"
