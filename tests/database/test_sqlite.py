@@ -44,11 +44,11 @@ class TestSQLiteIncrementalScan:
         self, sample_sqlite_db: Path, tmp_path: Path
     ) -> None:
         """Rescanning database should mark existing prefix folders as _seen=True."""
-        db_dir = tmp_path / "db"
+        app_dir = tmp_path
         conn_str = f"sqlite:////{sample_sqlite_db}"
 
         # First scan with prefix grouping
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_database(
             conn_str,
             Folder(id="db", name="Database"),
@@ -62,7 +62,7 @@ class TestSQLiteIncrementalScan:
         assert len(prefix_folders) > 0
 
         # Reload and rescan
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_database(
             conn_str,
             Folder(id="db", name="Database"),

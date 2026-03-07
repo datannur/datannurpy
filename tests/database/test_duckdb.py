@@ -53,10 +53,10 @@ class TestDuckDBIncrementalScan:
         self, duckdb_with_schemas: ibis.BaseBackend, tmp_path: Path
     ) -> None:
         """Rescanning database should mark existing schema folders as _seen=True."""
-        db_dir = tmp_path / "db"
+        app_dir = tmp_path
 
         # First scan - no schema specified, will scan all (sales, inventory)
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_database(
             duckdb_with_schemas,
             Folder(id="db", name="Database"),
@@ -68,7 +68,7 @@ class TestDuckDBIncrementalScan:
         assert len(schema_folders) >= 2  # at least sales and inventory
 
         # Reload and rescan
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_database(
             duckdb_with_schemas,
             Folder(id="db", name="Database"),

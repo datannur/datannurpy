@@ -58,6 +58,7 @@ def add_dataset(
     no_more_update: str | None = None,
 ) -> None:
     """Add a single dataset file or partitioned directory to the catalog."""
+    catalog._has_scanned = True
     q = quiet if quiet is not None else catalog.quiet
     do_refresh = refresh if refresh is not None else catalog.refresh
     dataset_path = Path(path).resolve()

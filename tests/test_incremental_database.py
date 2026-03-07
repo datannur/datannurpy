@@ -113,18 +113,18 @@ class TestIncrementalScanDatabase:
 
     def test_unchanged_table_is_skipped(self, sample_db: Path, tmp_path: Path):
         """Unchanged table should be skipped on second scan."""
-        db_dir = tmp_path / "catalog"
+        app_dir = tmp_path / "catalog"
         conn_str = f"sqlite:////{sample_db}"
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_database(conn_str, Folder(id="db", name="Database"))
         catalog1.export_db()
 
         assert len(catalog1.dataset.all()) == 2
 
         # Second scan
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_database(conn_str, Folder(id="db", name="Database"))
 
         # Should still have 2 datasets (unchanged)
@@ -135,11 +135,11 @@ class TestIncrementalScanDatabase:
 
     def test_modified_table_is_rescanned(self, sample_db: Path, tmp_path: Path):
         """Modified table (row count change) should be rescanned."""
-        db_dir = tmp_path / "catalog"
+        app_dir = tmp_path / "catalog"
         conn_str = f"sqlite:////{sample_db}"
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_database(conn_str, Folder(id="db", name="Database"))
         catalog1.export_db()
 
@@ -156,7 +156,7 @@ class TestIncrementalScanDatabase:
         conn.close()
 
         # Second scan
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_database(conn_str, Folder(id="db", name="Database"))
 
         # Should have rescanned with new row count
@@ -167,11 +167,11 @@ class TestIncrementalScanDatabase:
 
     def test_schema_change_triggers_rescan(self, sample_db: Path, tmp_path: Path):
         """Schema change should trigger rescan."""
-        db_dir = tmp_path / "catalog"
+        app_dir = tmp_path / "catalog"
         conn_str = f"sqlite:////{sample_db}"
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_database(conn_str, Folder(id="db", name="Database"))
         catalog1.export_db()
 
@@ -188,7 +188,7 @@ class TestIncrementalScanDatabase:
         conn.close()
 
         # Second scan
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_database(conn_str, Folder(id="db", name="Database"))
 
         # Should have new signature
@@ -199,11 +199,11 @@ class TestIncrementalScanDatabase:
 
     def test_new_table_is_added(self, sample_db: Path, tmp_path: Path):
         """New table should be added on second scan."""
-        db_dir = tmp_path / "catalog"
+        app_dir = tmp_path / "catalog"
         conn_str = f"sqlite:////{sample_db}"
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_database(conn_str, Folder(id="db", name="Database"))
         catalog1.export_db()
 
@@ -218,7 +218,7 @@ class TestIncrementalScanDatabase:
         conn.close()
 
         # Second scan
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_database(conn_str, Folder(id="db", name="Database"))
 
         # Should have 3 datasets
@@ -227,38 +227,37 @@ class TestIncrementalScanDatabase:
 
     def test_refresh_forces_rescan(self, sample_db: Path, tmp_path: Path):
         """refresh=True should force rescan even if unchanged."""
-        db_dir = tmp_path / "catalog"
+        app_dir = tmp_path / "catalog"
         conn_str = f"sqlite:////{sample_db}"
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_database(conn_str, Folder(id="db", name="Database"))
         catalog1.export_db()
 
         initial_vars = len(catalog1.variable.all())
 
-        # Second scan with refresh=True (without folder to add new datasets)
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
-        catalog2.add_database(conn_str, refresh=True)
+        # Second scan with refresh=True - should rescan and update existing datasets
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
+        catalog2.add_database(conn_str, Folder(id="db", name="Database"), refresh=True)
 
-        # With refresh, all tables are rescanned and added again
-        # Since we don't use the same folder, we get duplicate datasets
-        # The key is that refresh=True doesn't skip the tables
-        assert len(catalog2.dataset.all()) == 4  # 2 original + 2 rescanned
-        assert len(catalog2.variable.all()) == initial_vars * 2
+        # With refresh, tables are rescanned and updated (not duplicated)
+        # The key is that refresh=True doesn't skip the tables even if unchanged
+        assert len(catalog2.dataset.all()) == 2  # Same count, rescanned in place
+        assert len(catalog2.variable.all()) == initial_vars  # Same variables
 
     def test_refresh_false_skips_unchanged(self, sample_db: Path, tmp_path: Path):
         """refresh=False should skip unchanged tables."""
-        db_dir = tmp_path / "catalog"
+        app_dir = tmp_path / "catalog"
         conn_str = f"sqlite:////{sample_db}"
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_database(conn_str, Folder(id="db", name="Database"))
         catalog1.export_db()
 
         # Second scan with same folder (datasets should be skipped)
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_database(conn_str, Folder(id="db", name="Database"))
 
         # Should have same number of datasets (not duplicated)

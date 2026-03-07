@@ -91,8 +91,8 @@ class Modality:
 class Value:
     """A value within a modality."""
 
-    id: str
-    modality_id: str
+    id: str = ""  # Computed at runtime from modality_id + value
+    modality_id: str = ""
     value: str | None = None
     description: str | None = None
 
@@ -101,10 +101,10 @@ class Value:
 class Freq:
     """Frequency count for a variable value."""
 
-    id: str
-    variable_id: str
-    value: str
-    freq: int
+    id: str = ""  # Computed at runtime from variable_id + value
+    variable_id: str = ""
+    value: str | None = None
+    freq: int = 0
 
 
 @dataclass
@@ -181,3 +181,5 @@ class DatannurDB(Jsonjsdb):
         self.institution.runtime_fields = {"_seen"}
         self.tag.runtime_fields = {"_seen"}
         self.doc.runtime_fields = {"_seen"}
+        self.value.runtime_fields = {"id"}
+        self.freq.runtime_fields = {"id"}

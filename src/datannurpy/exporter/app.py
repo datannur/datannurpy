@@ -52,10 +52,10 @@ def export_app(
     catalog.finalize()
 
     if output_dir is None:
-        if catalog.db_path is None:
-            msg = "output_dir is required when db_path was not set at init"
+        if catalog.app_path is None:
+            msg = "output_dir is required when app_path was not set at init"
             raise ValueError(msg)
-        output_dir = catalog.db_path
+        output_dir = catalog.app_path
 
     q = quiet if quiet is not None else catalog.quiet
     output_dir = Path(output_dir)
@@ -67,7 +67,7 @@ def export_app(
     # Copy app files
     copy_app(output_dir)
 
-    # Write to data/db/ (copy_app already cleared the data/ directory)
+    # Write to data/db/
     db_dir = output_dir / "data" / "db"
     catalog.export_db(db_dir, quiet=True)  # Don't duplicate write logs
 

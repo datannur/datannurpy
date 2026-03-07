@@ -235,8 +235,8 @@ class TestModalityExport:
         assert len(data) == 2
         assert all("modality_id" in v for v in data)
         assert all("value" in v for v in data)
-        # description should be absent (None excluded)
-        assert all("description" not in v for v in data)
+        # description should be null when not set
+        assert all(v.get("description") is None for v in data)
 
     def test_variable_json_has_modality_ids(self, tmp_path: Path):
         """variable.json should include modality_ids."""
@@ -259,11 +259,11 @@ class TestModalityIncremental:
 
     def test_modality_index_rebuilt_on_load(self, tmp_path: Path):
         """Modality index should be rebuilt when loading from db_path."""
-        db_dir = tmp_path / "db"
+        app_dir = tmp_path
         (tmp_path / "data.csv").write_text("color\nred\nblue\n")
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_folder(tmp_path, include=["data.csv"])
         catalog1.export_db()
 
@@ -271,7 +271,7 @@ class TestModalityIncremental:
         assert initial_modalities == 1
 
         # Second scan - should reuse existing modality
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_folder(tmp_path, include=["data.csv"])
 
         # Should not create duplicates
@@ -279,16 +279,16 @@ class TestModalityIncremental:
 
     def test_existing_modality_marked_seen(self, tmp_path: Path):
         """Existing modality should be marked as _seen when reused."""
-        db_dir = tmp_path / "db"
+        app_dir = tmp_path
         (tmp_path / "data.csv").write_text("color\nred\nblue\n")
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_folder(tmp_path, include=["data.csv"])
         catalog1.export_db()
 
         # Reload and rescan
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_folder(tmp_path, include=["data.csv"])
         catalog2.finalize()
 
@@ -299,11 +299,11 @@ class TestModalityIncremental:
         """rebuild_index should handle None values in Value objects."""
         from datannurpy.schema import Value
 
-        db_dir = tmp_path / "db"
+        app_dir = tmp_path
         (tmp_path / "data.csv").write_text("color\nred\nblue\n")
 
         # First scan
-        catalog1 = Catalog(db_path=db_dir, quiet=True)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_folder(tmp_path, include=["data.csv"])
 
         # Manually add a value with None
@@ -315,7 +315,7 @@ class TestModalityIncremental:
         catalog1.export_db()
 
         # Reload - rebuild_index should not crash
-        catalog2 = Catalog(db_path=db_dir, quiet=True)
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
 
         # Should have loaded successfully
         assert len(catalog2.modality.all()) >= 1
@@ -330,3 +330,22 @@ class TestModalityIncremental:
         # get_or_create should still work (won't find modality to mark, but returns id)
         result = catalog.modality_manager.get_or_create({"a", "b"})
         assert result == "missing_id"
+
+
+class TestStoreFreqTable:
+    """Test store_freq_table method."""
+
+    def test_empty_freq_table(self):
+        """store_freq_table with empty table should not add any freqs."""
+        import pyarrow as pa
+
+        catalog = Catalog(quiet=True)
+        empty_table = pa.table(
+            {
+                "variable_id": pa.array([], type=pa.string()),
+                "value": pa.array([], type=pa.string()),
+                "freq": pa.array([], type=pa.int64()),
+            }
+        )
+        catalog.modality_manager.store_freq_table(empty_table, {})
+        assert len(catalog.freq.all()) == 0
