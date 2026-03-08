@@ -15,6 +15,7 @@ from .utils import (
     sanitize_id,
     upsert_folder,
 )
+from .finalize import remove_dataset_cascade
 from .schema import Dataset, Folder
 from .scanner.utils import SUPPORTED_FORMATS, get_mtime_iso, get_mtime_timestamp
 from .scanner.parquet import (
@@ -190,17 +191,17 @@ def add_dataset(
     data_path_str = str(dataset_path)
 
     # Check for existing dataset (incremental scan)
-    existing = catalog._get_dataset_by_path(data_path_str)
+    existing = catalog.dataset.get_by("data_path", data_path_str)
     if existing is not None:
         if not do_refresh and existing.last_update_timestamp == current_mtime:
             # Unchanged - skip and mark as seen
             catalog.dataset.update(existing.id, _seen=True)
-            catalog._mark_dataset_modalities_seen(existing)
+            catalog.modality_manager.mark_dataset_seen(existing.id)
             log_skip(dataset_path.name, q)
             return
         else:
             # Modified or refresh forced - remove old dataset cascade before rescan
-            catalog._remove_dataset_cascade(existing)
+            remove_dataset_cascade(catalog, existing)
 
     # Build dataset ID
     base_name = sanitize_id(dataset_path.stem)
@@ -260,10 +261,10 @@ def add_dataset(
         catalog.modality_manager.assign_from_freq(
             result.variables, result.freq_table, var_id_mapping
         )
-    catalog._add_variables(result.variables, dataset.id)
+    catalog.variable.add_all(result.variables)
 
     # Log result
-    var_count = catalog._get_variable_count(dataset.id)
+    var_count = len(result.variables)
     if schema_only:
         log_done(f"{dataset_path.name} ({var_count} vars)", q, start_time)
     else:
@@ -291,14 +292,14 @@ def _add_parquet_directory(
     data_path_str = str(dir_path)
 
     # Check for existing dataset (incremental scan)
-    existing = catalog._get_dataset_by_path(data_path_str)
+    existing = catalog.dataset.get_by("data_path", data_path_str)
     if existing is not None:
         if not refresh and existing.last_update_timestamp == current_mtime:
             catalog.dataset.update(existing.id, _seen=True)
-            catalog._mark_dataset_modalities_seen(existing)
+            catalog.modality_manager.mark_dataset_seen(existing.id)
             log_skip(dir_path.name, quiet)
             return
-        catalog._remove_dataset_cascade(existing)
+        remove_dataset_cascade(catalog, existing)
 
     # Detect dataset type
     if is_delta_table(dir_path):
@@ -366,10 +367,10 @@ def _add_parquet_directory(
     var_id_mapping = build_variable_ids(variables, dataset.id)
     if not schema_only:
         catalog.modality_manager.assign_from_freq(variables, freq_table, var_id_mapping)
-    catalog._add_variables(variables, dataset.id)
+    catalog.variable.add_all(variables)
 
     # Log result
-    var_count = catalog._get_variable_count(dataset.id)
+    var_count = len(variables)
     if schema_only:
         log_done(f"{dir_path.name} ({var_count} vars)", quiet, start_time)
     else:

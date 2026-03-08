@@ -7,6 +7,8 @@ import json
 import re
 from pathlib import Path
 
+import polars as pl
+
 # Separator for path components (folder---dataset---variable)
 ID_SEPARATOR = "---"
 
@@ -84,6 +86,16 @@ def build_freq_id(variable_id: str, value: str | None) -> str:
     """Build freq ID from variable and value."""
     safe_value = sanitize_id(value) if value is not None else "_null_"
     return make_id(variable_id, safe_value)
+
+
+def compute_runtime_ids(df: pl.DataFrame, cols: list[str]) -> pl.DataFrame:
+    """Compute id column by concatenating cols with ID_SEPARATOR."""
+    if df.is_empty() or "id" in df.columns:
+        return df
+    expr = pl.col(cols[0])
+    for col in cols[1:]:
+        expr = expr + ID_SEPARATOR + pl.col(col).fill_null("_null_")
+    return df.with_columns(expr.alias("id"))
 
 
 def get_folder_id(

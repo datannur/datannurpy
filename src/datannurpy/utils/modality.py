@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import polars as pl
 import pyarrow as pa
 
 from .ids import (
@@ -29,17 +30,17 @@ class ModalityManager:
 
     def rebuild_index(self) -> None:
         """Rebuild modality index from existing values (after loading from db)."""
-        # Group values by modality_id
-        values_by_modality: dict[str, set[str]] = {}
-        for v in self._catalog.value.all():
-            if v.modality_id not in values_by_modality:
-                values_by_modality[v.modality_id] = set()
-            if v.value is not None:
-                values_by_modality[v.modality_id].add(v.value)
+        df = self._catalog.value.df
+        if df.is_empty():
+            return
 
-        # Build index: frozenset(values) -> modality_id
-        for modality_id, vals in values_by_modality.items():
-            self._modality_index[frozenset(vals)] = modality_id
+        # Group values by modality_id using Polars
+        grouped = df.group_by("modality_id").agg(pl.col("value"))
+        for row in grouped.iter_rows(named=True):
+            modality_id = row["modality_id"]
+            values = {v for v in row["value"] if v is not None}
+            if values:
+                self._modality_index[frozenset(values)] = modality_id
 
     def ensure_modalities_folder(self) -> None:
         """Create the _modalities folder if not already present."""
@@ -48,6 +49,19 @@ class ModalityManager:
             return
         folder = Folder(id=MODALITIES_FOLDER_ID, name="Modalities", _seen=True)
         self._catalog.folder.add(folder)
+
+    def mark_dataset_seen(self, dataset_id: str) -> None:
+        """Mark all modalities referenced by a dataset's variables as seen."""
+        dataset_vars = self._catalog.variable.having.dataset(dataset_id)
+        referenced_modality_ids: set[str] = set()
+        for var in dataset_vars:
+            referenced_modality_ids.update(var.modality_ids)
+
+        if not referenced_modality_ids:
+            return
+
+        self._catalog.modality.update_many(list(referenced_modality_ids), _seen=True)
+        self.ensure_modalities_folder()
 
     def get_or_create(self, values: set[str]) -> str:
         """Get existing modality or create new one for the given values."""

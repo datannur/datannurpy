@@ -108,7 +108,7 @@ def compute_scan_plan(
     to_skip: list[DatasetInfo] = []
 
     for info in datasets:
-        existing = catalog._get_dataset_by_path(str(info.path))
+        existing = catalog.dataset.get_by("data_path", str(info.path))
         if existing is None or refresh or existing.last_update_timestamp != info.mtime:
             to_scan.append(info)
         else:

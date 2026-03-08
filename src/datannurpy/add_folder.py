@@ -20,6 +20,7 @@ from .utils import (
     sanitize_id,
     upsert_folder,
 )
+from .finalize import remove_dataset_cascade
 from .schema import Dataset, Folder
 from .scanner.discovery import compute_scan_plan, discover_datasets
 from .scanner.utils import get_mtime_iso
@@ -76,7 +77,6 @@ def add_folder(
 
     # Set data_path for root folder
     folder.data_path = str(root)
-    folder.last_update_date = get_mtime_iso(root)
     folder.type = "filesystem"
 
     # Add or update root folder
@@ -115,7 +115,6 @@ def add_folder(
                 parent_id=parent_id,
                 type="filesystem",
                 data_path=str(subdir),
-                last_update_date=get_mtime_iso(subdir),
             ),
         )
         subdir_ids[subdir] = folder_id
@@ -127,14 +126,14 @@ def add_folder(
     if resolved_depth == "structure":
         # Skip unchanged datasets
         for info in plan.to_skip:
-            existing = catalog._get_dataset_by_path(str(info.path))
+            existing = catalog.dataset.get_by("data_path", str(info.path))
             assert existing is not None
             catalog.dataset.update(existing.id, _seen=True)
 
         # Create or update modified datasets
         for info in plan.to_scan:
             data_path_str = str(info.path)
-            existing = catalog._get_dataset_by_path(data_path_str)
+            existing = catalog.dataset.get_by("data_path", data_path_str)
             if existing:
                 # Update metadata for modified dataset
                 catalog.dataset.update(
@@ -165,10 +164,10 @@ def add_folder(
 
     # Handle skipped datasets (mark as seen)
     for info in plan.to_skip:
-        existing = catalog._get_dataset_by_path(str(info.path))
+        existing = catalog.dataset.get_by("data_path", str(info.path))
         assert existing is not None  # compute_scan_plan guarantees this
         catalog.dataset.update(existing.id, _seen=True)
-        catalog._mark_dataset_modalities_seen(existing)
+        catalog.modality_manager.mark_dataset_seen(existing.id)
         log_skip(info.path.name, q)
 
     # Process datasets to scan
@@ -182,9 +181,9 @@ def add_folder(
         data_path_str = str(info.path)
 
         # Remove old dataset if exists (modified or refresh)
-        existing = catalog._get_dataset_by_path(data_path_str)
+        existing = catalog.dataset.get_by("data_path", data_path_str)
         if existing:
-            catalog._remove_dataset_cascade(existing)
+            remove_dataset_cascade(catalog, existing)
 
         log_start(info.path.name, q)
         dataset_id, dataset_name = build_dataset_id_name(info.path, root, prefix)
@@ -221,7 +220,7 @@ def add_folder(
             catalog.modality_manager.assign_from_freq(
                 result.variables, result.freq_table, var_id_mapping
             )
-        catalog._add_variables(result.variables, dataset.id)
+        catalog.variable.add_all(result.variables)
 
         # Log result
         if schema_only:

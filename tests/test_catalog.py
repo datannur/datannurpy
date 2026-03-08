@@ -164,7 +164,7 @@ class TestCatalogExportDbDefault:
         catalog2 = Catalog(app_path=app_dir)
 
         # Filter out _modalities folder
-        user_folders = [f for f in catalog2.folder.all() if f.id != "_modalities"]
+        user_folders = catalog2.folder.where("id", "!=", "_modalities")
         assert len(user_folders) == 1
         assert user_folders[0].id == "src"
         assert len(catalog2.dataset.all()) == 1
