@@ -12,6 +12,7 @@ from .utils import SUPPORTED_FORMATS, find_files, get_mtime_timestamp
 
 if TYPE_CHECKING:
     from ..catalog import Catalog
+    from .filesystem import FileSystem
 
 
 @dataclass
@@ -44,12 +45,13 @@ def discover_datasets(
     include: Sequence[str] | None = None,
     exclude: Sequence[str] | None = None,
     recursive: bool = True,
+    fs: FileSystem | None = None,
 ) -> DiscoveryResult:
     """Discover all datasets (parquet and other formats) in a directory."""
     result: list[DatasetInfo] = []
 
     # 1. Discover Parquet datasets (Delta, Hive, Iceberg, simple)
-    parquet_result = discover_parquet_datasets(root, include, exclude, recursive)
+    parquet_result = discover_parquet_datasets(root, include, exclude, recursive, fs=fs)
     parquet_files: set[Path] = set()
 
     for pq_info in parquet_result.datasets:
@@ -58,12 +60,12 @@ def discover_datasets(
             DatasetInfo(
                 path=pq_info.path,
                 format=pq_info.type.value,
-                mtime=get_mtime_timestamp(pq_info.path),
+                mtime=get_mtime_timestamp(pq_info.path, fs=fs),
             )
         )
 
     # 2. Find non-parquet files (CSV, Excel, statistical)
-    all_files = find_files(root, include, exclude, recursive)
+    all_files = find_files(root, include, exclude, recursive, fs=fs)
 
     for file_path in all_files:
         if file_path in parquet_files:
@@ -88,7 +90,7 @@ def discover_datasets(
             DatasetInfo(
                 path=file_path,
                 format=fmt,
-                mtime=get_mtime_timestamp(file_path),
+                mtime=get_mtime_timestamp(file_path, fs=fs),
             )
         )
 

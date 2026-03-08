@@ -41,6 +41,12 @@ pip install datannurpy[stat]      # SAS, SPSS, Stata
 pip install datannurpy[delta]     # Delta Lake metadata extraction
 pip install datannurpy[iceberg]   # Apache Iceberg metadata extraction
 
+# Cloud storage
+pip install datannurpy[s3]        # Amazon S3
+pip install datannurpy[azure]     # Azure Blob Storage
+pip install datannurpy[gcs]       # Google Cloud Storage
+pip install datannurpy[cloud]     # All cloud providers
+
 # Multiple extras
 pip install datannurpy[postgres,stat,delta]
 ```
@@ -135,6 +141,54 @@ catalog.add_dataset(
 ```
 
 With extras `[delta]` and `[iceberg]`, metadata (name, description, column docs) is extracted when available.
+
+## Remote storage
+
+Scan files on SFTP servers or cloud storage (S3, Azure, GCS):
+
+```python
+from datannurpy import Catalog, Folder
+
+catalog = Catalog()
+
+# SFTP (paramiko included by default)
+catalog.add_folder(
+    "sftp://user@host/path/to/data",
+    storage_options={"password": "secret"},  # or key_filename="/path/to/key"
+)
+
+# Amazon S3 (requires: pip install datannurpy[s3])
+catalog.add_folder(
+    "s3://my-bucket/data",
+    storage_options={"key": "...", "secret": "..."},
+)
+
+# Azure Blob (requires: pip install datannurpy[azure])
+catalog.add_folder(
+    "az://container/data",
+    storage_options={"account_name": "...", "account_key": "..."},
+)
+
+# Google Cloud Storage (requires: pip install datannurpy[gcs])
+catalog.add_folder(
+    "gs://my-bucket/data",
+    storage_options={"token": "/path/to/credentials.json"},
+)
+
+# Single remote file
+catalog.add_dataset("s3://my-bucket/data/sales.parquet", storage_options={...})
+
+# Remote SQLite / GeoPackage database
+catalog.add_database("sftp://host/path/to/db.sqlite", storage_options={...})
+catalog.add_database("s3://bucket/geodata.gpkg", storage_options={...})
+```
+
+The `storage_options` dict is passed directly to [fsspec](https://filesystem-spec.readthedocs.io/). See provider documentation for available options:
+
+- [SFTP](https://filesystem-spec.readthedocs.io/en/latest/api.html#fsspec.implementations.sftp.SFTPFileSystem)
+- [S3](https://s3fs.readthedocs.io/en/latest/)
+- [Azure](https://github.com/fsspec/adlfs)
+- [GCS](https://gcsfs.readthedocs.io/en/latest/)
 
 ## Scanning databases
 
@@ -256,21 +310,23 @@ Catalog(app_path=None, depth="full", refresh=False, freq_threshold=100, csv_enco
 
 ```python
 catalog.add_folder(path, folder=None, *, depth=None, include=None, exclude=None,
-                   recursive=True, infer_stats=True, csv_encoding=None, refresh=None, quiet=None)
+                   recursive=True, infer_stats=True, csv_encoding=None, storage_options=None,
+                   refresh=None, quiet=None)
 ```
 
-| Parameter    | Type                                      | Default  | Description                               |
-| ------------ | ----------------------------------------- | -------- | ----------------------------------------- |
-| path         | str \| Path                               | required | Directory to scan                         |
-| folder       | Folder \| None                            | None     | Custom folder metadata                    |
-| depth        | "structure" \| "schema" \| "full" \| None | None     | Scan depth (uses catalog.depth if None)   |
-| include      | list[str] \| None                         | None     | Glob patterns to include                  |
-| exclude      | list[str] \| None                         | None     | Glob patterns to exclude                  |
-| recursive    | bool                                      | True     | Scan subdirectories                       |
-| infer_stats  | bool                                      | True     | Compute distinct/missing/duplicate counts |
-| csv_encoding | str \| None                               | None     | Override CSV encoding                     |
-| refresh      | bool \| None                              | None     | Force rescan (overrides catalog setting)  |
-| quiet        | bool \| None                              | None     | Override catalog quiet setting            |
+| Parameter       | Type                                      | Default  | Description                                   |
+| --------------- | ----------------------------------------- | -------- | --------------------------------------------- |
+| path            | str \| Path                               | required | Directory to scan (local or remote URL)       |
+| folder          | Folder \| None                            | None     | Custom folder metadata                        |
+| depth           | "structure" \| "schema" \| "full" \| None | None     | Scan depth (uses catalog.depth if None)       |
+| include         | list[str] \| None                         | None     | Glob patterns to include                      |
+| exclude         | list[str] \| None                         | None     | Glob patterns to exclude                      |
+| recursive       | bool                                      | True     | Scan subdirectories                           |
+| infer_stats     | bool                                      | True     | Compute distinct/missing/duplicate counts     |
+| csv_encoding    | str \| None                               | None     | Override CSV encoding                         |
+| storage_options | dict \| None                              | None     | Options for remote storage (passed to fsspec) |
+| refresh         | bool \| None                              | None     | Force rescan (overrides catalog setting)      |
+| quiet           | bool \| None                              | None     | Override catalog quiet setting                |
 
 **Depth levels:**
 
@@ -284,21 +340,24 @@ catalog.add_folder(path, folder=None, *, depth=None, include=None, exclude=None,
 
 ```python
 catalog.add_dataset(path, folder=None, *, folder_id=None, depth=None, infer_stats=True,
-                    csv_encoding=None, refresh=None, quiet=None, id=None, name=None, description=None, ...)
+                    csv_encoding=None, storage_options=None, refresh=None, quiet=None,
+                    id=None, name=None, description=None, ...)
 ```
 
-| Parameter   | Type                                      | Default  | Description                              |
-| ----------- | ----------------------------------------- | -------- | ---------------------------------------- |
-| path        | str \| Path                               | required | File or partitioned directory            |
-| folder      | Folder \| None                            | None     | Parent folder                            |
-| folder_id   | str \| None                               | None     | Parent folder ID (alternative to folder) |
-| depth       | "structure" \| "schema" \| "full" \| None | None     | Scan depth (uses catalog.depth if None)  |
-| infer_stats | bool                                      | True     | Compute statistics                       |
-| refresh     | bool \| None                              | None     | Force rescan (overrides catalog setting) |
-| quiet       | bool \| None                              | None     | Override catalog quiet setting           |
-| id          | str \| None                               | None     | Override dataset ID                      |
-| name        | str \| None                               | None     | Override dataset name                    |
-| description | str \| None                               | None     | Override dataset description             |
+| Parameter       | Type                                      | Default  | Description                                   |
+| --------------- | ----------------------------------------- | -------- | --------------------------------------------- |
+| path            | str \| Path                               | required | File or partitioned directory (local/remote)  |
+| folder          | Folder \| None                            | None     | Parent folder                                 |
+| folder_id       | str \| None                               | None     | Parent folder ID (alternative to folder)      |
+| depth           | "structure" \| "schema" \| "full" \| None | None     | Scan depth (uses catalog.depth if None)       |
+| infer_stats     | bool                                      | True     | Compute statistics                            |
+| csv_encoding    | str \| None                               | None     | Override CSV encoding                         |
+| storage_options | dict \| None                              | None     | Options for remote storage (passed to fsspec) |
+| refresh         | bool \| None                              | None     | Force rescan (overrides catalog setting)      |
+| quiet           | bool \| None                              | None     | Override catalog quiet setting                |
+| id              | str \| None                               | None     | Override dataset ID                           |
+| name            | str \| None                               | None     | Override dataset name                         |
+| description     | str \| None                               | None     | Override dataset description                  |
 
 Additional metadata parameters: `type`, `link`, `localisation`, `manager_id`, `owner_id`, `tag_ids`, `doc_ids`, `start_date`, `end_date`, `updating_each`, `no_more_update`
 
@@ -307,7 +366,8 @@ Additional metadata parameters: `type`, `link`, `localisation`, `manager_id`, `o
 ```python
 catalog.add_database(connection, folder=None, *, depth=None, schema=None, include=None,
                      exclude=None, infer_stats=True, sample_size=None,
-                     group_by_prefix=True, prefix_min_tables=2, refresh=None, quiet=None)
+                     group_by_prefix=True, prefix_min_tables=2, storage_options=None,
+                     refresh=None, quiet=None)
 ```
 
 | Parameter         | Type                                            | Default  | Description                              |
@@ -322,12 +382,13 @@ catalog.add_database(connection, folder=None, *, depth=None, schema=None, includ
 | sample_size       | int \| None                                     | None     | Limit rows for stats (large tables)      |
 | group_by_prefix   | bool \| str                                     | True     | Group tables by prefix into subfolders   |
 | prefix_min_tables | int                                             | 2        | Min tables to form a prefix group        |
+| storage_options   | dict \| None                                    | None     | Options for remote SQLite/GeoPackage     |
 | refresh           | bool \| None                                    | None     | Force rescan (overrides catalog setting) |
 | quiet             | bool \| None                                    | None     | Override catalog quiet setting           |
 
 **Connection string formats:**
 
-- SQLite: `sqlite:///path/to/db.sqlite`
+- SQLite: `sqlite:///path/to/db.sqlite` or `sftp://host/path/db.sqlite` (remote)
 - PostgreSQL: `postgresql://user:pass@host:5432/database`
 - MySQL: `mysql://user:pass@host:3306/database`
 - Oracle: `oracle://user:pass@host:1521/service_name`

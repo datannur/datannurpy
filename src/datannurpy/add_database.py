@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Literal
+from urllib.parse import urlparse
 
 import ibis
 
@@ -22,6 +24,8 @@ from .utils import (
     timestamp_to_iso,
     upsert_folder,
 )
+from .scanner.filesystem import FileSystem
+from .scanner.utils import get_mtime_iso
 from .finalize import remove_dataset_cascade
 from .schema import Dataset, Folder
 from .scanner.database import (
@@ -41,6 +45,25 @@ if TYPE_CHECKING:
     from .catalog import Catalog
 
 
+_DATABASE_SCHEMES = {
+    "sqlite",
+    "postgresql",
+    "postgres",
+    "mysql",
+    "oracle",
+    "mssql",
+    "duckdb",
+}
+
+
+def _is_remote_database_file(connection: str) -> bool:
+    """Check if connection is a remote file URL (sftp://, s3://, etc.), not a database URL."""
+    if "://" not in connection:
+        return False
+    scheme = urlparse(connection).scheme.lower()
+    return scheme not in _DATABASE_SCHEMES and scheme != "file"
+
+
 def add_database(
     catalog: Catalog,
     connection: str | ibis.BaseBackend,
@@ -56,8 +79,68 @@ def add_database(
     prefix_min_tables: int = 2,
     quiet: bool | None = None,
     refresh: bool | None = None,
+    storage_options: dict[str, str] | None = None,
 ) -> None:
     """Scan a database and add its tables to the catalog."""
+    # Handle remote SQLite files (sftp://, s3://, etc.)
+    if isinstance(connection, str) and _is_remote_database_file(connection):
+        remote_path = urlparse(connection).path
+        fs = FileSystem(connection, storage_options)
+        with fs.ensure_local(remote_path) as local_path:
+            _add_database_impl(
+                catalog,
+                f"sqlite:///{local_path}",
+                folder,
+                depth=depth,
+                schema=schema,
+                include=include,
+                exclude=exclude,
+                infer_stats=infer_stats,
+                sample_size=sample_size,
+                group_by_prefix=group_by_prefix,
+                prefix_min_tables=prefix_min_tables,
+                quiet=quiet,
+                refresh=refresh,
+                remote_path=connection,
+            )
+        return
+
+    _add_database_impl(
+        catalog,
+        connection,
+        folder,
+        depth=depth,
+        schema=schema,
+        include=include,
+        exclude=exclude,
+        infer_stats=infer_stats,
+        sample_size=sample_size,
+        group_by_prefix=group_by_prefix,
+        prefix_min_tables=prefix_min_tables,
+        quiet=quiet,
+        refresh=refresh,
+        remote_path=None,
+    )
+
+
+def _add_database_impl(
+    catalog: Catalog,
+    connection: str | ibis.BaseBackend,
+    folder: Folder | None,
+    *,
+    depth: Literal["structure", "schema", "full"] | None,
+    schema: str | None,
+    include: Sequence[str] | None,
+    exclude: Sequence[str] | None,
+    infer_stats: bool,
+    sample_size: int | None,
+    group_by_prefix: bool | str,
+    prefix_min_tables: int,
+    quiet: bool | None,
+    refresh: bool | None,
+    remote_path: str | None,
+) -> None:
+    """Implementation of add_database (local or already-downloaded remote)."""
     catalog._has_scanned = True
     q = quiet if quiet is not None else catalog.quiet
     do_refresh = refresh if refresh is not None else catalog.refresh
@@ -66,7 +149,10 @@ def add_database(
     con, backend_name = connect(connection)
 
     # Determine database name for folder
-    db_name = get_database_name(connection, con, backend_name)
+    if remote_path:
+        db_name = PurePosixPath(remote_path).stem
+    else:
+        db_name = get_database_name(connection, con, backend_name)
 
     start_time = log_section("add_database", f"{backend_name}://{db_name}", q)
     datasets_before = catalog.dataset.count
@@ -85,12 +171,21 @@ def add_database(
     else:
         root_folder_id = folder.id
 
-    folder.last_update_date = now_iso
-    folder.data_path = (
-        get_database_path(connection, backend_name)
-        if isinstance(connection, str)
-        else None
-    )
+    # Set data_path: use remote_path if remote, otherwise local path
+    if remote_path:
+        folder.data_path = remote_path
+        folder.last_update_date = None  # Can't get mtime from remote
+    else:
+        folder.data_path = (
+            get_database_path(connection, backend_name)
+            if isinstance(connection, str)
+            else None
+        )
+        # Use mtime of database file for last_update_date (null for non-file connections)
+        if folder.data_path:
+            folder.last_update_date = get_mtime_iso(Path(folder.data_path))
+        else:
+            folder.last_update_date = None
     folder.type = backend_name
 
     # Add or update root folder
@@ -113,7 +208,6 @@ def add_database(
                     name=schema_name,
                     parent_id=root_folder_id,
                     type="schema",
-                    last_update_date=now_iso,
                 ),
             )
             current_folder_id = schema_folder_id
@@ -151,7 +245,6 @@ def add_database(
                         name=pf.prefix,
                         parent_id=parent_id,
                         type="table_prefix",
-                        last_update_date=now_iso,
                     ),
                 )
 

@@ -1136,7 +1136,7 @@ wheels = [
 
 [[package]]
 name = "datannurpy"
-version = "0.6.0"
+version = "0.7.0"
 source = { editable = "." }
 dependencies = [
     { name = "ibis-framework", extra = ["duckdb"] },
@@ -1225,7 +1225,7 @@ requires-dist = [
     { name = "ibis-framework", extras = ["postgres", "mysql", "oracle", "mssql"], marker = "extra == 'databases'", specifier = ">=11.0" },
     { name = "jsonjsdb", specifier = ">=0.8.2" },
     { name = "openpyxl", specifier = ">=3.0" },
-    { name = "paramiko", specifier = ">=3.0" },
+    { name = "paramiko", specifier = ">=4.0" },
     { name = "pyiceberg", marker = "extra == 'iceberg'", specifier = ">=0.10.0" },
     { name = "pyreadstat", marker = "python_full_version >= '3.10' and extra == 'stat'", specifier = ">=1.2.0" },
     { name = "pyreadstat", marker = "python_full_version < '3.10' and extra == 'stat'", specifier = ">=1.2.0,<=1.2.8" },

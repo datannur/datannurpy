@@ -188,6 +188,9 @@ def scan_iceberg(
     # Find the latest metadata file
     metadata_dir = path / "metadata"
     metadata_files = sorted(metadata_dir.glob("*.metadata.json"), reverse=True)
+    if not metadata_files:
+        msg = f"No Iceberg metadata files found in {metadata_dir}"
+        raise FileNotFoundError(msg)
 
     # Load table via PyIceberg
     table = StaticTable.from_metadata(str(metadata_files[0]))
