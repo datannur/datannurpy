@@ -10,12 +10,13 @@ src/datannurpy/
 ├── add_folder.py        # Catalog.add_folder implementation
 ├── add_dataset.py       # Catalog.add_dataset implementation
 ├── add_database.py      # Catalog.add_database implementation
+├── add_metadata.py      # Catalog.add_metadata implementation
 ├── finalize.py          # Cleanup of entities not seen during scan
-├── utils/               # Internal utilities (ids, log, modality, prefix)
-├── entities/            # Dataclasses: Folder, Dataset, Variable, Modality, Value
+├── exporter.py          # export_db, export_app
+├── schema.py            # Dataclasses: Folder, Dataset, Variable, Modality, Value
+├── utils/               # Internal utilities (ids, log, modality, prefix, folder, time)
 ├── scanner/             # File/DB scanning → Variables + stats
-├── importer/            # db.py (load_db for incremental scan)
-└── exporter/            # db.py (export_db), app.py (export_app)
+└── app/                 # Web app template files (copied during export)
 ```
 
 ## Public API

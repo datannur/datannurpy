@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .utils.ids import MODALITIES_FOLDER_ID
-
 if TYPE_CHECKING:
     from .catalog import Catalog
     from .schema import Dataset
@@ -30,7 +28,7 @@ def finalize(catalog: Catalog) -> None:
     # 2. Remove unseen datasets (cascade: variables, frequencies)
     unseen_datasets = catalog.dataset.where("_seen", "==", False)
     for dataset in unseen_datasets:
-        catalog._remove_dataset_cascade(dataset)
+        remove_dataset_cascade(catalog, dataset)
 
     # 3. Remove unseen modalities
     removed_modality_ids = catalog.modality.ids_where("_seen", "==", False)
@@ -54,39 +52,14 @@ def finalize(catalog: Catalog) -> None:
     catalog._finalized = True
 
 
-def mark_dataset_modalities_seen(catalog: Catalog, dataset: Dataset) -> None:
-    """Mark all modalities referenced by a dataset's variables as seen."""
-    # Find all modality_ids referenced by this dataset's variables
-    dataset_vars = catalog.variable.having.dataset(dataset.id)
-    referenced_modality_ids: set[str] = set()
-    for var in dataset_vars:
-        referenced_modality_ids.update(var.modality_ids)
-
-    if not referenced_modality_ids:
-        return
-
-    # Mark those modalities as seen (batch update)
-    catalog.modality.update_many(list(referenced_modality_ids), _seen=True)
-
-    # Also mark the _modalities folder as seen
-    if catalog.folder.exists(MODALITIES_FOLDER_ID):
-        catalog.folder.update(MODALITIES_FOLDER_ID, _seen=True)
-
-
 def remove_dataset_cascade(self: Catalog, dataset: Dataset) -> None:
     """Remove a dataset and its associated variables and frequencies."""
     # Remove variables for this dataset
-    vars_to_remove = self.variable.having.dataset(dataset.id)
-    if vars_to_remove:
-        self.variable.remove_all([v.id for v in vars_to_remove])
-
-    # Remove frequencies for this dataset's variables
-    var_id_prefix = f"{dataset.id}---"
-    freqs_to_remove = [
-        f for f in self.freq.all() if f.variable_id.startswith(var_id_prefix)
-    ]
-    if freqs_to_remove:
-        self.freq.remove_all([f.id for f in freqs_to_remove])
+    var_ids = self.variable.ids_having.dataset(dataset.id)
+    if var_ids:
+        self.variable.remove_all(var_ids)
+        # Remove frequencies for these variables
+        self.freq.remove_where("variable_id", "in", var_ids)
 
     # Remove dataset
     self.dataset.remove(dataset.id)

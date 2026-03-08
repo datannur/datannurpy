@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from datannurpy import Catalog, Folder
-from datannurpy.exporter import app
+from datannurpy import exporter
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 
@@ -85,8 +85,8 @@ class TestExportApp:
 
     def test_export_app_without_app_raises(self, tmp_path, monkeypatch):
         """export_app should raise FileNotFoundError if app not bundled."""
-        # Mock get_app_path to return nonexistent path
-        monkeypatch.setattr(app, "get_app_path", lambda: Path("/nonexistent"))
+        # Mock _get_app_path to return nonexistent path
+        monkeypatch.setattr(exporter, "_get_app_path", lambda: Path("/nonexistent"))
 
         catalog = Catalog()
         catalog.add_folder(

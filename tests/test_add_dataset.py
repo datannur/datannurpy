@@ -40,7 +40,7 @@ class TestAddDataset:
             folder=Folder(id="hr", name="HR Data"),
         )
 
-        assert len([f for f in catalog.folder.all() if f.id != "_modalities"]) == 1
+        assert len(catalog.folder.where("id", "!=", "_modalities")) == 1
         assert catalog.folder.all()[0].id == "hr"
         assert catalog.dataset.all()[0].folder_id == "hr"
         assert catalog.dataset.all()[0].id == "hr---employees"
@@ -60,7 +60,7 @@ class TestAddDataset:
         catalog.add_dataset(CSV_DIR / "employees.csv", folder=folder)
         catalog.add_dataset(CSV_DIR / "regions_france.csv", folder=folder)
 
-        assert len([f for f in catalog.folder.all() if f.id != "_modalities"]) == 1
+        assert len(catalog.folder.where("id", "!=", "_modalities")) == 1
         assert len(catalog.dataset.all()) == 2
 
     def test_add_dataset_with_metadata(self):

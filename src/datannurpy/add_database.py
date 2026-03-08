@@ -22,6 +22,7 @@ from .utils import (
     timestamp_to_iso,
     upsert_folder,
 )
+from .finalize import remove_dataset_cascade
 from .schema import Dataset, Folder
 from .scanner.database import (
     build_table_data_path,
@@ -167,7 +168,7 @@ def add_database(
             current_nb_row = get_table_row_count(con, table_name, schema_name)
 
             # Check if table exists in cache
-            existing_dataset = catalog._get_dataset_by_path(table_data_path)
+            existing_dataset = catalog.dataset.get_by("data_path", table_data_path)
 
             # Preserve timestamp if data unchanged (for stable evolution tracking)
             preserved_timestamp: int | None = None
@@ -182,7 +183,7 @@ def add_database(
                 if not do_refresh and data_unchanged:
                     # Unchanged, skip
                     catalog.dataset.update(existing_dataset.id, _seen=True)
-                    catalog._mark_dataset_modalities_seen(existing_dataset)
+                    catalog.modality_manager.mark_dataset_seen(existing_dataset.id)
                     log_skip(table_name, q)
                     continue
 
@@ -191,7 +192,7 @@ def add_database(
                     preserved_timestamp = existing_dataset.last_update_timestamp
 
                 # Modified or refresh forced - remove old dataset before rescan
-                catalog._remove_dataset_cascade(existing_dataset)
+                remove_dataset_cascade(catalog, existing_dataset)
 
             # Determine folder for this table
             table_prefix: str | None = None
@@ -268,7 +269,7 @@ def add_database(
                 catalog.modality_manager.assign_from_freq(
                     table_vars, freq_table, var_id_mapping
                 )
-            catalog._add_variables(table_vars, dataset.id)
+            catalog.variable.add_all(table_vars)
 
             if schema_only:
                 log_done(f"{table_name} ({len(table_vars)} vars)", q)

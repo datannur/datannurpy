@@ -360,7 +360,7 @@ class BaseSchemaTests(ABC):
         )
 
         # +1 for _modalities folder (auto-created)
-        user_folders = [f for f in catalog.folder.all() if f.id != "_modalities"]
+        user_folders = catalog.folder.where("id", "!=", "_modalities")
         assert len(user_folders) == 1
         assert user_folders[0].id == "sales_db"
 

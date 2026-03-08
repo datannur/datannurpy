@@ -423,8 +423,7 @@ class TestFinalizeCalledByExport:
         assert catalog._finalized is True
 
     def test_finalize_missing_modality_reference(self, tmp_path: Path):
-        """mark_dataset_modalities_seen should handle missing modality gracefully."""
-        from datannurpy.finalize import mark_dataset_modalities_seen
+        """mark_dataset_seen should handle missing modality gracefully."""
         from datannurpy.schema import Dataset, Variable
 
         app_dir = tmp_path
@@ -435,5 +434,5 @@ class TestFinalizeCalledByExport:
                 id="ds1---v1", name="v1", dataset_id="ds1", modality_ids=["nonexistent"]
             )
         )
-        mark_dataset_modalities_seen(catalog, catalog.dataset.all()[0])
+        catalog.modality_manager.mark_dataset_seen("ds1")
         # Should not raise — modality simply not found

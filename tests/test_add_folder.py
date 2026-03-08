@@ -220,7 +220,7 @@ class TestSubfolders:
         catalog = Catalog()
         catalog.add_folder(tmp_path, Folder(id="root", name="Root"))
 
-        user_folders = [f for f in catalog.folder.all() if f.id != "_modalities"]
+        user_folders = catalog.folder.where("id", "!=", "_modalities")
         assert len(user_folders) == 2  # root + 2024
         subfolder = user_folders[1]
         assert subfolder.id == "root---2024"
@@ -235,7 +235,7 @@ class TestSubfolders:
         catalog = Catalog()
         catalog.add_folder(tmp_path, Folder(id="x", name="X"))
 
-        user_folders = [f for f in catalog.folder.all() if f.id != "_modalities"]
+        user_folders = catalog.folder.where("id", "!=", "_modalities")
         assert len(user_folders) == 4
         folder_ids = [f.id for f in user_folders]
         assert "x" in folder_ids
@@ -494,7 +494,7 @@ class TestIncrementalScanSubfolders:
         catalog2.finalize()
 
         # All user folders should be kept (excluding _modalities system folder)
-        user_folders = [f for f in catalog2.folder.all() if f.id != "_modalities"]
+        user_folders = catalog2.folder.where("id", "!=", "_modalities")
         assert len(user_folders) == 2
         assert any(f.id == "src" for f in user_folders)
         assert any("subdir" in f.id for f in user_folders)

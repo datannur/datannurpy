@@ -1,4 +1,4 @@
-"""App export utilities for datannur visualization."""
+"""Export catalog to JSON database and web app."""
 
 from __future__ import annotations
 
@@ -10,17 +10,49 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..catalog import Catalog
+    from .catalog import Catalog
 
 
-def get_app_path() -> Path:
+def export_db(
+    catalog: Catalog,
+    output_dir: str | Path | None = None,
+    *,
+    track_evolution: bool = True,
+    quiet: bool | None = None,
+) -> None:
+    """Write all catalog entities to JSON files."""
+    # Only finalize (cleanup unseen entities) if a scan was performed
+    if catalog._has_scanned:
+        catalog.finalize()
+
+    path = output_dir or catalog.db_path
+    if path is None:
+        msg = "output_dir is required when app_path was not set at init"
+        raise ValueError(msg)
+
+    # Parent relations for cascade suppression in evolution tracking
+    parent_relations = {
+        "dataset": "folder",
+        "variable": "dataset",
+        "freq": "variable",
+        "value": "modality",
+    }
+    catalog.save(
+        path,
+        track_evolution=track_evolution,
+        timestamp=catalog._now,
+        parent_relations=parent_relations,
+    )
+
+
+def _get_app_path() -> Path:
     """Return path to bundled app directory."""
-    return Path(__file__).parent.parent / "app"
+    return Path(__file__).parent / "app"
 
 
-def copy_app(output_dir: Path) -> None:
+def _copy_app(output_dir: Path) -> None:
     """Copy datannur app to output directory."""
-    app_src = get_app_path()
+    app_src = _get_app_path()
     if not app_src.exists():
         raise FileNotFoundError(
             "datannur app not found. Run `make download-app` to download it, "
@@ -65,7 +97,7 @@ def export_app(
         print(f"\n[export_app] {output_dir}", file=sys.stderr)
 
     # Copy app files
-    copy_app(output_dir)
+    _copy_app(output_dir)
 
     # Write to data/db/
     db_dir = output_dir / "data" / "db"
