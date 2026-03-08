@@ -6,9 +6,12 @@ import re
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
 
 from ..utils import find_files
+
+if TYPE_CHECKING:
+    from ..filesystem import FileSystem
 
 
 class DatasetType(Enum):
@@ -41,33 +44,60 @@ class DiscoveryResult:
 _HIVE_PARTITION_PATTERN = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*=.+$")
 
 
-def is_delta_table(path: Path) -> bool:
+def is_delta_table(path: Path | str, fs: FileSystem | None = None) -> bool:
     """Check if a directory is a Delta Lake table."""
-    delta_log = path / "_delta_log"
-    if not delta_log.is_dir():
+    if fs is not None:
+        path_str = str(path)
+        delta_log = f"{path_str}/_delta_log"
+        return fs.isdir(delta_log) and bool(fs.glob(f"{delta_log}/*.json"))
+    # Local path fallback
+    path_obj = Path(path) if isinstance(path, str) else path
+    delta_log_path = path_obj / "_delta_log"
+    if not delta_log_path.is_dir():
         return False
-    return any(delta_log.glob("*.json"))
+    return any(delta_log_path.glob("*.json"))
 
 
-def is_iceberg_table(path: Path) -> bool:
+def is_iceberg_table(path: Path | str, fs: FileSystem | None = None) -> bool:
     """Check if a directory is an Apache Iceberg table."""
-    metadata_dir = path / "metadata"
-    if not metadata_dir.is_dir():
+    if fs is not None:
+        path_str = str(path)
+        metadata_dir = f"{path_str}/metadata"
+        if not fs.isdir(metadata_dir):
+            return False
+        return bool(fs.glob(f"{metadata_dir}/*.metadata.json")) or bool(
+            fs.glob(f"{metadata_dir}/v*.metadata.json")
+        )
+    # Local path fallback
+    path_obj = Path(path) if isinstance(path, str) else path
+    metadata_dir_path = path_obj / "metadata"
+    if not metadata_dir_path.is_dir():
         return False
-    # Iceberg tables have .json and .avro metadata files
-    return any(metadata_dir.glob("*.metadata.json")) or any(
-        metadata_dir.glob("v*.metadata.json")
+    return any(metadata_dir_path.glob("*.metadata.json")) or any(
+        metadata_dir_path.glob("v*.metadata.json")
     )
 
 
-def is_hive_partitioned(path: Path) -> bool:
+def is_hive_partitioned(path: Path | str, fs: FileSystem | None = None) -> bool:
     """Check if a directory contains Hive-style partitions."""
-    if not path.is_dir():
+    if fs is not None:
+        path_str = str(path)
+        if not fs.isdir(path_str):
+            return False
+        for child_path in fs.iterdir(path_str):
+            child_name = child_path.rsplit("/", 1)[-1]
+            if fs.isdir(child_path) and _HIVE_PARTITION_PATTERN.match(child_name):
+                if fs.glob(f"{child_path}/**/*.parquet") or fs.glob(
+                    f"{child_path}/**/*.pq"
+                ):
+                    return True
         return False
-
-    for child in path.iterdir():
+    # Local path fallback
+    path_obj = Path(path) if isinstance(path, str) else path
+    if not path_obj.is_dir():
+        return False
+    for child in path_obj.iterdir():
         if child.is_dir() and _HIVE_PARTITION_PATTERN.match(child.name):
-            # Verify there are parquet files inside
             if list(child.rglob("*.parquet")) or list(child.rglob("*.pq")):
                 return True
     return False
@@ -95,10 +125,11 @@ def find_parquet_files(
     include: Sequence[str] | None,
     exclude: Sequence[str] | None,
     recursive: bool,
+    fs: FileSystem | None = None,
 ) -> list[Path]:
     """Find all parquet files matching the patterns."""
     # Get all files, then filter to parquet only
-    all_files = find_files(root, include, exclude, recursive)
+    all_files = find_files(root, include, exclude, recursive, fs=fs)
     return [f for f in all_files if f.suffix.lower() in (".parquet", ".pq")]
 
 
@@ -107,12 +138,13 @@ def discover_parquet_datasets(
     include: Sequence[str] | None = None,
     exclude: Sequence[str] | None = None,
     recursive: bool = True,
+    fs: FileSystem | None = None,
 ) -> DiscoveryResult:
     """Discover all Parquet datasets in a directory.
 
     Returns datasets and directories to exclude from folder creation.
     """
-    parquet_files = find_parquet_files(root, include, exclude, recursive)
+    parquet_files = find_parquet_files(root, include, exclude, recursive, fs=fs)
 
     datasets: list[ParquetDatasetInfo] = []
     excluded_dirs: set[Path] = set()
@@ -124,14 +156,23 @@ def discover_parquet_datasets(
         parent = f.parent
         files_by_parent.setdefault(parent, []).append(f)
 
+    is_remote = fs is not None and not fs.is_local
+
+    def glob_parquet_files(directory: Path) -> list[Path]:
+        """Get all parquet files in a directory, using fs.glob for remote."""
+        if is_remote and fs is not None:
+            pq_files = fs.glob(str(directory / "**/*.parquet"))
+            pq_files += fs.glob(str(directory / "**/*.pq"))
+            return [Path(f) for f in pq_files]
+        return list(directory.rglob("*.parquet")) + list(directory.rglob("*.pq"))
+
     # First pass: detect Delta Lake tables
     delta_roots: set[Path] = set()
     for parent in files_by_parent:
-        if is_delta_table(parent) and parent not in delta_roots:
+        if is_delta_table(parent, fs=fs) and parent not in delta_roots:
             delta_roots.add(parent)
-            files_in_delta = list(parent.rglob("*.parquet")) + list(
-                parent.rglob("*.pq")
-            )
+            excluded_dirs.add(parent)
+            files_in_delta = glob_parquet_files(parent)
             datasets.append(
                 ParquetDatasetInfo(
                     path=parent,
@@ -139,7 +180,6 @@ def discover_parquet_datasets(
                     files=files_in_delta,
                 )
             )
-            excluded_dirs.add(parent)
             processed_files.update(files_in_delta)
 
     # Second pass: detect Iceberg tables
@@ -151,11 +191,10 @@ def discover_parquet_datasets(
         # Check parent and ancestors for Iceberg metadata
         check_path = parent
         while check_path >= root:
-            if is_iceberg_table(check_path) and check_path not in iceberg_roots:
+            if is_iceberg_table(check_path, fs=fs) and check_path not in iceberg_roots:
                 iceberg_roots.add(check_path)
-                files_in_iceberg = list(check_path.rglob("*.parquet")) + list(
-                    check_path.rglob("*.pq")
-                )
+                excluded_dirs.add(check_path)
+                files_in_iceberg = glob_parquet_files(check_path)
                 datasets.append(
                     ParquetDatasetInfo(
                         path=check_path,
@@ -163,7 +202,6 @@ def discover_parquet_datasets(
                         files=files_in_iceberg,
                     )
                 )
-                excluded_dirs.add(check_path)
                 processed_files.update(files_in_iceberg)
                 break
             check_path = check_path.parent
@@ -177,9 +215,7 @@ def discover_parquet_datasets(
         partition_root = has_hive_partition_in_path(f, root)
         if partition_root and partition_root not in hive_roots:
             hive_roots.add(partition_root)
-            files_in_hive = list(partition_root.rglob("*.parquet")) + list(
-                partition_root.rglob("*.pq")
-            )
+            files_in_hive = glob_parquet_files(partition_root)
             datasets.append(
                 ParquetDatasetInfo(
                     path=partition_root,

@@ -11,8 +11,13 @@ import pyarrow.parquet as pq
 import pytest
 
 from datannurpy import Catalog, Folder
+from datannurpy.scanner.filesystem import FileSystem
 from datannurpy.scanner.parquet.core import scan_parquet
-from datannurpy.scanner.parquet.discovery import is_hive_partitioned
+from datannurpy.scanner.parquet.discovery import (
+    is_delta_table,
+    is_hive_partitioned,
+    is_iceberg_table,
+)
 
 DATA_DIR = Path(__file__).parent.parent.parent / "data"
 
@@ -106,6 +111,17 @@ class TestScanIcebergExceptions:
         with pytest.raises(ImportError, match="PyIceberg is required"):
             catalog.add_dataset(tmp_path, quiet=True)
 
+    def test_iceberg_no_metadata_files(self, tmp_path: Path):
+        """Iceberg scan should raise FileNotFoundError if no metadata files."""
+        from datannurpy.scanner.parquet.core import scan_iceberg
+
+        metadata_dir = tmp_path / "metadata"
+        metadata_dir.mkdir()
+        # Create empty metadata directory (no .metadata.json files)
+
+        with pytest.raises(FileNotFoundError, match="No Iceberg metadata files found"):
+            scan_iceberg(tmp_path, "test", infer_stats=True, freq_threshold=None)
+
 
 class TestParquetFormats:
     """Test scanning different Parquet formats."""
@@ -176,3 +192,101 @@ class TestParquetFormats:
         assert ds.description == "Sample Iceberg table for testing"
         var_by_name = {v.name: v for v in catalog.variable.all()}
         assert var_by_name["id"].description == "Unique identifier"
+
+
+class TestDetectionWithFileSystem:
+    """Test format detection functions with FileSystem parameter."""
+
+    def test_is_delta_table_with_fs(self, tmp_path: Path) -> None:
+        """is_delta_table should work with FileSystem."""
+        delta_log = tmp_path / "_delta_log"
+        delta_log.mkdir()
+        (delta_log / "00000.json").write_text("{}")
+
+        fs = FileSystem(tmp_path)
+        assert is_delta_table(tmp_path, fs=fs) is True
+
+    def test_is_delta_table_with_fs_not_delta(self, tmp_path: Path) -> None:
+        """is_delta_table should return False for non-Delta directories."""
+        fs = FileSystem(tmp_path)
+        assert is_delta_table(tmp_path, fs=fs) is False
+
+    def test_is_iceberg_table_with_fs(self, tmp_path: Path) -> None:
+        """is_iceberg_table should work with FileSystem."""
+        metadata = tmp_path / "metadata"
+        metadata.mkdir()
+        (metadata / "00000-abc.metadata.json").write_text("{}")
+
+        fs = FileSystem(tmp_path)
+        assert is_iceberg_table(tmp_path, fs=fs) is True
+
+    def test_is_iceberg_table_with_fs_not_iceberg(self, tmp_path: Path) -> None:
+        """is_iceberg_table should return False for non-Iceberg directories."""
+        fs = FileSystem(tmp_path)
+        assert is_iceberg_table(tmp_path, fs=fs) is False
+
+    def test_is_iceberg_table_with_fs_no_metadata_dir(self, tmp_path: Path) -> None:
+        """is_iceberg_table should return False when metadata dir doesn't exist."""
+        (tmp_path / "some_file.txt").write_text("content")
+        fs = FileSystem(tmp_path)
+        assert is_iceberg_table(tmp_path, fs=fs) is False
+
+    def test_is_hive_partitioned_with_fs(self, tmp_path: Path) -> None:
+        """is_hive_partitioned should work with FileSystem."""
+        partition = tmp_path / "year=2024"
+        partition.mkdir()
+        (partition / "data.parquet").write_bytes(b"PAR1")
+
+        fs = FileSystem(tmp_path)
+        assert is_hive_partitioned(tmp_path, fs=fs) is True
+
+    def test_is_hive_partitioned_with_fs_not_hive(self, tmp_path: Path) -> None:
+        """is_hive_partitioned should return False for non-Hive directories."""
+        fs = FileSystem(tmp_path)
+        assert is_hive_partitioned(tmp_path, fs=fs) is False
+
+    def test_is_hive_partitioned_with_fs_not_dir(self, tmp_path: Path) -> None:
+        """is_hive_partitioned should return False for non-directories."""
+        file_path = tmp_path / "file.txt"
+        file_path.write_text("content")
+        fs = FileSystem(tmp_path)
+        assert is_hive_partitioned(file_path, fs=fs) is False
+
+    def test_is_hive_partitioned_with_fs_no_parquet(self, tmp_path: Path) -> None:
+        """is_hive_partitioned should return False if partition has no parquet."""
+        partition = tmp_path / "year=2024"
+        partition.mkdir()
+        (partition / "data.csv").write_text("x\n1")
+
+        fs = FileSystem(tmp_path)
+        assert is_hive_partitioned(tmp_path, fs=fs) is False
+
+    def test_is_hive_partitioned_with_fs_non_partition_subdir(
+        self, tmp_path: Path
+    ) -> None:
+        """is_hive_partitioned should skip non-partition subdirectories."""
+        # Regular subdirectory (not matching key=value pattern)
+        regular_dir = tmp_path / "data"
+        regular_dir.mkdir()
+        (regular_dir / "file.parquet").write_bytes(b"PAR1")
+
+        # Partition directory with parquet
+        partition = tmp_path / "year=2024"
+        partition.mkdir()
+        (partition / "data.parquet").write_bytes(b"PAR1")
+
+        fs = FileSystem(tmp_path)
+        assert is_hive_partitioned(tmp_path, fs=fs) is True
+
+    def test_is_hive_partitioned_with_fs_only_regular_dirs(
+        self, tmp_path: Path
+    ) -> None:
+        """is_hive_partitioned should return False with only regular subdirs."""
+        # Multiple regular subdirectories (not matching key=value pattern)
+        (tmp_path / "data").mkdir()
+        (tmp_path / "data" / "file.parquet").write_bytes(b"PAR1")
+        (tmp_path / "archive").mkdir()
+        (tmp_path / "archive" / "old.parquet").write_bytes(b"PAR1")
+
+        fs = FileSystem(tmp_path)
+        assert is_hive_partitioned(tmp_path, fs=fs) is False

@@ -19,9 +19,13 @@ from .discovery import (
     discover_datasets,
 )
 from .excel import read_excel, scan_excel
+from .filesystem import FileSystem, get_filesystem
 from .statistical import read_statistical, scan_statistical
 
 __all__ = [
+    # Filesystem abstraction
+    "FileSystem",
+    "get_filesystem",
     # Discovery
     "DatasetInfo",
     "DiscoveryResult",

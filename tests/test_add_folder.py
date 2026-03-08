@@ -697,3 +697,65 @@ class TestDepthParameter:
         ds = next((d for d in catalog.dataset.all() if "partitioned" in d.id), None)
         if ds:
             assert ds.nb_row is None
+
+
+class TestRemoteStorage:
+    """Test remote storage URL handling."""
+
+    def test_remote_url_requires_provider_package(self):
+        """add_folder should raise ImportError when provider package is missing."""
+        catalog = Catalog()
+        # S3 URLs require s3fs package
+        with pytest.raises(ImportError, match="s3fs"):
+            catalog.add_folder("s3://bucket/data")
+
+    def test_remote_url_with_sftp_connection_error(self):
+        """add_folder should raise connection error for unreachable SFTP."""
+        catalog = Catalog()
+        # Use a non-routable IP to get a quick timeout
+        with pytest.raises((TimeoutError, OSError)):
+            catalog.add_folder(
+                "sftp://10.255.255.1/data", storage_options={"timeout": 1}
+            )
+
+    def test_remote_folder_not_found(self, tmp_path: Path):
+        """add_folder should raise FileNotFoundError for non-existent remote folder."""
+        from unittest.mock import patch, MagicMock
+
+        mock_fs = MagicMock()
+        mock_fs.root = "memory://test/data"
+        mock_fs.exists.return_value = False
+
+        with patch("datannurpy.add_folder.FileSystem", return_value=mock_fs):
+            catalog = Catalog()
+            with pytest.raises(FileNotFoundError, match="Folder not found"):
+                catalog.add_folder("memory://test/data")
+
+    def test_remote_not_a_directory(self, tmp_path: Path):
+        """add_folder should raise NotADirectoryError for remote file."""
+        from unittest.mock import patch, MagicMock
+
+        mock_fs = MagicMock()
+        mock_fs.root = "memory://test/file.csv"
+        mock_fs.exists.return_value = True
+        mock_fs.isdir.return_value = False
+
+        with patch("datannurpy.add_folder.FileSystem", return_value=mock_fs):
+            catalog = Catalog()
+            with pytest.raises(NotADirectoryError, match="Not a directory"):
+                catalog.add_folder("memory://test/file.csv")
+
+    def test_remote_folder_is_dataset(self, tmp_path: Path):
+        """add_folder should raise ValueError if remote path is a dataset."""
+        from unittest.mock import patch, MagicMock
+
+        mock_fs = MagicMock()
+        mock_fs.root = "memory://test/data"
+        mock_fs.exists.return_value = True
+        mock_fs.isdir.return_value = True
+
+        with patch("datannurpy.add_folder.FileSystem", return_value=mock_fs):
+            with patch("datannurpy.add_folder.is_delta_table", return_value=True):
+                catalog = Catalog()
+                with pytest.raises(ValueError, match="dataset, not a folder"):
+                    catalog.add_folder("memory://test/data")

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 from .utils import (
     build_variable_ids,
@@ -17,6 +17,7 @@ from .utils import (
 )
 from .finalize import remove_dataset_cascade
 from .schema import Dataset, Folder
+from .scanner.filesystem import FileSystem, is_remote_url
 from .scanner.utils import SUPPORTED_FORMATS, get_mtime_iso, get_mtime_timestamp
 from .scanner.parquet import (
     DatasetType,
@@ -64,6 +65,7 @@ def _create_dataset(
     meta: DatasetMeta,
     nb_row: int | None = None,
     scanned_description: str | None = None,
+    fs: FileSystem | None = None,
 ) -> Dataset:
     """Create Dataset with common fields."""
     return Dataset(
@@ -71,7 +73,7 @@ def _create_dataset(
         name=meta.name or default_name,
         folder_id=folder_id,
         data_path=data_path,
-        last_update_date=get_mtime_iso(dataset_path),
+        last_update_date=get_mtime_iso(dataset_path, fs=fs),
         last_update_timestamp=current_mtime,
         delivery_format=delivery_format,
         nb_row=nb_row,
@@ -104,6 +106,7 @@ def add_dataset(
     csv_encoding: str | None = None,
     quiet: bool | None = None,
     refresh: bool | None = None,
+    storage_options: dict[str, Any] | None = None,
     # Dataset metadata overrides
     name: str | None = None,
     description: str | None = None,
@@ -128,12 +131,24 @@ def add_dataset(
         if depth is not None
         else cast(Literal["structure", "schema", "full"], catalog.depth)
     )
-    dataset_path = Path(path).resolve()
 
-    if not dataset_path.exists():
-        raise FileNotFoundError(f"Path not found: {dataset_path}")
+    # Handle remote URLs vs local paths
+    is_remote = is_remote_url(path)
+    fs: FileSystem | None = None
 
-    start_time = log_section("add_dataset", dataset_path.name, q)
+    if is_remote or storage_options:
+        fs = FileSystem(path, storage_options)
+        if not fs.exists(fs.root):
+            raise FileNotFoundError(f"Path not found: {path}")
+        dataset_path = Path(fs.root)
+        path_name = fs.root.rstrip("/").rsplit("/", 1)[-1]
+    else:
+        dataset_path = Path(path).resolve()
+        path_name = dataset_path.name
+        if not dataset_path.exists():
+            raise FileNotFoundError(f"Path not found: {dataset_path}")
+
+    start_time = log_section("add_dataset", path_name, q)
 
     # Handle folder
     resolved_folder_id: str | None = None
@@ -163,7 +178,8 @@ def add_dataset(
     )
 
     # Check if it's a partitioned Parquet directory
-    if dataset_path.is_dir():
+    is_dir = fs.isdir(fs.root) if fs else dataset_path.is_dir()
+    if is_dir:
         _add_parquet_directory(
             catalog,
             dataset_path,
@@ -174,11 +190,12 @@ def add_dataset(
             quiet=q,
             refresh=do_refresh,
             start_time=start_time,
+            fs=fs,
         )
         return
 
     # It's a file
-    suffix = dataset_path.suffix.lower()
+    suffix = Path(path_name).suffix.lower()
     delivery_format = SUPPORTED_FORMATS.get(suffix)
     if delivery_format is None:
         raise ValueError(
@@ -187,7 +204,7 @@ def add_dataset(
         )
 
     # Get current mtime
-    current_mtime = get_mtime_timestamp(dataset_path)
+    current_mtime = get_mtime_timestamp(dataset_path, fs=fs)
     data_path_str = str(dataset_path)
 
     # Check for existing dataset (incremental scan)
@@ -197,14 +214,15 @@ def add_dataset(
             # Unchanged - skip and mark as seen
             catalog.dataset.update(existing.id, _seen=True)
             catalog.modality_manager.mark_dataset_seen(existing.id)
-            log_skip(dataset_path.name, q)
+            log_skip(path_name, q)
             return
         else:
             # Modified or refresh forced - remove old dataset cascade before rescan
             remove_dataset_cascade(catalog, existing)
 
     # Build dataset ID
-    base_name = sanitize_id(dataset_path.stem)
+    path_stem = Path(path_name).stem
+    base_name = sanitize_id(path_stem)
     dataset_id = (
         make_id(resolved_folder_id, base_name) if resolved_folder_id else base_name
     )
@@ -218,16 +236,17 @@ def add_dataset(
     if resolved_depth == "structure":
         dataset = _create_dataset(
             dataset_id,
-            dataset_path.stem,
+            path_stem,
             resolved_folder_id,
             data_path_str,
             dataset_path,
             current_mtime,
             delivery_format,
             meta,
+            fs=fs,
         )
         catalog.dataset.add(dataset)
-        log_done(dataset_path.name, q, start_time)
+        log_done(path_name, q, start_time)
         return
 
     # Schema/Full mode: scan file
@@ -240,11 +259,12 @@ def add_dataset(
         infer_stats=infer_stats and not schema_only,
         freq_threshold=catalog.freq_threshold or None,
         csv_encoding=resolved_encoding,
+        fs=fs,
     )
 
     dataset = _create_dataset(
         dataset_id,
-        dataset_path.stem,
+        path_stem,
         resolved_folder_id,
         data_path_str,
         dataset_path,
@@ -253,6 +273,7 @@ def add_dataset(
         meta,
         nb_row=result.nb_row,
         scanned_description=result.description,
+        fs=fs,
     )
     catalog.dataset.add(dataset)
 
@@ -266,10 +287,10 @@ def add_dataset(
     # Log result
     var_count = len(result.variables)
     if schema_only:
-        log_done(f"{dataset_path.name} ({var_count} vars)", q, start_time)
+        log_done(f"{path_name} ({var_count} vars)", q, start_time)
     else:
         log_done(
-            f"{dataset_path.name} ({dataset.nb_row:,} rows, {var_count} vars)",
+            f"{path_name} ({dataset.nb_row:,} rows, {var_count} vars)",
             q,
             start_time,
         )
@@ -286,10 +307,12 @@ def _add_parquet_directory(
     quiet: bool,
     refresh: bool,
     start_time: float,
+    fs: FileSystem | None = None,
 ) -> None:
     """Add a partitioned Parquet directory (Delta, Hive, or Iceberg) to catalog."""
-    current_mtime = get_mtime_timestamp(dir_path)
+    current_mtime = get_mtime_timestamp(dir_path, fs=fs)
     data_path_str = str(dir_path)
+    dir_name = str(dir_path).rstrip("/").rsplit("/", 1)[-1]
 
     # Check for existing dataset (incremental scan)
     existing = catalog.dataset.get_by("data_path", data_path_str)
@@ -297,16 +320,16 @@ def _add_parquet_directory(
         if not refresh and existing.last_update_timestamp == current_mtime:
             catalog.dataset.update(existing.id, _seen=True)
             catalog.modality_manager.mark_dataset_seen(existing.id)
-            log_skip(dir_path.name, quiet)
+            log_skip(dir_name, quiet)
             return
         remove_dataset_cascade(catalog, existing)
 
     # Detect dataset type
-    if is_delta_table(dir_path):
+    if is_delta_table(dir_path, fs=fs):
         dataset_type, delivery_format = DatasetType.DELTA, "delta"
-    elif is_iceberg_table(dir_path):
+    elif is_iceberg_table(dir_path, fs=fs):
         dataset_type, delivery_format = DatasetType.ICEBERG, "iceberg"
-    elif is_hive_partitioned(dir_path):
+    elif is_hive_partitioned(dir_path, fs=fs):
         dataset_type, delivery_format = DatasetType.HIVE, "parquet"
     else:
         raise ValueError(
@@ -315,23 +338,24 @@ def _add_parquet_directory(
         )
 
     # Build dataset ID
-    base_name = sanitize_id(dir_path.name)
+    base_name = sanitize_id(dir_name)
     dataset_id = make_id(folder_id, base_name) if folder_id else base_name
 
     # Structure mode: create dataset without scanning
     if depth == "structure":
         dataset = _create_dataset(
             dataset_id,
-            dir_path.name,
+            dir_name,
             folder_id,
             data_path_str,
             dir_path,
             current_mtime,
             delivery_format,
             meta,
+            fs=fs,
         )
         catalog.dataset.add(dataset)
-        log_done(dir_path.name, quiet, start_time)
+        log_done(dir_name, quiet, start_time)
         return
 
     # Schema/Full mode: scan the dataset
@@ -345,7 +369,7 @@ def _add_parquet_directory(
     )
 
     # Override meta.name with parquet metadata if not user-provided
-    default_name = meta.name or pq_meta.name or dir_path.name
+    default_name = meta.name or pq_meta.name or dir_name
     scanned_desc = pq_meta.description
 
     dataset = _create_dataset(
@@ -359,6 +383,7 @@ def _add_parquet_directory(
         meta,
         nb_row=nb_row,
         scanned_description=scanned_desc,
+        fs=fs,
     )
     # Force the name (since _create_dataset uses meta.name or default_name)
     dataset.name = default_name
@@ -372,8 +397,6 @@ def _add_parquet_directory(
     # Log result
     var_count = len(variables)
     if schema_only:
-        log_done(f"{dir_path.name} ({var_count} vars)", quiet, start_time)
+        log_done(f"{dir_name} ({var_count} vars)", quiet, start_time)
     else:
-        log_done(
-            f"{dir_path.name} ({nb_row:,} rows, {var_count} vars)", quiet, start_time
-        )
+        log_done(f"{dir_name} ({nb_row:,} rows, {var_count} vars)", quiet, start_time)

@@ -5,6 +5,8 @@
 __pycache__/
 src/datannurpy/app/
 examples/output/
+examples/output_remote/
+.env
 
 # Coverage
 htmlcov/

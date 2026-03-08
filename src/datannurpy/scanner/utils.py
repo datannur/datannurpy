@@ -5,12 +5,16 @@ from __future__ import annotations
 from collections.abc import Sequence
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import ibis
 import ibis.expr.datatypes as dt
 import pyarrow as pa
 
 from ..schema import Variable
+
+if TYPE_CHECKING:
+    from .filesystem import FileSystem
 
 # Supported file formats: suffix -> delivery_format
 SUPPORTED_FORMATS: dict[str, str] = {
@@ -25,16 +29,31 @@ SUPPORTED_FORMATS: dict[str, str] = {
 }
 
 
-def get_mtime_iso(path: Path) -> str:
+def get_mtime_iso(path: Path, fs: FileSystem | None = None) -> str:
     """Get file modification time as YYYY/MM/DD."""
-    mtime = path.stat().st_mtime
+    if fs is not None:
+        info = fs.info(str(path))
+        mtime = info.get("mtime") or info.get("modified", 0)
+        # SFTP returns datetime, others return float
+        if isinstance(mtime, datetime):
+            return mtime.strftime("%Y/%m/%d")
+    else:
+        mtime = path.stat().st_mtime
     dt_obj = datetime.fromtimestamp(mtime, tz=timezone.utc)
     return dt_obj.strftime("%Y/%m/%d")
 
 
-def get_mtime_timestamp(path: Path) -> int:
+def get_mtime_timestamp(path: Path, fs: FileSystem | None = None) -> int:
     """Get file modification time as Unix timestamp (seconds)."""
-    return int(path.stat().st_mtime)
+    if fs is not None:
+        info = fs.info(str(path))
+        mtime = info.get("mtime") or info.get("modified", 0)
+        # SFTP returns datetime, others return float
+        if isinstance(mtime, datetime):
+            return int(mtime.timestamp())
+    else:
+        mtime = path.stat().st_mtime
+    return int(mtime)
 
 
 def find_files(
@@ -42,8 +61,13 @@ def find_files(
     include: Sequence[str] | None,
     exclude: Sequence[str] | None,
     recursive: bool,
+    fs: FileSystem | None = None,
 ) -> list[Path]:
     """Find files matching include/exclude patterns."""
+    # Use FileSystem if provided, otherwise use pathlib directly
+    if fs is not None:
+        return _find_files_with_fs(fs, root, include, exclude, recursive)
+
     if include is None:
         pattern = "**/*" if recursive else "*"
         candidates = [
@@ -85,6 +109,64 @@ def find_files(
         candidates = [f for f in candidates if f.resolve() not in excluded]
 
     return candidates
+
+
+def _find_files_with_fs(
+    fs: FileSystem,
+    root: Path,
+    include: Sequence[str] | None,
+    exclude: Sequence[str] | None,
+    recursive: bool,
+) -> list[Path]:
+    """Find files using FileSystem abstraction (for remote storage support)."""
+    root_str = str(root)
+
+    if include is None:
+        pattern = "**/*" if recursive else "*"
+        all_paths = fs.glob(f"{root_str}/{pattern}")
+        candidates = [
+            p for p in all_paths if Path(p).suffix.lower() in SUPPORTED_FORMATS
+        ]
+    else:
+        candidates_set: set[str] = set()
+        for pat in include:
+            if pat.endswith("/**"):
+                base = pat[:-3]
+                candidates_set.update(fs.glob(f"{root_str}/{base}/*"))
+                candidates_set.update(fs.glob(f"{root_str}/{base}/**/*"))
+            elif recursive and "**" not in pat:
+                candidates_set.update(fs.glob(f"{root_str}/**/{pat}"))
+            else:
+                candidates_set.update(fs.glob(f"{root_str}/{pat}"))
+        candidates = list(candidates_set)
+
+    # Filter to files only and supported formats
+    candidates = [
+        p
+        for p in candidates
+        if fs.isfile(p) and Path(p).suffix.lower() in SUPPORTED_FORMATS
+    ]
+
+    if exclude:
+        excluded: set[str] = set()
+        for pat in exclude:
+            pat = pat.rstrip("/")
+            target = f"{root_str}/{pat}"
+            if fs.isdir(target):
+                # Exclude all files inside this directory
+                for f in candidates:
+                    if f.startswith(target + "/"):
+                        excluded.add(f)
+            elif "*" in pat:
+                pattern = f"{root_str}/**/{pat}" if recursive else f"{root_str}/{pat}"
+                for f in fs.glob(pattern):
+                    excluded.add(f)
+            elif fs.isfile(target):
+                excluded.add(target)
+        candidates = [f for f in candidates if f not in excluded]
+
+    # Convert to Path objects for local filesystem (backward compatibility)
+    return sorted(Path(p) for p in candidates)
 
 
 def ibis_type_to_str(dtype: dt.DataType) -> str:

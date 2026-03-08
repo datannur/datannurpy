@@ -1,5 +1,12 @@
 # datannurpy
 
+## 0.7.0 (2026-03-08)
+
+- add: remote storage support for `add_folder`, `add_dataset`, `add_database`
+- add: `storage_options` parameter for SFTP/S3/Azure/GCS credentials
+- add: `add_database` now supports remote SQLite/GeoPackage files
+- add: `depth="schema"` optimization for remote files (minimal downloads)
+
 ## 0.6.0 (2026-03-08)
 
 - add: `depth` parameter for `add_dataset` and `add_metadata`

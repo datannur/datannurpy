@@ -273,3 +273,66 @@ class TestAddDatasetDepth:
         # Should create dataset with no variables
         assert len(catalog.dataset.all()) == 1
         assert len(catalog.variable.all()) == 0
+
+
+class TestRemoteStorage:
+    """Test remote storage URL handling."""
+
+    def test_remote_url_requires_provider_package(self):
+        """add_dataset should raise ImportError when provider package is missing."""
+        catalog = Catalog()
+        # S3 URLs require s3fs package
+        with pytest.raises(ImportError, match="s3fs"):
+            catalog.add_dataset("s3://bucket/data.csv")
+
+    def test_remote_url_with_sftp_connection_error(self):
+        """add_dataset should raise connection error for unreachable SFTP."""
+        catalog = Catalog()
+        # Use a non-routable IP to get a quick timeout
+        with pytest.raises((TimeoutError, OSError)):
+            catalog.add_dataset(
+                "sftp://10.255.255.1/data.csv", storage_options={"timeout": 1}
+            )
+
+    def test_remote_file_not_found(self, tmp_path: Path):
+        """add_dataset should raise FileNotFoundError for non-existent remote file."""
+        from unittest.mock import patch, MagicMock
+
+        mock_fs = MagicMock()
+        mock_fs.root = "memory://test/data.csv"
+        mock_fs.exists.return_value = False
+
+        with patch("datannurpy.add_dataset.FileSystem", return_value=mock_fs):
+            catalog = Catalog()
+            with pytest.raises(FileNotFoundError, match="Path not found"):
+                catalog.add_dataset("memory://test/data.csv")
+
+    def test_remote_file_path_resolution(self, tmp_path: Path):
+        """add_dataset should resolve remote file path correctly."""
+        from unittest.mock import patch, MagicMock
+
+        # Create a local CSV for scanning
+        csv_file = tmp_path / "data.csv"
+        csv_file.write_text("name,age\nAlice,30\n")
+
+        mock_fs = MagicMock()
+        mock_fs.root = "memory://bucket/data.csv"
+        mock_fs.exists.return_value = True
+        mock_fs.isdir.return_value = False  # it's a file
+        mock_fs.is_local = False
+        mock_fs.ensure_local.return_value.__enter__ = MagicMock(return_value=csv_file)
+        mock_fs.ensure_local.return_value.__exit__ = MagicMock(return_value=None)
+        mock_fs.info.return_value = {"mtime": 1700000000}
+
+        with patch("datannurpy.add_dataset.FileSystem", return_value=mock_fs):
+            catalog = Catalog(quiet=True)
+            catalog.add_dataset("memory://bucket/data.csv")
+
+            # Verify dataset was created with correct path
+            datasets = catalog.dataset.all()
+            assert len(datasets) == 1
+            # Path gets normalized to single slash by pathlib
+            assert datasets[0].data_path is not None
+            assert "memory:" in datasets[0].data_path
+            assert "bucket" in datasets[0].data_path
+            assert datasets[0].delivery_format == "csv"

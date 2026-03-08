@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from .utils import (
     build_dataset_id_name,
@@ -23,6 +23,7 @@ from .utils import (
 from .finalize import remove_dataset_cascade
 from .schema import Dataset, Folder
 from .scanner.discovery import compute_scan_plan, discover_datasets
+from .scanner.filesystem import FileSystem, is_remote_url
 from .scanner.utils import get_mtime_iso
 from .scanner.parquet.discovery import (
     is_delta_table,
@@ -48,21 +49,41 @@ def add_folder(
     csv_encoding: str | None = None,
     quiet: bool | None = None,
     refresh: bool | None = None,
+    storage_options: dict[str, Any] | None = None,
 ) -> None:
     """Scan a folder and add its contents to the catalog."""
     catalog._has_scanned = True
     q = quiet if quiet is not None else catalog.quiet
     do_refresh = refresh if refresh is not None else catalog.refresh
     resolved_depth = depth if depth is not None else catalog.depth
-    root = Path(path).resolve()
 
-    if not root.exists():
-        raise FileNotFoundError(f"Folder not found: {root}")
-    if not root.is_dir():
-        raise NotADirectoryError(f"Not a directory: {root}")
+    # Handle remote URLs vs local paths
+    is_remote = is_remote_url(path)
+    fs: FileSystem | None = None
+
+    if is_remote or storage_options:
+        fs = FileSystem(path, storage_options)
+        if not fs.exists(fs.root):
+            raise FileNotFoundError(f"Folder not found: {path}")
+        if not fs.isdir(fs.root):
+            raise NotADirectoryError(f"Not a directory: {path}")
+        # For remote paths, we use the URL as-is for root
+        root = Path(fs.root)
+        root_name = fs.root.rstrip("/").rsplit("/", 1)[-1]
+    else:
+        root = Path(path).resolve()
+        root_name = root.name
+        if not root.exists():
+            raise FileNotFoundError(f"Folder not found: {root}")
+        if not root.is_dir():
+            raise NotADirectoryError(f"Not a directory: {root}")
 
     # Reject if path is a dataset (Delta/Hive/Iceberg) - use add_dataset instead
-    if is_delta_table(root) or is_hive_partitioned(root) or is_iceberg_table(root):
+    if (
+        is_delta_table(root, fs=fs)
+        or is_hive_partitioned(root, fs=fs)
+        or is_iceberg_table(root, fs=fs)
+    ):
         raise ValueError(
             f"Path is a dataset, not a folder: {root}. Use add_dataset() instead."
         )
@@ -73,7 +94,7 @@ def add_folder(
 
     # Create default folder from directory name if not provided
     if folder is None:
-        folder = Folder(id=sanitize_id(root.name), name=root.name)
+        folder = Folder(id=sanitize_id(root_name), name=root_name)
 
     # Set data_path for root folder
     folder.data_path = str(root)
@@ -84,7 +105,7 @@ def add_folder(
     prefix = folder.id
 
     # Discover all datasets (parquet + other formats)
-    discovery = discover_datasets(root, include, exclude, recursive)
+    discovery = discover_datasets(root, include, exclude, recursive, fs=fs)
 
     # Extract subdirs from discovered datasets
     subdirs: set[Path] = set()
@@ -138,7 +159,7 @@ def add_folder(
                 # Update metadata for modified dataset
                 catalog.dataset.update(
                     existing.id,
-                    last_update_date=get_mtime_iso(info.path),
+                    last_update_date=get_mtime_iso(info.path, fs=fs),
                     last_update_timestamp=info.mtime,
                     _seen=True,
                 )
@@ -151,7 +172,7 @@ def add_folder(
                 name=dataset_name,
                 folder_id=folder_id,
                 data_path=data_path_str,
-                last_update_date=get_mtime_iso(info.path),
+                last_update_date=get_mtime_iso(info.path, fs=fs),
                 last_update_timestamp=info.mtime,
                 delivery_format=info.format,
                 _seen=True,
@@ -198,6 +219,7 @@ def add_folder(
             infer_stats=infer_stats,
             freq_threshold=freq_threshold,
             csv_encoding=resolved_encoding,
+            fs=fs,
         )
 
         # Create dataset
@@ -206,7 +228,7 @@ def add_folder(
             name=result.name or dataset_name,
             folder_id=folder_id,
             data_path=data_path_str,
-            last_update_date=get_mtime_iso(info.path),
+            last_update_date=get_mtime_iso(info.path, fs=fs),
             last_update_timestamp=info.mtime,
             delivery_format=info.format,
             description=result.description,

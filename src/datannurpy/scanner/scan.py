@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
+import ibis
 import pyarrow as pa
+import pyarrow.fs
 import pyarrow.parquet as pq
 
 from ..schema import Variable
@@ -15,6 +19,9 @@ from .parquet import scan_parquet
 from .parquet.core import scan_delta, scan_hive, scan_iceberg
 from .statistical import scan_statistical
 from .utils import build_variables_from_schema
+
+if TYPE_CHECKING:
+    from .filesystem import FileSystem
 
 
 @dataclass
@@ -37,15 +44,30 @@ def scan_file(
     infer_stats: bool = True,
     freq_threshold: int | None = None,
     csv_encoding: str | None = None,
+    fs: FileSystem | None = None,
 ) -> ScanResult:
     """Scan a file and return variables, row count, and optional metadata.
 
     Args:
         schema_only: If True, only read schema (no data, no row count, no stats).
+        fs: Optional FileSystem for remote file access. Non-streamable formats
+            (CSV, Excel, SAS/SPSS/Stata) will be downloaded to a temp file.
     """
     # Schema-only mode: read metadata without scanning data
     if schema_only:
-        return _scan_schema_only(path, delivery_format, dataset_id, csv_encoding)
+        return _scan_schema_only(path, delivery_format, dataset_id, csv_encoding, fs=fs)
+
+    # Remote filesystem: use ensure_local for all formats
+    if fs is not None and not fs.is_local:
+        return _scan_with_ensure_local(
+            path,
+            delivery_format,
+            dataset_id=dataset_id,
+            infer_stats=infer_stats,
+            freq_threshold=freq_threshold,
+            csv_encoding=csv_encoding,
+            fs=fs,
+        )
 
     # Parquet-based formats (parquet, delta, hive, iceberg)
     parquet_scanners = {
@@ -103,15 +125,105 @@ def scan_file(
     return ScanResult(variables=variables, nb_row=nb_row, freq_table=freq_table)
 
 
+def _scan_with_ensure_local(
+    path: Path,
+    delivery_format: str,
+    *,
+    dataset_id: str,
+    infer_stats: bool,
+    freq_threshold: int | None,
+    csv_encoding: str | None,
+    fs: FileSystem,
+) -> ScanResult:
+    """Download remote file/directory and scan locally."""
+    # Directory formats (delta, hive, iceberg) need ensure_local_dir
+    if delivery_format in ("delta", "hive", "iceberg"):
+        dir_scanners = {
+            "delta": scan_delta,
+            "hive": scan_hive,
+            "iceberg": scan_iceberg,
+        }
+        with fs.ensure_local_dir(str(path)) as local_path:
+            variables, nb_row, freq_table, metadata = dir_scanners[delivery_format](
+                local_path,
+                dataset_id=dataset_id,
+                infer_stats=infer_stats,
+                freq_threshold=freq_threshold,
+            )
+            return ScanResult(
+                variables=variables,
+                nb_row=nb_row,
+                freq_table=freq_table,
+                description=metadata.description if metadata else None,
+                name=metadata.name if metadata else None,
+            )
+
+    # File formats use ensure_local
+    with fs.ensure_local(str(path)) as local_path:
+        if delivery_format == "parquet":
+            variables, nb_row, freq_table, metadata = scan_parquet(
+                local_path,
+                dataset_id=dataset_id,
+                infer_stats=infer_stats,
+                freq_threshold=freq_threshold,
+            )
+            return ScanResult(
+                variables=variables,
+                nb_row=nb_row,
+                freq_table=freq_table,
+                description=metadata.description if metadata else None,
+                name=metadata.name if metadata else None,
+            )
+
+        if delivery_format in ("sas", "spss", "stata"):
+            variables, nb_row, freq_table, metadata = scan_statistical(
+                local_path,
+                dataset_id=dataset_id,
+                infer_stats=infer_stats,
+                freq_threshold=freq_threshold,
+            )
+            return ScanResult(
+                variables=variables,
+                nb_row=nb_row,
+                freq_table=freq_table,
+                description=metadata.description if metadata else None,
+            )
+
+        if delivery_format == "csv":
+            variables, nb_row, freq_table = scan_csv(
+                local_path,
+                dataset_id=dataset_id,
+                infer_stats=infer_stats,
+                freq_threshold=freq_threshold,
+                csv_encoding=csv_encoding,
+            )
+            return ScanResult(variables=variables, nb_row=nb_row, freq_table=freq_table)
+
+        # Excel (xls, xlsx)
+        variables, nb_row, freq_table = scan_excel(
+            local_path,
+            dataset_id=dataset_id,
+            infer_stats=infer_stats,
+            freq_threshold=freq_threshold,
+        )
+        return ScanResult(variables=variables, nb_row=nb_row, freq_table=freq_table)
+
+
 def _scan_schema_only(
     path: Path,
     delivery_format: str,
     dataset_id: str,
     csv_encoding: str | None = None,
+    fs: FileSystem | None = None,
 ) -> ScanResult:
     """Read schema only without scanning data (for depth='schema' mode)."""
-    import ibis
+    # Remote filesystem: use optimized partial downloads
+    if fs is not None and not fs.is_local:
+        return _scan_schema_only_remote(
+            path, delivery_format, dataset_id, csv_encoding, fs
+        )
 
+    # Local: read schema directly
     # Parquet-based: read schema from metadata
     if delivery_format in ("parquet", "delta", "hive", "iceberg"):
         if delivery_format == "parquet":
@@ -131,6 +243,135 @@ def _scan_schema_only(
         variables = build_variables_from_schema(schema, dataset_id)
         return ScanResult(variables=variables, nb_row=None)
 
+    return _scan_schema_only_local(path, delivery_format, dataset_id, csv_encoding)
+
+
+# Bytes to download for schema-only reads of statistical formats
+_PARTIAL_BYTES = {
+    "sas": 16384,  # 16KB for SAS header
+    "spss": 2048,  # 2KB for SPSS header
+    "stata": 8192,  # 8KB for Stata header
+}
+
+
+def _scan_schema_only_remote(
+    path: Path,
+    delivery_format: str,
+    dataset_id: str,
+    csv_encoding: str | None,
+    fs: FileSystem,
+) -> ScanResult:
+    """Optimized schema-only scan for remote files - minimal downloads."""
+    # Parquet: PyArrow reads footer natively via fsspec (no full download)
+    if delivery_format == "parquet":
+        pa_fs = pyarrow.fs.PyFileSystem(pyarrow.fs.FSSpecHandler(fs.fs))
+        full_path = fs._full_path(str(path))
+        schema = pq.read_schema(full_path, filesystem=pa_fs)
+        variables = build_variables_from_schema(schema, dataset_id)
+        return ScanResult(variables=variables, nb_row=None)
+
+    # Delta: download only _delta_log/ directory
+    if delivery_format == "delta":
+        delta_log_path = f"{path}/_delta_log"
+        with fs.ensure_local_dir(delta_log_path) as local_log:
+            from deltalake import DeltaTable
+
+            # DeltaTable needs the parent directory containing _delta_log
+            dt = DeltaTable(local_log.parent)
+            schema = pa.schema(dt.schema().to_arrow())
+            variables = build_variables_from_schema(schema, dataset_id)
+            return ScanResult(variables=variables, nb_row=None)
+
+    # Iceberg: download only metadata/ directory
+    if delivery_format == "iceberg":
+        metadata_path = f"{path}/metadata"
+        with fs.ensure_local_dir(metadata_path) as local_meta:
+            # Read schema from latest metadata file
+            meta_files = sorted(local_meta.glob("*.metadata.json"), reverse=True)
+            if meta_files:
+                meta_content = json.loads(meta_files[0].read_text())
+                # Parse Iceberg schema from JSON
+                schema_fields = meta_content.get("schemas", [{}])[-1].get("fields", [])
+                pa_fields = []
+                for f in schema_fields:
+                    pa_type = _iceberg_type_to_pyarrow(f.get("type", "string"))
+                    pa_fields.append(pa.field(f["name"], pa_type))
+                schema = pa.schema(pa_fields)
+            else:
+                schema = pa.schema([])
+            variables = build_variables_from_schema(schema, dataset_id)
+            return ScanResult(variables=variables, nb_row=None)
+
+    # Hive: find one parquet file and read its schema
+    if delivery_format == "hive":
+        # List parquet files remotely
+        parquet_files = fs.glob(f"{path}/**/*.parquet")
+        if parquet_files:
+            pa_fs = pyarrow.fs.PyFileSystem(pyarrow.fs.FSSpecHandler(fs.fs))
+            schema = pq.read_schema(parquet_files[0], filesystem=pa_fs)
+        else:
+            schema = pa.schema([])
+        variables = build_variables_from_schema(schema, dataset_id)
+        return ScanResult(variables=variables, nb_row=None)
+
+    # SAS/SPSS/Stata: partial download + metadataonly
+    if delivery_format in _PARTIAL_BYTES:
+        max_bytes = _PARTIAL_BYTES[delivery_format]
+        with fs.ensure_local_partial(str(path), max_bytes) as local_path:
+            from .statistical import scan_statistical
+
+            variables, _, _, metadata = scan_statistical(
+                local_path, dataset_id=dataset_id, infer_stats=False
+            )
+            return ScanResult(
+                variables=variables,
+                nb_row=None,
+                description=metadata.description if metadata else None,
+            )
+
+    # CSV: partial download (4KB for header + some rows for type inference)
+    if delivery_format == "csv":
+        with fs.ensure_local_partial(str(path), 4096) as local_path:
+            return _scan_schema_only_local(
+                local_path, delivery_format, dataset_id, csv_encoding
+            )
+
+    # Excel: no optimization possible (must download full file)
+    with fs.ensure_local(str(path)) as local_path:
+        return _scan_schema_only_local(
+            local_path, delivery_format, dataset_id, csv_encoding
+        )
+
+
+def _iceberg_type_to_pyarrow(iceberg_type: str | dict) -> pa.DataType:
+    """Convert Iceberg type to PyArrow type."""
+    if isinstance(iceberg_type, dict):
+        type_name = iceberg_type.get("type", "string")
+    else:
+        type_name = iceberg_type
+
+    type_map = {
+        "boolean": pa.bool_(),
+        "int": pa.int32(),
+        "long": pa.int64(),
+        "float": pa.float32(),
+        "double": pa.float64(),
+        "string": pa.string(),
+        "binary": pa.binary(),
+        "date": pa.date32(),
+        "timestamp": pa.timestamp("us"),
+        "timestamptz": pa.timestamp("us", tz="UTC"),
+    }
+    return type_map.get(type_name, pa.string())
+
+
+def _scan_schema_only_local(
+    path: Path,
+    delivery_format: str,
+    dataset_id: str,
+    csv_encoding: str | None = None,
+) -> ScanResult:
+    """Schema-only scan for local files."""
     # CSV/Excel/Statistical: use ibis to infer schema from first rows
     con = ibis.duckdb.connect()
     try:
