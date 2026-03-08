@@ -178,16 +178,19 @@ class TestCatalogDepth:
         app_dir = tmp_path / "app"
         data_dir = tmp_path / "data"
         data_dir.mkdir()
-        (data_dir / "test.csv").write_text("a,b\n1,2\n3,4\n")
+        # Create CSV with repeated values to ensure freq and modalities are created
+        (data_dir / "test.csv").write_text("a,b\n1,x\n2,x\n3,x\n")
 
-        # First run: full scan (creates variables, modalities, etc.)
-        catalog1 = Catalog(app_path=app_dir, depth="full")
+        # First run: full scan with low freq_threshold to create freq entries
+        catalog1 = Catalog(app_path=app_dir, depth="full", freq_threshold=2)
         catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
         catalog1.export_db()
 
-        # Verify we have data
+        # Verify we have data in all tables
         assert len(catalog1.variable.all()) > 0
         assert len(catalog1.modality.all()) > 0
+        assert len(catalog1.value.all()) > 0
+        assert len(catalog1.freq.all()) > 0
 
         # Second run: load with structure mode
         catalog2 = Catalog(app_path=app_dir, depth="structure")
