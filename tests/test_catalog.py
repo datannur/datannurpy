@@ -201,3 +201,13 @@ class TestCatalogDepth:
         # But folders and datasets should still be loaded
         assert len(catalog2.folder.all()) > 0
         assert len(catalog2.dataset.all()) == 1
+
+    def test_depth_structure_on_new_catalog(self):
+        """depth='structure' on new catalog (no db) should work without error."""
+        catalog = Catalog(depth="structure")
+
+        # Should have empty tables
+        assert len(catalog.variable.all()) == 0
+        assert len(catalog.modality.all()) == 0
+        assert len(catalog.value.all()) == 0
+        assert len(catalog.freq.all()) == 0
