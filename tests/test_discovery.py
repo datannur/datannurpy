@@ -171,8 +171,35 @@ class TestDiscoverDatasets:
         assert result.datasets[0].path.name == "a.csv"
         assert result.datasets[1].path.name == "z.csv"
 
+    def test_excludes_files_inside_parquet_directories(self, tmp_path: Path):
+        """Non-parquet files inside Hive-partitioned directories should be excluded."""
+        import pyarrow as pa
+        import pyarrow.parquet as pq
 
-class TestBuildVariablesFromSchema:
+        # Create a Hive-partitioned parquet directory (year=2024/)
+        pq_dir = tmp_path / "partitioned"
+        partition_dir = pq_dir / "year=2024"
+        partition_dir.mkdir(parents=True)
+        table = pa.table({"a": [1, 2]})
+        pq.write_table(table, partition_dir / "part-0.parquet")
+        # CSV file directly inside the parquet directory
+        (pq_dir / "extra.csv").write_text("x\n1\n")
+        # CSV file in a subdirectory of parquet directory (tests parents check)
+        (partition_dir / "nested.csv").write_text("z\n3\n")
+        # CSV file outside should be included
+        (tmp_path / "outside.csv").write_text("y\n2\n")
+
+        result = discover_datasets(tmp_path)
+
+        # Should find: partitioned (as parquet dir) + outside.csv
+        # Should NOT find: extra.csv or nested.csv (inside parquet dir)
+        assert len(result.datasets) == 2
+        paths = {d.path.name for d in result.datasets}
+        assert "partitioned" in paths
+        assert "outside.csv" in paths
+        assert "extra.csv" not in paths
+        assert "nested.csv" not in paths
+
     """Test build_variables_from_schema function."""
 
     def test_builds_variables_from_pyarrow_schema(self):

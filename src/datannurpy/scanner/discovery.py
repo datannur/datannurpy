@@ -68,16 +68,21 @@ def discover_datasets(
     for file_path in all_files:
         if file_path in parquet_files:
             continue
-        if any(
-            file_path.parent == excl or excl in file_path.parent.parents
-            for excl in parquet_result.excluded_dirs
-        ):
+
+        # Check if file is inside an excluded parquet directory
+        # (explicit loop for coverage.py compatibility with Python 3.9)
+        in_excluded = False
+        for excl in parquet_result.excluded_dirs:
+            if file_path.parent == excl or excl in file_path.parent.parents:
+                in_excluded = True
+                break
+        if in_excluded:
             continue
 
         suffix = file_path.suffix.lower()
         fmt = SUPPORTED_FORMATS.get(suffix)
-        if fmt is None or fmt == "parquet":
-            continue
+        if fmt is None:
+            continue  # Skip unknown file types (include pattern may match more)
 
         result.append(
             DatasetInfo(
