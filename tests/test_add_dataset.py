@@ -202,3 +202,74 @@ class TestAddDatasetUnknown:
         catalog = Catalog()
         with pytest.raises(ValueError, match="not a recognized Parquet format"):
             catalog.add_dataset(tmp_path / "subdir")
+
+
+class TestAddDatasetDepth:
+    """Test add_dataset with depth parameter."""
+
+    def test_add_dataset_structure_file(self):
+        """depth=structure should create dataset without scanning."""
+        catalog = Catalog()
+        catalog.add_dataset(CSV_DIR / "employees.csv", depth="structure")
+
+        assert len(catalog.dataset.all()) == 1
+        ds = catalog.dataset.all()[0]
+        assert ds.nb_row is None
+        assert len(catalog.variable.all()) == 0
+
+    def test_add_dataset_schema_file(self):
+        """depth=schema should scan schema but skip stats."""
+        catalog = Catalog()
+        catalog.add_dataset(CSV_DIR / "employees.csv", depth="schema")
+
+        assert len(catalog.dataset.all()) == 1
+        ds = catalog.dataset.all()[0]
+        # Schema mode doesn't read data, so nb_row is None
+        assert ds.nb_row is None
+        assert len(catalog.variable.all()) == 9
+        # Schema mode skips modalities
+        assert len(catalog.modality.all()) == 0
+
+    def test_add_dataset_structure_delta(self):
+        """depth=structure should create dataset without scanning Delta."""
+        catalog = Catalog()
+        catalog.add_dataset(DATA_DIR / "test_delta", depth="structure")
+
+        assert len(catalog.dataset.all()) == 1
+        ds = catalog.dataset.all()[0]
+        assert ds.delivery_format == "delta"
+        assert ds.nb_row is None
+        assert len(catalog.variable.all()) == 0
+
+    def test_add_dataset_schema_delta(self):
+        """depth=schema should scan Delta schema but skip stats."""
+        catalog = Catalog()
+        catalog.add_dataset(DATA_DIR / "test_delta", depth="schema")
+
+        assert len(catalog.dataset.all()) == 1
+        ds = catalog.dataset.all()[0]
+        assert ds.nb_row is not None
+        assert len(catalog.variable.all()) > 0
+        assert len(catalog.modality.all()) == 0
+
+    def test_add_dataset_inherits_catalog_depth(self):
+        """add_dataset should use Catalog.depth when not overridden."""
+        catalog = Catalog(depth="structure")
+        catalog.add_dataset(CSV_DIR / "employees.csv")
+
+        assert len(catalog.variable.all()) == 0
+
+    def test_add_dataset_schema_unreadable_csv(self, tmp_path: Path):
+        """depth=schema should handle unreadable CSV gracefully."""
+        from unittest.mock import patch
+
+        (tmp_path / "bad.csv").write_text("a,b,c\n1,2,3")
+
+        catalog = Catalog()
+        # Mock _read_csv_table to simulate unreadable CSV
+        with patch("datannurpy.scanner.csv._read_csv_table", return_value=None):
+            catalog.add_dataset(tmp_path / "bad.csv", depth="schema")
+
+        # Should create dataset with no variables
+        assert len(catalog.dataset.all()) == 1
+        assert len(catalog.variable.all()) == 0

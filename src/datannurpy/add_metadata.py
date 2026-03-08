@@ -9,7 +9,7 @@ import warnings
 from collections.abc import Hashable
 from dataclasses import MISSING, fields
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 from urllib.parse import urlparse
 
 import ibis
@@ -52,6 +52,30 @@ LIST_FIELDS = {"tag_ids", "doc_ids", "modality_ids", "source_var_ids"}
 
 # Supported file extensions for metadata
 SUPPORTED_EXTENSIONS = {".csv", ".xlsx", ".xls", ".json", ".sas7bdat"}
+
+# Entities allowed per depth level
+DEPTH_ENTITIES: dict[str, set[str]] = {
+    "structure": {"folder", "dataset", "institution", "tag", "doc"},
+    "schema": {
+        "folder",
+        "dataset",
+        "institution",
+        "tag",
+        "doc",
+        "variable",
+    },
+    "full": {
+        "folder",
+        "dataset",
+        "institution",
+        "tag",
+        "doc",
+        "variable",
+        "modality",
+        "value",
+        "freq",
+    },
+}
 
 
 def _get_required_fields(entity_class: type) -> set[str]:
@@ -183,11 +207,12 @@ def _read_json(file_path: Path) -> pd.DataFrame | None:
 
 def _load_tables_from_folder(
     folder_path: Path,
+    allowed_entities: set[str],
 ) -> dict[str, tuple[pd.DataFrame, str]]:
-    """Load all entity files from a folder. Returns dict of (DataFrame, filename)."""
+    """Load entity files from a folder. Returns dict of (DataFrame, filename)."""
     tables: dict[str, tuple[pd.DataFrame, str]] = {}
 
-    for entity_name in ENTITY_CLASSES:
+    for entity_name in allowed_entities:
         for ext in SUPPORTED_EXTENSIONS:
             file_path = folder_path / f"{entity_name}{ext}"
             if file_path.exists():
@@ -201,6 +226,7 @@ def _load_tables_from_folder(
 
 def _load_tables_from_database(
     connection: str,
+    allowed_entities: set[str],
 ) -> dict[str, tuple[pd.DataFrame, str]]:
     """Load entity tables from a database. Returns dict of (DataFrame, table_name)."""
     tables: dict[str, tuple[pd.DataFrame, str]] = {}
@@ -214,7 +240,7 @@ def _load_tables_from_database(
     try:
         available_tables = set(con.list_tables())
 
-        for entity_name in ENTITY_CLASSES:
+        for entity_name in allowed_entities:
             if entity_name in available_tables:
                 try:
                     table = con.table(entity_name)
@@ -451,23 +477,27 @@ def add_metadata(
     self: Catalog,
     path: str | Path,
     *,
+    depth: Literal["structure", "schema", "full"] | None = None,
     quiet: bool | None = None,
 ) -> None:
     """Load manually curated metadata from files or database.
 
     Args:
         path: Folder containing metadata files or database connection string.
+        depth: Control which entities to load (structure/schema/full).
         quiet: Suppress progress logging.
     """
     if quiet is None:
         quiet = self.quiet
+    resolved_depth = depth if depth is not None else self.depth
+    allowed_entities = DEPTH_ENTITIES[resolved_depth]
 
     path_str = str(path)
 
     # Load tables from source
     if _is_database_connection(path_str):
         start_time = log_section("add_metadata", path_str, quiet)
-        tables = _load_tables_from_database(path_str)
+        tables = _load_tables_from_database(path_str, allowed_entities)
     else:
         folder_path = Path(path)
         if not folder_path.exists():
@@ -476,7 +506,7 @@ def add_metadata(
             raise ValueError(f"Path must be a directory: {folder_path}")
 
         start_time = log_section("add_metadata", str(folder_path), quiet)
-        tables = _load_tables_from_folder(folder_path)
+        tables = _load_tables_from_folder(folder_path, allowed_entities)
 
     if not tables:
         log_warn("No metadata files found", quiet)

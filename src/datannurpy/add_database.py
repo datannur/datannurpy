@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import ibis
 
@@ -45,6 +45,7 @@ def add_database(
     connection: str | ibis.BaseBackend,
     folder: Folder | None = None,
     *,
+    depth: Literal["structure", "schema", "full"] | None = None,
     schema: str | None = None,
     include: Sequence[str] | None = None,
     exclude: Sequence[str] | None = None,
@@ -59,6 +60,7 @@ def add_database(
     catalog._has_scanned = True
     q = quiet if quiet is not None else catalog.quiet
     do_refresh = refresh if refresh is not None else catalog.refresh
+    resolved_depth = depth if depth is not None else catalog.depth
     # Connect to database
     con, backend_name = connect(connection)
 
@@ -206,17 +208,6 @@ def add_database(
             # Build dataset ID
             dataset_id = make_id(table_folder_id, sanitize_id(table_name))
 
-            # Scan table
-            table_vars, nb_row, freq_table = scan_table(
-                con,
-                table_name,
-                schema=schema_name,
-                dataset_id=dataset_id,
-                infer_stats=infer_stats,
-                freq_threshold=freq_threshold,
-                sample_size=sample_size,
-            )
-
             # Use preserved timestamp if available, otherwise current time
             effective_timestamp = (
                 preserved_timestamp if preserved_timestamp is not None else catalog._now
@@ -225,6 +216,36 @@ def add_database(
                 timestamp_to_iso(preserved_timestamp)
                 if preserved_timestamp is not None
                 else now_iso
+            )
+
+            # Structure mode: create dataset without scanning variables
+            if resolved_depth == "structure":
+                dataset = Dataset(
+                    id=dataset_id,
+                    name=table_name,
+                    folder_id=table_folder_id,
+                    delivery_format=backend_name,
+                    last_update_date=effective_date,
+                    data_path=table_data_path,
+                    nb_row=current_nb_row,
+                    schema_signature=current_signature,
+                    last_update_timestamp=effective_timestamp,
+                    _seen=True,
+                )
+                catalog.dataset.add(dataset)
+                log_done(f"{table_name} ({current_nb_row:,} rows)", q)
+                continue
+
+            # Schema/Full mode: scan table
+            schema_only = resolved_depth == "schema"
+            table_vars, nb_row, freq_table = scan_table(
+                con,
+                table_name,
+                schema=schema_name,
+                dataset_id=dataset_id,
+                infer_stats=infer_stats and not schema_only,
+                freq_threshold=freq_threshold,
+                sample_size=sample_size,
             )
 
             # Create dataset with incremental fields
@@ -243,11 +264,16 @@ def add_database(
             catalog.dataset.add(dataset)
 
             var_id_mapping = build_variable_ids(table_vars, dataset.id)
-            catalog.modality_manager.assign_from_freq(
-                table_vars, freq_table, var_id_mapping
-            )
+            if not schema_only:
+                catalog.modality_manager.assign_from_freq(
+                    table_vars, freq_table, var_id_mapping
+                )
             catalog._add_variables(table_vars, dataset.id)
-            log_done(f"{table_name} ({nb_row:,} rows, {len(table_vars)} vars)", q)
+
+            if schema_only:
+                log_done(f"{table_name} ({len(table_vars)} vars)", q)
+            else:
+                log_done(f"{table_name} ({nb_row:,} rows, {len(table_vars)} vars)", q)
 
     # Close connection if we created it (string connection)
     if isinstance(connection, str):

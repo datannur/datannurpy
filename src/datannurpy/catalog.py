@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
+from typing import Literal
 
 import polars as pl
 
@@ -56,6 +57,7 @@ class Catalog(DatannurDB):
         self,
         *,
         app_path: str | Path | None = None,
+        depth: Literal["structure", "schema", "full"] = "full",
         refresh: bool = False,
         freq_threshold: int = 100,
         csv_encoding: str | None = None,
@@ -75,6 +77,7 @@ class Catalog(DatannurDB):
 
         # Initialize DatannurDB (loads existing data if path provided and exists)
         super().__init__(load_path)
+        self.depth = depth
         self.refresh = refresh
         self._now = _now if _now is not None else int(time.time())
         self.freq_threshold = freq_threshold
@@ -91,6 +94,13 @@ class Catalog(DatannurDB):
         # Track whether a scan (add_folder/add_dataset/add_database) was performed
         # Only run finalize cleanup if scanning was done
         self._has_scanned: bool = False
+
+        # Structure mode: clear variable/modality/value/freq tables (not needed)
+        if depth == "structure" and self._loaded_from_db:
+            self.variable._df = self.variable._df.clear()
+            self.modality._df = self.modality._df.clear()
+            self.value._df = self.value._df.clear()
+            self.freq._df = self.freq._df.clear()
 
         # Add _seen column to tables that have it as runtime field (defaults to False)
         # Only add if the table has data (not empty)

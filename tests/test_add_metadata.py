@@ -15,6 +15,7 @@ from datannurpy import Catalog, Folder
 from datannurpy.schema import Value, Variable
 from datannurpy.utils.ids import build_value_id
 from datannurpy.add_metadata import (
+    DEPTH_ENTITIES,
     _convert_row_to_dict,
     _find_entity_by_id,
     _find_value,
@@ -31,6 +32,8 @@ from datannurpy.add_metadata import (
     _validate_all_tables,
     _validate_entity_table,
 )
+
+ALL_ENTITIES = DEPTH_ENTITIES["full"]
 
 
 class TestGetRequiredFields:
@@ -383,7 +386,7 @@ class TestLoadTablesFromFolder:
         (tmp_path / "variable.csv").write_text("id,name,dataset_id\nv1,Var1,ds1\n")
         (tmp_path / "tag.csv").write_text("id,name\nt1,Tag1\n")
 
-        tables = _load_tables_from_folder(tmp_path)
+        tables = _load_tables_from_folder(tmp_path, ALL_ENTITIES)
 
         assert "variable" in tables
         assert "tag" in tables
@@ -394,7 +397,7 @@ class TestLoadTablesFromFolder:
         """Should ignore files that don't match entity names."""
         (tmp_path / "other.csv").write_text("id,name\n1,Test\n")
 
-        tables = _load_tables_from_folder(tmp_path)
+        tables = _load_tables_from_folder(tmp_path, ALL_ENTITIES)
         assert "other" not in tables
 
     def test_loads_first_matching_extension(self, tmp_path: Path):
@@ -404,7 +407,7 @@ class TestLoadTablesFromFolder:
             '[{"id": "json", "name": "JSON", "dataset_id": "ds"}]'
         )
 
-        tables = _load_tables_from_folder(tmp_path)
+        tables = _load_tables_from_folder(tmp_path, ALL_ENTITIES)
         # Should only load one file, not both
         assert "variable" in tables
         # The filename should be one of the two (order depends on set iteration)
@@ -412,7 +415,7 @@ class TestLoadTablesFromFolder:
 
     def test_empty_folder(self, tmp_path: Path):
         """Should return empty dict for empty folder."""
-        tables = _load_tables_from_folder(tmp_path)
+        tables = _load_tables_from_folder(tmp_path, ALL_ENTITIES)
         assert tables == {}
 
     def test_skips_empty_dataframe(self, tmp_path: Path):
@@ -420,7 +423,7 @@ class TestLoadTablesFromFolder:
         # Create an empty CSV (headers only)
         (tmp_path / "folder.csv").write_text("id,name\n")
 
-        tables = _load_tables_from_folder(tmp_path)
+        tables = _load_tables_from_folder(tmp_path, ALL_ENTITIES)
         # Empty DataFrame should be skipped
         assert "folder" not in tables
 
@@ -437,7 +440,7 @@ class TestLoadTablesFromDatabase:
         conn.commit()
         conn.close()
 
-        tables = _load_tables_from_database(f"sqlite:///{db_path}")
+        tables = _load_tables_from_database(f"sqlite:///{db_path}", ALL_ENTITIES)
 
         assert "variable" in tables
         assert len(tables["variable"][0]) == 1
@@ -445,7 +448,9 @@ class TestLoadTablesFromDatabase:
     def test_invalid_connection(self):
         """Should return empty dict and warn for invalid connection."""
         with pytest.warns(UserWarning, match="Could not connect"):
-            tables = _load_tables_from_database("sqlite:///nonexistent/path/db.sqlite")
+            tables = _load_tables_from_database(
+                "sqlite:///nonexistent/path/db.sqlite", ALL_ENTITIES
+            )
         assert tables == {}
 
     def test_ignores_non_entity_tables(self, tmp_path: Path):
@@ -456,7 +461,7 @@ class TestLoadTablesFromDatabase:
         conn.commit()
         conn.close()
 
-        tables = _load_tables_from_database(f"sqlite:///{db_path}")
+        tables = _load_tables_from_database(f"sqlite:///{db_path}", ALL_ENTITIES)
         assert "other_table" not in tables
         # All entity types should have been checked but not found
         assert tables == {}
@@ -468,7 +473,7 @@ class TestLoadTablesFromDatabase:
         conn.commit()
         conn.close()
 
-        tables = _load_tables_from_database(f"sqlite:///{db_path}")
+        tables = _load_tables_from_database(f"sqlite:///{db_path}", ALL_ENTITIES)
         assert tables == {}
 
     def test_connection_without_disconnect(self, tmp_path: Path):
@@ -484,7 +489,7 @@ class TestLoadTablesFromDatabase:
             mock_con.list_tables.return_value = []
             mock_ibis.connect.return_value = mock_con
 
-            tables = _load_tables_from_database(f"sqlite:///{db_path}")
+            tables = _load_tables_from_database(f"sqlite:///{db_path}", ALL_ENTITIES)
             assert tables == {}
             # Verify disconnect was not called (doesn't exist)
             assert not hasattr(mock_con, "disconnect")
@@ -898,7 +903,9 @@ class TestEdgeCases:
             mock_ibis.connect.return_value = mock_con
 
             with pytest.warns(UserWarning, match="Could not read table"):
-                tables = _load_tables_from_database(f"sqlite:///{db_path}")
+                tables = _load_tables_from_database(
+                    f"sqlite:///{db_path}", ALL_ENTITIES
+                )
 
             assert "folder" not in tables
 
@@ -958,3 +965,24 @@ class TestEdgeCases:
         catalog.add_metadata(tmp_path, quiet=True)
         val = catalog.value.all()[0]
         assert val.description == "Old"
+
+    def test_value_create_marks_parent_modality_seen(self, tmp_path: Path):
+        """Creating new value should mark parent modality as seen."""
+        from datannurpy.schema import Modality
+
+        (tmp_path / "value.csv").write_text(
+            "modality_id,value,description\nm1,B,New val\n"
+        )
+
+        catalog = Catalog()
+        # Add existing modality with _seen=False
+        catalog.modality.add(Modality(id="m1", name="Mod", _seen=False))
+
+        catalog.add_metadata(tmp_path, quiet=True)
+
+        # New value should be created
+        assert len(catalog.value.all()) == 1
+        # Parent modality should be marked as seen
+        mod = catalog.modality.get("m1")
+        assert mod is not None
+        assert mod._seen is True

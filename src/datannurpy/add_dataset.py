@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, cast
 
 from .utils import (
     build_variable_ids,
@@ -32,11 +33,71 @@ if TYPE_CHECKING:
     from .catalog import Catalog
 
 
+@dataclass
+class DatasetMeta:
+    """User-provided dataset metadata."""
+
+    name: str | None = None
+    description: str | None = None
+    type: str | None = None
+    link: str | None = None
+    localisation: str | None = None
+    manager_id: str | None = None
+    owner_id: str | None = None
+    tag_ids: list[str] | None = None
+    doc_ids: list[str] | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    updating_each: str | None = None
+    no_more_update: str | None = None
+
+
+def _create_dataset(
+    dataset_id: str,
+    default_name: str,
+    folder_id: str | None,
+    data_path: str,
+    dataset_path: Path,
+    current_mtime: int,
+    delivery_format: str,
+    meta: DatasetMeta,
+    nb_row: int | None = None,
+    scanned_description: str | None = None,
+) -> Dataset:
+    """Create Dataset with common fields."""
+    return Dataset(
+        id=dataset_id,
+        name=meta.name or default_name,
+        folder_id=folder_id,
+        data_path=data_path,
+        last_update_date=get_mtime_iso(dataset_path),
+        last_update_timestamp=current_mtime,
+        delivery_format=delivery_format,
+        nb_row=nb_row,
+        description=meta.description
+        if meta.description is not None
+        else scanned_description,
+        type=meta.type,
+        link=meta.link,
+        localisation=meta.localisation,
+        manager_id=meta.manager_id,
+        owner_id=meta.owner_id,
+        tag_ids=meta.tag_ids or [],
+        doc_ids=meta.doc_ids or [],
+        start_date=meta.start_date,
+        end_date=meta.end_date,
+        updating_each=meta.updating_each,
+        no_more_update=meta.no_more_update,
+        _seen=True,
+    )
+
+
 def add_dataset(
     catalog: Catalog,
     path: str | Path,
     folder: Folder | None = None,
     *,
+    depth: Literal["structure", "schema", "full"] | None = None,
     folder_id: str | None = None,
     infer_stats: bool = True,
     csv_encoding: str | None = None,
@@ -61,6 +122,11 @@ def add_dataset(
     catalog._has_scanned = True
     q = quiet if quiet is not None else catalog.quiet
     do_refresh = refresh if refresh is not None else catalog.refresh
+    resolved_depth: Literal["structure", "schema", "full"] = (
+        depth
+        if depth is not None
+        else cast(Literal["structure", "schema", "full"], catalog.depth)
+    )
     dataset_path = Path(path).resolve()
 
     if not dataset_path.exists():
@@ -73,35 +139,40 @@ def add_dataset(
     if folder is not None:
         if folder_id is not None:
             raise ValueError("Cannot specify both folder and folder_id")
-        # Add folder if not already present, otherwise mark as seen
         upsert_folder(catalog, folder)
         resolved_folder_id = folder.id
     elif folder_id is not None:
         resolved_folder_id = folder_id
 
+    # Build metadata container
+    meta = DatasetMeta(
+        name=name,
+        description=description,
+        type=type,
+        link=link,
+        localisation=localisation,
+        manager_id=manager_id,
+        owner_id=owner_id,
+        tag_ids=tag_ids,
+        doc_ids=doc_ids,
+        start_date=start_date,
+        end_date=end_date,
+        updating_each=updating_each,
+        no_more_update=no_more_update,
+    )
+
     # Check if it's a partitioned Parquet directory
     if dataset_path.is_dir():
-        add_parquet_directory(
+        _add_parquet_directory(
             catalog,
             dataset_path,
             resolved_folder_id,
+            meta,
+            depth=resolved_depth,
             infer_stats=infer_stats,
             quiet=q,
             refresh=do_refresh,
             start_time=start_time,
-            name=name,
-            description=description,
-            type=type,
-            link=link,
-            localisation=localisation,
-            manager_id=manager_id,
-            owner_id=owner_id,
-            tag_ids=tag_ids,
-            doc_ids=doc_ids,
-            start_date=start_date,
-            end_date=end_date,
-            updating_each=updating_each,
-            no_more_update=no_more_update,
         )
         return
 
@@ -131,95 +202,91 @@ def add_dataset(
             # Modified or refresh forced - remove old dataset cascade before rescan
             catalog._remove_dataset_cascade(existing)
 
-    # Build dataset ID and name
+    # Build dataset ID
     base_name = sanitize_id(dataset_path.stem)
-    if resolved_folder_id:
-        dataset_id = make_id(resolved_folder_id, base_name)
-    else:
-        dataset_id = base_name
-    dataset_name = name or dataset_path.stem
+    dataset_id = (
+        make_id(resolved_folder_id, base_name) if resolved_folder_id else base_name
+    )
 
-    # Resolve csv_encoding: parameter > catalog default
+    # Resolve csv_encoding
     resolved_encoding = (
         csv_encoding if csv_encoding is not None else catalog.csv_encoding
     )
 
-    # Scan file first to get nb_row and description
+    # Structure mode: create dataset without scanning
+    if resolved_depth == "structure":
+        dataset = _create_dataset(
+            dataset_id,
+            dataset_path.stem,
+            resolved_folder_id,
+            data_path_str,
+            dataset_path,
+            current_mtime,
+            delivery_format,
+            meta,
+        )
+        catalog.dataset.add(dataset)
+        log_done(dataset_path.name, q, start_time)
+        return
+
+    # Schema/Full mode: scan file
+    schema_only = resolved_depth == "schema"
     result = scan_file(
         dataset_path,
         delivery_format,
         dataset_id=dataset_id,
-        infer_stats=infer_stats,
-        freq_threshold=catalog.freq_threshold if catalog.freq_threshold else None,
+        schema_only=schema_only,
+        infer_stats=infer_stats and not schema_only,
+        freq_threshold=catalog.freq_threshold or None,
         csv_encoding=resolved_encoding,
     )
 
-    # Create dataset with all info
-    dataset = Dataset(
-        id=dataset_id,
-        name=dataset_name,
-        folder_id=resolved_folder_id,
-        data_path=data_path_str,
-        last_update_date=get_mtime_iso(dataset_path),
-        last_update_timestamp=current_mtime,
-        delivery_format=delivery_format,
+    dataset = _create_dataset(
+        dataset_id,
+        dataset_path.stem,
+        resolved_folder_id,
+        data_path_str,
+        dataset_path,
+        current_mtime,
+        delivery_format,
+        meta,
         nb_row=result.nb_row,
-        description=description or result.description,
-        type=type,
-        link=link,
-        localisation=localisation,
-        manager_id=manager_id,
-        owner_id=owner_id,
-        tag_ids=tag_ids or [],
-        doc_ids=doc_ids or [],
-        start_date=start_date,
-        end_date=end_date,
-        updating_each=updating_each,
-        no_more_update=no_more_update,
-        _seen=True,
+        scanned_description=result.description,
     )
     catalog.dataset.add(dataset)
 
     var_id_mapping = build_variable_ids(result.variables, dataset.id)
-    catalog.modality_manager.assign_from_freq(
-        result.variables, result.freq_table, var_id_mapping
-    )
+    if not schema_only:
+        catalog.modality_manager.assign_from_freq(
+            result.variables, result.freq_table, var_id_mapping
+        )
     catalog._add_variables(result.variables, dataset.id)
 
     # Log result
     var_count = catalog._get_variable_count(dataset.id)
-    log_done(
-        f"{dataset_path.name} ({dataset.nb_row:,} rows, {var_count} vars)",
-        q,
-        start_time,
-    )
+    if schema_only:
+        log_done(f"{dataset_path.name} ({var_count} vars)", q, start_time)
+    else:
+        log_done(
+            f"{dataset_path.name} ({dataset.nb_row:,} rows, {var_count} vars)",
+            q,
+            start_time,
+        )
 
 
-def add_parquet_directory(
+def _add_parquet_directory(
     catalog: Catalog,
     dir_path: Path,
     folder_id: str | None,
+    meta: DatasetMeta,
     *,
+    depth: Literal["structure", "schema", "full"],
     infer_stats: bool,
     quiet: bool,
     refresh: bool,
     start_time: float,
-    name: str | None,
-    description: str | None,
-    type: str | None,
-    link: str | None,
-    localisation: str | None,
-    manager_id: str | None,
-    owner_id: str | None,
-    tag_ids: list[str] | None,
-    doc_ids: list[str] | None,
-    start_date: str | None,
-    end_date: str | None,
-    updating_each: str | None,
-    no_more_update: str | None,
 ) -> None:
     """Add a partitioned Parquet directory (Delta, Hive, or Iceberg) to catalog."""
-    # Get current mtime
     current_mtime = get_mtime_timestamp(dir_path)
     data_path_str = str(dir_path)
 
@@ -227,89 +294,85 @@ def add_parquet_directory(
     existing = catalog._get_dataset_by_path(data_path_str)
     if existing is not None:
         if not refresh and existing.last_update_timestamp == current_mtime:
-            # Unchanged - skip and mark as seen
             catalog.dataset.update(existing.id, _seen=True)
             catalog._mark_dataset_modalities_seen(existing)
             log_skip(dir_path.name, quiet)
             return
-        else:
-            # Modified or refresh forced - remove old dataset cascade before rescan
-            catalog._remove_dataset_cascade(existing)
+        catalog._remove_dataset_cascade(existing)
 
     # Detect dataset type
     if is_delta_table(dir_path):
-        dataset_type = DatasetType.DELTA
-        delivery_format = "delta"
+        dataset_type, delivery_format = DatasetType.DELTA, "delta"
     elif is_iceberg_table(dir_path):
-        dataset_type = DatasetType.ICEBERG
-        delivery_format = "iceberg"
+        dataset_type, delivery_format = DatasetType.ICEBERG, "iceberg"
     elif is_hive_partitioned(dir_path):
-        dataset_type = DatasetType.HIVE
-        delivery_format = "parquet"
+        dataset_type, delivery_format = DatasetType.HIVE, "parquet"
     else:
         raise ValueError(
             f"Directory is not a recognized Parquet format "
             f"(Delta, Hive, or Iceberg): {dir_path}"
         )
 
-    # Create ParquetDatasetInfo for scanning
-    parquet_info = ParquetDatasetInfo(
-        path=dir_path,
-        type=dataset_type,
-    )
-
     # Build dataset ID
     base_name = sanitize_id(dir_path.name)
-    if folder_id:
-        dataset_id = make_id(folder_id, base_name)
-    else:
-        dataset_id = base_name
+    dataset_id = make_id(folder_id, base_name) if folder_id else base_name
 
-    # Scan the dataset
-    freq_threshold = catalog.freq_threshold if catalog.freq_threshold else None
-    variables, nb_row, freq_table, metadata = scan_parquet_dataset(
+    # Structure mode: create dataset without scanning
+    if depth == "structure":
+        dataset = _create_dataset(
+            dataset_id,
+            dir_path.name,
+            folder_id,
+            data_path_str,
+            dir_path,
+            current_mtime,
+            delivery_format,
+            meta,
+        )
+        catalog.dataset.add(dataset)
+        log_done(dir_path.name, quiet, start_time)
+        return
+
+    # Schema/Full mode: scan the dataset
+    schema_only = depth == "schema"
+    parquet_info = ParquetDatasetInfo(path=dir_path, type=dataset_type)
+    variables, nb_row, freq_table, pq_meta = scan_parquet_dataset(
         parquet_info,
         dataset_id=dataset_id,
-        infer_stats=infer_stats,
-        freq_threshold=freq_threshold,
+        infer_stats=infer_stats and not schema_only,
+        freq_threshold=catalog.freq_threshold or None,
     )
 
-    # Build dataset name: user override > metadata > directory name
-    dataset_name = name or metadata.name or dir_path.name
+    # Override meta.name with parquet metadata if not user-provided
+    default_name = meta.name or pq_meta.name or dir_path.name
+    scanned_desc = pq_meta.description
 
-    # Use provided metadata or fall back to extracted metadata
-    final_description = description if description is not None else metadata.description
-
-    # Create dataset
-    dataset = Dataset(
-        id=dataset_id,
-        name=dataset_name,
-        folder_id=folder_id,
-        data_path=data_path_str,
-        last_update_date=get_mtime_iso(dir_path),
-        last_update_timestamp=current_mtime,
-        delivery_format=delivery_format,
+    dataset = _create_dataset(
+        dataset_id,
+        default_name,
+        folder_id,
+        data_path_str,
+        dir_path,
+        current_mtime,
+        delivery_format,
+        meta,
         nb_row=nb_row,
-        description=final_description,
-        type=type,
-        link=link,
-        localisation=localisation,
-        manager_id=manager_id,
-        owner_id=owner_id,
-        tag_ids=tag_ids or [],
-        doc_ids=doc_ids or [],
-        start_date=start_date,
-        end_date=end_date,
-        updating_each=updating_each,
-        no_more_update=no_more_update,
-        _seen=True,
+        scanned_description=scanned_desc,
     )
+    # Force the name (since _create_dataset uses meta.name or default_name)
+    dataset.name = default_name
     catalog.dataset.add(dataset)
 
-    # Finalize variables and modalities
     var_id_mapping = build_variable_ids(variables, dataset.id)
-    catalog.modality_manager.assign_from_freq(variables, freq_table, var_id_mapping)
+    if not schema_only:
+        catalog.modality_manager.assign_from_freq(variables, freq_table, var_id_mapping)
     catalog._add_variables(variables, dataset.id)
 
-    if not quiet:
-        log_done(dataset_id, quiet=False, start_time=start_time)
+    # Log result
+    var_count = catalog._get_variable_count(dataset.id)
+    if schema_only:
+        log_done(f"{dir_path.name} ({var_count} vars)", quiet, start_time)
+    else:
+        log_done(
+            f"{dir_path.name} ({nb_row:,} rows, {var_count} vars)", quiet, start_time
+        )
