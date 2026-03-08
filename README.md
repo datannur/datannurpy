@@ -287,18 +287,18 @@ catalog.add_dataset(path, folder=None, *, folder_id=None, depth=None, infer_stat
                     csv_encoding=None, refresh=None, quiet=None, id=None, name=None, description=None, ...)
 ```
 
-| Parameter   | Type                                            | Default  | Description                              |
-| ----------- | ----------------------------------------------- | -------- | ---------------------------------------- |
-| path        | str \| Path                                     | required | File or partitioned directory            |
-| folder      | Folder \| None                                  | None     | Parent folder                            |
-| folder_id   | str \| None                                     | None     | Parent folder ID (alternative to folder) |
-| depth       | "structure" \| "schema" \| "full" \| None      | None     | Scan depth (uses catalog.depth if None)  |
-| infer_stats | bool                                            | True     | Compute statistics                       |
-| refresh     | bool \| None                                    | None     | Force rescan (overrides catalog setting) |
-| quiet       | bool \| None                                    | None     | Override catalog quiet setting           |
-| id          | str \| None                                     | None     | Override dataset ID                      |
-| name        | str \| None                                     | None     | Override dataset name                    |
-| description | str \| None                                     | None     | Override dataset description             |
+| Parameter   | Type                                      | Default  | Description                              |
+| ----------- | ----------------------------------------- | -------- | ---------------------------------------- |
+| path        | str \| Path                               | required | File or partitioned directory            |
+| folder      | Folder \| None                            | None     | Parent folder                            |
+| folder_id   | str \| None                               | None     | Parent folder ID (alternative to folder) |
+| depth       | "structure" \| "schema" \| "full" \| None | None     | Scan depth (uses catalog.depth if None)  |
+| infer_stats | bool                                      | True     | Compute statistics                       |
+| refresh     | bool \| None                              | None     | Force rescan (overrides catalog setting) |
+| quiet       | bool \| None                              | None     | Override catalog quiet setting           |
+| id          | str \| None                               | None     | Override dataset ID                      |
+| name        | str \| None                               | None     | Override dataset name                    |
+| description | str \| None                               | None     | Override dataset description             |
 
 Additional metadata parameters: `type`, `link`, `localisation`, `manager_id`, `owner_id`, `tag_ids`, `doc_ids`, `start_date`, `end_date`, `updating_each`, `no_more_update`
 
@@ -339,11 +339,11 @@ catalog.add_database(connection, folder=None, *, depth=None, schema=None, includ
 catalog.add_metadata(path, depth=None, quiet=None)
 ```
 
-| Parameter | Type                                       | Default  | Description                                  |
-| --------- | ------------------------------------------ | -------- | -------------------------------------------- |
-| path      | str \| Path                                | required | Folder or database containing metadata files |
+| Parameter | Type                                      | Default  | Description                                  |
+| --------- | ----------------------------------------- | -------- | -------------------------------------------- |
+| path      | str \| Path                               | required | Folder or database containing metadata files |
 | depth     | "structure" \| "schema" \| "full" \| None | None     | Filter which entities to load                |
-| quiet     | bool \| None                               | None     | Override catalog quiet setting               |
+| quiet     | bool \| None                              | None     | Override catalog quiet setting               |
 
 **Supported entity files/tables:** `folder`, `dataset`, `variable`, `modality`, `value`, `freq`, `institution`, `tag`, `doc`
 
