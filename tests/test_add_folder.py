@@ -498,3 +498,202 @@ class TestIncrementalScanSubfolders:
         assert len(user_folders) == 2
         assert any(f.id == "src" for f in user_folders)
         assert any("subdir" in f.id for f in user_folders)
+
+
+class TestDepthParameter:
+    """Test depth parameter for progressive scanning."""
+
+    def test_depth_at_catalog_level(self, tmp_path: Path):
+        """depth can be set at Catalog level and overridden per add_folder."""
+        (tmp_path / "data.csv").write_text("a,b\n1,2\n")
+
+        # Set depth at catalog level
+        catalog = Catalog(depth="structure")
+        catalog.add_folder(tmp_path)
+
+        assert len(catalog.dataset.all()) == 1
+        assert len(catalog.variable.all()) == 0  # structure mode
+
+        # Override at add_folder level
+        catalog2 = Catalog(depth="structure")
+        catalog2.add_folder(tmp_path, depth="schema")
+
+        assert len(catalog2.dataset.all()) == 1
+        assert len(catalog2.variable.all()) == 2  # schema mode
+
+    def test_depth_structure_creates_datasets_without_variables(self, tmp_path: Path):
+        """depth='structure' should create datasets but no variables."""
+        (tmp_path / "data.csv").write_text("a,b,c\n1,2,3\n")
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, depth="structure")
+
+        assert len(catalog.dataset.all()) == 1
+        assert len(catalog.variable.all()) == 0
+
+        ds = catalog.dataset.all()[0]
+        assert ds.delivery_format == "csv"
+        assert ds.nb_row is None  # No scanning
+
+    def test_depth_structure_creates_subfolders(self, tmp_path: Path):
+        """depth='structure' should still create subfolder hierarchy."""
+        sub = tmp_path / "sub"
+        sub.mkdir()
+        (sub / "data.csv").write_text("a\n1\n")
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, depth="structure")
+
+        folders = catalog.folder.all()
+        assert len(folders) == 2  # root + sub
+
+    def test_depth_structure_marks_existing_as_seen(self, tmp_path: Path):
+        """depth='structure' should mark existing datasets as seen on rescan."""
+        csv_file = tmp_path / "data.csv"
+        csv_file.write_text("a,b\n1,2\n")
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path)  # Full scan first
+        ds = catalog.dataset.all()[0]
+        assert ds.nb_row == 1
+
+        # Reset _seen
+        catalog.dataset.update(ds.id, _seen=False)
+
+        # Rescan with structure only
+        catalog.add_folder(tmp_path, depth="structure")
+
+        ds = catalog.dataset.get(ds.id)
+        assert ds is not None
+        assert ds._seen is True
+        assert ds.nb_row == 1  # Preserved from first scan
+
+    def test_depth_structure_updates_mtime_on_modified(self, tmp_path: Path):
+        """depth='structure' should update mtime when file is modified."""
+        import os
+
+        csv_file = tmp_path / "data.csv"
+        csv_file.write_text("a,b\n1,2\n")
+        # Set old mtime (1 day ago)
+        old_mtime = int(csv_file.stat().st_mtime) - 86400
+        os.utime(csv_file, (old_mtime, old_mtime))
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, depth="structure")
+        ds = catalog.dataset.all()[0]
+        assert ds.last_update_timestamp is not None
+        original_mtime = ds.last_update_timestamp
+
+        # Modify file (will have current mtime)
+        csv_file.write_text("a,b\n1,2\n3,4\n")
+
+        # Rescan with structure
+        catalog.add_folder(tmp_path, depth="structure")
+
+        ds = catalog.dataset.get(ds.id)
+        assert ds is not None
+        assert ds.last_update_timestamp is not None
+        assert ds.last_update_timestamp > original_mtime
+
+    def test_depth_full_is_default(self, tmp_path: Path):
+        """depth='full' should be the default (with variables and stats)."""
+        (tmp_path / "data.csv").write_text("a,b\n1,2\n3,4\n")
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path)  # Default depth="full"
+
+        assert len(catalog.dataset.all()) == 1
+        assert len(catalog.variable.all()) == 2
+        assert catalog.dataset.all()[0].nb_row == 2
+
+    def test_depth_schema_scans_variables_without_stats(self, tmp_path: Path):
+        """depth='schema' should scan variables but no row count or stats."""
+        (tmp_path / "data.csv").write_text("a,b,c\n1,2,3\n4,5,6\n")
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, depth="schema")
+
+        # Should have dataset and variables
+        assert len(catalog.dataset.all()) == 1
+        assert len(catalog.variable.all()) == 3
+
+        # No row count
+        ds = catalog.dataset.all()[0]
+        assert ds.nb_row is None
+
+        # No stats on variables
+        for var in catalog.variable.all():
+            assert var.nb_distinct is None
+            assert var.nb_missing is None
+
+    def test_depth_schema_parquet(self, tmp_path: Path):
+        """depth='schema' should work with parquet files."""
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
+        table = pa.table({"x": [1, 2, 3], "y": ["a", "b", "c"]})
+        pq.write_table(table, tmp_path / "data.parquet")
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, depth="schema")
+
+        assert len(catalog.dataset.all()) == 1
+        assert len(catalog.variable.all()) == 2
+        assert catalog.dataset.all()[0].nb_row is None
+
+        # Check types were inferred
+        vars_by_name = {v.name: v for v in catalog.variable.all()}
+        assert vars_by_name["x"].type == "integer"
+        assert vars_by_name["y"].type == "string"
+
+    def test_depth_schema_excel(self, tmp_path: Path):
+        """depth='schema' should work with Excel files."""
+        import pandas as pd
+
+        df = pd.DataFrame({"col1": [1, 2], "col2": ["a", "b"]})
+        df.to_excel(tmp_path / "data.xlsx", index=False)
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, depth="schema")
+
+        assert len(catalog.dataset.all()) == 1
+        assert len(catalog.variable.all()) == 2
+        assert catalog.dataset.all()[0].nb_row is None
+
+    def test_depth_schema_statistical(self):
+        """depth='schema' should work with statistical files (SAS)."""
+        catalog = Catalog()
+        catalog.add_folder(DATA_DIR, include=["cars.sas7bdat"], depth="schema")
+
+        assert len(catalog.dataset.all()) == 1
+        assert len(catalog.variable.all()) > 0
+        assert catalog.dataset.all()[0].nb_row is None
+
+    def test_depth_schema_delta(self):
+        """depth='schema' should work with Delta tables."""
+        delta_path = DATA_DIR / "test_delta"
+        if not delta_path.exists():
+            pytest.skip("Delta test data not available")
+
+        catalog = Catalog()
+        catalog.add_folder(DATA_DIR, include=["test_delta/**"], depth="schema")
+
+        ds = next((d for d in catalog.dataset.all() if "delta" in d.id), None)
+        if ds:
+            assert ds.nb_row is None
+            # Should have variables
+            vars_for_ds = [v for v in catalog.variable.all() if v.dataset_id == ds.id]
+            assert len(vars_for_ds) > 0
+
+    def test_depth_schema_hive(self):
+        """depth='schema' should work with Hive partitioned datasets."""
+        hive_path = DATA_DIR / "test_partitioned"
+        if not hive_path.exists():
+            pytest.skip("Hive test data not available")
+
+        catalog = Catalog()
+        catalog.add_folder(DATA_DIR, include=["test_partitioned/**"], depth="schema")
+
+        ds = next((d for d in catalog.dataset.all() if "partitioned" in d.id), None)
+        if ds:
+            assert ds.nb_row is None

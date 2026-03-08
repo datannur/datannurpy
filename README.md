@@ -236,82 +236,94 @@ catalog.export_app("./my-catalog", open_browser=True)
 ### `Catalog`
 
 ```python
-Catalog(db_path=None, refresh=False, freq_threshold=100, csv_encoding=None, quiet=False)
+Catalog(app_path=None, depth="full", refresh=False, freq_threshold=100, csv_encoding=None, quiet=False)
 ```
 
-| Attribute        | Type             | Description                                             |
-| ---------------- | ---------------- | ------------------------------------------------------- |
-| `db_path`        | `str \| None`    | Load existing catalog for incremental scan              |
-| `refresh`        | `bool`           | Force full rescan ignoring cache (default: `False`)     |
-| `freq_threshold` | `int`            | Max distinct values for modality detection (0=disabled) |
-| `csv_encoding`   | `str \| None`    | Default CSV encoding (`"utf-8"`, `"cp1252"`, etc.)      |
-| `quiet`          | `bool`           | Suppress progress logging (default: `False`)            |
-| `folders`        | `list[Folder]`   | All folders in catalog                                  |
-| `datasets`       | `list[Dataset]`  | All datasets in catalog                                 |
-| `variables`      | `list[Variable]` | All variables in catalog                                |
-| `modalities`     | `list[Modality]` | All modalities in catalog                               |
+| Attribute      | Type                              | Description                                        |
+| -------------- | --------------------------------- | -------------------------------------------------- |
+| app_path       | str \| None                       | Load existing catalog for incremental scan         |
+| depth          | "structure" \| "schema" \| "full" | Default scan depth for add_folder                  |
+| refresh        | bool                              | Force full rescan ignoring cache (default: False)  |
+| freq_threshold | int                               | Max distinct values for modality detection (0=off) |
+| csv_encoding   | str \| None                       | Default CSV encoding (utf-8, cp1252, etc.)         |
+| quiet          | bool                              | Suppress progress logging (default: False)         |
+| folders        | list[Folder]                      | All folders in catalog                             |
+| datasets       | list[Dataset]                     | All datasets in catalog                            |
+| variables      | list[Variable]                    | All variables in catalog                           |
+| modalities     | list[Modality]                    | All modalities in catalog                          |
 
 ### `Catalog.add_folder()`
 
 ```python
-catalog.add_folder(path, folder=None, *, include=None, exclude=None,
+catalog.add_folder(path, folder=None, *, depth=None, include=None, exclude=None,
                    recursive=True, infer_stats=True, csv_encoding=None, refresh=None, quiet=None)
 ```
 
-| Parameter      | Type                | Default  | Description                                |
-| -------------- | ------------------- | -------- | ------------------------------------------ |
-| `path`         | `str \| Path`       | required | Directory to scan                          |
-| `folder`       | `Folder \| None`    | `None`   | Custom folder metadata                     |
-| `include`      | `list[str] \| None` | `None`   | Glob patterns to include (`["*.csv"]`)     |
-| `exclude`      | `list[str] \| None` | `None`   | Glob patterns to exclude (`["**/tmp/**"]`) |
-| `recursive`    | `bool`              | `True`   | Scan subdirectories                        |
-| `infer_stats`  | `bool`              | `True`   | Compute distinct/missing/duplicate counts  |
-| `csv_encoding` | `str \| None`       | `None`   | Override CSV encoding                      |
-| `refresh`      | `bool \| None`      | `None`   | Force rescan (overrides catalog setting)   |
-| `quiet`        | `bool \| None`      | `None`   | Override catalog quiet setting             |
+| Parameter    | Type                                      | Default  | Description                               |
+| ------------ | ----------------------------------------- | -------- | ----------------------------------------- |
+| path         | str \| Path                               | required | Directory to scan                         |
+| folder       | Folder \| None                            | None     | Custom folder metadata                    |
+| depth        | "structure" \| "schema" \| "full" \| None | None     | Scan depth (uses catalog.depth if None)   |
+| include      | list[str] \| None                         | None     | Glob patterns to include                  |
+| exclude      | list[str] \| None                         | None     | Glob patterns to exclude                  |
+| recursive    | bool                                      | True     | Scan subdirectories                       |
+| infer_stats  | bool                                      | True     | Compute distinct/missing/duplicate counts |
+| csv_encoding | str \| None                               | None     | Override CSV encoding                     |
+| refresh      | bool \| None                              | None     | Force rescan (overrides catalog setting)  |
+| quiet        | bool \| None                              | None     | Override catalog quiet setting            |
+
+**Depth levels:**
+
+| depth     | Output                                       |
+| --------- | -------------------------------------------- |
+| structure | Folders, datasets (format, mtime, path only) |
+| schema    | + Variables (names, types)                   |
+| full      | + Row count, stats, modalities               |
 
 ### `Catalog.add_dataset()`
 
 ```python
-catalog.add_dataset(path, folder=None, *, folder_id=None, infer_stats=True,
+catalog.add_dataset(path, folder=None, *, folder_id=None, depth=None, infer_stats=True,
                     csv_encoding=None, refresh=None, quiet=None, id=None, name=None, description=None, ...)
 ```
 
-| Parameter     | Type             | Default  | Description                                |
-| ------------- | ---------------- | -------- | ------------------------------------------ |
-| `path`        | `str \| Path`    | required | File or partitioned directory              |
-| `folder`      | `Folder \| None` | `None`   | Parent folder                              |
-| `folder_id`   | `str \| None`    | `None`   | Parent folder ID (alternative to `folder`) |
-| `infer_stats` | `bool`           | `True`   | Compute statistics                         |
-| `refresh`     | `bool \| None`   | `None`   | Force rescan (overrides catalog setting)   |
-| `quiet`       | `bool \| None`   | `None`   | Override catalog quiet setting             |
-| `id`          | `str \| None`    | `None`   | Override dataset ID                        |
-| `name`        | `str \| None`    | `None`   | Override dataset name                      |
-| `description` | `str \| None`    | `None`   | Override dataset description               |
+| Parameter   | Type                                            | Default  | Description                              |
+| ----------- | ----------------------------------------------- | -------- | ---------------------------------------- |
+| path        | str \| Path                                     | required | File or partitioned directory            |
+| folder      | Folder \| None                                  | None     | Parent folder                            |
+| folder_id   | str \| None                                     | None     | Parent folder ID (alternative to folder) |
+| depth       | "structure" \| "schema" \| "full" \| None      | None     | Scan depth (uses catalog.depth if None)  |
+| infer_stats | bool                                            | True     | Compute statistics                       |
+| refresh     | bool \| None                                    | None     | Force rescan (overrides catalog setting) |
+| quiet       | bool \| None                                    | None     | Override catalog quiet setting           |
+| id          | str \| None                                     | None     | Override dataset ID                      |
+| name        | str \| None                                     | None     | Override dataset name                    |
+| description | str \| None                                     | None     | Override dataset description             |
 
 Additional metadata parameters: `type`, `link`, `localisation`, `manager_id`, `owner_id`, `tag_ids`, `doc_ids`, `start_date`, `end_date`, `updating_each`, `no_more_update`
 
 ### `Catalog.add_database()`
 
 ```python
-catalog.add_database(connection, folder=None, *, schema=None, include=None,
+catalog.add_database(connection, folder=None, *, depth=None, schema=None, include=None,
                      exclude=None, infer_stats=True, sample_size=None,
                      group_by_prefix=True, prefix_min_tables=2, refresh=None, quiet=None)
 ```
 
-| Parameter           | Type                | Default  | Description                              |
-| ------------------- | ------------------- | -------- | ---------------------------------------- |
-| `connection`        | `str`               | required | Connection string (see formats below)    |
-| `folder`            | `Folder \| None`    | `None`   | Custom root folder                       |
-| `schema`            | `str \| None`       | `None`   | Specific schema to scan                  |
-| `include`           | `list[str] \| None` | `None`   | Table name patterns to include           |
-| `exclude`           | `list[str] \| None` | `None`   | Table name patterns to exclude           |
-| `infer_stats`       | `bool`              | `True`   | Compute column statistics                |
-| `sample_size`       | `int \| None`       | `None`   | Limit rows for stats (large tables)      |
-| `group_by_prefix`   | `bool \| str`       | `True`   | Group tables by prefix into subfolders   |
-| `prefix_min_tables` | `int`               | `2`      | Min tables to form a prefix group        |
-| `refresh`           | `bool \| None`      | `None`   | Force rescan (overrides catalog setting) |
-| `quiet`             | `bool \| None`      | `None`   | Override catalog quiet setting           |
+| Parameter         | Type                                            | Default  | Description                              |
+| ----------------- | ----------------------------------------------- | -------- | ---------------------------------------- |
+| connection        | str                                             | required | Connection string (see formats below)    |
+| folder            | Folder \| None                                  | None     | Custom root folder                       |
+| depth             | \"structure\" \| \"schema\" \| \"full\" \| None | None     | Scan depth (uses catalog.depth if None)  |
+| schema            | str \| None                                     | None     | Specific schema to scan                  |
+| include           | list[str] \| None                               | None     | Table name patterns to include           |
+| exclude           | list[str] \| None                               | None     | Table name patterns to exclude           |
+| infer_stats       | bool                                            | True     | Compute column statistics                |
+| sample_size       | int \| None                                     | None     | Limit rows for stats (large tables)      |
+| group_by_prefix   | bool \| str                                     | True     | Group tables by prefix into subfolders   |
+| prefix_min_tables | int                                             | 2        | Min tables to form a prefix group        |
+| refresh           | bool \| None                                    | None     | Force rescan (overrides catalog setting) |
+| quiet             | bool \| None                                    | None     | Override catalog quiet setting           |
 
 **Connection string formats:**
 
@@ -324,13 +336,14 @@ catalog.add_database(connection, folder=None, *, schema=None, include=None,
 ### `Catalog.add_metadata()`
 
 ```python
-catalog.add_metadata(path, quiet=None)
+catalog.add_metadata(path, depth=None, quiet=None)
 ```
 
-| Parameter | Type           | Default  | Description                                  |
-| --------- | -------------- | -------- | -------------------------------------------- |
-| `path`    | `str \| Path`  | required | Folder or database containing metadata files |
-| `quiet`   | `bool \| None` | `None`   | Override catalog quiet setting               |
+| Parameter | Type                                       | Default  | Description                                  |
+| --------- | ------------------------------------------ | -------- | -------------------------------------------- |
+| path      | str \| Path                                | required | Folder or database containing metadata files |
+| depth     | "structure" \| "schema" \| "full" \| None | None     | Filter which entities to load                |
+| quiet     | bool \| None                               | None     | Override catalog quiet setting               |
 
 **Supported entity files/tables:** `folder`, `dataset`, `variable`, `modality`, `value`, `freq`, `institution`, `tag`, `doc`
 
@@ -364,24 +377,24 @@ Exports complete standalone datannur app with data. Uses `db_path` by default if
 Folder(id, name=None, description=None, parent_id=None, type=None, data_path=None)
 ```
 
-| Parameter     | Type          | Description       |
-| ------------- | ------------- | ----------------- |
-| `id`          | `str`         | Unique identifier |
-| `name`        | `str \| None` | Display name      |
-| `description` | `str \| None` | Description       |
-| `parent_id`   | `str \| None` | Parent folder ID  |
+| Parameter   | Type        | Description       |
+| ----------- | ----------- | ----------------- |
+| id          | str         | Unique identifier |
+| name        | str \| None | Display name      |
+| description | str \| None | Description       |
+| parent_id   | str \| None | Parent folder ID  |
 
-### ID Helpers
+### ID helpers
 
 ```python
 from datannurpy import sanitize_id, build_dataset_id, build_variable_id
 ```
 
-| Function                                               | Description                | Example                                                 |
-| ------------------------------------------------------ | -------------------------- | ------------------------------------------------------- |
-| `sanitize_id(s)`                                       | Clean string for use as ID | `"My File (v2)"` → `"My_File_v2"`                       |
-| `build_dataset_id(folder_id, dataset_name)`            | Build dataset ID           | `("src", "sales")` → `"src---sales"`                    |
-| `build_variable_id(folder_id, dataset_name, var_name)` | Build variable ID          | `("src", "sales", "amount")` → `"src---sales---amount"` |
+| Function                                        | Description                | Example                                                     |
+| ----------------------------------------------- | -------------------------- | ----------------------------------------------------------- |
+| sanitize_id(s)                                  | Clean string for use as ID | \"My File (v2)\" → \"My_File_v2\"                           |
+| build_dataset_id(folder_id, dataset_name)       | Build dataset ID           | (\"src\", \"sales\") → \"src---sales\"                      |
+| build_variable_id(folder_id, dataset_name, var) | Build variable ID          | (\"src\", \"sales\", \"amount\") → \"src---sales---amount\" |
 
 ## License
 

@@ -168,3 +168,36 @@ class TestCatalogExportDbDefault:
         assert len(user_folders) == 1
         assert user_folders[0].id == "src"
         assert len(catalog2.dataset.all()) == 1
+
+
+class TestCatalogDepth:
+    """Test Catalog depth parameter."""
+
+    def test_depth_structure_clears_variable_tables_on_load(self, tmp_path: Path):
+        """Loading with depth='structure' should clear variable/modality/value/freq."""
+        app_dir = tmp_path / "app"
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "test.csv").write_text("a,b\n1,2\n3,4\n")
+
+        # First run: full scan (creates variables, modalities, etc.)
+        catalog1 = Catalog(app_path=app_dir, depth="full")
+        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.export_db()
+
+        # Verify we have data
+        assert len(catalog1.variable.all()) > 0
+        assert len(catalog1.modality.all()) > 0
+
+        # Second run: load with structure mode
+        catalog2 = Catalog(app_path=app_dir, depth="structure")
+
+        # Structure mode should have cleared these tables
+        assert len(catalog2.variable.all()) == 0
+        assert len(catalog2.modality.all()) == 0
+        assert len(catalog2.value.all()) == 0
+        assert len(catalog2.freq.all()) == 0
+
+        # But folders and datasets should still be loaded
+        assert len(catalog2.folder.all()) > 0
+        assert len(catalog2.dataset.all()) == 1

@@ -402,3 +402,61 @@ class TestOracleBranches:
         # Should call with uppercased table name, no database arg
         mock_con.table.assert_called_once_with("USERS")
         assert result == 10
+
+
+class TestDepthParameterDatabase:
+    """Test depth parameter for database scanning."""
+
+    def test_depth_structure_creates_datasets_without_variables(self, sample_db: Path):
+        """depth='structure' should create datasets but no variables."""
+        conn_str = f"sqlite:////{sample_db}"
+
+        catalog = Catalog(quiet=True)
+        catalog.add_database(conn_str, depth="structure")
+
+        # Should have datasets (users, orders)
+        assert len(catalog.dataset.all()) == 2
+        # But no variables
+        assert len(catalog.variable.all()) == 0
+
+        # Datasets should have nb_row
+        for ds in catalog.dataset.all():
+            assert ds.nb_row is not None
+            assert ds.nb_row > 0
+
+    def test_depth_schema_creates_variables_without_stats(self, sample_db: Path):
+        """depth='schema' should create variables without stats."""
+        conn_str = f"sqlite:////{sample_db}"
+
+        catalog = Catalog(quiet=True)
+        catalog.add_database(conn_str, depth="schema")
+
+        # Should have datasets and variables
+        assert len(catalog.dataset.all()) == 2
+        assert len(catalog.variable.all()) > 0
+
+        # Variables should have no stats (nb_distinct, nb_missing)
+        for var in catalog.variable.all():
+            assert var.nb_distinct is None
+            assert var.nb_missing is None
+
+    def test_depth_at_catalog_level_affects_database(self, sample_db: Path):
+        """depth set at Catalog level should affect add_database."""
+        conn_str = f"sqlite:////{sample_db}"
+
+        # Set depth at catalog level
+        catalog = Catalog(depth="structure", quiet=True)
+        catalog.add_database(conn_str)
+
+        assert len(catalog.dataset.all()) == 2
+        assert len(catalog.variable.all()) == 0  # structure mode
+
+    def test_depth_override_at_add_database(self, sample_db: Path):
+        """depth at add_database should override catalog.depth."""
+        conn_str = f"sqlite:////{sample_db}"
+
+        catalog = Catalog(depth="structure", quiet=True)
+        catalog.add_database(conn_str, depth="schema")
+
+        assert len(catalog.dataset.all()) == 2
+        assert len(catalog.variable.all()) > 0  # schema mode overrides

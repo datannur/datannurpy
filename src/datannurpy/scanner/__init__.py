@@ -11,10 +11,23 @@ from .database import (
     list_tables,
     scan_table,
 )
+from .discovery import (
+    DatasetInfo,
+    DiscoveryResult,
+    ScanPlan,
+    compute_scan_plan,
+    discover_datasets,
+)
 from .excel import read_excel, scan_excel
 from .statistical import read_statistical, scan_statistical
 
 __all__ = [
+    # Discovery
+    "DatasetInfo",
+    "DiscoveryResult",
+    "ScanPlan",
+    "compute_scan_plan",
+    "discover_datasets",
     # Read functions (return DataFrame)
     "read_csv",
     "read_excel",

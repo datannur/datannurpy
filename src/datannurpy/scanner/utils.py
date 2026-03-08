@@ -87,17 +87,6 @@ def find_files(
     return candidates
 
 
-def find_subdirs(root: Path, files: list[Path]) -> set[Path]:
-    """Find subdirectories containing files."""
-    subdirs: set[Path] = set()
-    for f in files:
-        parent = f.parent
-        while parent != root:
-            subdirs.add(parent)
-            parent = parent.parent
-    return subdirs
-
-
 def ibis_type_to_str(dtype: dt.DataType) -> str:
     """Convert Ibis dtype to string."""
     if isinstance(dtype, (dt.Int8, dt.Int16, dt.Int32, dt.Int64)):
@@ -220,3 +209,42 @@ def build_variables(
     ]
 
     return variables, freq_table
+
+
+def build_variables_from_schema(
+    schema: pa.Schema,
+    dataset_id: str,
+) -> list[Variable]:
+    """Build Variable entities from PyArrow schema (no stats, no data read)."""
+    return [
+        Variable(
+            id=field.name,
+            name=field.name,
+            dataset_id=dataset_id,
+            type=pyarrow_type_to_str(field.type),
+        )
+        for field in schema
+    ]
+
+
+def pyarrow_type_to_str(dtype: pa.DataType) -> str:
+    """Convert PyArrow dtype to string."""
+    if pa.types.is_integer(dtype):
+        return "integer"
+    if pa.types.is_floating(dtype):
+        return "number"
+    if pa.types.is_boolean(dtype):
+        return "boolean"
+    if pa.types.is_date(dtype):
+        return "date"
+    if pa.types.is_timestamp(dtype):
+        return "datetime"
+    if pa.types.is_time(dtype):
+        return "time"
+    if pa.types.is_string(dtype) or pa.types.is_large_string(dtype):
+        return "string"
+    if pa.types.is_binary(dtype) or pa.types.is_large_binary(dtype):
+        return "binary"
+    if pa.types.is_null(dtype):
+        return "null"
+    return "unknown"

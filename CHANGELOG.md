@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.6.0 (2026-03-08)
+
+- add: `depth` parameter for `add_dataset` and `add_metadata`
+- refactor: `depth="structure"` now clears variable/modality/value/freq at load time
+
 ## 0.5.0 (2026-03-07)
 
 - add: evolution cascade filtering via parent_relations (jsonjsdb 0.8.2)
