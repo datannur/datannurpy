@@ -28,6 +28,27 @@
     "type": null
   },
   {
+    "id": "_modalities---mod_0b3bf09e4d",
+    "folder_id": "_modalities",
+    "name": "1450, 1600, 1700",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_11b1cdf31f",
+    "folder_id": "_modalities",
+    "name": "est, nord, sud",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_12e46258b4",
+    "folder_id": "_modalities",
+    "name": "Nantes, Nice, Toulouse",
+    "description": null,
+    "type": null
+  },
+  {
     "id": "_modalities---mod_182cfe8514",
     "folder_id": "_modalities",
     "name": "Léger, Müller, Çelik",
@@ -91,9 +112,23 @@
     "type": null
   },
   {
+    "id": "_modalities---mod_2c3b8eef57",
+    "folder_id": "_modalities",
+    "name": "1100, 1200, 1350",
+    "description": null,
+    "type": null
+  },
+  {
     "id": "_modalities---mod_2dc8eb7aad",
     "folder_id": "_modalities",
     "name": "Eolien, Solaire",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_2e497825fa",
+    "folder_id": "_modalities",
+    "name": "105, 241, 48",
     "description": null,
     "type": null
   },
@@ -175,9 +210,30 @@
     "type": null
   },
   {
+    "id": "_modalities---mod_3d42fd796c",
+    "folder_id": "_modalities",
+    "name": "avril, juin, mai",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_3e9050559f",
+    "folder_id": "_modalities",
+    "name": "4, 5, 6",
+    "description": null,
+    "type": null
+  },
+  {
     "id": "_modalities---mod_3eee4f2a23",
     "folder_id": "_modalities",
     "name": "company_name, version",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_4082c9af55",
+    "folder_id": "_modalities",
+    "name": "alice@mail.com, bob@mail.com, claire@mail.com",
     "description": null,
     "type": null
   },
@@ -199,6 +255,13 @@
     "id": "_modalities---mod_433535a949",
     "folder_id": "_modalities",
     "name": "Lyon, Marseille, Paris... (+1)",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_48609b1180",
+    "folder_id": "_modalities",
+    "name": "70, 75, 80",
     "description": null,
     "type": null
   },
@@ -231,9 +294,23 @@
     "type": null
   },
   {
+    "id": "_modalities---mod_50424576d6",
+    "folder_id": "_modalities",
+    "name": "fevrier, janvier, mars",
+    "description": null,
+    "type": null
+  },
+  {
     "id": "_modalities---mod_51e321b770",
     "folder_id": "_modalities",
     "name": "149.99, 99.99",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_5340c829ca",
+    "folder_id": "_modalities",
+    "name": "1, 15, 31",
     "description": null,
     "type": null
   },
@@ -248,6 +325,13 @@
     "id": "_modalities---mod_5cbe3d324b",
     "folder_id": "_modalities",
     "name": "entrée en fo..., exploitation..., mise en serv...... (+5)",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_5d5b7408d8",
+    "folder_id": "_modalities",
+    "name": "28, 34, 45",
     "description": null,
     "type": null
   },
@@ -329,6 +413,13 @@
     "type": null
   },
   {
+    "id": "_modalities---mod_6a8c8f6c18",
+    "folder_id": "_modalities",
+    "name": "David, Emma, François",
+    "description": null,
+    "type": null
+  },
+  {
     "id": "_modalities---mod_6adc02e862",
     "folder_id": "_modalities",
     "name": "Defective",
@@ -343,9 +434,23 @@
     "type": null
   },
   {
+    "id": "_modalities---mod_6bd28bfeff",
+    "folder_id": "_modalities",
+    "name": "Gaelle, Hugo, Isabelle",
+    "description": null,
+    "type": null
+  },
+  {
     "id": "_modalities---mod_6e1c74353a",
     "folder_id": "_modalities",
     "name": "Alice, Bob, Charlie... (+3)",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_6ecad2a9fb",
+    "folder_id": "_modalities",
+    "name": "60, 65, 68",
     "description": null,
     "type": null
   },
@@ -371,6 +476,13 @@
     "type": null
   },
   {
+    "id": "_modalities---mod_748614813d",
+    "folder_id": "_modalities",
+    "name": "29, 31, 42",
+    "description": null,
+    "type": null
+  },
+  {
     "id": "_modalities---mod_7973835a5d",
     "folder_id": "_modalities",
     "name": "10000, 5000",
@@ -385,9 +497,37 @@
     "type": null
   },
   {
+    "id": "_modalities---mod_7a4b126002",
+    "folder_id": "_modalities",
+    "name": "2148000, 522969, 870731",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_7d5087ec3d",
+    "folder_id": "_modalities",
+    "name": "12000, 5000, 50000",
+    "description": null,
+    "type": null
+  },
+  {
     "id": "_modalities---mod_802a13bf34",
     "folder_id": "_modalities",
     "name": "data---csv--...",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_81fce7934e",
+    "folder_id": "_modalities",
+    "name": "Lyon, Marseille, Paris",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_822ca4ae9c",
+    "folder_id": "_modalities",
+    "name": "1.8, 3.1, 5.2",
     "description": null,
     "type": null
   },
@@ -416,6 +556,13 @@
     "id": "_modalities---mod_8bcead3a0b",
     "folder_id": "_modalities",
     "name": "Alice, Bob, Charlie",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_8e4901402e",
+    "folder_id": "_modalities",
+    "name": "2150000, 525000, 872000",
     "description": null,
     "type": null
   },
@@ -511,9 +658,30 @@
     "type": null
   },
   {
+    "id": "_modalities---mod_a2479a798c",
+    "folder_id": "_modalities",
+    "name": "1250, 1400, 1500",
+    "description": null,
+    "type": null
+  },
+  {
     "id": "_modalities---mod_a4750880c6",
     "folder_id": "_modalities",
     "name": "a, b, c... (+2)",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_a6091cf7c5",
+    "folder_id": "_modalities",
+    "name": "290, 320, 340",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_a61987ee8a",
+    "folder_id": "_modalities",
+    "name": "11.0, 7.1, 9.3",
     "description": null,
     "type": null
   },
@@ -546,6 +714,13 @@
     "type": null
   },
   {
+    "id": "_modalities---mod_ac565f22a4",
+    "folder_id": "_modalities",
+    "name": "Bordeaux, Lille, Strasbourg",
+    "description": null,
+    "type": null
+  },
+  {
     "id": "_modalities---mod_ae6d5a38cc",
     "folder_id": "_modalities",
     "name": "contact@inse...",
@@ -567,6 +742,13 @@
     "type": null
   },
   {
+    "id": "_modalities---mod_b974ffb0d5",
+    "folder_id": "_modalities",
+    "name": "Alice, Bob, Claire",
+    "description": null,
+    "type": null
+  },
+  {
     "id": "_modalities---mod_bda75bc83c",
     "folder_id": "_modalities",
     "name": "Finance, RH",
@@ -574,9 +756,30 @@
     "type": null
   },
   {
+    "id": "_modalities---mod_bfc8e87c51",
+    "folder_id": "_modalities",
+    "name": "2.0, 4.5, 6.2",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_c0a038d9c2",
+    "folder_id": "_modalities",
+    "name": "7, 8, 9",
+    "description": null,
+    "type": null
+  },
+  {
     "id": "_modalities---mod_c0e1a30973",
     "folder_id": "_modalities",
     "name": "1, 2, 3... (+2)",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_c60568ab09",
+    "folder_id": "_modalities",
+    "name": "infra, rh",
     "description": null,
     "type": null
   },
@@ -626,6 +829,20 @@
     "id": "_modalities---mod_ceb2957b9e",
     "folder_id": "_modalities",
     "name": "Gadget Plus, Widget Pro",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_d7cb333b55",
+    "folder_id": "_modalities",
+    "name": "15000, 52000, 6000",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_d89a50a28b",
+    "folder_id": "_modalities",
+    "name": "1, 15, 28",
     "description": null,
     "type": null
   },
@@ -693,6 +910,13 @@
     "type": null
   },
   {
+    "id": "_modalities---mod_e8b43a8bcd",
+    "folder_id": "_modalities",
+    "name": "78, 82, 85",
+    "description": null,
+    "type": null
+  },
+  {
     "id": "_modalities---mod_ecdfc6dc16",
     "folder_id": "_modalities",
     "name": "DGFiP, INSEE",
@@ -756,9 +980,23 @@
     "type": null
   },
   {
+    "id": "_modalities---mod_faf13cd03f",
+    "folder_id": "_modalities",
+    "name": "formation, materiel, salaires",
+    "description": null,
+    "type": null
+  },
+  {
     "id": "_modalities---mod_fb91005117",
     "folder_id": "_modalities",
     "name": "25, 26, 27... (+16)",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_fdcca94666",
+    "folder_id": "_modalities",
+    "name": "40000, 47000, 54000",
     "description": null,
     "type": null
   }

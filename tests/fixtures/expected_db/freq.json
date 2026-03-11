@@ -3910,6 +3910,776 @@
     "freq": 1
   },
   {
+    "variable_id": "data---timeseries---mixed---budget_2022_csv---categorie",
+    "value": "infra",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_2022_csv---categorie",
+    "value": "rh",
+    "freq": 2
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_2022_csv---montant",
+    "value": "12000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_2022_csv---montant",
+    "value": "5000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_2022_csv---montant",
+    "value": "50000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_2022_csv---poste",
+    "value": "formation",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_2022_csv---poste",
+    "value": "materiel",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_2022_csv---poste",
+    "value": "salaires",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_2023_csv---categorie",
+    "value": "infra",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_2023_csv---categorie",
+    "value": "rh",
+    "freq": 2
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_2023_csv---montant",
+    "value": "15000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_2023_csv---montant",
+    "value": "52000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_2023_csv---montant",
+    "value": "6000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_2023_csv---poste",
+    "value": "formation",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_2023_csv---poste",
+    "value": "materiel",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_2023_csv---poste",
+    "value": "salaires",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_2023_csv---commune",
+    "value": "Lyon",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_2023_csv---commune",
+    "value": "Marseille",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_2023_csv---commune",
+    "value": "Paris",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_2023_csv---population",
+    "value": "2148000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_2023_csv---population",
+    "value": "522969",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_2023_csv---population",
+    "value": "870731",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_2023_csv---superficie",
+    "value": "105",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_2023_csv---superficie",
+    "value": "241",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_2023_csv---superficie",
+    "value": "48",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_2024_csv---commune",
+    "value": "Lyon",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_2024_csv---commune",
+    "value": "Marseille",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_2024_csv---commune",
+    "value": "Paris",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_2024_csv---population",
+    "value": "2150000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_2024_csv---population",
+    "value": "525000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_2024_csv---population",
+    "value": "872000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_2024_csv---superficie",
+    "value": "105",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_2024_csv---superficie",
+    "value": "241",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_2024_csv---superficie",
+    "value": "48",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2023---12---export_csv---humidite",
+    "value": "78",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2023---12---export_csv---humidite",
+    "value": "82",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2023---12---export_csv---humidite",
+    "value": "85",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2023---12---export_csv---jour",
+    "value": "1",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2023---12---export_csv---jour",
+    "value": "15",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2023---12---export_csv---jour",
+    "value": "31",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2023---12---export_csv---temperature",
+    "value": "1.8",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2023---12---export_csv---temperature",
+    "value": "3.1",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2023---12---export_csv---temperature",
+    "value": "5.2",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2024---01---export_csv---humidite",
+    "value": "70",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2024---01---export_csv---humidite",
+    "value": "75",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2024---01---export_csv---humidite",
+    "value": "80",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2024---01---export_csv---jour",
+    "value": "1",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2024---01---export_csv---jour",
+    "value": "15",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2024---01---export_csv---jour",
+    "value": "31",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2024---01---export_csv---temperature",
+    "value": "2.0",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2024---01---export_csv---temperature",
+    "value": "4.5",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2024---01---export_csv---temperature",
+    "value": "6.2",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2024---02---export_csv---humidite",
+    "value": "60",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2024---02---export_csv---humidite",
+    "value": "65",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2024---02---export_csv---humidite",
+    "value": "68",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2024---02---export_csv---jour",
+    "value": "1",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2024---02---export_csv---jour",
+    "value": "15",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2024---02---export_csv---jour",
+    "value": "28",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2024---02---export_csv---temperature",
+    "value": "11.0",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2024---02---export_csv---temperature",
+    "value": "7.1",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders---2024---02---export_csv---temperature",
+    "value": "9.3",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2023Q1_csv---mois",
+    "value": "fevrier",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2023Q1_csv---mois",
+    "value": "janvier",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2023Q1_csv---mois",
+    "value": "mars",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2023Q1_csv---region",
+    "value": "est",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2023Q1_csv---region",
+    "value": "nord",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2023Q1_csv---region",
+    "value": "sud",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2023Q1_csv---ventes",
+    "value": "1100",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2023Q1_csv---ventes",
+    "value": "1200",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2023Q1_csv---ventes",
+    "value": "1350",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2023Q2_csv---mois",
+    "value": "avril",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2023Q2_csv---mois",
+    "value": "juin",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2023Q2_csv---mois",
+    "value": "mai",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2023Q2_csv---region",
+    "value": "est",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2023Q2_csv---region",
+    "value": "nord",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2023Q2_csv---region",
+    "value": "sud",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2023Q2_csv---ventes",
+    "value": "1250",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2023Q2_csv---ventes",
+    "value": "1400",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2023Q2_csv---ventes",
+    "value": "1500",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2024Q1_csv---marge",
+    "value": "290",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2024Q1_csv---marge",
+    "value": "320",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2024Q1_csv---marge",
+    "value": "340",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2024Q1_csv---mois",
+    "value": "fevrier",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2024Q1_csv---mois",
+    "value": "janvier",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2024Q1_csv---mois",
+    "value": "mars",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2024Q1_csv---region",
+    "value": "est",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2024Q1_csv---region",
+    "value": "nord",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2024Q1_csv---region",
+    "value": "sud",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2024Q1_csv---ventes",
+    "value": "1450",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2024Q1_csv---ventes",
+    "value": "1600",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_2024Q1_csv---ventes",
+    "value": "1700",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2020_csv---id",
+    "value": "1",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2020_csv---id",
+    "value": "2",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2020_csv---id",
+    "value": "3",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2020_csv---nom",
+    "value": "Alice",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2020_csv---nom",
+    "value": "Bob",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2020_csv---nom",
+    "value": "Claire",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2020_csv---revenu",
+    "value": "38000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2020_csv---revenu",
+    "value": "45000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2020_csv---revenu",
+    "value": "52000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2021_csv---email",
+    "value": "alice@mail.com",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2021_csv---email",
+    "value": "bob@mail.com",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2021_csv---email",
+    "value": "claire@mail.com",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2021_csv---id",
+    "value": "1",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2021_csv---id",
+    "value": "2",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2021_csv---id",
+    "value": "3",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2021_csv---nom",
+    "value": "Alice",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2021_csv---nom",
+    "value": "Bob",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2021_csv---nom",
+    "value": "Claire",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2021_csv---revenu",
+    "value": "40000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2021_csv---revenu",
+    "value": "47000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2021_csv---revenu",
+    "value": "54000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2023_csv---email",
+    "value": "alice@mail.com",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2023_csv---email",
+    "value": "bob@mail.com",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2023_csv---email",
+    "value": "claire@mail.com",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2023_csv---id",
+    "value": "1",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2023_csv---id",
+    "value": "2",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2023_csv---id",
+    "value": "3",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2023_csv---nom",
+    "value": "Alice",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2023_csv---nom",
+    "value": "Bob",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_2023_csv---nom",
+    "value": "Claire",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2020_csv---id",
+    "value": "1",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2020_csv---id",
+    "value": "2",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2020_csv---id",
+    "value": "3",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2020_csv---nom",
+    "value": "Alice",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2020_csv---nom",
+    "value": "Bob",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2020_csv---nom",
+    "value": "Claire",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2020_csv---ville",
+    "value": "Lyon",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2020_csv---ville",
+    "value": "Marseille",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2020_csv---ville",
+    "value": "Paris",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2021_csv---age",
+    "value": "28",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2021_csv---age",
+    "value": "34",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2021_csv---age",
+    "value": "45",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2021_csv---id",
+    "value": "4",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2021_csv---id",
+    "value": "5",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2021_csv---id",
+    "value": "6",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2021_csv---nom",
+    "value": "David",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2021_csv---nom",
+    "value": "Emma",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2021_csv---nom",
+    "value": "François",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2021_csv---ville",
+    "value": "Nantes",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2021_csv---ville",
+    "value": "Nice",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2021_csv---ville",
+    "value": "Toulouse",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2023_csv---age",
+    "value": "29",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2023_csv---age",
+    "value": "31",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2023_csv---age",
+    "value": "42",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2023_csv---id",
+    "value": "7",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2023_csv---id",
+    "value": "8",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2023_csv---id",
+    "value": "9",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2023_csv---nom",
+    "value": "Gaelle",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2023_csv---nom",
+    "value": "Hugo",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2023_csv---nom",
+    "value": "Isabelle",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2023_csv---ville",
+    "value": "Bordeaux",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2023_csv---ville",
+    "value": "Lille",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_2023_csv---ville",
+    "value": "Strasbourg",
+    "freq": 1
+  },
+  {
     "variable_id": "photovoltaik---EnergySourceCatalogue---DE",
     "value": "Solar",
     "freq": 1

@@ -195,6 +195,51 @@
     "description": null
   },
   {
+    "modality_id": "_modalities---mod_0b3bf09e4d",
+    "value": "1450",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_0b3bf09e4d",
+    "value": "1600",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_0b3bf09e4d",
+    "value": "1700",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_11b1cdf31f",
+    "value": "est",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_11b1cdf31f",
+    "value": "nord",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_11b1cdf31f",
+    "value": "sud",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_12e46258b4",
+    "value": "Nantes",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_12e46258b4",
+    "value": "Nice",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_12e46258b4",
+    "value": "Toulouse",
+    "description": null
+  },
+  {
     "modality_id": "_modalities---mod_182cfe8514",
     "value": "Léger",
     "description": null
@@ -455,6 +500,21 @@
     "description": null
   },
   {
+    "modality_id": "_modalities---mod_2c3b8eef57",
+    "value": "1100",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_2c3b8eef57",
+    "value": "1200",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_2c3b8eef57",
+    "value": "1350",
+    "description": null
+  },
+  {
     "modality_id": "_modalities---mod_2dc8eb7aad",
     "value": "Eolien",
     "description": null
@@ -462,6 +522,21 @@
   {
     "modality_id": "_modalities---mod_2dc8eb7aad",
     "value": "Solaire",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_2e497825fa",
+    "value": "105",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_2e497825fa",
+    "value": "241",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_2e497825fa",
+    "value": "48",
     "description": null
   },
   {
@@ -1045,6 +1120,36 @@
     "description": null
   },
   {
+    "modality_id": "_modalities---mod_3d42fd796c",
+    "value": "avril",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_3d42fd796c",
+    "value": "juin",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_3d42fd796c",
+    "value": "mai",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_3e9050559f",
+    "value": "4",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_3e9050559f",
+    "value": "5",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_3e9050559f",
+    "value": "6",
+    "description": null
+  },
+  {
     "modality_id": "_modalities---mod_3eee4f2a23",
     "value": "company_name",
     "description": null
@@ -1052,6 +1157,21 @@
   {
     "modality_id": "_modalities---mod_3eee4f2a23",
     "value": "version",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_4082c9af55",
+    "value": "alice@mail.com",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_4082c9af55",
+    "value": "bob@mail.com",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_4082c9af55",
+    "value": "claire@mail.com",
     "description": null
   },
   {
@@ -1455,6 +1575,21 @@
     "description": null
   },
   {
+    "modality_id": "_modalities---mod_48609b1180",
+    "value": "70",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_48609b1180",
+    "value": "75",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_48609b1180",
+    "value": "80",
+    "description": null
+  },
+  {
     "modality_id": "_modalities---mod_4aa562f5c5",
     "value": "Andre",
     "description": null
@@ -1770,6 +1905,21 @@
     "description": null
   },
   {
+    "modality_id": "_modalities---mod_50424576d6",
+    "value": "fevrier",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_50424576d6",
+    "value": "janvier",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_50424576d6",
+    "value": "mars",
+    "description": null
+  },
+  {
     "modality_id": "_modalities---mod_51e321b770",
     "value": "149.99",
     "description": null
@@ -1777,6 +1927,21 @@
   {
     "modality_id": "_modalities---mod_51e321b770",
     "value": "99.99",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_5340c829ca",
+    "value": "1",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_5340c829ca",
+    "value": "15",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_5340c829ca",
+    "value": "31",
     "description": null
   },
   {
@@ -1832,6 +1997,21 @@
   {
     "modality_id": "_modalities---mod_5cbe3d324b",
     "value": "retiré",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_5d5b7408d8",
+    "value": "28",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_5d5b7408d8",
+    "value": "34",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_5d5b7408d8",
+    "value": "45",
     "description": null
   },
   {
@@ -2430,6 +2610,21 @@
     "description": null
   },
   {
+    "modality_id": "_modalities---mod_6a8c8f6c18",
+    "value": "David",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_6a8c8f6c18",
+    "value": "Emma",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_6a8c8f6c18",
+    "value": "François",
+    "description": null
+  },
+  {
     "modality_id": "_modalities---mod_6adc02e862",
     "value": "Defective",
     "description": null
@@ -2442,6 +2637,21 @@
   {
     "modality_id": "_modalities---mod_6bc4c3e856",
     "value": "1",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_6bd28bfeff",
+    "value": "Gaelle",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_6bd28bfeff",
+    "value": "Hugo",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_6bd28bfeff",
+    "value": "Isabelle",
     "description": null
   },
   {
@@ -2472,6 +2682,21 @@
   {
     "modality_id": "_modalities---mod_6e1c74353a",
     "value": "Frank",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_6ecad2a9fb",
+    "value": "60",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_6ecad2a9fb",
+    "value": "65",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_6ecad2a9fb",
+    "value": "68",
     "description": null
   },
   {
@@ -2527,6 +2752,21 @@
   {
     "modality_id": "_modalities---mod_741f0d5c51",
     "value": "insee",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_748614813d",
+    "value": "29",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_748614813d",
+    "value": "31",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_748614813d",
+    "value": "42",
     "description": null
   },
   {
@@ -2685,8 +2925,68 @@
     "description": null
   },
   {
+    "modality_id": "_modalities---mod_7a4b126002",
+    "value": "2148000",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_7a4b126002",
+    "value": "522969",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_7a4b126002",
+    "value": "870731",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_7d5087ec3d",
+    "value": "12000",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_7d5087ec3d",
+    "value": "5000",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_7d5087ec3d",
+    "value": "50000",
+    "description": null
+  },
+  {
     "modality_id": "_modalities---mod_802a13bf34",
     "value": "data---csv---employees_csv",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_81fce7934e",
+    "value": "Lyon",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_81fce7934e",
+    "value": "Marseille",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_81fce7934e",
+    "value": "Paris",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_822ca4ae9c",
+    "value": "1.8",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_822ca4ae9c",
+    "value": "3.1",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_822ca4ae9c",
+    "value": "5.2",
     "description": null
   },
   {
@@ -2997,6 +3297,21 @@
   {
     "modality_id": "_modalities---mod_8bcead3a0b",
     "value": "Charlie",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_8e4901402e",
+    "value": "2150000",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_8e4901402e",
+    "value": "525000",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_8e4901402e",
+    "value": "872000",
     "description": null
   },
   {
@@ -3960,6 +4275,21 @@
     "description": null
   },
   {
+    "modality_id": "_modalities---mod_a2479a798c",
+    "value": "1250",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_a2479a798c",
+    "value": "1400",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_a2479a798c",
+    "value": "1500",
+    "description": null
+  },
+  {
     "modality_id": "_modalities---mod_a4750880c6",
     "value": "a",
     "description": null
@@ -3982,6 +4312,36 @@
   {
     "modality_id": "_modalities---mod_a4750880c6",
     "value": "e",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_a6091cf7c5",
+    "value": "290",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_a6091cf7c5",
+    "value": "320",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_a6091cf7c5",
+    "value": "340",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_a61987ee8a",
+    "value": "11.0",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_a61987ee8a",
+    "value": "7.1",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_a61987ee8a",
+    "value": "9.3",
     "description": null
   },
   {
@@ -4145,6 +4505,21 @@
     "description": null
   },
   {
+    "modality_id": "_modalities---mod_ac565f22a4",
+    "value": "Bordeaux",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_ac565f22a4",
+    "value": "Lille",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_ac565f22a4",
+    "value": "Strasbourg",
+    "description": null
+  },
+  {
     "modality_id": "_modalities---mod_ae6d5a38cc",
     "value": "contact@insee.fr",
     "description": null
@@ -4180,6 +4555,21 @@
     "description": null
   },
   {
+    "modality_id": "_modalities---mod_b974ffb0d5",
+    "value": "Alice",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_b974ffb0d5",
+    "value": "Bob",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_b974ffb0d5",
+    "value": "Claire",
+    "description": null
+  },
+  {
     "modality_id": "_modalities---mod_bda75bc83c",
     "value": "Finance",
     "description": null
@@ -4187,6 +4577,36 @@
   {
     "modality_id": "_modalities---mod_bda75bc83c",
     "value": "RH",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_bfc8e87c51",
+    "value": "2.0",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_bfc8e87c51",
+    "value": "4.5",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_bfc8e87c51",
+    "value": "6.2",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_c0a038d9c2",
+    "value": "7",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_c0a038d9c2",
+    "value": "8",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_c0a038d9c2",
+    "value": "9",
     "description": null
   },
   {
@@ -4212,6 +4632,16 @@
   {
     "modality_id": "_modalities---mod_c0e1a30973",
     "value": "5",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_c60568ab09",
+    "value": "infra",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_c60568ab09",
+    "value": "rh",
     "description": null
   },
   {
@@ -4332,6 +4762,36 @@
   {
     "modality_id": "_modalities---mod_ceb2957b9e",
     "value": "Widget Pro",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_d7cb333b55",
+    "value": "15000",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_d7cb333b55",
+    "value": "52000",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_d7cb333b55",
+    "value": "6000",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_d89a50a28b",
+    "value": "1",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_d89a50a28b",
+    "value": "15",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_d89a50a28b",
+    "value": "28",
     "description": null
   },
   {
@@ -4795,6 +5255,21 @@
     "description": null
   },
   {
+    "modality_id": "_modalities---mod_e8b43a8bcd",
+    "value": "78",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_e8b43a8bcd",
+    "value": "82",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_e8b43a8bcd",
+    "value": "85",
+    "description": null
+  },
+  {
     "modality_id": "_modalities---mod_ecdfc6dc16",
     "value": "DGFiP",
     "description": null
@@ -5220,6 +5695,21 @@
     "description": null
   },
   {
+    "modality_id": "_modalities---mod_faf13cd03f",
+    "value": "formation",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_faf13cd03f",
+    "value": "materiel",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_faf13cd03f",
+    "value": "salaires",
+    "description": null
+  },
+  {
     "modality_id": "_modalities---mod_fb91005117",
     "value": "25",
     "description": null
@@ -5312,6 +5802,21 @@
   {
     "modality_id": "_modalities---mod_fb91005117",
     "value": "45",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_fdcca94666",
+    "value": "40000",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_fdcca94666",
+    "value": "47000",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_fdcca94666",
+    "value": "54000",
     "description": null
   }
 ]
