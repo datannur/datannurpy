@@ -31,6 +31,27 @@ add:
         assert any(f.id == "test_csv" for f in catalog.folder.all())
         assert len(catalog.dataset.all()) > 0
 
+    def test_run_config_dataset(self, tmp_path: Path, data_dir: Path):
+        """Run a config that scans a single dataset."""
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+app_path: {tmp_path / "output"}
+refresh: true
+quiet: true
+
+add:
+  - type: dataset
+    path: {data_dir / "csv" / "employees.csv"}
+    name: Custom Name
+    description: Custom description
+""")
+        catalog = run_config(config_file)
+
+        assert len(catalog.dataset.all()) == 1
+        ds = catalog.dataset.all()[0]
+        assert ds.name == "Custom Name"
+        assert ds.description == "Custom description"
+
     def test_run_config_database(self, tmp_path: Path):
         """Run a config that scans a database."""
         import sqlite3
@@ -213,8 +234,10 @@ add:
         assert len(catalog.dataset.all()) == 1
         assert not (output_dir / "data" / "db").exists()
 
-    def test_run_config_unknown_type_ignored(self, tmp_path: Path):
-        """Unknown add type should be silently ignored."""
+    def test_run_config_unknown_type_warns(self, tmp_path: Path):
+        """Unknown add type should emit a warning."""
+        import warnings
+
         data_dir = tmp_path / "data"
         data_dir.mkdir()
         (data_dir / "test.csv").write_text("a,b\n1,2\n")
@@ -231,9 +254,17 @@ add:
   - type: folder
     path: {data_dir}
 """)
-        catalog = run_config(config_file)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            catalog = run_config(config_file)
 
-        # Unknown type ignored, folder still processed
+            # Warning should be raised for unknown type
+            assert len(w) == 1
+            assert "Unknown type 'unknown'" in str(w[0].message)
+            assert "database" in str(w[0].message)
+            assert "folder" in str(w[0].message)
+
+        # Folder still processed despite warning
         assert len(catalog.dataset.all()) == 1
 
     def test_run_config_relative_paths(self, tmp_path: Path):

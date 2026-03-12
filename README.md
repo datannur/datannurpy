@@ -82,6 +82,11 @@ add:
     path: ./data
     include: ["*.csv", "*.parquet"]
 
+  - type: dataset
+    path: ./data/sales.parquet
+    name: Sales Data
+    description: Monthly sales figures
+
   - type: database
     uri: sqlite:///mydb.sqlite
 

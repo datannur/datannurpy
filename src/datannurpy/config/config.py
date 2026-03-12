@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 
 import yaml
 
 from ..catalog import Catalog
 from ..schema import Folder
+
+VALID_TYPES = {"folder", "dataset", "database", "metadata"}
 
 
 def _resolve_path(p: str, base_dir: Path) -> str:
@@ -45,6 +48,9 @@ def run_config(path: str | Path) -> Catalog:
         if item_type == "folder":
             folder_path = _resolve_path(item.pop("path"), base_dir)
             catalog.add_folder(folder_path, **item)
+        elif item_type == "dataset":
+            dataset_path = _resolve_path(item.pop("path"), base_dir)
+            catalog.add_dataset(dataset_path, **item)
         elif item_type == "database":
             uri = item.pop("uri")
             # Resolve sqlite:/// paths
@@ -55,6 +61,11 @@ def run_config(path: str | Path) -> Catalog:
         elif item_type == "metadata":
             meta_path = _resolve_path(item.pop("path"), base_dir)
             catalog.add_metadata(meta_path, **item)
+        else:
+            warnings.warn(
+                f"Unknown type '{item_type}' in config. Valid types: {', '.join(sorted(VALID_TYPES))}",
+                stacklevel=2,
+            )
 
     # Export
     if "export_app" in config:

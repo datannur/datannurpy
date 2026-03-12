@@ -1,5 +1,12 @@
 # datannurpy
 
+## 0.9.0 (2026-03-12)
+
+- add: YAML configuration support with `run_config()`
+- add: CLI with `python -m datannurpy config.yml`
+- add: `datannurpy` entry point for venv usage
+- add: `type: dataset` support in YAML config
+
 ## 0.8.0 (2026-03-12)
 
 - add: `time_series` parameter for `add_folder` to group temporal files (e.g., `data_2020.csv`, `data_2021.csv`) into single datasets
