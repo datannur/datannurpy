@@ -546,3 +546,23 @@ class TestTimeSeriesRescan:
         assert len(datasets) == 1
         # Should still have variables from schema
         assert len(catalog.variable.all()) > 0
+
+    def test_timeseries_at_root_no_subfolders(self, tmp_path: Path):
+        """Time series files directly in scanned folder (no subfolders created)."""
+        # Create files directly in tmp_path (not in a subfolder)
+        (tmp_path / "report_2020.csv").write_text("id,value\n1,100\n")
+        (tmp_path / "report_2021.csv").write_text("id,value\n2,200\n")
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, Folder(id="root", name="Root"), quiet=True)
+
+        # Should have one grouped dataset
+        datasets = catalog.dataset.all()
+        assert len(datasets) == 1
+        assert datasets[0].nb_files == 2
+        # No child folders should be created from file paths
+        # (only the scanned folder and system folders like _modalities exist)
+        folder_ids = {f.id for f in catalog.folder.all()}
+        assert "root" in folder_ids
+        # No subfolders like "2020" or "2021" should exist
+        assert not any(f.id.startswith("root---") for f in catalog.folder.all())

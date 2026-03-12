@@ -128,24 +128,24 @@ def add_folder(
     # Extract subdirs from discovered datasets (skip time series temporal paths)
     subdirs: set[Path] = set()
     for info in discovery.datasets:
+        # Determine starting parent for folder traversal
+        start_parent: Path | None = None
         if info.series_files is not None:
             # For time series: only add non-temporal parent folders
             normalized = normalize_path(info.path, root)
             non_temporal_parts = get_series_folder_parts(normalized)
             if non_temporal_parts:
-                # Build path to non-temporal parent
-                non_temporal_parent = root / Path(*non_temporal_parts)
-                parent = non_temporal_parent
-                while parent != root and parent not in discovery.excluded_dirs:
-                    if parent not in subdirs:
-                        subdirs.add(parent)
-                    parent = parent.parent
-            continue
-        parent = info.path.parent
-        while parent != root and parent not in discovery.excluded_dirs:
-            if parent not in subdirs:
-                subdirs.add(parent)
-            parent = parent.parent
+                start_parent = root / Path(*non_temporal_parts)
+        else:
+            start_parent = info.path.parent
+
+        # Add parent folders up to root
+        if start_parent is not None:
+            parent = start_parent
+            while parent != root and parent not in discovery.excluded_dirs:
+                if parent not in subdirs:
+                    subdirs.add(parent)
+                parent = parent.parent
 
     # Create sub-folders
     subdir_ids: dict[Path, str] = {}
