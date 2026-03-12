@@ -68,6 +68,36 @@ catalog.add_database("sqlite:///mydb.sqlite")
 catalog.export_app("./my-catalog", open_browser=True)
 ```
 
+## Configuration file
+
+Alternative to Python scripts - define the catalog in YAML:
+
+```yaml
+# catalog.yml
+app_path: ./my-catalog
+refresh: true
+
+add:
+  - type: folder
+    path: ./data
+    include: ["*.csv", "*.parquet"]
+
+  - type: database
+    uri: sqlite:///mydb.sqlite
+
+  - type: metadata
+    path: ./metadata
+
+export_app:
+  open_browser: true
+```
+
+```python
+from datannurpy import run_config
+
+run_config("catalog.yml")
+```
+
 ## Incremental scan
 
 Re-run with the same `db_path` to only rescan changed files (compares mtime) or tables (compares schema + row count):
