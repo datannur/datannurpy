@@ -3910,6 +3910,301 @@
     "freq": 1
   },
   {
+    "variable_id": "data---timeseries---mixed---budget_---PERIOD---_csv---categorie",
+    "value": "infra",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_---PERIOD---_csv---categorie",
+    "value": "rh",
+    "freq": 2
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_---PERIOD---_csv---montant",
+    "value": "15000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_---PERIOD---_csv---montant",
+    "value": "52000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_---PERIOD---_csv---montant",
+    "value": "6000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_---PERIOD---_csv---poste",
+    "value": "formation",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_---PERIOD---_csv---poste",
+    "value": "materiel",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---budget_---PERIOD---_csv---poste",
+    "value": "salaires",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_---PERIOD---_csv---commune",
+    "value": "Lyon",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_---PERIOD---_csv---commune",
+    "value": "Marseille",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_---PERIOD---_csv---commune",
+    "value": "Paris",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_---PERIOD---_csv---population",
+    "value": "2150000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_---PERIOD---_csv---population",
+    "value": "525000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_---PERIOD---_csv---population",
+    "value": "872000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_---PERIOD---_csv---superficie",
+    "value": "105",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_---PERIOD---_csv---superficie",
+    "value": "241",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---mixed---census_---PERIOD---_csv---superficie",
+    "value": "48",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---humidite",
+    "value": "60",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---humidite",
+    "value": "65",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---humidite",
+    "value": "68",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---jour",
+    "value": "1",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---jour",
+    "value": "15",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---jour",
+    "value": "28",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---temperature",
+    "value": "11.0",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---temperature",
+    "value": "7.1",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---temperature",
+    "value": "9.3",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---marge",
+    "value": "290",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---marge",
+    "value": "320",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---marge",
+    "value": "340",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---mois",
+    "value": "fevrier",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---mois",
+    "value": "janvier",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---mois",
+    "value": "mars",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---region",
+    "value": "est",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---region",
+    "value": "nord",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---region",
+    "value": "sud",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---ventes",
+    "value": "1450",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---ventes",
+    "value": "1600",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---ventes",
+    "value": "1700",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---email",
+    "value": "alice@mail.com",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---email",
+    "value": "bob@mail.com",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---email",
+    "value": "claire@mail.com",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---id",
+    "value": "1",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---id",
+    "value": "2",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---id",
+    "value": "3",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---nom",
+    "value": "Alice",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---nom",
+    "value": "Bob",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---nom",
+    "value": "Claire",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---age",
+    "value": "29",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---age",
+    "value": "31",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---age",
+    "value": "42",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---id",
+    "value": "7",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---id",
+    "value": "8",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---id",
+    "value": "9",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---nom",
+    "value": "Gaelle",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---nom",
+    "value": "Hugo",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---nom",
+    "value": "Isabelle",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---ville",
+    "value": "Bordeaux",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---ville",
+    "value": "Lille",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---ville",
+    "value": "Strasbourg",
+    "freq": 1
+  },
+  {
     "variable_id": "photovoltaik---EnergySourceCatalogue---DE",
     "value": "Solar",
     "freq": 1

@@ -22,8 +22,15 @@ from .utils import (
 )
 from .finalize import remove_dataset_cascade
 from .schema import Dataset, Folder
-from .scanner.discovery import compute_scan_plan, discover_datasets
+from .scanner.discovery import DatasetInfo, compute_scan_plan, discover_datasets
 from .scanner.filesystem import FileSystem, is_remote_url
+from .scanner.timeseries import (
+    build_series_dataset_id,
+    build_series_dataset_name,
+    compute_variable_periods,
+    get_series_folder_parts,
+    normalize_path,
+)
 from .scanner.utils import get_mtime_iso
 from .scanner.parquet.discovery import (
     is_delta_table,
@@ -36,6 +43,14 @@ if TYPE_CHECKING:
     from .catalog import Catalog
 
 
+def _build_series_folder_id(normalized: str, prefix: str) -> str:
+    """Build folder_id for a time series using non-temporal parent folders."""
+    non_temporal_parts = get_series_folder_parts(normalized)
+    if non_temporal_parts:
+        return make_id(prefix, *[sanitize_id(p) for p in non_temporal_parts])
+    return prefix
+
+
 def add_folder(
     catalog: Catalog,
     path: str | Path,
@@ -46,6 +61,7 @@ def add_folder(
     exclude: Sequence[str] | None = None,
     recursive: bool = True,
     infer_stats: bool = True,
+    time_series: bool = True,
     csv_encoding: str | None = None,
     quiet: bool | None = None,
     refresh: bool | None = None,
@@ -105,16 +121,31 @@ def add_folder(
     prefix = folder.id
 
     # Discover all datasets (parquet + other formats)
-    discovery = discover_datasets(root, include, exclude, recursive, fs=fs)
+    discovery = discover_datasets(
+        root, include, exclude, recursive, time_series=time_series, fs=fs
+    )
 
-    # Extract subdirs from discovered datasets
+    # Extract subdirs from discovered datasets (skip time series temporal paths)
     subdirs: set[Path] = set()
     for info in discovery.datasets:
-        parent = info.path.parent
-        while parent != root and parent not in discovery.excluded_dirs:
-            if parent not in subdirs:
-                subdirs.add(parent)
-            parent = parent.parent
+        # Determine starting parent for folder traversal
+        start_parent: Path | None = None
+        if info.series_files is not None:
+            # For time series: only add non-temporal parent folders
+            normalized = normalize_path(info.path, root)
+            non_temporal_parts = get_series_folder_parts(normalized)
+            if non_temporal_parts:
+                start_parent = root / Path(*non_temporal_parts)
+        else:
+            start_parent = info.path.parent
+
+        # Add parent folders up to root
+        if start_parent is not None:
+            parent = start_parent
+            while parent != root and parent not in discovery.excluded_dirs:
+                if parent not in subdirs:
+                    subdirs.add(parent)
+                parent = parent.parent
 
     # Create sub-folders
     subdir_ids: dict[Path, str] = {}
@@ -165,8 +196,25 @@ def add_folder(
                 )
                 continue
 
-            dataset_id, dataset_name = build_dataset_id_name(info.path, root, prefix)
-            folder_id = get_folder_id(info.path, root, prefix, subdir_ids)
+            # Handle time series vs single file
+            if info.series_files is not None:
+                periods = [period for period, _ in info.series_files]
+                normalized = normalize_path(info.path, root)
+                dataset_id = build_series_dataset_id(normalized, prefix)
+                dataset_name = build_series_dataset_name(normalized, periods)
+                nb_files = len(info.series_files)
+                start_date = periods[0]
+                end_date = periods[-1]
+                folder_id = _build_series_folder_id(normalized, prefix)
+            else:
+                dataset_id, dataset_name = build_dataset_id_name(
+                    info.path, root, prefix
+                )
+                nb_files = None
+                start_date = None
+                end_date = None
+                folder_id = get_folder_id(info.path, root, prefix, subdir_ids)
+
             dataset = Dataset(
                 id=dataset_id,
                 name=dataset_name,
@@ -175,6 +223,9 @@ def add_folder(
                 last_update_date=get_mtime_iso(info.path, fs=fs),
                 last_update_timestamp=info.mtime,
                 delivery_format=info.format,
+                nb_files=nb_files,
+                start_date=start_date,
+                end_date=end_date,
                 _seen=True,
             )
             catalog.dataset.add(dataset)
@@ -199,6 +250,23 @@ def add_folder(
     schema_only = resolved_depth == "schema"
 
     for info in plan.to_scan:
+        # Time series: special handling
+        if info.series_files is not None:
+            _scan_time_series(
+                catalog=catalog,
+                info=info,
+                root=root,
+                prefix=prefix,
+                schema_only=schema_only,
+                infer_stats=infer_stats,
+                freq_threshold=freq_threshold,
+                csv_encoding=resolved_encoding,
+                quiet=q,
+                fs=fs,
+            )
+            continue
+
+        # Single file: standard handling
         data_path_str = str(info.path)
 
         # Remove old dataset if exists (modified or refresh)
@@ -258,3 +326,133 @@ def add_folder(
     datasets_added = catalog.dataset.count - datasets_before
     vars_added = catalog.variable.count - vars_before
     log_summary(datasets_added, vars_added, q, start_time)
+
+
+def _scan_time_series(
+    catalog: Catalog,
+    info: DatasetInfo,
+    root: Path,
+    prefix: str,
+    schema_only: bool,
+    infer_stats: bool,
+    freq_threshold: int | None,
+    csv_encoding: str | None,
+    quiet: bool,
+    fs: FileSystem | None,
+) -> None:
+    """Scan a time series dataset (multiple files with temporal pattern)."""
+    assert info.series_files is not None
+    series_files = info.series_files
+    periods = [period for period, _ in series_files]
+    first_period = periods[0]
+    last_period, last_path = series_files[-1]
+
+    # Build dataset ID using normalized path
+    normalized = normalize_path(info.path, root)
+    dataset_id = build_series_dataset_id(normalized, prefix)
+
+    # Build dataset name from normalized path
+    dataset_name = build_series_dataset_name(normalized, periods)
+
+    # Folder ID: use non-temporal parent folders only
+    folder_id = _build_series_folder_id(normalized, prefix)
+
+    # Remove old dataset if exists
+    existing = catalog.dataset.get_by("data_path", str(last_path))
+    if existing:
+        remove_dataset_cascade(catalog, existing)
+
+    log_start(f"{dataset_name} ({len(series_files)} files)", quiet)
+
+    # Step 1: Schema-only scan on all files to get columns per period
+    columns_by_period: dict[str, list[str]] = {}
+    for period, file_path in series_files:
+        schema_result = scan_file(
+            file_path,
+            info.format,
+            dataset_id=dataset_id,
+            schema_only=True,  # Always schema-only for older files
+            infer_stats=False,
+            freq_threshold=None,
+            csv_encoding=csv_encoding,
+            fs=fs,
+        )
+        columns_by_period[period] = [v.name for v in schema_result.variables]
+
+    # Step 2: Compute variable periods (start_date/end_date)
+    var_periods = compute_variable_periods(columns_by_period)
+
+    # Step 3: Full scan on the latest file only (unless schema_only mode)
+    result = scan_file(
+        last_path,
+        info.format,
+        dataset_id=dataset_id,
+        schema_only=schema_only,
+        infer_stats=infer_stats,
+        freq_threshold=freq_threshold,
+        csv_encoding=csv_encoding,
+        fs=fs,
+    )
+
+    # Step 4: Create dataset
+    dataset = Dataset(
+        id=dataset_id,
+        name=result.name or dataset_name,
+        folder_id=folder_id,
+        data_path=str(last_path),
+        last_update_date=get_mtime_iso(last_path, fs=fs),
+        last_update_timestamp=info.mtime,
+        delivery_format=info.format,
+        description=result.description,
+        nb_row=result.nb_row,
+        nb_files=len(series_files),
+        start_date=first_period,
+        end_date=last_period,
+        _seen=True,
+    )
+    catalog.dataset.add(dataset)
+
+    # Step 5: Build variables with start_date/end_date from var_periods
+    # Union all variables from all periods (some may not be in last file)
+    all_var_names = set(var_periods.keys())
+    vars_in_last = {v.name for v in result.variables}
+
+    # Variables from last file - add start_date/end_date
+    for var in result.variables:
+        start_date, end_date = var_periods.get(var.name, (None, None))
+        var.start_date = start_date
+        var.end_date = end_date
+
+    # Variables not in last file (were removed) - create skeleton variables
+    removed_vars = all_var_names - vars_in_last
+    from .schema import Variable
+
+    for var_name in removed_vars:
+        start_date, end_date = var_periods.get(var_name, (None, None))
+        var = Variable(
+            id="",  # Will be set by build_variable_ids
+            name=var_name,
+            dataset_id=dataset_id,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        result.variables.append(var)
+
+    # Build variable IDs and assign modalities
+    var_id_mapping = build_variable_ids(result.variables, dataset.id)
+    if not schema_only:
+        catalog.modality_manager.assign_from_freq(
+            result.variables, result.freq_table, var_id_mapping
+        )
+    catalog.variable.add_all(result.variables)
+
+    # Log result
+    if schema_only:
+        log_done(f"{dataset_name} ({len(result.variables)} vars)", quiet)
+    elif result.nb_row and result.nb_row > 0:
+        log_done(
+            f"{dataset_name} ({result.nb_row:,} rows, {len(result.variables)} vars, {len(series_files)} files)",
+            quiet,
+        )
+    else:
+        log_warn(f"{dataset_name}: empty file", quiet)

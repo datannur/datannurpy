@@ -309,9 +309,21 @@ Catalog(app_path=None, depth="full", refresh=False, freq_threshold=100, csv_enco
 ### `Catalog.add_folder()`
 
 ```python
-catalog.add_folder(path, folder=None, *, depth=None, include=None, exclude=None,
-                   recursive=True, infer_stats=True, csv_encoding=None, storage_options=None,
-                   refresh=None, quiet=None)
+catalog.add_folder(
+    path,
+    folder=None,
+    *,
+    depth=None,
+    include=None,
+    exclude=None,
+    recursive=True,
+    infer_stats=True,
+    csv_encoding=None,
+    storage_options=None,
+    refresh=None,
+    quiet=None,
+    time_series=True,
+)
 ```
 
 | Parameter       | Type                                      | Default  | Description                                   |
@@ -327,6 +339,29 @@ catalog.add_folder(path, folder=None, *, depth=None, include=None, exclude=None,
 | storage_options | dict \| None                              | None     | Options for remote storage (passed to fsspec) |
 | refresh         | bool \| None                              | None     | Force rescan (overrides catalog setting)      |
 | quiet           | bool \| None                              | None     | Override catalog quiet setting                |
+| time_series     | bool                                      | True     | Group files with temporal patterns            |
+
+**Time series detection:**
+
+When `time_series=True` (default), files with temporal patterns in their names are automatically grouped into a single dataset:
+
+```
+data/
+├── enquete_2020.csv    ─┐
+├── enquete_2021.csv     ├─→ Single dataset "enquete" with nb_files=3
+├── enquete_2022.csv    ─┘
+└── reference.csv       ─→ Separate dataset "reference"
+```
+
+Detected patterns: year (`2024`), quarter (`2024Q1`, `2024T2`), month (`2024-03`, `202403`), date (`2024-03-15`).
+
+The resulting dataset includes:
+
+- `nb_files`: number of files in the series
+- `start_date` / `end_date`: temporal coverage
+- Variables track their own `start_date` / `end_date` based on presence across periods
+
+Set `time_series=False` to treat each file as a separate dataset.
 
 **Depth levels:**
 
@@ -339,9 +374,22 @@ catalog.add_folder(path, folder=None, *, depth=None, include=None, exclude=None,
 ### `Catalog.add_dataset()`
 
 ```python
-catalog.add_dataset(path, folder=None, *, folder_id=None, depth=None, infer_stats=True,
-                    csv_encoding=None, storage_options=None, refresh=None, quiet=None,
-                    id=None, name=None, description=None, ...)
+catalog.add_dataset(
+    path,
+    folder=None,
+    *,
+    folder_id=None,
+    depth=None,
+    infer_stats=True,
+    csv_encoding=None,
+    storage_options=None,
+    refresh=None,
+    quiet=None,
+    id=None,
+    name=None,
+    description=None,
+    ...,
+)
 ```
 
 | Parameter       | Type                                      | Default  | Description                                   |
@@ -364,10 +412,22 @@ Additional metadata parameters: `type`, `link`, `localisation`, `manager_id`, `o
 ### `Catalog.add_database()`
 
 ```python
-catalog.add_database(connection, folder=None, *, depth=None, schema=None, include=None,
-                     exclude=None, infer_stats=True, sample_size=None,
-                     group_by_prefix=True, prefix_min_tables=2, storage_options=None,
-                     refresh=None, quiet=None)
+catalog.add_database(
+    connection,
+    folder=None,
+    *,
+    depth=None,
+    schema=None,
+    include=None,
+    exclude=None,
+    infer_stats=True,
+    sample_size=None,
+    group_by_prefix=True,
+    prefix_min_tables=2,
+    storage_options=None,
+    refresh=None,
+    quiet=None,
+)
 ```
 
 | Parameter         | Type                                            | Default  | Description                              |

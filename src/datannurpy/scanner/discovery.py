@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from .parquet import discover_parquet_datasets
+from .timeseries import group_time_series
 from .utils import SUPPORTED_FORMATS, find_files, get_mtime_timestamp
 
 if TYPE_CHECKING:
@@ -22,6 +23,7 @@ class DatasetInfo:
     path: Path
     format: str  # csv, parquet, delta, hive, iceberg, sas, spss, stata, excel
     mtime: int
+    series_files: list[tuple[str, Path]] | None = None  # [(period, path), ...]
 
 
 @dataclass
@@ -45,6 +47,7 @@ def discover_datasets(
     include: Sequence[str] | None = None,
     exclude: Sequence[str] | None = None,
     recursive: bool = True,
+    time_series: bool = True,
     fs: FileSystem | None = None,
 ) -> DiscoveryResult:
     """Discover all datasets (parquet and other formats) in a directory."""
@@ -94,10 +97,73 @@ def discover_datasets(
             )
         )
 
+    # 3. Group files into time series if enabled
+    if time_series:
+        result = _apply_time_series_grouping(result, root)
+
     return DiscoveryResult(
         datasets=sorted(result, key=lambda d: d.path),
         excluded_dirs=parquet_result.excluded_dirs,
     )
+
+
+def _apply_time_series_grouping(
+    datasets: list[DatasetInfo],
+    root: Path,
+) -> list[DatasetInfo]:
+    """Group single-file datasets into time series where applicable."""
+    # Separate groupable files from non-groupable (partitioned datasets)
+    groupable: list[tuple[Path, int, str]] = []  # (path, mtime, format)
+    non_groupable: list[DatasetInfo] = []
+
+    # Group simple file formats (exclude Delta/Iceberg/Hive which have their own partitioning)
+    groupable_formats = {"csv", "excel", "sas", "spss", "stata", "parquet"}
+
+    for info in datasets:
+        if info.format in groupable_formats:
+            groupable.append((info.path, info.mtime, info.format))
+        else:
+            non_groupable.append(info)
+
+    if not groupable:
+        return datasets
+
+    # Group by format first, then by normalized path
+    from collections import defaultdict
+
+    by_format: dict[str, list[tuple[Path, int]]] = defaultdict(list)
+    for path, mtime, fmt in groupable:
+        by_format[fmt].append((path, mtime))
+
+    result = list(non_groupable)
+
+    for fmt, files in by_format.items():
+        series_groups, singles = group_time_series(files, root)
+
+        # Add time series groups
+        for group in series_groups:
+            # Use the last file's path as the dataset path
+            last_period, last_path = group.files[-1]
+            result.append(
+                DatasetInfo(
+                    path=last_path,
+                    format=fmt,
+                    mtime=group.max_mtime,
+                    series_files=group.files,
+                )
+            )
+
+        # Add single files
+        for path, mtime in singles:
+            result.append(
+                DatasetInfo(
+                    path=path,
+                    format=fmt,
+                    mtime=mtime,
+                )
+            )
+
+    return result
 
 
 def compute_scan_plan(

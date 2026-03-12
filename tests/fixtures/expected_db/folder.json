@@ -120,6 +120,66 @@
     "data_path": "subfolder1"
   },
   {
+    "id": "data---timeseries",
+    "parent_id": "data",
+    "tag_ids": "",
+    "doc_ids": "",
+    "name": "timeseries",
+    "description": null,
+    "type": "filesystem",
+    "data_path": "timeseries"
+  },
+  {
+    "id": "data---timeseries---mixed",
+    "parent_id": "data---timeseries",
+    "tag_ids": "",
+    "doc_ids": "",
+    "name": "mixed",
+    "description": null,
+    "type": "filesystem",
+    "data_path": "timeseries/mixed"
+  },
+  {
+    "id": "data---timeseries---monthly_folders",
+    "parent_id": "data---timeseries",
+    "tag_ids": "",
+    "doc_ids": "",
+    "name": "monthly_folders",
+    "description": null,
+    "type": "filesystem",
+    "data_path": "timeseries/monthly_folders"
+  },
+  {
+    "id": "data---timeseries---quarterly",
+    "parent_id": "data---timeseries",
+    "tag_ids": "",
+    "doc_ids": "",
+    "name": "quarterly",
+    "description": null,
+    "type": "filesystem",
+    "data_path": "timeseries/quarterly"
+  },
+  {
+    "id": "data---timeseries---schema_evolution",
+    "parent_id": "data---timeseries",
+    "tag_ids": "",
+    "doc_ids": "",
+    "name": "schema_evolution",
+    "description": null,
+    "type": "filesystem",
+    "data_path": "timeseries/schema_evolution"
+  },
+  {
+    "id": "data---timeseries---yearly",
+    "parent_id": "data---timeseries",
+    "tag_ids": "",
+    "doc_ids": "",
+    "name": "yearly",
+    "description": null,
+    "type": "filesystem",
+    "data_path": "timeseries/yearly"
+  },
+  {
     "id": "photovoltaik",
     "parent_id": null,
     "tag_ids": "",

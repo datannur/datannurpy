@@ -1,5 +1,11 @@
 # datannurpy
 
+## 0.8.0 (2026-03-12)
+
+- add: `time_series` parameter for `add_folder` to group temporal files (e.g., `data_2020.csv`, `data_2021.csv`) into single datasets
+- add: `nb_files` field on Dataset schema for time series file count
+- add: variable period tracking (`start_date`, `end_date`) based on presence across periods
+
 ## 0.7.0 (2026-03-08)
 
 - add: remote storage support for `add_folder`, `add_dataset`, `add_database`
