@@ -48,6 +48,9 @@ azure = ["adlfs>=2024.0"]
 gcs = ["gcsfs>=2024.0"]
 cloud = ["s3fs>=2024.0", "adlfs>=2024.0", "gcsfs>=2024.0"]
 
+[project.scripts]
+datannurpy = "datannurpy.__main__:main"
+
 [project.urls]
 Homepage = "https://github.com/datannur/datannurpy"
 Repository = "https://github.com/datannur/datannurpy"

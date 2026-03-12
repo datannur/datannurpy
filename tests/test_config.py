@@ -173,6 +173,24 @@ app_path: {tmp_path / "output"}
 
         assert len(catalog.dataset.all()) == 0
 
+    def test_run_config_no_app_path(self, tmp_path: Path):
+        """Config without app_path should work."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "test.csv").write_text("a,b\n1,2\n")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+quiet: true
+
+add:
+  - type: folder
+    path: {data_dir}
+""")
+        catalog = run_config(config_file)
+
+        assert len(catalog.dataset.all()) == 1
+
     def test_run_config_no_export(self, tmp_path: Path):
         """Config without export should not create output files."""
         data_dir = tmp_path / "data"
@@ -216,4 +234,80 @@ add:
         catalog = run_config(config_file)
 
         # Unknown type ignored, folder still processed
+        assert len(catalog.dataset.all()) == 1
+
+    def test_run_config_relative_paths(self, tmp_path: Path):
+        """Relative paths should be resolved relative to config file."""
+        # Create structure: config_dir/catalog.yml, config_dir/data/test.csv
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        data_dir = config_dir / "data"
+        data_dir.mkdir()
+        (data_dir / "test.csv").write_text("a,b\n1,2\n")
+
+        config_file = config_dir / "catalog.yml"
+        # Use relative paths in config
+        config_file.write_text("""
+app_path: ./output
+refresh: true
+quiet: true
+
+add:
+  - type: folder
+    path: ./data
+""")
+        catalog = run_config(config_file)
+
+        assert len(catalog.dataset.all()) == 1
+        # Output should be created relative to config file
+        assert (config_dir / "output" / "data" / "db").exists() is False  # no export
+
+    def test_run_config_relative_sqlite_path(self, tmp_path: Path):
+        """Relative sqlite:/// paths should be resolved relative to config file."""
+        import sqlite3
+
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        db_path = config_dir / "test.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE users (id INTEGER)")
+        conn.commit()
+        conn.close()
+
+        config_file = config_dir / "catalog.yml"
+        config_file.write_text("""
+app_path: ./output
+refresh: true
+quiet: true
+
+add:
+  - type: database
+    uri: sqlite:///test.db
+""")
+        catalog = run_config(config_file)
+
+        assert any(d.name == "users" for d in catalog.dataset.all())
+
+    def test_run_config_absolute_paths(self, tmp_path: Path):
+        """Absolute paths should be used as-is."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "test.csv").write_text("a,b\n1,2\n")
+
+        # Config in different directory
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        config_file = config_dir / "catalog.yml"
+        # Use absolute paths
+        config_file.write_text(f"""
+app_path: {tmp_path / "output"}
+refresh: true
+quiet: true
+
+add:
+  - type: folder
+    path: {data_dir}
+""")
+        catalog = run_config(config_file)
+
         assert len(catalog.dataset.all()) == 1

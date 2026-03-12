@@ -92,10 +92,10 @@ export_app:
   open_browser: true
 ```
 
-```python
-from datannurpy import run_config
+Run with:
 
-run_config("catalog.yml")
+```bash
+python -m datannurpy catalog.yml
 ```
 
 ## Incremental scan

@@ -1,0 +1,69 @@
+"""Tests for CLI entry point."""
+
+from __future__ import annotations
+
+import subprocess
+import sys
+from pathlib import Path
+from unittest.mock import patch
+
+import pytest
+
+from datannurpy.__main__ import main
+
+
+def test_main_no_args() -> None:
+    """main() without args shows usage and exits."""
+    with patch.object(sys, "argv", ["datannurpy"]):
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 1
+
+
+def test_main_run_config(tmp_path: Path) -> None:
+    """main() runs config file."""
+    config = tmp_path / "test.yml"
+    output = tmp_path / "output"
+    data_path = Path(__file__).parent.parent / "data" / "csv"
+    config.write_text(f"""
+app_path: "{output}"
+add:
+  - type: folder
+    path: "{data_path}"
+export_db: {{}}
+""")
+    with patch.object(sys, "argv", ["datannurpy", str(config)]):
+        main()
+    assert (output / "data" / "db" / "dataset.json").exists()
+
+
+def test_cli_no_args() -> None:
+    """CLI without args shows usage."""
+    result = subprocess.run(
+        [sys.executable, "-m", "datannurpy"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1
+    assert "Usage:" in result.stdout
+
+
+def test_cli_run_config(tmp_path: Path) -> None:
+    """CLI runs config file."""
+    config = tmp_path / "test.yml"
+    output = tmp_path / "output"
+    data_path = Path(__file__).parent.parent / "data" / "csv"
+    config.write_text(f"""
+app_path: "{output}"
+add:
+  - type: folder
+    path: "{data_path}"
+export_db: {{}}
+""")
+    result = subprocess.run(
+        [sys.executable, "-m", "datannurpy", str(config)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, f"stdout: {result.stdout}\nstderr: {result.stderr}"
+    assert (output / "data" / "db" / "dataset.json").exists()
