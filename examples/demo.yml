@@ -1,0 +1,24 @@
+app_path: ./output
+refresh: true
+
+add:
+  - type: folder
+    path: ../data
+
+  - type: database
+    uri: sqlite:///../data/company.db
+
+  - type: database
+    uri: sqlite:///../data/photovoltaik.gpkg
+    folder:
+      id: photovoltaik
+      name: Grandes installations photovoltaïques
+      description: >
+        Installations photovoltaïques de haute altitude en Suisse.
+        Source: Office fédéral de l'énergie (OFEN) - opendata.swiss
+
+  - type: metadata
+    path: ../data/metadata
+
+export_app:
+  open_browser: true
