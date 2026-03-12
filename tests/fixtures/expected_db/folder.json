@@ -150,56 +150,6 @@
     "data_path": "timeseries/monthly_folders"
   },
   {
-    "id": "data---timeseries---monthly_folders---2023",
-    "parent_id": "data---timeseries---monthly_folders",
-    "tag_ids": "",
-    "doc_ids": "",
-    "name": "2023",
-    "description": null,
-    "type": "filesystem",
-    "data_path": "timeseries/monthly_folders/2023"
-  },
-  {
-    "id": "data---timeseries---monthly_folders---2023---12",
-    "parent_id": "data---timeseries---monthly_folders---2023",
-    "tag_ids": "",
-    "doc_ids": "",
-    "name": "12",
-    "description": null,
-    "type": "filesystem",
-    "data_path": "timeseries/monthly_folders/2023/12"
-  },
-  {
-    "id": "data---timeseries---monthly_folders---2024",
-    "parent_id": "data---timeseries---monthly_folders",
-    "tag_ids": "",
-    "doc_ids": "",
-    "name": "2024",
-    "description": null,
-    "type": "filesystem",
-    "data_path": "timeseries/monthly_folders/2024"
-  },
-  {
-    "id": "data---timeseries---monthly_folders---2024---01",
-    "parent_id": "data---timeseries---monthly_folders---2024",
-    "tag_ids": "",
-    "doc_ids": "",
-    "name": "01",
-    "description": null,
-    "type": "filesystem",
-    "data_path": "timeseries/monthly_folders/2024/01"
-  },
-  {
-    "id": "data---timeseries---monthly_folders---2024---02",
-    "parent_id": "data---timeseries---monthly_folders---2024",
-    "tag_ids": "",
-    "doc_ids": "",
-    "name": "02",
-    "description": null,
-    "type": "filesystem",
-    "data_path": "timeseries/monthly_folders/2024/02"
-  },
-  {
     "id": "data---timeseries---quarterly",
     "parent_id": "data---timeseries",
     "tag_ids": "",

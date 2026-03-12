@@ -225,21 +225,6 @@
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_12e46258b4",
-    "value": "Nantes",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_12e46258b4",
-    "value": "Nice",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_12e46258b4",
-    "value": "Toulouse",
-    "description": null
-  },
-  {
     "modality_id": "_modalities---mod_182cfe8514",
     "value": "Léger",
     "description": null
@@ -497,21 +482,6 @@
   {
     "modality_id": "_modalities---mod_290b7fe59b",
     "value": "rh",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_2c3b8eef57",
-    "value": "1100",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_2c3b8eef57",
-    "value": "1200",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_2c3b8eef57",
-    "value": "1350",
     "description": null
   },
   {
@@ -1120,36 +1090,6 @@
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3d42fd796c",
-    "value": "avril",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_3d42fd796c",
-    "value": "juin",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_3d42fd796c",
-    "value": "mai",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_3e9050559f",
-    "value": "4",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_3e9050559f",
-    "value": "5",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_3e9050559f",
-    "value": "6",
-    "description": null
-  },
-  {
     "modality_id": "_modalities---mod_3eee4f2a23",
     "value": "company_name",
     "description": null
@@ -1575,21 +1515,6 @@
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_48609b1180",
-    "value": "70",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_48609b1180",
-    "value": "75",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_48609b1180",
-    "value": "80",
-    "description": null
-  },
-  {
     "modality_id": "_modalities---mod_4aa562f5c5",
     "value": "Andre",
     "description": null
@@ -1930,21 +1855,6 @@
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5340c829ca",
-    "value": "1",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_5340c829ca",
-    "value": "15",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_5340c829ca",
-    "value": "31",
-    "description": null
-  },
-  {
     "modality_id": "_modalities---mod_5342f153b6",
     "value": "38000",
     "description": null
@@ -1997,21 +1907,6 @@
   {
     "modality_id": "_modalities---mod_5cbe3d324b",
     "value": "retiré",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_5d5b7408d8",
-    "value": "28",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_5d5b7408d8",
-    "value": "34",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_5d5b7408d8",
-    "value": "45",
     "description": null
   },
   {
@@ -2610,21 +2505,6 @@
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a8c8f6c18",
-    "value": "David",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_6a8c8f6c18",
-    "value": "Emma",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_6a8c8f6c18",
-    "value": "François",
-    "description": null
-  },
-  {
     "modality_id": "_modalities---mod_6adc02e862",
     "value": "Defective",
     "description": null
@@ -2925,36 +2805,6 @@
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a4b126002",
-    "value": "2148000",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_7a4b126002",
-    "value": "522969",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_7a4b126002",
-    "value": "870731",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_7d5087ec3d",
-    "value": "12000",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_7d5087ec3d",
-    "value": "5000",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_7d5087ec3d",
-    "value": "50000",
-    "description": null
-  },
-  {
     "modality_id": "_modalities---mod_802a13bf34",
     "value": "data---csv---employees_csv",
     "description": null
@@ -2972,21 +2822,6 @@
   {
     "modality_id": "_modalities---mod_81fce7934e",
     "value": "Paris",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_822ca4ae9c",
-    "value": "1.8",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_822ca4ae9c",
-    "value": "3.1",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_822ca4ae9c",
-    "value": "5.2",
     "description": null
   },
   {
@@ -4275,21 +4110,6 @@
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a2479a798c",
-    "value": "1250",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_a2479a798c",
-    "value": "1400",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_a2479a798c",
-    "value": "1500",
-    "description": null
-  },
-  {
     "modality_id": "_modalities---mod_a4750880c6",
     "value": "a",
     "description": null
@@ -4577,21 +4397,6 @@
   {
     "modality_id": "_modalities---mod_bda75bc83c",
     "value": "RH",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_bfc8e87c51",
-    "value": "2.0",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_bfc8e87c51",
-    "value": "4.5",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_bfc8e87c51",
-    "value": "6.2",
     "description": null
   },
   {
@@ -5255,21 +5060,6 @@
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e8b43a8bcd",
-    "value": "78",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_e8b43a8bcd",
-    "value": "82",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_e8b43a8bcd",
-    "value": "85",
-    "description": null
-  },
-  {
     "modality_id": "_modalities---mod_ecdfc6dc16",
     "value": "DGFiP",
     "description": null
@@ -5802,21 +5592,6 @@
   {
     "modality_id": "_modalities---mod_fb91005117",
     "value": "45",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_fdcca94666",
-    "value": "40000",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_fdcca94666",
-    "value": "47000",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_fdcca94666",
-    "value": "54000",
     "description": null
   }
 ]

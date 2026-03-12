@@ -42,6 +42,7 @@ class Dataset:
     localisation: str | None = None
     delivery_format: str | None = None
     nb_row: int | None = None
+    nb_files: int | None = None  # Number of files in series (>1 = time series)
     start_date: str | None = None
     end_date: str | None = None
     last_update_date: str | None = None
