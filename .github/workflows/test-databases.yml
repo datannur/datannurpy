@@ -27,9 +27,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --extra postgres
+        run: uv sync --frozen --extra postgres
 
       - name: Run PostgreSQL tests
         run: uv run pytest tests/database/test_postgres.py -v -n 0 --cov=src/datannurpy --cov-report=xml
@@ -64,9 +66,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --extra mysql
+        run: uv sync --frozen --extra mysql
 
       - name: Run MySQL tests
         run: uv run pytest tests/database/test_mysql.py -v -n 0 --cov=src/datannurpy --cov-report=xml
@@ -87,6 +91,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
 
       - name: Cache Oracle Docker image
         uses: actions/cache@v4
@@ -128,7 +134,7 @@ jobs:
           exit 1
 
       - name: Install dependencies
-        run: uv sync --extra oracle
+        run: uv sync --frozen --extra oracle
 
       - name: Run Oracle tests
         run: uv run pytest tests/database/test_oracle.py -v -n 0 --cov=src/datannurpy --cov-report=xml
@@ -163,6 +169,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
 
       - name: Install ODBC Driver 18
         run: |
@@ -190,7 +198,7 @@ jobs:
           docker exec ${{ job.services.mssql.id }} /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Test@123!' -C -Q "CREATE DATABASE testdb"
 
       - name: Install dependencies
-        run: uv sync --extra mssql
+        run: uv sync --frozen --extra mssql
 
       - name: Run SQL Server tests
         run: uv run pytest tests/database/test_mssql.py -v -n 0 --cov=src/datannurpy --cov-report=xml
