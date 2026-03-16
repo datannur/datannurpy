@@ -29,8 +29,21 @@ SUPPORTED_FORMATS: dict[str, str] = {
 }
 
 # Directories and patterns to always exclude
-DEFAULT_EXCLUDE_DIRS = {".git", "__pycache__", ".venv", "node_modules"}
-DEFAULT_EXCLUDE_PREFIXES = ("~$",)  # Office temp files
+DEFAULT_EXCLUDE_DIRS = {
+    # Version control
+    ".git",
+    ".svn",
+    ".hg",
+    # Python/Node environments
+    ".venv",
+    "env",
+    "__pycache__",
+    "node_modules",
+    # System/IDE artifacts
+    "__MACOSX",
+    ".ipynb_checkpoints",
+}
+DEFAULT_EXCLUDE_PREFIXES = ("~$", ".~lock.")  # Office/LibreOffice temp/lock files
 
 
 def get_mtime_iso(path: Path, fs: FileSystem | None = None) -> str:
@@ -93,6 +106,14 @@ def find_files(
 
     candidates = [f for f in candidates if f.is_file()]
 
+    # Apply default exclusions
+    candidates = [
+        f
+        for f in candidates
+        if not f.name.startswith(DEFAULT_EXCLUDE_PREFIXES)
+        and not any(d in f.parts for d in DEFAULT_EXCLUDE_DIRS)
+    ]
+
     if exclude:
         excluded = set()
         for pat in exclude:
@@ -149,6 +170,14 @@ def _find_files_with_fs(
         p
         for p in candidates
         if fs.isfile(p) and Path(p).suffix.lower() in SUPPORTED_FORMATS
+    ]
+
+    # Apply default exclusions
+    candidates = [
+        p
+        for p in candidates
+        if not Path(p).name.startswith(DEFAULT_EXCLUDE_PREFIXES)
+        and not any(d in Path(p).parts for d in DEFAULT_EXCLUDE_DIRS)
     ]
 
     if exclude:

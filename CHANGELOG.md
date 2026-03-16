@@ -3,6 +3,7 @@
 ## 0.9.1 (2026-03-16)
 
 - fix: add missing `fsspec` explicit dependency for remote storage
+- fix: auto-exclude common non-data dirs (`.git`, `.venv`, `__pycache__`, `.ipynb_checkpoints`, etc.) and `~$*` temp files from scans
 
 ## 0.9.0 (2026-03-12)
 

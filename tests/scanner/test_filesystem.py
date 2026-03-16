@@ -452,6 +452,47 @@ class TestFindFilesEdgeCases:
         files = find_files(tmp_path, None, ["nonexistent.csv", "data.csv"], True, fs=fs)
         assert files == []
 
+    def test_find_files_excludes_git_directory(self, tmp_path: Path) -> None:
+        """find_files() should exclude .git directories by default."""
+        git_dir = tmp_path / ".git"
+        git_dir.mkdir()
+        (git_dir / "config.csv").write_text("a")
+        (tmp_path / "data.csv").write_text("b")
+
+        files = find_files(tmp_path, None, None, recursive=True)
+        assert len(files) == 1
+        assert files[0].name == "data.csv"
+
+    def test_find_files_excludes_office_temp_files(self, tmp_path: Path) -> None:
+        """find_files() should exclude Office temp files (~$*) by default."""
+        (tmp_path / "~$document.xlsx").write_text("temp")
+        (tmp_path / "document.xlsx").write_text("real")
+
+        files = find_files(tmp_path, None, None, recursive=True)
+        assert len(files) == 1
+        assert files[0].name == "document.xlsx"
+
+    def test_find_files_excludes_libreoffice_lock_files(self, tmp_path: Path) -> None:
+        """find_files() should exclude LibreOffice lock files (.~lock.*) by default."""
+        (tmp_path / ".~lock.data.csv#").write_text("lock")
+        (tmp_path / "data.csv").write_text("real")
+
+        files = find_files(tmp_path, None, None, recursive=True)
+        assert len(files) == 1
+        assert files[0].name == "data.csv"
+
+    def test_find_files_excludes_default_dirs_with_fs(self, tmp_path: Path) -> None:
+        """find_files() with FileSystem should exclude default dirs."""
+        venv_dir = tmp_path / ".venv"
+        venv_dir.mkdir()
+        (venv_dir / "config.csv").write_text("a")
+        (tmp_path / "data.csv").write_text("b")
+
+        fs = FileSystem(tmp_path)
+        files = find_files(tmp_path, None, None, recursive=True, fs=fs)
+        assert len(files) == 1
+        assert files[0].name == "data.csv"
+
 
 class TestRemoteScanWithEnsureLocal:
     """Test scan_file with ensure_local for remote filesystems."""
