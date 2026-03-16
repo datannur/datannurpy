@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import sys
 import time
-import warnings
 from collections.abc import Hashable
 from dataclasses import MISSING, fields
 from pathlib import Path
@@ -168,22 +167,22 @@ def _is_database_connection(path: str) -> bool:
     }
 
 
-def _read_file(file_path: Path) -> pd.DataFrame | None:
+def _read_file(file_path: Path, *, quiet: bool = False) -> pd.DataFrame | None:
     """Read a file into a pandas DataFrame using existing scanners."""
     suffix = file_path.suffix.lower()
 
     if suffix == ".csv":
         return read_csv(file_path)
     elif suffix in {".xlsx", ".xls"}:
-        return read_excel(file_path)
+        return read_excel(file_path, quiet=quiet)
     elif suffix == ".json":
-        return _read_json(file_path)
+        return _read_json(file_path, quiet=quiet)
     elif suffix in {".sas7bdat", ".sav", ".dta"}:
-        return read_statistical(file_path)
+        return read_statistical(file_path, quiet=quiet)
     return None
 
 
-def _read_json(file_path: Path) -> pd.DataFrame | None:
+def _read_json(file_path: Path, *, quiet: bool = False) -> pd.DataFrame | None:
     """Read JSON file into pandas DataFrame."""
     try:
         with open(file_path, encoding="utf-8") as f:
@@ -201,13 +200,15 @@ def _read_json(file_path: Path) -> pd.DataFrame | None:
 
         return pd.DataFrame(data)
     except Exception as e:
-        warnings.warn(f"Could not read JSON '{file_path.name}': {e}", stacklevel=4)
+        log_warn(f"Could not read JSON '{file_path.name}': {e}", quiet)
         return None
 
 
 def _load_tables_from_folder(
     folder_path: Path,
     allowed_entities: set[str],
+    *,
+    quiet: bool = False,
 ) -> dict[str, tuple[pd.DataFrame, str]]:
     """Load entity files from a folder. Returns dict of (DataFrame, filename)."""
     tables: dict[str, tuple[pd.DataFrame, str]] = {}
@@ -216,7 +217,7 @@ def _load_tables_from_folder(
         for ext in SUPPORTED_EXTENSIONS:
             file_path = folder_path / f"{entity_name}{ext}"
             if file_path.exists():
-                df = _read_file(file_path)
+                df = _read_file(file_path, quiet=quiet)
                 if df is not None and not df.empty:
                     tables[entity_name] = (df, file_path.name)
                 break
@@ -227,6 +228,8 @@ def _load_tables_from_folder(
 def _load_tables_from_database(
     connection: str,
     allowed_entities: set[str],
+    *,
+    quiet: bool = False,
 ) -> dict[str, tuple[pd.DataFrame, str]]:
     """Load entity tables from a database. Returns dict of (DataFrame, table_name)."""
     tables: dict[str, tuple[pd.DataFrame, str]] = {}
@@ -234,7 +237,7 @@ def _load_tables_from_database(
     try:
         con = ibis.connect(connection)
     except Exception as e:
-        warnings.warn(f"Could not connect to database: {e}", stacklevel=3)
+        log_warn(f"Could not connect to database: {e}", quiet)
         return tables
 
     try:
@@ -246,9 +249,7 @@ def _load_tables_from_database(
                     table = con.table(entity_name)
                     tables[entity_name] = (table.to_pandas(), f"table '{entity_name}'")
                 except Exception as e:
-                    warnings.warn(
-                        f"Could not read table '{entity_name}': {e}", stacklevel=3
-                    )
+                    log_warn(f"Could not read table '{entity_name}': {e}", quiet)
     finally:
         if hasattr(con, "disconnect"):
             con.disconnect()
@@ -497,7 +498,7 @@ def add_metadata(
     # Load tables from source
     if _is_database_connection(path_str):
         start_time = log_section("add_metadata", path_str, quiet)
-        tables = _load_tables_from_database(path_str, allowed_entities)
+        tables = _load_tables_from_database(path_str, allowed_entities, quiet=quiet)
     else:
         folder_path = Path(path)
         if not folder_path.exists():
@@ -506,7 +507,7 @@ def add_metadata(
             raise ValueError(f"Path must be a directory: {folder_path}")
 
         start_time = log_section("add_metadata", str(folder_path), quiet)
-        tables = _load_tables_from_folder(folder_path, allowed_entities)
+        tables = _load_tables_from_folder(folder_path, allowed_entities, quiet=quiet)
 
     if not tables:
         log_warn("No metadata files found", quiet)

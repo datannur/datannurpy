@@ -48,13 +48,15 @@ class TestAddFolderFormats:
         assert len(catalog.dataset.all()) == 1
         assert len(catalog.variable.all()) == 0
 
-    def test_add_folder_corrupted_excel(self, tmp_path: Path):
+    def test_add_folder_corrupted_excel(self, tmp_path: Path, capsys):
         """add_folder should warn on corrupted Excel files."""
         (tmp_path / "corrupted.xlsx").write_bytes(b"not a real excel file")
 
         catalog = Catalog()
-        with pytest.warns(UserWarning, match="Could not read Excel file"):
-            catalog.add_folder(tmp_path, quiet=True)
+        catalog.add_folder(tmp_path, quiet=False)
+
+        captured = capsys.readouterr()
+        assert "Could not read Excel file" in captured.err
 
         assert len(catalog.dataset.all()) == 1
         assert len(catalog.variable.all()) == 0

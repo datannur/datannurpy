@@ -13,7 +13,11 @@ def main() -> None:
 
     from .config import run_config
 
-    run_config(sys.argv[1])
+    try:
+        run_config(sys.argv[1])
+    except (ValueError, FileNotFoundError) as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":  # pragma: no cover

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -12,6 +11,7 @@ import pandas as pd
 import pyarrow as pa
 
 from ..schema import Variable
+from ..utils import log_warn
 from .utils import build_variables
 
 if TYPE_CHECKING:
@@ -33,6 +33,8 @@ def _read_csv_table(
     file_path: Path,
     con: ibis.BaseBackend,
     csv_encoding: str | None,
+    *,
+    quiet: bool = False,
 ) -> Table | None:
     """Read CSV into ibis Table using existing connection. Returns None on error."""
     encodings = _build_encoding_order(csv_encoding)
@@ -49,10 +51,7 @@ def _read_csv_table(
             continue
 
     first_line = last_error.split("\n")[0] if last_error else ""
-    warnings.warn(
-        f"Could not parse CSV file '{file_path.name}': {first_line}",
-        stacklevel=4,
-    )
+    log_warn(f"Could not parse CSV file '{file_path.name}': {first_line}", quiet)
     return None
 
 
@@ -82,6 +81,7 @@ def scan_csv(
     infer_stats: bool = True,
     freq_threshold: int | None = None,
     csv_encoding: str | None = None,
+    quiet: bool = False,
 ) -> tuple[list[Variable], int, pa.Table | None]:
     """Scan a CSV file and return (variables, row_count, freq_table)."""
     file_path = Path(path)
@@ -91,7 +91,7 @@ def scan_csv(
 
     con = ibis.duckdb.connect()
     try:
-        table = _read_csv_table(file_path, con, csv_encoding)
+        table = _read_csv_table(file_path, con, csv_encoding, quiet=quiet)
         if table is None:
             return [], 0, None
 

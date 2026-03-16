@@ -260,6 +260,7 @@ def add_dataset(
         freq_threshold=catalog.freq_threshold or None,
         csv_encoding=resolved_encoding,
         fs=fs,
+        quiet=q,
     )
 
     dataset = _create_dataset(

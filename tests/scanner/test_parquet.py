@@ -72,15 +72,17 @@ class TestHivePartitionDetection:
 class TestScanDeltaExceptions:
     """Test scan_delta exception handling."""
 
-    def test_deltalake_not_installed(self, monkeypatch):
+    def test_deltalake_not_installed(self, monkeypatch, capsys):
         """Delta scan should warn if deltalake is not installed."""
         monkeypatch.setitem(sys.modules, "deltalake", None)
 
         catalog = Catalog()
-        with pytest.warns(UserWarning, match="deltalake not installed"):
-            catalog.add_dataset(DATA_DIR / "test_delta", quiet=True)
+        catalog.add_dataset(DATA_DIR / "test_delta", quiet=False)
 
-    def test_deltalake_other_exception(self, monkeypatch):
+        captured = capsys.readouterr()
+        assert "deltalake not installed" in captured.err
+
+    def test_deltalake_other_exception(self, monkeypatch, capsys):
         """Delta scan should warn on other deltalake errors."""
 
         def mock_deltatable(*args, **kwargs):
@@ -91,8 +93,10 @@ class TestScanDeltaExceptions:
         monkeypatch.setitem(sys.modules, "deltalake", mock_module)
 
         catalog = Catalog()
-        with pytest.warns(UserWarning, match="Failed to extract Delta table metadata"):
-            catalog.add_dataset(DATA_DIR / "test_delta", quiet=True)
+        catalog.add_dataset(DATA_DIR / "test_delta", quiet=False)
+
+        captured = capsys.readouterr()
+        assert "Failed to extract Delta table metadata" in captured.err
 
 
 class TestScanIcebergExceptions:

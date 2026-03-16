@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from datannurpy import run_config
 
 
@@ -234,10 +236,8 @@ add:
         assert len(catalog.dataset.all()) == 1
         assert not (output_dir / "data" / "db").exists()
 
-    def test_run_config_unknown_type_warns(self, tmp_path: Path):
-        """Unknown add type should emit a warning."""
-        import warnings
-
+    def test_run_config_unknown_type_raises(self, tmp_path: Path):
+        """Unknown add type should raise ValueError."""
         data_dir = tmp_path / "data"
         data_dir.mkdir()
         (data_dir / "test.csv").write_text("a,b\n1,2\n")
@@ -251,21 +251,9 @@ quiet: true
 add:
   - type: unknown
     path: {data_dir}
-  - type: folder
-    path: {data_dir}
 """)
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            catalog = run_config(config_file)
-
-            # Warning should be raised for unknown type
-            assert len(w) == 1
-            assert "Unknown type 'unknown'" in str(w[0].message)
-            assert "database" in str(w[0].message)
-            assert "folder" in str(w[0].message)
-
-        # Folder still processed despite warning
-        assert len(catalog.dataset.all()) == 1
+        with pytest.raises(ValueError, match="Unknown type 'unknown'"):
+            run_config(config_file)
 
     def test_run_config_relative_paths(self, tmp_path: Path):
         """Relative paths should be resolved relative to config file."""

@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import duckdb
-import pytest
 
 from datannurpy import Catalog
 from datannurpy.scanner import read_csv
@@ -53,7 +52,7 @@ class TestLegacyEncoding:
 
         assert len(catalog.variable.all()) == 4
 
-    def test_all_encodings_fail(self, tmp_path: Path, monkeypatch):
+    def test_all_encodings_fail(self, tmp_path: Path, monkeypatch, capsys):
         """CSV scan should warn when all encodings fail."""
         csv_file = tmp_path / "test.csv"
         csv_file.write_text("col\n1")
@@ -64,8 +63,10 @@ class TestLegacyEncoding:
         monkeypatch.setattr("ibis.backends.duckdb.Backend.read_csv", mock_read_csv)
 
         catalog = Catalog()
-        with pytest.warns(UserWarning, match="Could not parse CSV file"):
-            catalog.add_dataset(csv_file, quiet=True)
+        catalog.add_dataset(csv_file, quiet=False)
+
+        captured = capsys.readouterr()
+        assert "Could not parse CSV file" in captured.err
 
         assert len(catalog.dataset.all()) == 1
         assert len(catalog.variable.all()) == 0

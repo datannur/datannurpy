@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
 from pathlib import Path
 
 import yaml
@@ -62,9 +61,9 @@ def run_config(path: str | Path) -> Catalog:
             meta_path = _resolve_path(item.pop("path"), base_dir)
             catalog.add_metadata(meta_path, **item)
         else:
-            warnings.warn(
-                f"Unknown type '{item_type}' in config. Valid types: {', '.join(sorted(VALID_TYPES))}",
-                stacklevel=2,
+            valid = ", ".join(sorted(VALID_TYPES))
+            raise ValueError(
+                f"Unknown type '{item_type}' in config. Valid types: {valid}"
             )
 
     # Export

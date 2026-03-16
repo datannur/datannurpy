@@ -67,3 +67,33 @@ export_db: {{}}
     )
     assert result.returncode == 0, f"stdout: {result.stdout}\nstderr: {result.stderr}"
     assert (output / "data" / "db" / "dataset.json").exists()
+
+
+def test_main_invalid_config_type(tmp_path: Path, capsys) -> None:
+    """main() shows clean error for invalid config type."""
+    config = tmp_path / "test.yml"
+    config.write_text("""
+add:
+  - type: invalid_type
+    path: /some/path
+""")
+    with patch.object(sys, "argv", ["datannurpy", str(config)]):
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 1
+
+    captured = capsys.readouterr()
+    assert "Unknown type 'invalid_type'" in captured.err
+    assert "Traceback" not in captured.err
+
+
+def test_main_file_not_found(tmp_path: Path, capsys) -> None:
+    """main() shows clean error for missing config file."""
+    config = tmp_path / "nonexistent.yml"
+    with patch.object(sys, "argv", ["datannurpy", str(config)]):
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 1
+
+    captured = capsys.readouterr()
+    assert "Error:" in captured.err
