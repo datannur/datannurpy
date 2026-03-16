@@ -9,7 +9,7 @@ on:
 jobs:
   check-version:
     name: Check Version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     if: >
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'push'
@@ -54,7 +54,7 @@ jobs:
 
   publish:
     name: Publish
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     needs: [check-version, database-tests]
     if: needs.check-version.outputs.changed == 'true'
     permissions:
@@ -63,20 +63,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v4
         with:
-          python-version: "3.14"
+          enable-cache: true
 
-      - uses: astral-sh/setup-uv@v3
-
-      - name: Install build tools
-        run: pip install build
+      - run: uv python install 3.14
+      - run: uv sync --frozen
 
       - name: Download app
         run: make download-app
 
       - name: Build package
-        run: python -m build
+        run: uv build
 
       - name: Extract changelog
         id: changelog

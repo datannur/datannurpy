@@ -6,21 +6,40 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - run: make lint
+      - run: make typecheck
+
   test:
-    name: CI
-    runs-on: ubuntu-latest
+    name: Test (${{ matrix.python-version }})
+    runs-on: ubuntu-24.04-arm
     strategy:
       matrix:
         python-version: ["3.9", "3.14"]
 
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
       - run: uv python install ${{ matrix.python-version }}
-      - run: uv sync
+      - run: uv sync --frozen
+
       - run: make download-app
-      - run: make check
+      - run: make test-cov
 
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.14'
