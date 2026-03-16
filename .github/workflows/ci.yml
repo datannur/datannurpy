@@ -35,6 +35,7 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
+          cache-suffix: ${{ matrix.python-version }}
       - run: uv python install ${{ matrix.python-version }}
       - run: uv sync --frozen
 
