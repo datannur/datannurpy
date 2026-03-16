@@ -28,6 +28,10 @@ SUPPORTED_FORMATS: dict[str, str] = {
     ".dta": "stata",
 }
 
+# Directories and patterns to always exclude
+DEFAULT_EXCLUDE_DIRS = {".git", "__pycache__", ".venv", "node_modules"}
+DEFAULT_EXCLUDE_PREFIXES = ("~$",)  # Office temp files
+
 
 def get_mtime_iso(path: Path, fs: FileSystem | None = None) -> str:
     """Get file modification time as YYYY/MM/DD."""

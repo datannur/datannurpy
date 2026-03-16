@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.9.1 (2026-03-16)
+
+- fix: add missing `fsspec` explicit dependency for remote storage
+
 ## 0.9.0 (2026-03-12)
 
 - add: YAML configuration support with `run_config()`

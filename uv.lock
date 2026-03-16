@@ -1139,6 +1139,8 @@ name = "datannurpy"
 version = "0.9.0"
 source = { editable = "." }
 dependencies = [
+    { name = "fsspec", version = "2025.10.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "fsspec", version = "2026.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "ibis-framework", extra = ["duckdb"] },
     { name = "jsonjsdb" },
     { name = "openpyxl" },
@@ -1216,6 +1218,7 @@ requires-dist = [
     { name = "adlfs", marker = "extra == 'azure'", specifier = ">=2024.0" },
     { name = "adlfs", marker = "extra == 'cloud'", specifier = ">=2024.0" },
     { name = "deltalake", marker = "extra == 'delta'", specifier = ">=0.18.0" },
+    { name = "fsspec", specifier = ">=2024.0" },
     { name = "gcsfs", marker = "extra == 'cloud'", specifier = ">=2024.0" },
     { name = "gcsfs", marker = "extra == 'gcs'", specifier = ">=2024.0" },
     { name = "ibis-framework", extras = ["duckdb"], specifier = ">=11.0" },
