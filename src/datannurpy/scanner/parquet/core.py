@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -11,6 +10,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from ...schema import Variable
+from ...utils import log_warn
 from ..utils import build_variables
 from .discovery import DatasetType, ParquetDatasetInfo
 
@@ -66,8 +66,11 @@ def scan_simple(
     dataset_id: str,
     infer_stats: bool,
     freq_threshold: int | None,
+    *,
+    quiet: bool = False,
 ) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
     """Scan a simple Parquet file."""
+    _ = quiet  # unused but kept for API consistency
     # Extract metadata
     metadata = extract_parquet_metadata(path)
 
@@ -97,6 +100,8 @@ def scan_delta(
     dataset_id: str,
     infer_stats: bool,
     freq_threshold: int | None,
+    *,
+    quiet: bool = False,
 ) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
     """Scan a Delta Lake table."""
     # Extract metadata using deltalake if available (optional, for metadata only)
@@ -112,16 +117,13 @@ def scan_delta(
             name=meta.name,
         )
     except ImportError:
-        warnings.warn(
+        log_warn(
             "deltalake not installed. Delta table metadata (name, description) "
             "will not be extracted. Install with: pip install datannurpy[delta]",
-            stacklevel=2,
+            quiet,
         )
     except Exception as e:
-        warnings.warn(
-            f"Failed to extract Delta table metadata: {e}",
-            stacklevel=2,
-        )
+        log_warn(f"Failed to extract Delta table metadata: {e}", quiet)
 
     # Scan with Ibis
     con = ibis.duckdb.connect()
@@ -147,8 +149,11 @@ def scan_hive(
     dataset_id: str,
     infer_stats: bool,
     freq_threshold: int | None,
+    *,
+    quiet: bool = False,
 ) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
     """Scan a Hive-partitioned Parquet dataset."""
+    _ = quiet  # unused but kept for API consistency
     # Hive partitioned datasets don't have table-level metadata
     metadata = DatasetMetadata()
 
@@ -177,8 +182,11 @@ def scan_iceberg(
     dataset_id: str,
     infer_stats: bool,
     freq_threshold: int | None,
+    *,
+    quiet: bool = False,
 ) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
     """Scan an Apache Iceberg table using PyIceberg."""
+    _ = quiet  # unused but kept for API consistency
     try:
         from pyiceberg.table import StaticTable
     except ImportError as e:
@@ -252,6 +260,7 @@ def scan_parquet(
     dataset_id: str,
     infer_stats: bool = True,
     freq_threshold: int | None = None,
+    quiet: bool = False,
 ) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
     """Scan a simple Parquet file and return (variables, row_count, freq_table, metadata)."""
-    return scan_simple(Path(path), dataset_id, infer_stats, freq_threshold)
+    return scan_simple(Path(path), dataset_id, infer_stats, freq_threshold, quiet=quiet)

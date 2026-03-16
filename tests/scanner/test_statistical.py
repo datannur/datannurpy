@@ -36,7 +36,7 @@ class TestReadStatistical:
         assert read_statistical(txt_path) is None
 
     def test_read_statistical_pyreadstat_not_installed(
-        self, monkeypatch, tmp_path: Path
+        self, monkeypatch, tmp_path: Path, capsys
     ):
         """read_statistical should return None and warn when pyreadstat not installed."""
         import datannurpy.scanner.statistical as stat_module
@@ -58,20 +58,22 @@ class TestReadStatistical:
         sas_path = tmp_path / "test.sas7bdat"
         sas_path.write_bytes(b"dummy")
 
-        with pytest.warns(UserWarning, match="pyreadstat is required"):
-            result = stat_module.read_statistical(sas_path)
+        result = stat_module.read_statistical(sas_path, quiet=False)
+        captured = capsys.readouterr()
+        assert "pyreadstat is required" in captured.err
         assert result is None
 
         if saved_pyreadstat:
             sys.modules["pyreadstat"] = saved_pyreadstat
 
-    def test_read_statistical_corrupted_file(self, tmp_path: Path):
+    def test_read_statistical_corrupted_file(self, tmp_path: Path, capsys):
         """read_statistical should return None and warn for corrupted files."""
         sas_path = tmp_path / "corrupted.sas7bdat"
         sas_path.write_bytes(b"not a valid sas file")
 
-        with pytest.warns(UserWarning, match="Could not read statistical file"):
-            result = read_statistical(sas_path)
+        result = read_statistical(sas_path, quiet=False)
+        captured = capsys.readouterr()
+        assert "Could not read statistical file" in captured.err
         assert result is None
 
 
@@ -89,14 +91,16 @@ class TestScanStatisticalExceptions:
         with pytest.raises(ImportError, match="pyreadstat is required"):
             catalog.add_dataset(sas_file, quiet=True)
 
-    def test_corrupted_file(self, tmp_path: Path):
+    def test_corrupted_file(self, tmp_path: Path, capsys):
         """Statistical scan should warn and return empty for corrupted files."""
         sas_file = tmp_path / "corrupted.sas7bdat"
         sas_file.write_bytes(b"not a valid sas file")
 
         catalog = Catalog()
-        with pytest.warns(UserWarning, match="Could not read statistical file"):
-            catalog.add_dataset(sas_file, quiet=True)
+        catalog.add_dataset(sas_file, quiet=False)
+
+        captured = capsys.readouterr()
+        assert "Could not read statistical file" in captured.err
 
         assert len(catalog.dataset.all()) == 1
         assert catalog.dataset.all()[0].nb_row == 0

@@ -288,6 +288,7 @@ def add_folder(
             freq_threshold=freq_threshold,
             csv_encoding=resolved_encoding,
             fs=fs,
+            quiet=q,
         )
 
         # Create dataset
@@ -376,6 +377,7 @@ def _scan_time_series(
             freq_threshold=None,
             csv_encoding=csv_encoding,
             fs=fs,
+            quiet=quiet,
         )
         columns_by_period[period] = [v.name for v in schema_result.variables]
 
@@ -392,6 +394,7 @@ def _scan_time_series(
         freq_threshold=freq_threshold,
         csv_encoding=csv_encoding,
         fs=fs,
+        quiet=quiet,
     )
 
     # Step 4: Create dataset

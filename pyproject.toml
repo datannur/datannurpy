@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "datannurpy"
-version = "0.9.1"
+version = "0.9.2"
 description = "Python library for datannur catalog metadata management"
 authors = [{ name = "datannur" }]
 readme = "README.md"
@@ -23,7 +23,7 @@ classifiers = [
 ]
 dependencies = [
   "ibis-framework[duckdb]>=11.0",
-  "jsonjsdb>=0.8.2",
+  "jsonjsdb>=0.8.3",
   "openpyxl>=3.0",
   "xlrd>=2.0",
   "fsspec>=2024.0",

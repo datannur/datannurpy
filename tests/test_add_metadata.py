@@ -361,13 +361,14 @@ class TestReadJson:
 
         assert _read_json(json_path) is None
 
-    def test_invalid_json(self, tmp_path: Path):
+    def test_invalid_json(self, tmp_path: Path, capsys):
         """Should return None and warn for invalid JSON."""
         json_path = tmp_path / "test.json"
         json_path.write_text("not valid json")
 
-        with pytest.warns(UserWarning, match="Could not read JSON"):
-            result = _read_json(json_path)
+        result = _read_json(json_path, quiet=False)
+        captured = capsys.readouterr()
+        assert "Could not read JSON" in captured.err
         assert result is None
 
     def test_non_array_json(self, tmp_path: Path):
@@ -445,12 +446,13 @@ class TestLoadTablesFromDatabase:
         assert "variable" in tables
         assert len(tables["variable"][0]) == 1
 
-    def test_invalid_connection(self):
+    def test_invalid_connection(self, capsys):
         """Should return empty dict and warn for invalid connection."""
-        with pytest.warns(UserWarning, match="Could not connect"):
-            tables = _load_tables_from_database(
-                "sqlite:///nonexistent/path/db.sqlite", ALL_ENTITIES
-            )
+        tables = _load_tables_from_database(
+            "sqlite:///nonexistent/path/db.sqlite", ALL_ENTITIES, quiet=False
+        )
+        captured = capsys.readouterr()
+        assert "Could not connect" in captured.err
         assert tables == {}
 
     def test_ignores_non_entity_tables(self, tmp_path: Path):
@@ -887,7 +889,7 @@ class TestEdgeCases:
             assert df is not None
             assert len(df) > 0
 
-    def test_load_database_with_table_read_error(self, tmp_path: Path):
+    def test_load_database_with_table_read_error(self, tmp_path: Path, capsys):
         """Should warn when table read fails."""
         db_path = tmp_path / "test.db"
         conn = sqlite3.connect(db_path)
@@ -902,11 +904,12 @@ class TestEdgeCases:
             mock_con.table.side_effect = Exception("Table read error")
             mock_ibis.connect.return_value = mock_con
 
-            with pytest.warns(UserWarning, match="Could not read table"):
-                tables = _load_tables_from_database(
-                    f"sqlite:///{db_path}", ALL_ENTITIES
-                )
+            tables = _load_tables_from_database(
+                f"sqlite:///{db_path}", ALL_ENTITIES, quiet=False
+            )
 
+            captured = capsys.readouterr()
+            assert "Could not read table" in captured.err
             assert "folder" not in tables
 
     def test_add_metadata_shows_summary_with_updates_only(self, tmp_path: Path, capsys):

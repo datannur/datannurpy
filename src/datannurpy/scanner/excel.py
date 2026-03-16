@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
 from pathlib import Path
 
 import ibis
@@ -10,6 +9,7 @@ import pandas as pd
 import pyarrow as pa
 
 from ..schema import Variable
+from ..utils import log_warn
 from .utils import build_variables
 
 
@@ -17,6 +17,7 @@ def read_excel(
     path: str | Path,
     *,
     sheet_name: str | int = 0,
+    quiet: bool = False,
 ) -> pd.DataFrame | None:
     """Read an Excel file into a pandas DataFrame."""
     file_path = Path(path)
@@ -34,10 +35,7 @@ def read_excel(
         return df
     except Exception as e:
         error_msg = str(e).split("\n")[0]
-        warnings.warn(
-            f"Could not read Excel file '{file_path.name}': {error_msg}",
-            stacklevel=3,
-        )
+        log_warn(f"Could not read Excel file '{file_path.name}': {error_msg}", quiet)
         return None
 
 
@@ -48,9 +46,10 @@ def scan_excel(
     dataset_id: str,
     infer_stats: bool = True,
     freq_threshold: int | None = None,
+    quiet: bool = False,
 ) -> tuple[list[Variable], int, pa.Table | None]:
     """Scan an Excel file and return (variables, row_count, freq_table)."""
-    df = read_excel(path, sheet_name=sheet_name)
+    df = read_excel(path, sheet_name=sheet_name, quiet=quiet)
     if df is None:
         return [], 0, None
 

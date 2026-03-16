@@ -45,6 +45,7 @@ def scan_file(
     freq_threshold: int | None = None,
     csv_encoding: str | None = None,
     fs: FileSystem | None = None,
+    quiet: bool = False,
 ) -> ScanResult:
     """Scan a file and return variables, row count, and optional metadata.
 
@@ -67,6 +68,7 @@ def scan_file(
             freq_threshold=freq_threshold,
             csv_encoding=csv_encoding,
             fs=fs,
+            quiet=quiet,
         )
 
     # Parquet-based formats (parquet, delta, hive, iceberg)
@@ -82,6 +84,7 @@ def scan_file(
             dataset_id=dataset_id,
             infer_stats=infer_stats,
             freq_threshold=freq_threshold,
+            quiet=quiet,
         )
         return ScanResult(
             variables=variables,
@@ -97,6 +100,7 @@ def scan_file(
             dataset_id=dataset_id,
             infer_stats=infer_stats,
             freq_threshold=freq_threshold,
+            quiet=quiet,
         )
         return ScanResult(
             variables=variables,
@@ -112,6 +116,7 @@ def scan_file(
             infer_stats=infer_stats,
             freq_threshold=freq_threshold,
             csv_encoding=csv_encoding,
+            quiet=quiet,
         )
         return ScanResult(variables=variables, nb_row=nb_row, freq_table=freq_table)
 
@@ -121,6 +126,7 @@ def scan_file(
         dataset_id=dataset_id,
         infer_stats=infer_stats,
         freq_threshold=freq_threshold,
+        quiet=quiet,
     )
     return ScanResult(variables=variables, nb_row=nb_row, freq_table=freq_table)
 
@@ -134,6 +140,7 @@ def _scan_with_ensure_local(
     freq_threshold: int | None,
     csv_encoding: str | None,
     fs: FileSystem,
+    quiet: bool = False,
 ) -> ScanResult:
     """Download remote file/directory and scan locally."""
     # Directory formats (delta, hive, iceberg) need ensure_local_dir
@@ -149,6 +156,7 @@ def _scan_with_ensure_local(
                 dataset_id=dataset_id,
                 infer_stats=infer_stats,
                 freq_threshold=freq_threshold,
+                quiet=quiet,
             )
             return ScanResult(
                 variables=variables,
@@ -166,6 +174,7 @@ def _scan_with_ensure_local(
                 dataset_id=dataset_id,
                 infer_stats=infer_stats,
                 freq_threshold=freq_threshold,
+                quiet=quiet,
             )
             return ScanResult(
                 variables=variables,
@@ -181,6 +190,7 @@ def _scan_with_ensure_local(
                 dataset_id=dataset_id,
                 infer_stats=infer_stats,
                 freq_threshold=freq_threshold,
+                quiet=quiet,
             )
             return ScanResult(
                 variables=variables,
@@ -196,6 +206,7 @@ def _scan_with_ensure_local(
                 infer_stats=infer_stats,
                 freq_threshold=freq_threshold,
                 csv_encoding=csv_encoding,
+                quiet=quiet,
             )
             return ScanResult(variables=variables, nb_row=nb_row, freq_table=freq_table)
 
@@ -205,6 +216,7 @@ def _scan_with_ensure_local(
             dataset_id=dataset_id,
             infer_stats=infer_stats,
             freq_threshold=freq_threshold,
+            quiet=quiet,
         )
         return ScanResult(variables=variables, nb_row=nb_row, freq_table=freq_table)
 

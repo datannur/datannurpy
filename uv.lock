@@ -1136,7 +1136,7 @@ wheels = [
 
 [[package]]
 name = "datannurpy"
-version = "0.9.1"
+version = "0.9.2"
 source = { editable = "." }
 dependencies = [
     { name = "fsspec", version = "2025.10.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
@@ -1227,7 +1227,7 @@ requires-dist = [
     { name = "ibis-framework", extras = ["oracle"], marker = "extra == 'oracle'", specifier = ">=11.0" },
     { name = "ibis-framework", extras = ["postgres"], marker = "extra == 'postgres'", specifier = ">=11.0" },
     { name = "ibis-framework", extras = ["postgres", "mysql", "oracle", "mssql"], marker = "extra == 'databases'", specifier = ">=11.0" },
-    { name = "jsonjsdb", specifier = ">=0.8.2" },
+    { name = "jsonjsdb", specifier = ">=0.8.3" },
     { name = "openpyxl", specifier = ">=3.0" },
     { name = "paramiko", specifier = ">=4.0" },
     { name = "pyiceberg", marker = "extra == 'iceberg'", specifier = ">=0.10.0" },
@@ -2020,16 +2020,16 @@ wheels = [
 
 [[package]]
 name = "jsonjsdb"
-version = "0.8.2"
+version = "0.8.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openpyxl" },
     { name = "polars", version = "1.36.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "polars", version = "1.38.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b6/4f/fadbf7016588a68a7fb8ca0016aa2295e7ed47beb12d2b19f494f1279752/jsonjsdb-0.8.2.tar.gz", hash = "sha256:a8b1fbce58f472bb2ff93fadc1e74ccf01c3785d68264b8404c79723cb02b610", size = 14363, upload-time = "2026-03-06T23:30:51.548Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/01/01/747c3de262869f1cd36bd51ea8666ba5f48c4191fe53d16562ce1a689e70/jsonjsdb-0.8.3.tar.gz", hash = "sha256:74fb1280e21dc70d8df5dc054e221232bcc32275ab0c1e540ad86018bf15acc4", size = 14374, upload-time = "2026-03-16T21:35:11.537Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8c/68/1e5aa3faeea02a92b1249a4fa2f72006c2d25acf0019f9140c9fe4e2d7a2/jsonjsdb-0.8.2-py3-none-any.whl", hash = "sha256:6687dc69dc270b8acfb395e19a80857c9259d440d2764e137a6778fd8e75641e", size = 17345, upload-time = "2026-03-06T23:30:50.188Z" },
+    { url = "https://files.pythonhosted.org/packages/fb/43/99621fdfdc495ecac6fd9e8183133922c1b40b22ed5a402409e80b159a6b/jsonjsdb-0.8.3-py3-none-any.whl", hash = "sha256:6445cc7435534f447670222c7535f895690ba6b8890412ea64485ffb9c38517a", size = 17381, upload-time = "2026-03-16T21:35:10.116Z" },
 ]
 
 [[package]]

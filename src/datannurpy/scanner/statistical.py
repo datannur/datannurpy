@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -12,6 +11,7 @@ import pandas as pd
 import pyarrow as pa
 
 from ..schema import Variable
+from ..utils import log_warn
 from .utils import build_variables
 
 
@@ -35,15 +35,15 @@ def convert_float_to_int(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def read_statistical(path: str | Path) -> pd.DataFrame | None:
+def read_statistical(path: str | Path, *, quiet: bool = False) -> pd.DataFrame | None:
     """Read a statistical file (SAS/SPSS/Stata) into a pandas DataFrame."""
     try:
         import pyreadstat
     except ImportError:
-        warnings.warn(
+        log_warn(
             "pyreadstat is required for SAS/SPSS/Stata support. "
             "Install it with: pip install datannurpy[stat]",
-            stacklevel=3,
+            quiet,
         )
         return None
 
@@ -65,9 +65,9 @@ def read_statistical(path: str | Path) -> pd.DataFrame | None:
         return convert_float_to_int(df)
     except Exception as e:
         error_msg = str(e).split("\n")[0]
-        warnings.warn(
+        log_warn(
             f"Could not read statistical file '{file_path.name}': {error_msg}",
-            stacklevel=3,
+            quiet,
         )
         return None
 
@@ -78,6 +78,7 @@ def scan_statistical(
     dataset_id: str,
     infer_stats: bool = True,
     freq_threshold: int | None = None,
+    quiet: bool = False,
 ) -> tuple[list[Variable], int, pa.Table | None, StatisticalMetadata]:
     """Scan a statistical file (SAS/SPSS/Stata) and return (variables, row_count, freq_table, metadata)."""
     try:
@@ -106,9 +107,9 @@ def scan_statistical(
         df, meta = reader(file_path)
     except Exception as e:
         error_msg = str(e).split("\n")[0]
-        warnings.warn(
+        log_warn(
             f"Could not read statistical file '{file_path.name}': {error_msg}",
-            stacklevel=3,
+            quiet,
         )
         return [], 0, None, StatisticalMetadata()
 
