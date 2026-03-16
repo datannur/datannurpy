@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.9.2 (2026-03-16)
+
+- refactor: replace `warnings.warn` with quiet-aware `log_warn` and clean CLI errors
+- chore: bump jsonjsdb to >=0.8.3
+
 ## 0.9.1 (2026-03-16)
 
 - fix: add missing `fsspec` explicit dependency for remote storage
