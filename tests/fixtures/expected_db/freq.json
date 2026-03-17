@@ -1526,6 +1526,11 @@
   },
   {
     "variable_id": "data---csv---legacy_encoding_csv---d_partement",
+    "value": "Alsace…",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---csv---legacy_encoding_csv---d_partement",
     "value": "Côte d'Or",
     "freq": 1
   },
@@ -1537,6 +1542,11 @@
   {
     "variable_id": "data---csv---legacy_encoding_csv---d_partement",
     "value": "Île-de-France",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---csv---legacy_encoding_csv---nom",
+    "value": "Dupré",
     "freq": 1
   },
   {
@@ -1570,6 +1580,11 @@
     "freq": 1
   },
   {
+    "variable_id": "data---csv---legacy_encoding_csv---pr_nom",
+    "value": "Sœur",
+    "freq": 1
+  },
+  {
     "variable_id": "data---csv---legacy_encoding_csv---salaire",
     "value": "38000",
     "freq": 1
@@ -1577,6 +1592,11 @@
   {
     "variable_id": "data---csv---legacy_encoding_csv---salaire",
     "value": "45000",
+    "freq": 1
+  },
+  {
+    "variable_id": "data---csv---legacy_encoding_csv---salaire",
+    "value": "50€",
     "freq": 1
   },
   {

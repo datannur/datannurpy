@@ -37,13 +37,13 @@ class TestReadCsv:
 class TestLegacyEncoding:
     """Test scanning CSV files with legacy encodings and delimiters."""
 
-    def test_latin1_semicolon_delimiter(self):
-        """CSV with latin1 encoding and semicolon delimiter should be scanned correctly."""
+    def test_cp1252_semicolon_delimiter(self):
+        """CSV with CP1252 encoding and semicolon delimiter should be scanned correctly."""
         catalog = Catalog()
         catalog.add_dataset(CSV_DIR / "legacy_encoding.csv")
 
         assert len(catalog.variable.all()) == 4
-        assert catalog.dataset.all()[0].nb_row == 3
+        assert catalog.dataset.all()[0].nb_row == 4
 
     def test_explicit_encoding(self):
         """CSV scan with explicit encoding should work."""
