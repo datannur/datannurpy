@@ -56,7 +56,7 @@ def _read_csv_polars(
     for encoding in encodings:
         try:
             return pl.read_csv(
-                file_path,
+                source=file_path,
                 encoding=encoding,
                 separator=separator,
                 n_rows=n_rows,
@@ -107,7 +107,7 @@ def scan_csv(
         return [], 0, None
 
     row_count = len(df)
-    table = ibis.memtable(df.to_arrow())
+    table = ibis.memtable(df)
 
     variables, freq_table = build_variables(
         table,

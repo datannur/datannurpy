@@ -61,10 +61,10 @@ Issues = "https://github.com/datannur/datannurpy/issues"
 
 [dependency-groups]
 dev = [
-  "pytest",
-  "pytest-xdist",
-  "pytest-cov",
-  "ruff",
+  "pytest>=7.0",
+  "pytest-xdist>=3.0",
+  "pytest-cov>=4.0",
+  "ruff>=0.4.0",
   "pyright>=1.1.400",
   "deltalake>=0.18.0",
   "oracledb>=2.0.0",
