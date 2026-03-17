@@ -98,7 +98,13 @@ ignore-vcs = true
 [tool.pyright]
 pythonVersion = "3.9"
 typeCheckingMode = "standard"
-exclude = ["src/datannurpy/app"]
+exclude = [
+  "src/datannurpy/app",
+  "**/node_modules",
+  "**/__pycache__",
+  "**/.*",
+  ".venv",
+]
 
 [tool.coverage.run]
 source = ["src/datannurpy"]
