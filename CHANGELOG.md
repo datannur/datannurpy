@@ -1,5 +1,11 @@
 # datannurpy
 
+## 0.9.3 (2026-03-17)
+
+- add: Oracle TNS name support via `oracle_client_path` parameter in `add_database()` (thick mode)
+- fix: CSV scanner now uses Polars instead of DuckDB for cross-platform encoding support (Windows CP1252)
+- chore: CI now tests minimum and maximum dependency versions
+
 ## 0.9.2 (2026-03-16)
 
 - refactor: replace `warnings.warn` with quiet-aware `log_warn` and clean CLI errors

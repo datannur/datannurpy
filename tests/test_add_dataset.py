@@ -259,20 +259,18 @@ class TestAddDatasetDepth:
 
         assert len(catalog.variable.all()) == 0
 
-    def test_add_dataset_schema_unreadable_csv(self, tmp_path: Path):
-        """depth=schema should handle unreadable CSV gracefully."""
-        from unittest.mock import patch
-
-        (tmp_path / "bad.csv").write_text("a,b,c\n1,2,3")
+    def test_add_dataset_schema_empty_csv(self, tmp_path: Path):
+        """depth=schema should handle empty CSV gracefully."""
+        # Create CSV with only header
+        (tmp_path / "empty.csv").write_text("a,b,c\n")
 
         catalog = Catalog()
-        # Mock _read_csv_table to simulate unreadable CSV
-        with patch("datannurpy.scanner.csv._read_csv_table", return_value=None):
-            catalog.add_dataset(tmp_path / "bad.csv", depth="schema")
+        catalog.add_dataset(tmp_path / "empty.csv", depth="schema")
 
-        # Should create dataset with no variables
+        # Should create dataset with variables (schema only, no type inference)
         assert len(catalog.dataset.all()) == 1
-        assert len(catalog.variable.all()) == 0
+        assert len(catalog.variable.all()) == 3
+        assert catalog.dataset.all()[0].nb_row is None  # No row count in schema mode
 
 
 class TestRemoteStorage:

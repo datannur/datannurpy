@@ -24,20 +24,27 @@ jobs:
       - run: make typecheck
 
   test:
-    name: CI (${{ matrix.python-version }})
+    name: CI (${{ matrix.python-version }}, ${{ matrix.resolution }})
     runs-on: ubuntu-24.04-arm
     strategy:
       matrix:
         python-version: ["3.9", "3.14"]
+        resolution: ["lowest", "highest"]
+        exclude:
+          # Only test lowest on oldest Python, highest on newest
+          - python-version: "3.9"
+            resolution: "highest"
+          - python-version: "3.14"
+            resolution: "lowest"
 
     steps:
       - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-          cache-suffix: ${{ matrix.python-version }}
+          cache-suffix: ${{ matrix.python-version }}-${{ matrix.resolution }}
       - run: uv python install ${{ matrix.python-version }}
-      - run: uv sync --frozen
+      - run: uv sync --resolution ${{ matrix.resolution }}
 
       - run: make download-app
       - run: make test-cov

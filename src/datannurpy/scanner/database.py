@@ -97,6 +97,22 @@ ORACLE_SYSTEM_TABLE_PREFIXES: tuple[str, ...] = (
     "product_privs",
 )
 
+_oracle_client_initialized = False
+
+
+def _init_oracle_client(lib_dir: str) -> None:
+    """Initialize Oracle thick mode (can only be called once per process)."""
+    global _oracle_client_initialized  # noqa: PLW0603
+    if _oracle_client_initialized:
+        return
+    try:
+        import oracledb
+    except ImportError as e:
+        raise_driver_error("oracle", e)
+    oracledb.init_oracle_client(lib_dir=lib_dir)
+    _oracle_client_initialized = True
+
+
 # SQLite system table prefixes to exclude (GeoPackage metadata, rtree indexes)
 SQLITE_SYSTEM_TABLE_PREFIXES: tuple[str, ...] = (
     "gpkg_",  # GeoPackage metadata tables
@@ -186,7 +202,10 @@ def parse_connection_string(connection: str) -> tuple[str, dict[str, str]]:
 
 
 def _connect_external_backend(
-    backend: str, kwargs: dict[str, str]
+    backend: str,
+    kwargs: dict[str, str],
+    *,
+    oracle_client_path: str | None = None,
 ) -> ibis.BaseBackend:  # pragma: no cover
     """Connect to external database backends (requires drivers)."""
     try:
@@ -207,12 +226,23 @@ def _connect_external_backend(
                 database=kwargs.get("database"),
             )
         if backend == "oracle":
+            if oracle_client_path:
+                _init_oracle_client(oracle_client_path)
+            host = kwargs.get("host")
+            database = kwargs.get("database")
+            # No host → TNS name resolved via tnsnames.ora / LDAP (thick mode)
+            if not host and database:
+                return ibis.oracle.connect(
+                    user=kwargs.get("user"),
+                    password=kwargs.get("password"),
+                    dsn=database,
+                )
             return ibis.oracle.connect(
-                host=kwargs.get("host", "localhost"),
+                host=host or "localhost",
                 port=int(kwargs.get("port", 1521)),
                 user=kwargs.get("user"),
                 password=kwargs.get("password"),
-                database=kwargs.get("database"),
+                database=database,
             )
         # mssql
         known_params = {"host", "port", "user", "password", "database", "driver"}
@@ -236,7 +266,11 @@ def _connect_external_backend(
         raise_driver_error(backend, e)
 
 
-def connect(connection: str | ibis.BaseBackend) -> tuple[ibis.BaseBackend, str]:
+def connect(
+    connection: str | ibis.BaseBackend,
+    *,
+    oracle_client_path: str | None = None,
+) -> tuple[ibis.BaseBackend, str]:
     """Connect to a database, return (connection, backend_name)."""
     if isinstance(connection, ibis.BaseBackend):
         backend_name = get_backend_name(connection)
@@ -252,7 +286,9 @@ def connect(connection: str | ibis.BaseBackend) -> tuple[ibis.BaseBackend, str]:
     if backend == "sqlite":
         con = ibis.sqlite.connect(kwargs.get("path", ":memory:"))
     else:
-        con = _connect_external_backend(backend, kwargs)
+        con = _connect_external_backend(
+            backend, kwargs, oracle_client_path=oracle_client_path
+        )
 
     return con, backend
 
@@ -443,6 +479,14 @@ def build_table_data_path(
     return f"{backend_name}://{db_name}/{table_name}"
 
 
+def _normalize_dtype(dtype: ibis.expr.datatypes.DataType) -> str:
+    """Normalize dtype string for stable hashing across ibis/backend versions."""
+    s = str(dtype)
+    if s.startswith("unknown"):
+        return "unknown"
+    return s
+
+
 def compute_schema_signature(
     con: ibis.BaseBackend, table_name: str, schema: str | None
 ) -> str:
@@ -463,7 +507,10 @@ def compute_schema_signature(
 
     # Build schema string from column names and types
     # Sort by column name for consistency
-    schema_parts = sorted(f"{col}:{dtype}" for col, dtype in table.schema().items())
+    # Normalize unknown(...) types to "unknown" for cross-version stability
+    schema_parts = sorted(
+        f"{col}:{_normalize_dtype(dtype)}" for col, dtype in table.schema().items()
+    )
     schema_str = "|".join(schema_parts)
 
     # Return MD5 hash (fast, collision-resistant enough for this use case)

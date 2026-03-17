@@ -1,52 +1,69 @@
-"""CSV reader using Ibis/DuckDB."""
+"""CSV reader using Polars for encoding support."""
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import duckdb
 import ibis
 import pandas as pd
+import polars as pl
 import pyarrow as pa
 
-from ..schema import Variable
 from ..utils import log_warn
 from .utils import build_variables
 
 if TYPE_CHECKING:
-    from ibis.expr.types import Table
+    from ..schema import Variable
 
 # Default encoding fallback order
-DEFAULT_ENCODINGS = ("utf-8", "CP1252", "ISO_8859_1")
+DEFAULT_ENCODINGS = ("utf-8", "cp1252", "iso-8859-1")
+
+# Common CSV separators, ordered by frequency
+SEPARATORS = (",", ";", "\t", "|")
 
 
-def _build_encoding_order(csv_encoding: str | None) -> tuple[str | None, ...]:
+def _build_encoding_order(csv_encoding: str | None) -> tuple[str, ...]:
     """Build encoding order with specified encoding first."""
     if csv_encoding is None:
-        return (None, "CP1252", "ISO_8859_1")
-    others = [enc for enc in DEFAULT_ENCODINGS if enc.upper() != csv_encoding.upper()]
-    return (csv_encoding, *others)
+        return DEFAULT_ENCODINGS
+    normalized = csv_encoding.lower().replace("_", "-")
+    others = tuple(enc for enc in DEFAULT_ENCODINGS if enc != normalized)
+    return (normalized, *others)
 
 
-def _read_csv_table(
+def _detect_separator(file_path: Path) -> str:
+    """Detect CSV separator from first line."""
+    with open(file_path, "rb") as f:
+        header = f.readline().decode("iso-8859-1")
+    counts = {sep: header.count(sep) for sep in SEPARATORS}
+    best = max(counts, key=lambda s: counts[s])
+    return best if counts[best] > 0 else ","
+
+
+def _read_csv_polars(
     file_path: Path,
-    con: ibis.BaseBackend,
     csv_encoding: str | None,
     *,
+    n_rows: int | None = None,
     quiet: bool = False,
-) -> Table | None:
-    """Read CSV into ibis Table using existing connection. Returns None on error."""
+) -> pl.DataFrame | None:
+    """Read CSV with Polars, using encoding fallback."""
+    separator = _detect_separator(file_path)
     encodings = _build_encoding_order(csv_encoding)
     last_error: str | None = None
 
     for encoding in encodings:
         try:
-            if encoding is None:
-                return con.read_csv(file_path)
-            else:
-                return con.read_csv(file_path, encoding=encoding)
-        except duckdb.InvalidInputException as e:
+            return pl.read_csv(
+                file_path,  # pyright: ignore[reportCallIssue]
+                encoding=encoding,
+                separator=separator,
+                n_rows=n_rows,
+                infer_schema_length=10000,
+                try_parse_dates=False,
+            )
+        except Exception as e:
             last_error = str(e)
             continue
 
@@ -66,12 +83,8 @@ def read_csv(
     if file_path.stat().st_size == 0:
         return None
 
-    con = ibis.duckdb.connect()
-    try:
-        table = _read_csv_table(file_path, con, csv_encoding)
-        return table.to_pandas() if table is not None else None
-    finally:
-        con.disconnect()
+    df = _read_csv_polars(file_path, csv_encoding)
+    return df.to_pandas() if df is not None else None
 
 
 def scan_csv(
@@ -89,21 +102,18 @@ def scan_csv(
     if file_path.stat().st_size == 0:
         return [], 0, None
 
-    con = ibis.duckdb.connect()
-    try:
-        table = _read_csv_table(file_path, con, csv_encoding, quiet=quiet)
-        if table is None:
-            return [], 0, None
+    df = _read_csv_polars(file_path, csv_encoding, quiet=quiet)
+    if df is None:
+        return [], 0, None
 
-        row_count = int(table.count().to_pyarrow().as_py())
+    row_count = len(df)
+    table = ibis.memtable(df)
 
-        variables, freq_table = build_variables(
-            table,
-            nb_rows=row_count,
-            dataset_id=dataset_id,
-            infer_stats=infer_stats,
-            freq_threshold=freq_threshold,
-        )
-        return variables, row_count, freq_table
-    finally:
-        con.disconnect()
+    variables, freq_table = build_variables(
+        table,
+        nb_rows=row_count,
+        dataset_id=dataset_id,
+        infer_stats=infer_stats,
+        freq_threshold=freq_threshold,
+    )
+    return variables, row_count, freq_table

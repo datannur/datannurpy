@@ -1,12 +1,5 @@
 [
   {
-    "id": "_modalities---mod_01855ce71d",
-    "folder_id": "_modalities",
-    "name": "André, François, José",
-    "description": null,
-    "type": null
-  },
-  {
     "id": "_modalities---mod_06d1e3109c",
     "folder_id": "_modalities",
     "name": "1583-01-01, 1880-05-06, 1960-01-01... (+1)",
@@ -35,16 +28,16 @@
     "type": null
   },
   {
-    "id": "_modalities---mod_11b1cdf31f",
+    "id": "_modalities---mod_0d98aec329",
     "folder_id": "_modalities",
-    "name": "est, nord, sud",
+    "name": "Alsace…, Côte d'Or, Rhône-Alpes... (+1)",
     "description": null,
     "type": null
   },
   {
-    "id": "_modalities---mod_182cfe8514",
+    "id": "_modalities---mod_11b1cdf31f",
     "folder_id": "_modalities",
-    "name": "Léger, Müller, Çelik",
+    "name": "est, nord, sud",
     "description": null,
     "type": null
   },
@@ -273,13 +266,6 @@
     "type": null
   },
   {
-    "id": "_modalities---mod_5342f153b6",
-    "folder_id": "_modalities",
-    "name": "38000, 45000, 52000",
-    "description": null,
-    "type": null
-  },
-  {
     "id": "_modalities---mod_5cbe3d324b",
     "folder_id": "_modalities",
     "name": "entrée en fo..., exploitation..., mise en serv...... (+5)",
@@ -325,6 +311,13 @@
     "id": "_modalities---mod_649d7c0cd5",
     "folder_id": "_modalities",
     "name": "st11, st12, st13... (+1)",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_64cf737ed5",
+    "folder_id": "_modalities",
+    "name": "38000, 45000, 50€... (+1)",
     "description": null,
     "type": null
   },
@@ -399,6 +392,13 @@
     "type": null
   },
   {
+    "id": "_modalities---mod_6fb4b7bd75",
+    "folder_id": "_modalities",
+    "name": "Dupré, Léger, Müller... (+1)",
+    "description": null,
+    "type": null
+  },
+  {
     "id": "_modalities---mod_71409fff3c",
     "folder_id": "_modalities",
     "name": "1, 2, 5",
@@ -409,6 +409,13 @@
     "id": "_modalities---mod_730f7b7bab",
     "folder_id": "_modalities",
     "name": "1, 2, 3... (+3)",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_73d75aa99b",
+    "folder_id": "_modalities",
+    "name": "André, François, José... (+1)",
     "description": null,
     "type": null
   },
@@ -451,13 +458,6 @@
     "id": "_modalities---mod_81fce7934e",
     "folder_id": "_modalities",
     "name": "Lyon, Marseille, Paris",
-    "description": null,
-    "type": null
-  },
-  {
-    "id": "_modalities---mod_8394c5497a",
-    "folder_id": "_modalities",
-    "name": "Côte d'Or, Rhône-Alpes, Île-de-France",
     "description": null,
     "type": null
   },

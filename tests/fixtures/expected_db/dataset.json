@@ -277,7 +277,7 @@
     "link": null,
     "localisation": null,
     "delivery_format": "csv",
-    "nb_row": 3,
+    "nb_row": 4,
     "nb_files": null,
     "start_date": null,
     "end_date": null,
@@ -767,7 +767,7 @@
     "end_date": null,
     "updating_each": null,
     "no_more_update": null,
-    "schema_signature": "7e4e2d94b92a0681124f6ac9191a765b"
+    "schema_signature": "5f58680de0beaecc23bf7a733b9d767b"
   },
   {
     "id": "photovoltaik---ProjectStatus",

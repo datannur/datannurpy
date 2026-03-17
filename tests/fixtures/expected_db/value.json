@@ -1,20 +1,5 @@
 [
   {
-    "modality_id": "_modalities---mod_01855ce71d",
-    "value": "André",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_01855ce71d",
-    "value": "François",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_01855ce71d",
-    "value": "José",
-    "description": null
-  },
-  {
     "modality_id": "_modalities---mod_06d1e3109c",
     "value": "1583-01-01",
     "description": null
@@ -210,6 +195,26 @@
     "description": null
   },
   {
+    "modality_id": "_modalities---mod_0d98aec329",
+    "value": "Alsace…",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_0d98aec329",
+    "value": "Côte d'Or",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_0d98aec329",
+    "value": "Rhône-Alpes",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_0d98aec329",
+    "value": "Île-de-France",
+    "description": null
+  },
+  {
     "modality_id": "_modalities---mod_11b1cdf31f",
     "value": "est",
     "description": null
@@ -222,21 +227,6 @@
   {
     "modality_id": "_modalities---mod_11b1cdf31f",
     "value": "sud",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_182cfe8514",
-    "value": "Léger",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_182cfe8514",
-    "value": "Müller",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_182cfe8514",
-    "value": "Çelik",
     "description": null
   },
   {
@@ -1855,21 +1845,6 @@
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5342f153b6",
-    "value": "38000",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_5342f153b6",
-    "value": "45000",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_5342f153b6",
-    "value": "52000",
-    "description": null
-  },
-  {
     "modality_id": "_modalities---mod_5cbe3d324b",
     "value": "entrée en force de l'autorisation",
     "description": null
@@ -2032,6 +2007,26 @@
   {
     "modality_id": "_modalities---mod_649d7c0cd5",
     "value": "st14",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_64cf737ed5",
+    "value": "38000",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_64cf737ed5",
+    "value": "45000",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_64cf737ed5",
+    "value": "50€",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_64cf737ed5",
+    "value": "52000",
     "description": null
   },
   {
@@ -2580,6 +2575,26 @@
     "description": null
   },
   {
+    "modality_id": "_modalities---mod_6fb4b7bd75",
+    "value": "Dupré",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_6fb4b7bd75",
+    "value": "Léger",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_6fb4b7bd75",
+    "value": "Müller",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_6fb4b7bd75",
+    "value": "Çelik",
+    "description": null
+  },
+  {
     "modality_id": "_modalities---mod_71409fff3c",
     "value": "1",
     "description": null
@@ -2622,6 +2637,26 @@
   {
     "modality_id": "_modalities---mod_730f7b7bab",
     "value": "6",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_73d75aa99b",
+    "value": "André",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_73d75aa99b",
+    "value": "François",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_73d75aa99b",
+    "value": "José",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_73d75aa99b",
+    "value": "Sœur",
     "description": null
   },
   {
@@ -2822,21 +2857,6 @@
   {
     "modality_id": "_modalities---mod_81fce7934e",
     "value": "Paris",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_8394c5497a",
-    "value": "Côte d'Or",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_8394c5497a",
-    "value": "Rhône-Alpes",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_8394c5497a",
-    "value": "Île-de-France",
     "description": null
   },
   {

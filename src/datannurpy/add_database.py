@@ -80,6 +80,7 @@ def add_database(
     quiet: bool | None = None,
     refresh: bool | None = None,
     storage_options: dict[str, str] | None = None,
+    oracle_client_path: str | None = None,
 ) -> None:
     """Scan a database and add its tables to the catalog."""
     # Handle remote SQLite files (sftp://, s3://, etc.)
@@ -120,6 +121,7 @@ def add_database(
         quiet=quiet,
         refresh=refresh,
         remote_path=None,
+        oracle_client_path=oracle_client_path,
     )
 
 
@@ -139,6 +141,7 @@ def _add_database_impl(
     quiet: bool | None,
     refresh: bool | None,
     remote_path: str | None,
+    oracle_client_path: str | None = None,
 ) -> None:
     """Implementation of add_database (local or already-downloaded remote)."""
     catalog._has_scanned = True
@@ -146,7 +149,7 @@ def _add_database_impl(
     do_refresh = refresh if refresh is not None else catalog.refresh
     resolved_depth = depth if depth is not None else catalog.depth
     # Connect to database
-    con, backend_name = connect(connection)
+    con, backend_name = connect(connection, oracle_client_path=oracle_client_path)
 
     # Determine database name for folder
     if remote_path:
