@@ -23,7 +23,7 @@ classifiers = [
 ]
 dependencies = [
   "ibis-framework[duckdb]>=11.0",
-  "polars>=1.0",
+  "polars>=1.0,!=1.38.1",
   "jsonjsdb>=0.8.3",
   "openpyxl>=3.0",
   "xlrd>=2.0",
@@ -94,6 +94,9 @@ include = ["src/datannurpy"]
 [tool.hatch.build]
 # Include app/ even though it's gitignored
 ignore-vcs = true
+
+[tool.uv]
+constraint-dependencies = ["setuptools>=75.0"]
 
 [tool.pyright]
 pythonVersion = "3.9"
