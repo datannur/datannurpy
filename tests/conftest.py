@@ -4,9 +4,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import duckdb
 import pytest
 
 from datannurpy import Catalog, Folder
+
+# Pre-install DuckDB extensions to avoid lock conflicts with parallel workers
+duckdb.execute("INSTALL delta")
+duckdb.execute("INSTALL iceberg")
 
 # Common paths
 DATA_DIR = Path(__file__).parent.parent / "data"
