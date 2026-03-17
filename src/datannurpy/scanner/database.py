@@ -479,6 +479,14 @@ def build_table_data_path(
     return f"{backend_name}://{db_name}/{table_name}"
 
 
+def _normalize_dtype(dtype: ibis.expr.datatypes.DataType) -> str:
+    """Normalize dtype string for stable hashing across ibis/backend versions."""
+    s = str(dtype)
+    if s.startswith("unknown"):
+        return "unknown"
+    return s
+
+
 def compute_schema_signature(
     con: ibis.BaseBackend, table_name: str, schema: str | None
 ) -> str:
@@ -499,7 +507,10 @@ def compute_schema_signature(
 
     # Build schema string from column names and types
     # Sort by column name for consistency
-    schema_parts = sorted(f"{col}:{dtype}" for col, dtype in table.schema().items())
+    # Normalize unknown(...) types to "unknown" for cross-version stability
+    schema_parts = sorted(
+        f"{col}:{_normalize_dtype(dtype)}" for col, dtype in table.schema().items()
+    )
     schema_str = "|".join(schema_parts)
 
     # Return MD5 hash (fast, collision-resistant enough for this use case)
