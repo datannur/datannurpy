@@ -13,6 +13,7 @@ resolution-markers = [
 [manifest]
 constraints = [
     { name = "cffi", specifier = ">=1.17.0" },
+    { name = "duckdb", specifier = ">=1.0" },
     { name = "et-xmlfile", specifier = ">=2.0" },
     { name = "google-cloud-storage", specifier = ">=2.0" },
     { name = "iniconfig", specifier = ">=2.0" },
@@ -1243,7 +1244,7 @@ requires-dist = [
     { name = "jsonjsdb", specifier = ">=0.8.3" },
     { name = "openpyxl", specifier = ">=3.0" },
     { name = "paramiko", specifier = ">=4.0" },
-    { name = "polars", specifier = ">=1.0,!=1.38.1" },
+    { name = "polars", specifier = ">=1.0" },
     { name = "pyiceberg", marker = "extra == 'iceberg'", specifier = ">=0.10.0" },
     { name = "pyreadstat", marker = "python_full_version >= '3.10' and extra == 'stat'", specifier = ">=1.2.0" },
     { name = "pyreadstat", marker = "python_full_version < '3.10' and extra == 'stat'", specifier = ">=1.2.0,<=1.2.8" },

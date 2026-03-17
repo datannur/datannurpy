@@ -55,8 +55,8 @@ def _read_csv_polars(
 
     for encoding in encodings:
         try:
-            return pl.read_csv(
-                source=file_path,
+            return pl.read_csv(  # pyright: ignore[reportCallIssue]
+                file_path,
                 encoding=encoding,
                 separator=separator,
                 n_rows=n_rows,
