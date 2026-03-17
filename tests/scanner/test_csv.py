@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import duckdb
-
 from datannurpy import Catalog
 from datannurpy.scanner import read_csv
 
@@ -54,13 +52,16 @@ class TestLegacyEncoding:
 
     def test_all_encodings_fail(self, tmp_path: Path, monkeypatch, capsys):
         """CSV scan should warn when all encodings fail."""
+        import polars as pl
+
         csv_file = tmp_path / "test.csv"
         csv_file.write_text("col\n1")
 
-        def mock_read_csv(*args, **kwargs):
-            raise duckdb.InvalidInputException("Mocked encoding error")
+        # Mock pl.read_csv to always fail (simulates all encodings failing)
+        def mock_read(*args, **kwargs):
+            raise pl.exceptions.ComputeError("Invalid UTF-8 sequence")
 
-        monkeypatch.setattr("ibis.backends.duckdb.Backend.read_csv", mock_read_csv)
+        monkeypatch.setattr(pl, "read_csv", mock_read)
 
         catalog = Catalog()
         catalog.add_dataset(csv_file, quiet=False)
@@ -70,3 +71,24 @@ class TestLegacyEncoding:
 
         assert len(catalog.dataset.all()) == 1
         assert len(catalog.variable.all()) == 0
+
+    def test_single_column_csv(self, tmp_path: Path):
+        """CSV with single column (no separators) should work."""
+        csv_file = tmp_path / "single.csv"
+        csv_file.write_text("name\nAlice\nBob\n")
+
+        catalog = Catalog()
+        catalog.add_dataset(csv_file)
+
+        assert len(catalog.variable.all()) == 1
+        assert catalog.variable.all()[0].name == "name"
+
+    def test_detect_separator_with_non_utf8(self, tmp_path: Path):
+        """_detect_separator should work with non-utf8 files."""
+        from datannurpy.scanner.csv import _detect_separator
+
+        csv_file = tmp_path / "test.csv"
+        csv_file.write_bytes(b"pr\xe9nom;age\n")  # é = 0xe9, invalid utf-8
+
+        sep = _detect_separator(csv_file)
+        assert sep == ";"

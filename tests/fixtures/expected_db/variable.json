@@ -773,7 +773,7 @@
     "source_var_ids": "",
     "original_name": null,
     "description": null,
-    "type": "date",
+    "type": "string",
     "key": null,
     "nb_distinct": 20,
     "nb_duplicate": 0,

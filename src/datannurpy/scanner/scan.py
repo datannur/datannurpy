@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import ibis
 import pyarrow as pa
 import pyarrow.fs
 import pyarrow.parquet as pq
@@ -330,8 +329,6 @@ def _scan_schema_only_remote(
     if delivery_format in _PARTIAL_BYTES:
         max_bytes = _PARTIAL_BYTES[delivery_format]
         with fs.ensure_local_partial(str(path), max_bytes) as local_path:
-            from .statistical import scan_statistical
-
             variables, _, _, metadata = scan_statistical(
                 local_path, dataset_id=dataset_id, infer_stats=False
             )
@@ -384,35 +381,32 @@ def _scan_schema_only_local(
     csv_encoding: str | None = None,
 ) -> ScanResult:
     """Schema-only scan for local files."""
-    # CSV/Excel/Statistical: use ibis to infer schema from first rows
-    con = ibis.duckdb.connect()
-    try:
-        if delivery_format == "csv":
-            from .csv import _read_csv_table
+    if delivery_format == "csv":
+        from .csv import _read_csv_polars
 
-            table = _read_csv_table(path, con, csv_encoding)
-            if table is None:
-                return ScanResult(variables=[], nb_row=None)
-        elif delivery_format == "excel":
-            # For Excel, read the full file but don't compute stats
-            from .excel import scan_excel
-
-            variables, _, _ = scan_excel(path, dataset_id=dataset_id, infer_stats=False)
-            return ScanResult(variables=variables, nb_row=None)
-        else:  # statistical formats
-            from .statistical import scan_statistical
-
-            variables, _, _, metadata = scan_statistical(
-                path, dataset_id=dataset_id, infer_stats=False
+        df = _read_csv_polars(path, csv_encoding, n_rows=0)
+        columns = list(df.columns) if df is not None else []
+        variables = [
+            Variable(
+                id=f"{dataset_id}---{col}",
+                name=col,
+                dataset_id=dataset_id,
+                type="string",
             )
-            return ScanResult(
-                variables=variables,
-                nb_row=None,
-                description=metadata.description if metadata else None,
-            )
-
-        schema = table.to_pyarrow().schema
-        variables = build_variables_from_schema(schema, dataset_id)
+            for col in columns
+        ]
         return ScanResult(variables=variables, nb_row=None)
-    finally:
-        con.disconnect()
+
+    if delivery_format == "excel":
+        variables, _, _ = scan_excel(path, dataset_id=dataset_id, infer_stats=False)
+        return ScanResult(variables=variables, nb_row=None)
+
+    # statistical formats
+    variables, _, _, metadata = scan_statistical(
+        path, dataset_id=dataset_id, infer_stats=False
+    )
+    return ScanResult(
+        variables=variables,
+        nb_row=None,
+        description=metadata.description if metadata else None,
+    )
