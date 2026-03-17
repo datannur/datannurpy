@@ -2,9 +2,7 @@ coverage:
   status:
     project:
       default:
-        target: auto
-        threshold: 1%
-        informational: true
+        target: 100%
     patch: off
 
 # Merge coverage from multiple CI runs
