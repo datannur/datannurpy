@@ -11,7 +11,14 @@ resolution-markers = [
 ]
 
 [manifest]
-constraints = [{ name = "setuptools", specifier = ">=75.0" }]
+constraints = [
+    { name = "cffi", specifier = ">=1.17.0" },
+    { name = "et-xmlfile", specifier = ">=2.0" },
+    { name = "google-cloud-storage", specifier = ">=2.0" },
+    { name = "iniconfig", specifier = ">=2.0" },
+    { name = "pycparser", specifier = ">=2.20" },
+    { name = "setuptools", specifier = ">=75.0" },
+]
 
 [[package]]
 name = "adlfs"

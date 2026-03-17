@@ -56,7 +56,7 @@ def _read_csv_polars(
     for encoding in encodings:
         try:
             return pl.read_csv(
-                file_path,
+                source=file_path,
                 encoding=encoding,
                 separator=separator,
                 n_rows=n_rows,

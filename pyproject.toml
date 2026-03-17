@@ -96,7 +96,14 @@ include = ["src/datannurpy"]
 ignore-vcs = true
 
 [tool.uv]
-constraint-dependencies = ["setuptools>=75.0"]
+constraint-dependencies = [
+  "cffi>=1.17.0",
+  "setuptools>=75.0",
+  "pycparser>=2.20",
+  "google-cloud-storage>=2.0",
+  "et-xmlfile>=2.0",
+  "iniconfig>=2.0",
+]
 
 [tool.pyright]
 pythonVersion = "3.9"
