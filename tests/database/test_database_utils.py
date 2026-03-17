@@ -8,6 +8,7 @@ import ibis
 import pytest
 
 from datannurpy.scanner.database import (
+    _init_oracle_client,
     connect,
     get_database_name,
     get_database_path,
@@ -100,6 +101,15 @@ class TestParseConnectionString:
         assert kwargs["sslmode"] == "require"
         assert kwargs["connect_timeout"] == "10"
 
+    def test_oracle_tns_no_host(self) -> None:
+        """Oracle URI without host parses as TNS name."""
+        backend, kwargs = parse_connection_string("oracle://system:secret@/TNS_NAME")
+        assert backend == "oracle"
+        assert "host" not in kwargs
+        assert kwargs["user"] == "system"
+        assert kwargs["password"] == "secret"
+        assert kwargs["database"] == "TNS_NAME"
+
     def test_unsupported_scheme(self) -> None:
         with pytest.raises(ValueError, match="Unsupported database scheme"):
             parse_connection_string("mongodb://user:pass@host/db")
@@ -138,10 +148,31 @@ class TestConnect:
         ) as mock_connect:
             con, backend = connect("postgresql://localhost/mydb")
             mock_connect.assert_called_once_with(
-                "postgres", {"host": "localhost", "database": "mydb"}
+                "postgres",
+                {"host": "localhost", "database": "mydb"},
+                oracle_client_path=None,
             )
             assert con is mock_con
             assert backend == "postgres"
+
+    def test_oracle_client_path_passed_through(self) -> None:
+        """oracle_client_path is forwarded to _connect_external_backend."""
+        mock_con = MagicMock(spec=ibis.BaseBackend)
+        with patch(
+            "datannurpy.scanner.database._connect_external_backend",
+            return_value=mock_con,
+        ) as mock_connect:
+            con, backend = connect(
+                "oracle://user:pass@/TNS_NAME",
+                oracle_client_path="/opt/oracle/client",
+            )
+            mock_connect.assert_called_once_with(
+                "oracle",
+                {"user": "user", "password": "pass", "database": "TNS_NAME"},
+                oracle_client_path="/opt/oracle/client",
+            )
+            assert con is mock_con
+            assert backend == "oracle"
 
 
 class TestGetDatabaseName:
@@ -408,3 +439,41 @@ class TestScanTable:
             scan_table(mock_con, "employees", dataset_id="test")
 
         mock_con.table.assert_called_once_with("EMPLOYEES")
+
+
+class TestInitOracleClient:
+    """Tests for _init_oracle_client function."""
+
+    def test_calls_init_oracle_client(self) -> None:
+        """First call initializes Oracle thick mode."""
+        import datannurpy.scanner.database as db_mod
+
+        db_mod._oracle_client_initialized = False
+        with patch.dict("sys.modules", {"oracledb": MagicMock()}) as modules:
+            _init_oracle_client("/opt/oracle/client")
+            modules["oracledb"].init_oracle_client.assert_called_once_with(
+                lib_dir="/opt/oracle/client"
+            )
+        db_mod._oracle_client_initialized = False
+
+    def test_only_called_once(self) -> None:
+        """Second call is a no-op."""
+        import datannurpy.scanner.database as db_mod
+
+        db_mod._oracle_client_initialized = False
+        mock_oracledb = MagicMock()
+        with patch.dict("sys.modules", {"oracledb": mock_oracledb}):
+            _init_oracle_client("/opt/oracle/client")
+            _init_oracle_client("/other/path")
+            mock_oracledb.init_oracle_client.assert_called_once()
+        db_mod._oracle_client_initialized = False
+
+    def test_missing_oracledb_raises(self) -> None:
+        """Missing oracledb raises ImportError with clear message."""
+        import datannurpy.scanner.database as db_mod
+
+        db_mod._oracle_client_initialized = False
+        with patch.dict("sys.modules", {"oracledb": None}):
+            with pytest.raises(ImportError, match="oracledb"):
+                _init_oracle_client("/opt/oracle/client")
+        db_mod._oracle_client_initialized = False

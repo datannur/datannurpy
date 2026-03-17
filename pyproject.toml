@@ -67,6 +67,7 @@ dev = [
   "ruff",
   "pyright>=1.1.400",
   "deltalake>=0.18.0",
+  "oracledb>=2.0.0",
   "pyiceberg>=0.10.0",
   "pyreadstat>=1.2.0,<=1.2.8; python_version < '3.10'",
   "pyreadstat>=1.2.0; python_version >= '3.10'",
