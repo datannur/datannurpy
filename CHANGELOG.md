@@ -1,5 +1,9 @@
 # datannurpy
 
+## unreleased
+
+- fix: add missing Oracle system schemas to exclusion list
+
 ## 0.9.3 (2026-03-17)
 
 - add: Oracle TNS name support via `oracle_client_path` parameter in `add_database()` (thick mode)
