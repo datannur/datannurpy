@@ -97,6 +97,16 @@ export_app:
   open_browser: true
 ```
 
+Environment variables (`$VAR` or `${VAR}`) are expanded in all values. Place a `.env` file next to the YAML, or specify a custom path with `env_file`:
+
+```yaml
+env_file: /secure/path/.env # optional, defaults to .env next to YAML
+
+add:
+  - type: database
+    uri: oracle://${DB_USER}:${DB_PASSWORD}@host:1521/ORCL
+```
+
 Run with:
 
 ```bash

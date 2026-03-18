@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
 
 from datannurpy import run_config
+from datannurpy.config.config import _expand_vars
 
 
 class TestRunConfig:
@@ -330,3 +332,123 @@ add:
         catalog = run_config(config_file)
 
         assert len(catalog.dataset.all()) == 1
+
+
+class TestExpandVars:
+    """Tests for recursive variable expansion."""
+
+    def test_string(self) -> None:
+        os.environ["MY_TEST_EXP"] = "world"
+        try:
+            assert _expand_vars("hello $MY_TEST_EXP") == "hello world"
+            assert _expand_vars("${MY_TEST_EXP}!") == "world!"
+        finally:
+            os.environ.pop("MY_TEST_EXP", None)
+
+    def test_dict(self) -> None:
+        os.environ["MY_TEST_EXP2"] = "val"
+        try:
+            result = _expand_vars({"key": "$MY_TEST_EXP2", "num": 42})
+            assert result == {"key": "val", "num": 42}
+        finally:
+            os.environ.pop("MY_TEST_EXP2", None)
+
+    def test_list(self) -> None:
+        os.environ["MY_TEST_EXP3"] = "x"
+        try:
+            assert _expand_vars(["$MY_TEST_EXP3", 1]) == ["x", 1]
+        finally:
+            os.environ.pop("MY_TEST_EXP3", None)
+
+    def test_non_string_passthrough(self) -> None:
+        assert _expand_vars(42) == 42
+        assert _expand_vars(None) is None
+        assert _expand_vars(True) is True
+
+
+class TestRunConfigEnvExpansion:
+    """Integration tests for .env + YAML config."""
+
+    def test_env_in_database_uri(self, tmp_path: Path) -> None:
+        """Environment variables in database URI are expanded."""
+        import sqlite3
+
+        db_path = tmp_path / "test.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE env_test (id INTEGER)")
+        conn.commit()
+        conn.close()
+
+        env_file = tmp_path / ".env"
+        env_file.write_text(f"TEST_DB_PATH={db_path}\n")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text("""
+quiet: true
+refresh: true
+
+add:
+  - type: database
+    uri: sqlite:///${TEST_DB_PATH}
+""")
+        try:
+            catalog = run_config(config_file)
+            assert any(d.name == "env_test" for d in catalog.dataset.all())
+        finally:
+            os.environ.pop("TEST_DB_PATH", None)
+
+    def test_env_in_folder_path(self, tmp_path: Path) -> None:
+        """Environment variables in folder path are expanded."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "test.csv").write_text("a,b\n1,2\n")
+
+        env_file = tmp_path / ".env"
+        env_file.write_text(f"TEST_DATA_DIR={data_dir}\n")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text("""
+quiet: true
+refresh: true
+
+add:
+  - type: folder
+    path: ${TEST_DATA_DIR}
+""")
+        try:
+            catalog = run_config(config_file)
+            assert len(catalog.dataset.all()) == 1
+        finally:
+            os.environ.pop("TEST_DATA_DIR", None)
+
+    def test_env_file_custom_path(self, tmp_path: Path) -> None:
+        """env_file in YAML points to a .env in a different directory."""
+        import sqlite3
+
+        secrets_dir = tmp_path / "secrets"
+        secrets_dir.mkdir()
+        env_file = secrets_dir / ".env"
+
+        db_path = tmp_path / "test.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE custom_env (id INTEGER)")
+        conn.commit()
+        conn.close()
+
+        env_file.write_text(f"TEST_CUSTOM_DB={db_path}\n")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+quiet: true
+refresh: true
+env_file: {secrets_dir / ".env"}
+
+add:
+  - type: database
+    uri: sqlite:///${{TEST_CUSTOM_DB}}
+""")
+        try:
+            catalog = run_config(config_file)
+            assert any(d.name == "custom_env" for d in catalog.dataset.all())
+        finally:
+            os.environ.pop("TEST_CUSTOM_DB", None)

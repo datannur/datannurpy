@@ -2,6 +2,7 @@
 
 ## unreleased
 
+- add: `.env` file support for YAML config (expand `$VAR` / `${VAR}` in all values, optional `env_file` key)
 - fix: add missing Oracle system schemas to exclusion list
 
 ## 0.9.3 (2026-03-17)
