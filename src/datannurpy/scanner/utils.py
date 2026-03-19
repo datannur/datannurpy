@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING
 
 import ibis
@@ -46,7 +46,7 @@ DEFAULT_EXCLUDE_DIRS = {
 DEFAULT_EXCLUDE_PREFIXES = ("~$", ".~lock.")  # Office/LibreOffice temp/lock files
 
 
-def get_mtime_iso(path: Path, fs: FileSystem | None = None) -> str:
+def get_mtime_iso(path: PurePath, fs: FileSystem | None = None) -> str:
     """Get file modification time as YYYY/MM/DD."""
     if fs is not None:
         info = fs.info(str(path))
@@ -55,12 +55,13 @@ def get_mtime_iso(path: Path, fs: FileSystem | None = None) -> str:
         if isinstance(mtime, datetime):
             return mtime.strftime("%Y/%m/%d")
     else:
+        assert isinstance(path, Path)
         mtime = path.stat().st_mtime
     dt_obj = datetime.fromtimestamp(mtime, tz=timezone.utc)
     return dt_obj.strftime("%Y/%m/%d")
 
 
-def get_mtime_timestamp(path: Path, fs: FileSystem | None = None) -> int:
+def get_mtime_timestamp(path: PurePath, fs: FileSystem | None = None) -> int:
     """Get file modification time as Unix timestamp (seconds)."""
     if fs is not None:
         info = fs.info(str(path))
@@ -69,21 +70,23 @@ def get_mtime_timestamp(path: Path, fs: FileSystem | None = None) -> int:
         if isinstance(mtime, datetime):
             return int(mtime.timestamp())
     else:
+        assert isinstance(path, Path)
         mtime = path.stat().st_mtime
     return int(mtime)
 
 
 def find_files(
-    root: Path,
+    root: PurePath,
     include: Sequence[str] | None,
     exclude: Sequence[str] | None,
     recursive: bool,
     fs: FileSystem | None = None,
-) -> list[Path]:
+) -> list[PurePath]:
     """Find files matching include/exclude patterns."""
     # Use FileSystem if provided, otherwise use pathlib directly
     if fs is not None:
         return _find_files_with_fs(fs, root, include, exclude, recursive)
+    assert isinstance(root, Path)
 
     if include is None:
         pattern = "**/*" if recursive else "*"
@@ -133,24 +136,24 @@ def find_files(
                 excluded.add(target.resolve())
         candidates = [f for f in candidates if f.resolve() not in excluded]
 
-    return candidates
+    return list(candidates)  # type: ignore[return-value]  # Path is PurePath
 
 
 def _find_files_with_fs(
     fs: FileSystem,
-    root: Path,
+    root: PurePath,
     include: Sequence[str] | None,
     exclude: Sequence[str] | None,
     recursive: bool,
-) -> list[Path]:
+) -> list[PurePath]:
     """Find files using FileSystem abstraction (for remote storage support)."""
-    root_str = str(root)
+    root_str = root.as_posix()
 
     if include is None:
         pattern = "**/*" if recursive else "*"
         all_paths = fs.glob(f"{root_str}/{pattern}")
         candidates = [
-            p for p in all_paths if Path(p).suffix.lower() in SUPPORTED_FORMATS
+            p for p in all_paths if PurePosixPath(p).suffix.lower() in SUPPORTED_FORMATS
         ]
     else:
         candidates_set: set[str] = set()
@@ -169,15 +172,15 @@ def _find_files_with_fs(
     candidates = [
         p
         for p in candidates
-        if fs.isfile(p) and Path(p).suffix.lower() in SUPPORTED_FORMATS
+        if fs.isfile(p) and PurePosixPath(p).suffix.lower() in SUPPORTED_FORMATS
     ]
 
     # Apply default exclusions
     candidates = [
         p
         for p in candidates
-        if not Path(p).name.startswith(DEFAULT_EXCLUDE_PREFIXES)
-        and not any(d in Path(p).parts for d in DEFAULT_EXCLUDE_DIRS)
+        if not PurePosixPath(p).name.startswith(DEFAULT_EXCLUDE_PREFIXES)
+        and not any(d in PurePosixPath(p).parts for d in DEFAULT_EXCLUDE_DIRS)
     ]
 
     if exclude:
@@ -198,8 +201,8 @@ def _find_files_with_fs(
                 excluded.add(target)
         candidates = [f for f in candidates if f not in excluded]
 
-    # Convert to Path objects for local filesystem (backward compatibility)
-    return sorted(Path(p) for p in candidates)
+    # Use PurePosixPath to preserve forward slashes for remote paths
+    return sorted(PurePosixPath(p) for p in candidates)
 
 
 def ibis_type_to_str(dtype: dt.DataType) -> str:

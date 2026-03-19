@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from datannurpy import run_config
-from datannurpy.config.config import _expand_vars
+from datannurpy.config.config import _expand_vars, _resolve_path
 
 
 class TestRunConfig:
@@ -332,6 +332,17 @@ add:
         catalog = run_config(config_file)
 
         assert len(catalog.dataset.all()) == 1
+
+
+class TestResolvePath:
+    """Tests for _resolve_path."""
+
+    def test_url_returned_as_is(self, tmp_path: Path) -> None:
+        """URLs with :// are returned unchanged."""
+        assert (
+            _resolve_path("sftp://user@host/data", tmp_path) == "sftp://user@host/data"
+        )
+        assert _resolve_path("s3://bucket/key", tmp_path) == "s3://bucket/key"
 
 
 class TestExpandVars:

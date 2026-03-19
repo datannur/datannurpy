@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import TYPE_CHECKING
 
 import pyarrow as pa
@@ -35,7 +35,7 @@ class ScanResult:
 
 
 def scan_file(
-    path: Path,
+    path: PurePath,
     delivery_format: str,
     *,
     dataset_id: str,
@@ -69,6 +69,9 @@ def scan_file(
             fs=fs,
             quiet=quiet,
         )
+
+    # Local path: concrete Path required for direct scanning
+    assert isinstance(path, Path)
 
     # Parquet-based formats (parquet, delta, hive, iceberg)
     parquet_scanners = {
@@ -131,7 +134,7 @@ def scan_file(
 
 
 def _scan_with_ensure_local(
-    path: Path,
+    path: PurePath,
     delivery_format: str,
     *,
     dataset_id: str,
@@ -221,7 +224,7 @@ def _scan_with_ensure_local(
 
 
 def _scan_schema_only(
-    path: Path,
+    path: PurePath,
     delivery_format: str,
     dataset_id: str,
     csv_encoding: str | None = None,
@@ -235,6 +238,7 @@ def _scan_schema_only(
         )
 
     # Local: read schema directly
+    assert isinstance(path, Path)
     # Parquet-based: read schema from metadata
     if delivery_format in ("parquet", "delta", "hive", "iceberg"):
         if delivery_format == "parquet":
@@ -266,7 +270,7 @@ _PARTIAL_BYTES = {
 
 
 def _scan_schema_only_remote(
-    path: Path,
+    path: PurePath,
     delivery_format: str,
     dataset_id: str,
     csv_encoding: str | None,

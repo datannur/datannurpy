@@ -29,6 +29,8 @@ def _expand_vars(obj: Any) -> Any:
 
 def _resolve_path(p: str, base_dir: Path) -> str:
     """Resolve a path relative to base_dir if not absolute."""
+    if "://" in p:
+        return p
     path = Path(p)
     if not path.is_absolute():
         path = (base_dir / path).resolve()

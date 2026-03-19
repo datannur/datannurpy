@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import PurePath
 from typing import TYPE_CHECKING
 
 from .parquet import discover_parquet_datasets
@@ -20,10 +20,10 @@ if TYPE_CHECKING:
 class DatasetInfo:
     """Information about a discovered dataset."""
 
-    path: Path
+    path: PurePath
     format: str  # csv, parquet, delta, hive, iceberg, sas, spss, stata, excel
     mtime: int
-    series_files: list[tuple[str, Path]] | None = None  # [(period, path), ...]
+    series_files: list[tuple[str, PurePath]] | None = None  # [(period, path), ...]
 
 
 @dataclass
@@ -39,11 +39,11 @@ class DiscoveryResult:
     """Result of dataset discovery."""
 
     datasets: list[DatasetInfo]
-    excluded_dirs: set[Path]
+    excluded_dirs: set[PurePath]
 
 
 def discover_datasets(
-    root: Path,
+    root: PurePath,
     include: Sequence[str] | None = None,
     exclude: Sequence[str] | None = None,
     recursive: bool = True,
@@ -55,7 +55,7 @@ def discover_datasets(
 
     # 1. Discover Parquet datasets (Delta, Hive, Iceberg, simple)
     parquet_result = discover_parquet_datasets(root, include, exclude, recursive, fs=fs)
-    parquet_files: set[Path] = set()
+    parquet_files: set[PurePath] = set()
 
     for pq_info in parquet_result.datasets:
         parquet_files.update(pq_info.files)
@@ -109,11 +109,11 @@ def discover_datasets(
 
 def _apply_time_series_grouping(
     datasets: list[DatasetInfo],
-    root: Path,
+    root: PurePath,
 ) -> list[DatasetInfo]:
     """Group single-file datasets into time series where applicable."""
     # Separate groupable files from non-groupable (partitioned datasets)
-    groupable: list[tuple[Path, int, str]] = []  # (path, mtime, format)
+    groupable: list[tuple[PurePath, int, str]] = []  # (path, mtime, format)
     non_groupable: list[DatasetInfo] = []
 
     # Group simple file formats (exclude Delta/Iceberg/Hive which have their own partitioning)
@@ -131,7 +131,7 @@ def _apply_time_series_grouping(
     # Group by format first, then by normalized path
     from collections import defaultdict
 
-    by_format: dict[str, list[tuple[Path, int]]] = defaultdict(list)
+    by_format: dict[str, list[tuple[PurePath, int]]] = defaultdict(list)
     for path, mtime, fmt in groupable:
         by_format[fmt].append((path, mtime))
 

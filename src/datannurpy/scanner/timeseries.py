@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import PurePath, PurePosixPath
 
 from ..utils import make_id, sanitize_id
 
@@ -147,7 +148,7 @@ def _combine_periods(periods: list[PeriodInfo]) -> PeriodInfo | None:
     return PeriodInfo(year, sub_period, day, "-".join(original_parts))
 
 
-def extract_period(path: Path, root: Path | None = None) -> PeriodInfo | None:
+def extract_period(path: PurePath, root: PurePath | None = None) -> PeriodInfo | None:
     """Extract the combined period from a file path."""
     rel_path = path.relative_to(root) if root else path
     all_periods: list[PeriodInfo] = []
@@ -161,7 +162,7 @@ def extract_period(path: Path, root: Path | None = None) -> PeriodInfo | None:
     return _combine_periods(all_periods)
 
 
-def normalize_path(path: Path, root: Path | None = None) -> str:
+def normalize_path(path: PurePath, root: PurePath | None = None) -> str:
     """Normalize path by replacing temporal patterns with placeholder.
 
     Returns the path with all period patterns replaced by PERIOD_PLACEHOLDER.
@@ -188,7 +189,7 @@ def normalize_path(path: Path, root: Path | None = None) -> str:
 
         normalized_parts.append(normalized_segment)
 
-    return str(Path(*normalized_parts))
+    return "/".join(normalized_parts)
 
 
 def period_sort_key(period: str | PeriodInfo) -> tuple[int, int, int]:
@@ -236,14 +237,14 @@ class TimeSeriesGroup:
     """A group of files forming a time series."""
 
     normalized_path: str
-    files: list[tuple[str, Path]]  # [(period_string, path), ...]
+    files: list[tuple[str, PurePath]]  # [(period_string, path), ...]
     max_mtime: int
 
 
 def group_time_series(
-    files: list[tuple[Path, int]],  # [(path, mtime), ...]
-    root: Path,
-) -> tuple[list[TimeSeriesGroup], list[tuple[Path, int]]]:
+    files: Sequence[tuple[PurePath, int]],  # [(path, mtime), ...]
+    root: PurePath,
+) -> tuple[list[TimeSeriesGroup], list[tuple[PurePath, int]]]:
     """Group files into time series and return singles separately.
 
     Returns:
@@ -252,7 +253,7 @@ def group_time_series(
         - single_files: files that don't form a series
     """
     # Group by normalized path
-    groups: dict[str, list[tuple[str, Path, int]]] = defaultdict(list)
+    groups: dict[str, list[tuple[str, PurePath, int]]] = defaultdict(list)
 
     for path, mtime in files:
         period_info = extract_period(path, root)
@@ -267,7 +268,7 @@ def group_time_series(
 
     # Separate series (≥2 files) from singles
     time_series: list[TimeSeriesGroup] = []
-    singles: list[tuple[Path, int]] = []
+    singles: list[tuple[PurePath, int]] = []
 
     for normalized, file_list in groups.items():
         if len(file_list) >= 2:
@@ -290,13 +291,13 @@ def group_time_series(
 
 def get_series_folder_parts(normalized_path: str) -> list[str]:
     """Get non-temporal parent folder parts from normalized path."""
-    parent_parts = Path(normalized_path).parent.parts
+    parent_parts = PurePosixPath(normalized_path).parent.parts
     return [p for p in parent_parts if PERIOD_PLACEHOLDER not in p]
 
 
 def build_series_dataset_id(normalized_path: str, prefix: str) -> str:
     """Build dataset ID from normalized path."""
-    parts = [sanitize_id(p) for p in Path(normalized_path).parts]
+    parts = [sanitize_id(p) for p in PurePosixPath(normalized_path).parts]
     return make_id(prefix, *parts)
 
 
@@ -309,7 +310,7 @@ def build_series_dataset_name(
     If period is in filename: enquete_{{PERIOD}}.csv → enquete_[YYYY]
     If period only in folder: {{PERIOD}}/enquete.csv → enquete
     """
-    path = Path(normalized_path)
+    path = PurePosixPath(normalized_path)
     stem = path.stem
 
     # Check if period is in the filename

@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
+from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Sequence
 
 from ..utils import find_files
@@ -27,9 +27,9 @@ class DatasetType(Enum):
 class ParquetDatasetInfo:
     """Information about a discovered Parquet dataset."""
 
-    path: Path  # Root path (file for SIMPLE, directory for DELTA/HIVE)
+    path: PurePath  # Root path (file for SIMPLE, directory for DELTA/HIVE)
     type: DatasetType
-    files: list[Path] = field(default_factory=list)  # All parquet files
+    files: list[PurePath] = field(default_factory=list)  # All parquet files
 
 
 @dataclass
@@ -37,14 +37,14 @@ class DiscoveryResult:
     """Result of Parquet dataset discovery."""
 
     datasets: list[ParquetDatasetInfo]
-    excluded_dirs: set[Path]  # Directories that are datasets, not folders
+    excluded_dirs: set[PurePath]  # Directories that are datasets, not folders
 
 
 # Pattern for Hive partition directories: key=value
 _HIVE_PARTITION_PATTERN = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*=.+$")
 
 
-def is_delta_table(path: Path | str, fs: FileSystem | None = None) -> bool:
+def is_delta_table(path: PurePath | str, fs: FileSystem | None = None) -> bool:
     """Check if a directory is a Delta Lake table."""
     if fs is not None:
         path_str = str(path)
@@ -52,13 +52,14 @@ def is_delta_table(path: Path | str, fs: FileSystem | None = None) -> bool:
         return fs.isdir(delta_log) and bool(fs.glob(f"{delta_log}/*.json"))
     # Local path fallback
     path_obj = Path(path) if isinstance(path, str) else path
+    assert isinstance(path_obj, Path)
     delta_log_path = path_obj / "_delta_log"
     if not delta_log_path.is_dir():
         return False
     return any(delta_log_path.glob("*.json"))
 
 
-def is_iceberg_table(path: Path | str, fs: FileSystem | None = None) -> bool:
+def is_iceberg_table(path: PurePath | str, fs: FileSystem | None = None) -> bool:
     """Check if a directory is an Apache Iceberg table."""
     if fs is not None:
         path_str = str(path)
@@ -70,6 +71,7 @@ def is_iceberg_table(path: Path | str, fs: FileSystem | None = None) -> bool:
         )
     # Local path fallback
     path_obj = Path(path) if isinstance(path, str) else path
+    assert isinstance(path_obj, Path)
     metadata_dir_path = path_obj / "metadata"
     if not metadata_dir_path.is_dir():
         return False
@@ -78,7 +80,7 @@ def is_iceberg_table(path: Path | str, fs: FileSystem | None = None) -> bool:
     )
 
 
-def is_hive_partitioned(path: Path | str, fs: FileSystem | None = None) -> bool:
+def is_hive_partitioned(path: PurePath | str, fs: FileSystem | None = None) -> bool:
     """Check if a directory contains Hive-style partitions."""
     if fs is not None:
         path_str = str(path)
@@ -94,6 +96,7 @@ def is_hive_partitioned(path: Path | str, fs: FileSystem | None = None) -> bool:
         return False
     # Local path fallback
     path_obj = Path(path) if isinstance(path, str) else path
+    assert isinstance(path_obj, Path)
     if not path_obj.is_dir():
         return False
     for child in path_obj.iterdir():
@@ -103,7 +106,7 @@ def is_hive_partitioned(path: Path | str, fs: FileSystem | None = None) -> bool:
     return False
 
 
-def has_hive_partition_in_path(file_path: Path, root: Path) -> Path | None:
+def has_hive_partition_in_path(file_path: PurePath, root: PurePath) -> PurePath | None:
     """Check if a file's path contains Hive partitions. Returns the partition root."""
     rel_parts = file_path.relative_to(root).parts
 
@@ -121,12 +124,12 @@ def has_hive_partition_in_path(file_path: Path, root: Path) -> Path | None:
 
 
 def find_parquet_files(
-    root: Path,
+    root: PurePath,
     include: Sequence[str] | None,
     exclude: Sequence[str] | None,
     recursive: bool,
     fs: FileSystem | None = None,
-) -> list[Path]:
+) -> list[PurePath]:
     """Find all parquet files matching the patterns."""
     # Get all files, then filter to parquet only
     all_files = find_files(root, include, exclude, recursive, fs=fs)
@@ -134,7 +137,7 @@ def find_parquet_files(
 
 
 def discover_parquet_datasets(
-    root: Path,
+    root: PurePath,
     include: Sequence[str] | None = None,
     exclude: Sequence[str] | None = None,
     recursive: bool = True,
@@ -147,27 +150,30 @@ def discover_parquet_datasets(
     parquet_files = find_parquet_files(root, include, exclude, recursive, fs=fs)
 
     datasets: list[ParquetDatasetInfo] = []
-    excluded_dirs: set[Path] = set()
-    processed_files: set[Path] = set()
+    excluded_dirs: set[PurePath] = set()
+    processed_files: set[PurePath] = set()
 
     # Group files by parent directory for multi-file detection
-    files_by_parent: dict[Path, list[Path]] = {}
+    files_by_parent: dict[PurePath, list[PurePath]] = {}
     for f in parquet_files:
         parent = f.parent
         files_by_parent.setdefault(parent, []).append(f)
 
     is_remote = fs is not None and not fs.is_local
 
-    def glob_parquet_files(directory: Path) -> list[Path]:
+    def glob_parquet_files(directory: PurePath) -> list[PurePath]:
         """Get all parquet files in a directory, using fs.glob for remote."""
         if is_remote and fs is not None:
-            pq_files = fs.glob(str(directory / "**/*.parquet"))
-            pq_files += fs.glob(str(directory / "**/*.pq"))
-            return [Path(f) for f in pq_files]
-        return list(directory.rglob("*.parquet")) + list(directory.rglob("*.pq"))
+            dir_str = directory.as_posix()
+            pq_files = fs.glob(f"{dir_str}/**/*.parquet")
+            pq_files += fs.glob(f"{dir_str}/**/*.pq")
+            return [PurePosixPath(f) for f in pq_files]
+        assert isinstance(directory, Path)
+        result = list(directory.rglob("*.parquet")) + list(directory.rglob("*.pq"))
+        return result  # type: ignore[return-value]  # Path is PurePath
 
     # First pass: detect Delta Lake tables
-    delta_roots: set[Path] = set()
+    delta_roots: set[PurePath] = set()
     for parent in files_by_parent:
         if is_delta_table(parent, fs=fs) and parent not in delta_roots:
             delta_roots.add(parent)
@@ -184,7 +190,7 @@ def discover_parquet_datasets(
 
     # Second pass: detect Iceberg tables
     # Iceberg stores parquet files in a data/ subdirectory, so we check parent paths
-    iceberg_roots: set[Path] = set()
+    iceberg_roots: set[PurePath] = set()
     for parent in files_by_parent:
         if any(f in processed_files for f in files_by_parent[parent]):
             continue
@@ -207,7 +213,7 @@ def discover_parquet_datasets(
             check_path = check_path.parent
 
     # Third pass: detect Hive-partitioned datasets
-    hive_roots: set[Path] = set()
+    hive_roots: set[PurePath] = set()
     for f in parquet_files:
         if f in processed_files:
             continue
