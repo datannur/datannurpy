@@ -12,6 +12,11 @@ import ibis
 import pyarrow as pa
 
 from ..schema import Variable
+from ._oracle import (
+    ORACLE_SYSTEM_TABLE_PREFIXES,
+    _init_oracle_client,
+    _oracle_get_schema,
+)
 from .utils import build_variables
 
 if TYPE_CHECKING:
@@ -93,35 +98,6 @@ SYSTEM_SCHEMAS: dict[str, set[str]] = {
         "SI_INFORMTN_SCHEMA",
     },
 }
-
-# Oracle system table prefixes to exclude (these exist in user schemas like SYSTEM)
-ORACLE_SYSTEM_TABLE_PREFIXES: tuple[str, ...] = (
-    "mview$_",
-    "mview_",
-    "ol$",
-    "aq$_",
-    "scheduler_",
-    "redo_",
-    "sqlplus_",
-    "help",
-    "product_privs",
-)
-
-_oracle_client_initialized = False
-
-
-def _init_oracle_client(lib_dir: str) -> None:
-    """Initialize Oracle thick mode (can only be called once per process)."""
-    global _oracle_client_initialized  # noqa: PLW0603
-    if _oracle_client_initialized:
-        return
-    try:
-        import oracledb
-    except ImportError as e:
-        raise_driver_error("oracle", e)
-    oracledb.init_oracle_client(lib_dir=lib_dir)
-    _oracle_client_initialized = True
-
 
 # SQLite system table prefixes to exclude (GeoPackage metadata, rtree indexes)
 SQLITE_SYSTEM_TABLE_PREFIXES: tuple[str, ...] = (
@@ -237,7 +213,7 @@ def _connect_external_backend(
             )
         if backend == "oracle":
             if oracle_client_path:
-                _init_oracle_client(oracle_client_path)
+                _init_oracle_client(oracle_client_path, raise_driver_error)
             host = kwargs.get("host")
             database = kwargs.get("database")
             # No host → TNS name resolved via tnsnames.ora / LDAP (thick mode)
@@ -494,13 +470,17 @@ def _get_table(
     table_name: str,
     schema: str | None,
     backend: str,
+    *,
+    oracle_schema: ibis.Schema | None = None,
 ) -> ibis.expr.types.Table:
     """Get an ibis table reference, with Oracle < 23 compatibility."""
     if backend == "oracle":
-        # Use con.sql() instead of con.table() to avoid ibis generating
-        # SQL with boolean expressions (nullable = 'Y' AS nullable)
-        # which fail on Oracle < 23 (no native BOOLEAN type).
+        # Use con.sql() with explicit schema instead of con.table() to avoid
+        # ibis generating boolean expressions (Oracle < 23) or creating
+        # temporary views for schema inference (cross-schema access).
         # sql() lives on SQLBackend, not BaseBackend, so use getattr.
+        if oracle_schema is None:
+            oracle_schema, _ = _oracle_get_schema(con, table_name, schema)
         sql_method = getattr(con, "sql")
         uc_table = table_name.upper().replace('"', '""')
         if schema:
@@ -508,7 +488,7 @@ def _get_table(
             qualified = f'"{uc_schema}"."{uc_table}"'
         else:
             qualified = f'"{uc_table}"'
-        table = sql_method(f"SELECT * FROM {qualified}")
+        table = sql_method(f"SELECT * FROM {qualified}", schema=oracle_schema)
         return table.rename(str.lower)
 
     if schema:
@@ -565,33 +545,18 @@ def scan_table(
     """Scan a database table and return (variables, row_count, freq_table)."""
     backend = get_backend_name(con)
 
-    # Oracle: detect CLOB/NCLOB columns that don't support COUNT DISTINCT
+    # Oracle: get schema + detect LOB columns in a single query
     skip_stats_columns: set[str] = set()
-    if backend == "oracle" and infer_stats:
-        uc_table = table_name.upper()
-        raw_sql = getattr(con, "raw_sql", None)
-        if raw_sql:
-            try:
-                if schema:
-                    uc_schema = schema.upper()
-                    query = (
-                        f"SELECT column_name FROM all_tab_columns "
-                        f"WHERE owner = '{uc_schema}' AND table_name = '{uc_table}' "
-                        f"AND data_type IN ('CLOB', 'NCLOB', 'BLOB')"
-                    )
-                else:
-                    query = (
-                        f"SELECT column_name FROM user_tab_columns "
-                        f"WHERE table_name = '{uc_table}' "
-                        f"AND data_type IN ('CLOB', 'NCLOB', 'BLOB')"
-                    )
-                result = raw_sql(query).fetchall()
-                # Convert to lowercase (_get_table lowercases column names)
-                skip_stats_columns = {row[0].lower() for row in result}
-            except Exception:
-                pass  # If detection fails, fallback to try/except in build_variables
+    oracle_schema: ibis.Schema | None = None
+    if backend == "oracle":
+        try:
+            oracle_schema, lob_columns = _oracle_get_schema(con, table_name, schema)
+            if infer_stats:
+                skip_stats_columns = lob_columns
+        except Exception:
+            pass  # If metadata fails, _get_table will retry
 
-    table = _get_table(con, table_name, schema, backend)
+    table = _get_table(con, table_name, schema, backend, oracle_schema=oracle_schema)
 
     # Get exact row count (always full count, not sampled)
     row_count = int(table.count().to_pyarrow().as_py())

@@ -329,8 +329,11 @@ class TestCloseConnection:
 class TestOracleBranches:
     """Tests for Oracle-specific branches using mocks."""
 
-    def test_compute_schema_signature_oracle_uppercase(self):
-        """Oracle backend should use con.sql() with uppercased identifiers."""
+    _oracle_schema_patch = "datannurpy.scanner.database._oracle_get_schema"
+    _mock_schema_result = (ibis.schema({"ID": "int64"}), set())
+
+    def test_compute_schema_signature_oracle_with_schema(self):
+        """Oracle backend should use con.sql() with explicit schema."""
         from unittest.mock import MagicMock, patch
 
         mock_con = MagicMock()
@@ -339,12 +342,16 @@ class TestOracleBranches:
         mock_table.rename.return_value = mock_table
         mock_con.sql.return_value = mock_table
 
-        with patch(
-            "datannurpy.scanner.database.get_backend_name", return_value="oracle"
+        with (
+            patch(
+                "datannurpy.scanner.database.get_backend_name", return_value="oracle"
+            ),
+            patch(self._oracle_schema_patch, return_value=self._mock_schema_result),
         ):
             compute_schema_signature(mock_con, "users", "myschema")
 
-        mock_con.sql.assert_called_once_with('SELECT * FROM "MYSCHEMA"."USERS"')
+        mock_con.sql.assert_called_once()
+        assert mock_con.sql.call_args[0][0] == 'SELECT * FROM "MYSCHEMA"."USERS"'
         mock_con.table.assert_not_called()
 
     def test_compute_schema_signature_oracle_no_schema(self):
@@ -357,16 +364,20 @@ class TestOracleBranches:
         mock_table.rename.return_value = mock_table
         mock_con.sql.return_value = mock_table
 
-        with patch(
-            "datannurpy.scanner.database.get_backend_name", return_value="oracle"
+        with (
+            patch(
+                "datannurpy.scanner.database.get_backend_name", return_value="oracle"
+            ),
+            patch(self._oracle_schema_patch, return_value=self._mock_schema_result),
         ):
             compute_schema_signature(mock_con, "users", None)
 
-        mock_con.sql.assert_called_once_with('SELECT * FROM "USERS"')
+        mock_con.sql.assert_called_once()
+        assert mock_con.sql.call_args[0][0] == 'SELECT * FROM "USERS"'
         mock_con.table.assert_not_called()
 
-    def test_get_table_row_count_oracle_uppercase(self):
-        """Oracle backend should use con.sql() with uppercased identifiers."""
+    def test_get_table_row_count_oracle_with_schema(self):
+        """Oracle backend should use con.sql() with explicit schema."""
         from unittest.mock import MagicMock, patch
 
         mock_con = MagicMock()
@@ -377,12 +388,16 @@ class TestOracleBranches:
         mock_table.rename.return_value = mock_table
         mock_con.sql.return_value = mock_table
 
-        with patch(
-            "datannurpy.scanner.database.get_backend_name", return_value="oracle"
+        with (
+            patch(
+                "datannurpy.scanner.database.get_backend_name", return_value="oracle"
+            ),
+            patch(self._oracle_schema_patch, return_value=self._mock_schema_result),
         ):
             result = get_table_row_count(mock_con, "users", "myschema")
 
-        mock_con.sql.assert_called_once_with('SELECT * FROM "MYSCHEMA"."USERS"')
+        mock_con.sql.assert_called_once()
+        assert mock_con.sql.call_args[0][0] == 'SELECT * FROM "MYSCHEMA"."USERS"'
         mock_con.table.assert_not_called()
         assert result == 42
 
@@ -398,12 +413,16 @@ class TestOracleBranches:
         mock_table.rename.return_value = mock_table
         mock_con.sql.return_value = mock_table
 
-        with patch(
-            "datannurpy.scanner.database.get_backend_name", return_value="oracle"
+        with (
+            patch(
+                "datannurpy.scanner.database.get_backend_name", return_value="oracle"
+            ),
+            patch(self._oracle_schema_patch, return_value=self._mock_schema_result),
         ):
             result = get_table_row_count(mock_con, "users", None)
 
-        mock_con.sql.assert_called_once_with('SELECT * FROM "USERS"')
+        mock_con.sql.assert_called_once()
+        assert mock_con.sql.call_args[0][0] == 'SELECT * FROM "USERS"'
         mock_con.table.assert_not_called()
         assert result == 10
 
