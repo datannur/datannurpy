@@ -28,11 +28,13 @@ jobs:
     runs-on: ubuntu-24.04-arm
     strategy:
       matrix:
-        python-version: ["3.9", "3.14"]
+        python-version: ["3.9", "3.10", "3.14"]
         resolution: ["lowest", "highest"]
         exclude:
-          # Only test lowest on oldest Python, highest on newest
+          # lowest on oldest, highest on newest, lowest on 3.10 (cloud/iceberg boundary)
           - python-version: "3.9"
+            resolution: "highest"
+          - python-version: "3.10"
             resolution: "highest"
           - python-version: "3.14"
             resolution: "lowest"
