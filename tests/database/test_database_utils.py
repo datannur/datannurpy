@@ -8,6 +8,7 @@ import ibis
 import pytest
 
 from datannurpy.scanner.database import (
+    _get_table,
     _init_oracle_client,
     connect,
     get_database_name,
@@ -363,74 +364,103 @@ class TestListTables:
         assert result == ["orders", "users"]  # sorted
 
 
+class TestGetTable:
+    """Tests for _get_table function (Oracle < 23 compatibility)."""
+
+    def test_oracle_uses_sql_with_schema(self) -> None:
+        """Oracle backend uses con.sql() with uppercased qualified name."""
+        mock_con = MagicMock()
+        mock_table = MagicMock()
+        mock_con.sql.return_value = mock_table
+
+        _get_table(mock_con, "employees", "hr", "oracle")
+
+        mock_con.sql.assert_called_once_with('SELECT * FROM "HR"."EMPLOYEES"')
+        mock_table.rename.assert_called_once_with(str.lower)
+        mock_con.table.assert_not_called()
+
+    def test_oracle_uses_sql_without_schema(self) -> None:
+        """Oracle backend without schema uses con.sql() with table only."""
+        mock_con = MagicMock()
+        mock_table = MagicMock()
+        mock_con.sql.return_value = mock_table
+
+        _get_table(mock_con, "employees", None, "oracle")
+
+        mock_con.sql.assert_called_once_with('SELECT * FROM "EMPLOYEES"')
+        mock_table.rename.assert_called_once_with(str.lower)
+
+    def test_non_oracle_uses_table_with_schema(self) -> None:
+        """Non-Oracle backends use con.table() with schema."""
+        mock_con = MagicMock()
+
+        _get_table(mock_con, "employees", "public", "postgres")
+
+        mock_con.table.assert_called_once_with("employees", database="public")
+        mock_con.sql.assert_not_called()
+
+    def test_non_oracle_uses_table_without_schema(self) -> None:
+        """Non-Oracle backends use con.table() without schema."""
+        mock_con = MagicMock()
+
+        _get_table(mock_con, "employees", None, "postgres")
+
+        mock_con.table.assert_called_once_with("employees")
+
+
 class TestScanTable:
     """Tests for scan_table function."""
 
-    def test_oracle_uppercases_identifiers(self) -> None:
-        """Oracle backend uppercases table name and schema."""
-        # Create a mock that makes get_backend_name return "oracle"
-        # by having __module__ end with "oracle"
+    def _make_oracle_mock(self) -> tuple[MagicMock, MagicMock]:
+        """Create a mock Oracle connection with con.sql() support."""
         mock_con = MagicMock()
         type(mock_con).__module__ = "ibis.backends.oracle"
-
         mock_table = MagicMock()
         mock_table.count.return_value.to_pyarrow.return_value.as_py.return_value = 0
         mock_table.rename.return_value = mock_table
-        mock_con.table.return_value = mock_table
+        mock_con.sql.return_value = mock_table
+        return mock_con, mock_table
+
+    def test_oracle_uses_sql_with_schema(self) -> None:
+        """Oracle backend uses con.sql() with uppercased qualified name."""
+        mock_con, _ = self._make_oracle_mock()
 
         with patch(
             "datannurpy.scanner.database.build_variables", return_value=([], None)
         ):
             scan_table(mock_con, "employees", schema="hr", dataset_id="test")
 
-        # Verify table was called with uppercased identifiers
-        mock_con.table.assert_called_once_with("EMPLOYEES", database="HR")
+        mock_con.sql.assert_called_once_with('SELECT * FROM "HR"."EMPLOYEES"')
+        mock_con.table.assert_not_called()
 
-    def test_oracle_without_schema(self) -> None:
-        """Oracle backend without schema only uppercases table name."""
-        mock_con = MagicMock()
-        type(mock_con).__module__ = "ibis.backends.oracle"
-
-        mock_table = MagicMock()
-        mock_table.count.return_value.to_pyarrow.return_value.as_py.return_value = 0
-        mock_table.rename.return_value = mock_table
-        mock_con.table.return_value = mock_table
+    def test_oracle_uses_sql_without_schema(self) -> None:
+        """Oracle backend without schema uses con.sql()."""
+        mock_con, _ = self._make_oracle_mock()
 
         with patch(
             "datannurpy.scanner.database.build_variables", return_value=([], None)
         ):
             scan_table(mock_con, "employees", dataset_id="test")
 
-        mock_con.table.assert_called_once_with("EMPLOYEES")
+        mock_con.sql.assert_called_once_with('SELECT * FROM "EMPLOYEES"')
+        mock_con.table.assert_not_called()
 
     def test_oracle_without_raw_sql(self) -> None:
         """Oracle backend without raw_sql skips CLOB detection."""
-        mock_con = MagicMock()
-        type(mock_con).__module__ = "ibis.backends.oracle"
+        mock_con, _ = self._make_oracle_mock()
         mock_con.raw_sql = None  # No raw_sql support
-
-        mock_table = MagicMock()
-        mock_table.count.return_value.to_pyarrow.return_value.as_py.return_value = 0
-        mock_table.rename.return_value = mock_table
-        mock_con.table.return_value = mock_table
 
         with patch(
             "datannurpy.scanner.database.build_variables", return_value=([], None)
         ):
             scan_table(mock_con, "employees", dataset_id="test")
 
-        mock_con.table.assert_called_once_with("EMPLOYEES")
+        mock_con.sql.assert_called_once_with('SELECT * FROM "EMPLOYEES"')
 
     def test_oracle_clob_detection_failure(self) -> None:
         """Oracle CLOB detection failure is silently ignored."""
-        mock_con = MagicMock()
-        type(mock_con).__module__ = "ibis.backends.oracle"
+        mock_con, _ = self._make_oracle_mock()
         mock_con.raw_sql.side_effect = RuntimeError("Query failed")
-
-        mock_table = MagicMock()
-        mock_table.count.return_value.to_pyarrow.return_value.as_py.return_value = 0
-        mock_table.rename.return_value = mock_table
-        mock_con.table.return_value = mock_table
 
         with patch(
             "datannurpy.scanner.database.build_variables", return_value=([], None)
@@ -438,7 +468,7 @@ class TestScanTable:
             # Should not raise, continues without skip_stats_columns
             scan_table(mock_con, "employees", dataset_id="test")
 
-        mock_con.table.assert_called_once_with("EMPLOYEES")
+        mock_con.sql.assert_called_once_with('SELECT * FROM "EMPLOYEES"')
 
 
 class TestInitOracleClient:

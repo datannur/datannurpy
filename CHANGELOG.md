@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.9.5 (2026-03-19)
+
+- fix: Oracle < 23 compatibility (`ORA-00923`) — use `con.sql()` instead of `con.table()` to avoid boolean expressions unsupported before Oracle 23
+- ci: test Oracle on both 18c and 23c via matrix strategy
+
 ## 0.9.4 (2026-03-19)
 
 - add: `.env` file support for YAML config (expand `$VAR` / `${VAR}` in all values, optional `env_file` key)

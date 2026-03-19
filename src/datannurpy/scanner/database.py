@@ -489,6 +489,33 @@ def build_table_data_path(
     return f"{backend_name}://{db_name}/{table_name}"
 
 
+def _get_table(
+    con: ibis.BaseBackend,
+    table_name: str,
+    schema: str | None,
+    backend: str,
+) -> ibis.expr.types.Table:
+    """Get an ibis table reference, with Oracle < 23 compatibility."""
+    if backend == "oracle":
+        # Use con.sql() instead of con.table() to avoid ibis generating
+        # SQL with boolean expressions (nullable = 'Y' AS nullable)
+        # which fail on Oracle < 23 (no native BOOLEAN type).
+        # sql() lives on SQLBackend, not BaseBackend, so use getattr.
+        sql_method = getattr(con, "sql")
+        uc_table = table_name.upper().replace('"', '""')
+        if schema:
+            uc_schema = schema.upper().replace('"', '""')
+            qualified = f'"{uc_schema}"."{uc_table}"'
+        else:
+            qualified = f'"{uc_table}"'
+        table = sql_method(f"SELECT * FROM {qualified}")
+        return table.rename(str.lower)
+
+    if schema:
+        return con.table(table_name, database=schema)
+    return con.table(table_name)
+
+
 def _normalize_dtype(dtype: ibis.expr.datatypes.DataType) -> str:
     """Normalize dtype string for stable hashing across ibis/backend versions."""
     s = str(dtype)
@@ -502,18 +529,7 @@ def compute_schema_signature(
 ) -> str:
     """Compute a hash signature of the table schema (column names and types)."""
     backend = get_backend_name(con)
-
-    # Oracle stores unquoted identifiers in UPPERCASE
-    if backend == "oracle":
-        table_name = table_name.upper()
-        if schema:
-            schema = schema.upper()
-
-    # Get table reference
-    if schema:
-        table = con.table(table_name, database=schema)
-    else:
-        table = con.table(table_name)
+    table = _get_table(con, table_name, schema, backend)
 
     # Build schema string from column names and types
     # Sort by column name for consistency
@@ -532,19 +548,7 @@ def get_table_row_count(
 ) -> int:
     """Get row count for a table."""
     backend = get_backend_name(con)
-
-    # Oracle stores unquoted identifiers in UPPERCASE
-    if backend == "oracle":
-        table_name = table_name.upper()
-        if schema:
-            schema = schema.upper()
-
-    # Get table reference
-    if schema:
-        table = con.table(table_name, database=schema)
-    else:
-        table = con.table(table_name)
-
+    table = _get_table(con, table_name, schema, backend)
     return int(table.count().to_pyarrow().as_py())
 
 
@@ -561,45 +565,33 @@ def scan_table(
     """Scan a database table and return (variables, row_count, freq_table)."""
     backend = get_backend_name(con)
 
-    # Oracle stores unquoted identifiers in UPPERCASE
-    if backend == "oracle":
-        table_name = table_name.upper()
-        if schema:
-            schema = schema.upper()
-
     # Oracle: detect CLOB/NCLOB columns that don't support COUNT DISTINCT
     skip_stats_columns: set[str] = set()
     if backend == "oracle" and infer_stats:
+        uc_table = table_name.upper()
         raw_sql = getattr(con, "raw_sql", None)
         if raw_sql:
             try:
                 if schema:
+                    uc_schema = schema.upper()
                     query = (
                         f"SELECT column_name FROM all_tab_columns "
-                        f"WHERE owner = '{schema}' AND table_name = '{table_name}' "
+                        f"WHERE owner = '{uc_schema}' AND table_name = '{uc_table}' "
                         f"AND data_type IN ('CLOB', 'NCLOB', 'BLOB')"
                     )
                 else:
                     query = (
                         f"SELECT column_name FROM user_tab_columns "
-                        f"WHERE table_name = '{table_name}' "
+                        f"WHERE table_name = '{uc_table}' "
                         f"AND data_type IN ('CLOB', 'NCLOB', 'BLOB')"
                     )
                 result = raw_sql(query).fetchall()
-                # Convert to lowercase (we rename columns to lowercase later)
+                # Convert to lowercase (_get_table lowercases column names)
                 skip_stats_columns = {row[0].lower() for row in result}
             except Exception:
                 pass  # If detection fails, fallback to try/except in build_variables
 
-    # Get table reference
-    if schema:
-        table = con.table(table_name, database=schema)
-    else:
-        table = con.table(table_name)
-
-    # Oracle returns UPPERCASE column names, normalize to lowercase
-    if backend == "oracle":
-        table = table.rename(str.lower)
+    table = _get_table(con, table_name, schema, backend)
 
     # Get exact row count (always full count, not sampled)
     row_count = int(table.count().to_pyarrow().as_py())

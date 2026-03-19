@@ -330,41 +330,43 @@ class TestOracleBranches:
     """Tests for Oracle-specific branches using mocks."""
 
     def test_compute_schema_signature_oracle_uppercase(self):
-        """Oracle backend should uppercase table and schema names."""
+        """Oracle backend should use con.sql() with uppercased identifiers."""
         from unittest.mock import MagicMock, patch
 
         mock_con = MagicMock()
         mock_table = MagicMock()
-        mock_table.schema.return_value = {"ID": "int64", "NAME": "string"}
-        mock_con.table.return_value = mock_table
+        mock_table.schema.return_value = {"id": "int64", "name": "string"}
+        mock_table.rename.return_value = mock_table
+        mock_con.sql.return_value = mock_table
 
         with patch(
             "datannurpy.scanner.database.get_backend_name", return_value="oracle"
         ):
             compute_schema_signature(mock_con, "users", "myschema")
 
-        # Should call with uppercased names
-        mock_con.table.assert_called_once_with("USERS", database="MYSCHEMA")
+        mock_con.sql.assert_called_once_with('SELECT * FROM "MYSCHEMA"."USERS"')
+        mock_con.table.assert_not_called()
 
     def test_compute_schema_signature_oracle_no_schema(self):
-        """Oracle backend without schema should still uppercase table name."""
+        """Oracle backend without schema should use con.sql() with table only."""
         from unittest.mock import MagicMock, patch
 
         mock_con = MagicMock()
         mock_table = MagicMock()
-        mock_table.schema.return_value = {"ID": "int64", "NAME": "string"}
-        mock_con.table.return_value = mock_table
+        mock_table.schema.return_value = {"id": "int64", "name": "string"}
+        mock_table.rename.return_value = mock_table
+        mock_con.sql.return_value = mock_table
 
         with patch(
             "datannurpy.scanner.database.get_backend_name", return_value="oracle"
         ):
             compute_schema_signature(mock_con, "users", None)
 
-        # Should call with uppercased table name, no database arg
-        mock_con.table.assert_called_once_with("USERS")
+        mock_con.sql.assert_called_once_with('SELECT * FROM "USERS"')
+        mock_con.table.assert_not_called()
 
     def test_get_table_row_count_oracle_uppercase(self):
-        """Oracle backend should uppercase table and schema names."""
+        """Oracle backend should use con.sql() with uppercased identifiers."""
         from unittest.mock import MagicMock, patch
 
         mock_con = MagicMock()
@@ -372,19 +374,20 @@ class TestOracleBranches:
         mock_count = MagicMock()
         mock_count.to_pyarrow.return_value.as_py.return_value = 42
         mock_table.count.return_value = mock_count
-        mock_con.table.return_value = mock_table
+        mock_table.rename.return_value = mock_table
+        mock_con.sql.return_value = mock_table
 
         with patch(
             "datannurpy.scanner.database.get_backend_name", return_value="oracle"
         ):
             result = get_table_row_count(mock_con, "users", "myschema")
 
-        # Should call with uppercased names
-        mock_con.table.assert_called_once_with("USERS", database="MYSCHEMA")
+        mock_con.sql.assert_called_once_with('SELECT * FROM "MYSCHEMA"."USERS"')
+        mock_con.table.assert_not_called()
         assert result == 42
 
     def test_get_table_row_count_oracle_no_schema(self):
-        """Oracle backend without schema should still uppercase table name."""
+        """Oracle backend without schema should use con.sql() with table only."""
         from unittest.mock import MagicMock, patch
 
         mock_con = MagicMock()
@@ -392,15 +395,16 @@ class TestOracleBranches:
         mock_count = MagicMock()
         mock_count.to_pyarrow.return_value.as_py.return_value = 10
         mock_table.count.return_value = mock_count
-        mock_con.table.return_value = mock_table
+        mock_table.rename.return_value = mock_table
+        mock_con.sql.return_value = mock_table
 
         with patch(
             "datannurpy.scanner.database.get_backend_name", return_value="oracle"
         ):
             result = get_table_row_count(mock_con, "users", None)
 
-        # Should call with uppercased table name, no database arg
-        mock_con.table.assert_called_once_with("USERS")
+        mock_con.sql.assert_called_once_with('SELECT * FROM "USERS"')
+        mock_con.table.assert_not_called()
         assert result == 10
 
 

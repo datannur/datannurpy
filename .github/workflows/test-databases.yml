@@ -85,8 +85,20 @@ jobs:
           fail_ci_if_error: false
 
   test-oracle:
-    name: Oracle
+    name: Oracle ${{ matrix.version }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: "18"
+            image: gvenzl/oracle-xe:18-slim-faststart
+            cache-key: oracle-xe-18-slim-faststart
+            database: XEPDB1
+          - version: "23"
+            image: gvenzl/oracle-free:slim-faststart
+            cache-key: oracle-free-slim-faststart
+            database: FREEPDB1
 
     steps:
       - uses: actions/checkout@v6
@@ -99,7 +111,7 @@ jobs:
         id: cache-oracle
         with:
           path: ~/oracle-image.tar
-          key: oracle-free-slim-faststart
+          key: ${{ matrix.cache-key }}
 
       - name: Load cached Oracle image
         if: steps.cache-oracle.outputs.cache-hit == 'true'
@@ -108,15 +120,15 @@ jobs:
       - name: Pull Oracle image
         if: steps.cache-oracle.outputs.cache-hit != 'true'
         run: |
-          docker pull gvenzl/oracle-free:slim-faststart
-          docker save gvenzl/oracle-free:slim-faststart -o ~/oracle-image.tar
+          docker pull ${{ matrix.image }}
+          docker save ${{ matrix.image }} -o ~/oracle-image.tar
 
       - name: Start Oracle container
         run: |
           docker run -d --name oracle \
             -e ORACLE_PASSWORD=test \
             -p 1521:1521 \
-            gvenzl/oracle-free:slim-faststart
+            ${{ matrix.image }}
 
       - name: Wait for Oracle to be ready
         run: |
@@ -139,13 +151,13 @@ jobs:
       - name: Run Oracle tests
         run: uv run pytest tests/database/test_oracle.py -v -n 0 --cov=src/datannurpy --cov-report=xml
         env:
-          TEST_ORACLE_URL: oracle://system:test@localhost:1521/FREEPDB1
+          TEST_ORACLE_URL: oracle://system:test@localhost:1521/${{ matrix.database }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           files: coverage.xml
-          flags: oracle
+          flags: oracle-${{ matrix.version }}
           fail_ci_if_error: false
 
   test-mssql:
