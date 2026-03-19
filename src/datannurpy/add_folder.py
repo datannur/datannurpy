@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from pathlib import Path
+from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Any, Literal
 
 from .utils import (
@@ -83,8 +83,8 @@ def add_folder(
             raise FileNotFoundError(f"Folder not found: {path}")
         if not fs.isdir(fs.root):
             raise NotADirectoryError(f"Not a directory: {path}")
-        # For remote paths, we use the URL as-is for root
-        root = Path(fs.root)
+        # Use PurePosixPath to preserve forward slashes on Windows
+        root = PurePosixPath(fs.root)
         root_name = fs.root.rstrip("/").rsplit("/", 1)[-1]
     else:
         root = Path(path).resolve()
@@ -126,16 +126,16 @@ def add_folder(
     )
 
     # Extract subdirs from discovered datasets (skip time series temporal paths)
-    subdirs: set[Path] = set()
+    subdirs: set[PurePath] = set()
     for info in discovery.datasets:
         # Determine starting parent for folder traversal
-        start_parent: Path | None = None
+        start_parent: PurePath | None = None
         if info.series_files is not None:
             # For time series: only add non-temporal parent folders
             normalized = normalize_path(info.path, root)
             non_temporal_parts = get_series_folder_parts(normalized)
             if non_temporal_parts:
-                start_parent = root / Path(*non_temporal_parts)
+                start_parent = root / "/".join(non_temporal_parts)
         else:
             start_parent = info.path.parent
 
@@ -148,7 +148,7 @@ def add_folder(
                 parent = parent.parent
 
     # Create sub-folders
-    subdir_ids: dict[Path, str] = {}
+    subdir_ids: dict[PurePath, str] = {}
     for subdir in sorted(subdirs):
         rel_path = subdir.relative_to(root)
         parts = [sanitize_id(p) for p in rel_path.parts]
@@ -332,7 +332,7 @@ def add_folder(
 def _scan_time_series(
     catalog: Catalog,
     info: DatasetInfo,
-    root: Path,
+    root: PurePath,
     prefix: str,
     schema_only: bool,
     infer_stats: bool,

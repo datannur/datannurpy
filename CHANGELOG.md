@@ -1,5 +1,11 @@
 # datannurpy
 
+## 0.9.4 (2026-03-19)
+
+- add: `.env` file support for YAML config (expand `$VAR` / `${VAR}` in all values, optional `env_file` key)
+- fix: add missing Oracle system schemas to exclusion list
+- fix: remote SFTP/S3 scans returning 0 datasets on Windows (`Path()` converting `/` to `\`)
+
 ## 0.9.3 (2026-03-17)
 
 - add: Oracle TNS name support via `oracle_client_path` parameter in `add_database()` (thick mode)

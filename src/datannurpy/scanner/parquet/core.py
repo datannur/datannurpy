@@ -251,6 +251,7 @@ def scan_parquet_dataset(
 ) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
     """Scan a Parquet dataset based on its type."""
     scanner = SCANNERS[info.type]
+    assert isinstance(info.path, Path)
     return scanner(info.path, dataset_id, infer_stats, freq_threshold)
 
 

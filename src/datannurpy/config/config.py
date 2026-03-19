@@ -2,18 +2,35 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
+from typing import Any
 
 import yaml
+from dotenv import load_dotenv
 
 from ..catalog import Catalog
 from ..schema import Folder
 
 VALID_TYPES = {"folder", "dataset", "database", "metadata"}
+RESERVED_KEYS = {"add", "export_app", "export_db", "env_file"}
+
+
+def _expand_vars(obj: Any) -> Any:
+    """Recursively expand $VAR and ${VAR} references in string values."""
+    if isinstance(obj, str):
+        return os.path.expandvars(obj)
+    if isinstance(obj, dict):
+        return {k: _expand_vars(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_expand_vars(item) for item in obj]
+    return obj
 
 
 def _resolve_path(p: str, base_dir: Path) -> str:
     """Resolve a path relative to base_dir if not absolute."""
+    if "://" in p:
+        return p
     path = Path(p)
     if not path.is_absolute():
         path = (base_dir / path).resolve()
@@ -28,10 +45,18 @@ def run_config(path: str | Path) -> Catalog:
     with open(config_path, encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
+    # Load .env: explicit env_file path takes priority, fallback to .env next to YAML
+    env_file = config.pop("env_file", None)
+    if env_file:
+        load_dotenv(_resolve_path(env_file, base_dir), override=False)
+    else:
+        load_dotenv(base_dir / ".env", override=False)
+
+    # Expand environment variables in all string values
+    config = _expand_vars(config)
+
     # Extract catalog init params and resolve paths
-    catalog_params = {
-        k: v for k, v in config.items() if k not in ("add", "export_app", "export_db")
-    }
+    catalog_params = {k: v for k, v in config.items() if k not in RESERVED_KEYS}
     if "app_path" in catalog_params:
         catalog_params["app_path"] = _resolve_path(catalog_params["app_path"], base_dir)
 

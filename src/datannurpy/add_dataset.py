@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 from .utils import (
@@ -59,7 +59,7 @@ def _create_dataset(
     default_name: str,
     folder_id: str | None,
     data_path: str,
-    dataset_path: Path,
+    dataset_path: PurePath,
     current_mtime: int,
     delivery_format: str,
     meta: DatasetMeta,
@@ -140,7 +140,7 @@ def add_dataset(
         fs = FileSystem(path, storage_options)
         if not fs.exists(fs.root):
             raise FileNotFoundError(f"Path not found: {path}")
-        dataset_path = Path(fs.root)
+        dataset_path = PurePosixPath(fs.root)
         path_name = fs.root.rstrip("/").rsplit("/", 1)[-1]
     else:
         dataset_path = Path(path).resolve()
@@ -178,7 +178,11 @@ def add_dataset(
     )
 
     # Check if it's a partitioned Parquet directory
-    is_dir = fs.isdir(fs.root) if fs else dataset_path.is_dir()
+    if fs:
+        is_dir = fs.isdir(fs.root)
+    else:
+        assert isinstance(dataset_path, Path)
+        is_dir = dataset_path.is_dir()
     if is_dir:
         _add_parquet_directory(
             catalog,
@@ -299,7 +303,7 @@ def add_dataset(
 
 def _add_parquet_directory(
     catalog: Catalog,
-    dir_path: Path,
+    dir_path: PurePath,
     folder_id: str | None,
     meta: DatasetMeta,
     *,

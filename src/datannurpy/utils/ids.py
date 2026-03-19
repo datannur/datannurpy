@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from pathlib import Path
+from pathlib import PurePath
 
 import polars as pl
 
@@ -99,10 +99,10 @@ def compute_runtime_ids(df: pl.DataFrame, cols: list[str]) -> pl.DataFrame:
 
 
 def get_folder_id(
-    path: Path,
-    root: Path,
+    path: PurePath,
+    root: PurePath,
     prefix: str,
-    subdir_ids: dict[Path, str],
+    subdir_ids: dict[PurePath, str],
 ) -> str:
     """Determine folder_id for a file or directory."""
     parent_dir = path.parent
@@ -112,13 +112,13 @@ def get_folder_id(
 
 
 def build_dataset_id_name(
-    path: Path,
-    root: Path,
+    path: PurePath,
+    root: PurePath,
     prefix: str,
 ) -> tuple[str, str]:
     """Build dataset ID and name from path."""
     rel_path = path.relative_to(root)
-    if path.is_file():
+    if path.suffix:  # File (has extension)
         path_parts = [sanitize_id(p) for p in rel_path.parts]
         return make_id(prefix, *path_parts), path.stem
     # Directory (Delta/Hive) in subdirectory

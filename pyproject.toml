@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "datannurpy"
-version = "0.9.3"
+version = "0.9.4"
 description = "Python library for datannur catalog metadata management"
 authors = [{ name = "datannur" }]
 readme = "README.md"
@@ -30,6 +30,7 @@ dependencies = [
   "fsspec>=2024.0",
   "paramiko>=4.0",
   "pyyaml>=6.0",
+  "python-dotenv>=1.0",
   "typing_extensions>=4.0;python_version<'3.11'",
 ]
 
