@@ -1,6 +1,6 @@
 # datannurpy
 
-## unreleased
+## 0.9.4 (2026-03-19)
 
 - add: `.env` file support for YAML config (expand `$VAR` / `${VAR}` in all values, optional `env_file` key)
 - fix: add missing Oracle system schemas to exclusion list
