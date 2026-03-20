@@ -395,7 +395,6 @@ def _scan_schema_only_local(
                 id=f"{dataset_id}---{col}",
                 name=col,
                 dataset_id=dataset_id,
-                type="string",
             )
             for col in columns
         ]
@@ -413,7 +412,6 @@ def _scan_schema_only_local(
                 id=f"{dataset_id}---{col}",
                 name=col,
                 dataset_id=dataset_id,
-                type="string",
             )
             for col in df.columns
         ]

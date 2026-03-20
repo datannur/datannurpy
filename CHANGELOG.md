@@ -6,6 +6,7 @@
 - add: scan continues on file/table error instead of crashing — errors logged and reported in summary
 - fix: Excel files with mixed-type columns (`int`, `bytes`, etc.) no longer crash — fallback converts `object` columns to `str`
 - fix: `depth="schema"` Excel scan now reads headers only (`nrows=0`) instead of loading entire file
+- fix: `depth="schema"` no longer assigns fake `type="string"` to CSV/Excel variables — uses `None` when type is unknown
 
 ## 0.9.5 (2026-03-19)
 
