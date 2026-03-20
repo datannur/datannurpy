@@ -11,6 +11,7 @@ from .utils import (
     build_variable_ids,
     get_folder_id,
     log_done,
+    log_error,
     log_section,
     log_skip,
     log_start,
@@ -251,47 +252,58 @@ def add_folder(
     )
     schema_only = resolved_depth == "schema"
 
+    scan_errors = 0
+
     for info in plan.to_scan:
         # Time series: special handling
         if info.series_files is not None:
-            _scan_time_series(
-                catalog=catalog,
-                info=info,
-                root=root,
-                prefix=prefix,
-                schema_only=schema_only,
-                infer_stats=infer_stats,
-                freq_threshold=freq_threshold,
-                csv_encoding=resolved_encoding,
-                quiet=q,
-                fs=fs,
-            )
+            try:
+                _scan_time_series(
+                    catalog=catalog,
+                    info=info,
+                    root=root,
+                    prefix=prefix,
+                    schema_only=schema_only,
+                    infer_stats=infer_stats,
+                    freq_threshold=freq_threshold,
+                    csv_encoding=resolved_encoding,
+                    quiet=q,
+                    fs=fs,
+                )
+            except Exception as exc:
+                log_error(info.path.name, exc, q)
+                scan_errors += 1
             continue
 
         # Single file: standard handling
         data_path_str = str(info.path)
-
-        # Remove old dataset if exists (modified or refresh)
-        existing = catalog.dataset.get_by("data_path", data_path_str)
-        if existing:
-            remove_dataset_cascade(catalog, existing)
 
         log_start(info.path.name, q)
         dataset_id, dataset_name = build_dataset_id_name(info.path, root, prefix)
         folder_id = get_folder_id(info.path, root, prefix, subdir_ids)
 
         # Scan dataset
-        result = scan_file(
-            info.path,
-            info.format,
-            dataset_id=dataset_id,
-            schema_only=schema_only,
-            infer_stats=infer_stats,
-            freq_threshold=freq_threshold,
-            csv_encoding=resolved_encoding,
-            fs=fs,
-            quiet=q,
-        )
+        try:
+            result = scan_file(
+                info.path,
+                info.format,
+                dataset_id=dataset_id,
+                schema_only=schema_only,
+                infer_stats=infer_stats,
+                freq_threshold=freq_threshold,
+                csv_encoding=resolved_encoding,
+                fs=fs,
+                quiet=q,
+            )
+        except Exception as exc:
+            log_error(info.path.name, exc, q)
+            scan_errors += 1
+            continue
+
+        # Remove old dataset only after successful scan
+        existing = catalog.dataset.get_by("data_path", data_path_str)
+        if existing:
+            remove_dataset_cascade(catalog, existing)
 
         # Create dataset
         dataset = Dataset(
@@ -328,7 +340,7 @@ def add_folder(
 
     datasets_added = catalog.dataset.count - datasets_before
     vars_added = catalog.variable.count - vars_before
-    log_summary(datasets_added, vars_added, q, start_time)
+    log_summary(datasets_added, vars_added, q, start_time, scan_errors)
 
 
 def _scan_time_series(

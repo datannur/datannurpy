@@ -54,12 +54,25 @@ def log_folder(name: str, quiet: bool) -> None:
     print(f"  📁 {name}", file=sys.stderr)
 
 
-def log_summary(datasets: int, variables: int, quiet: bool, start_time: float) -> None:
+def log_error(name: str, error: BaseException, quiet: bool) -> None:
+    """Log a scan error (replaces the 'start' line)."""
+    if quiet:
+        return
+    msg = str(error).split("\n")[0]
+    print(f"\r  ✗ {name} — {type(error).__name__}: {msg}", file=sys.stderr)
+
+
+def log_summary(
+    datasets: int, variables: int, quiet: bool, start_time: float, errors: int = 0
+) -> None:
     """Log final summary with elapsed time."""
     if quiet:
         return
     elapsed = time.perf_counter() - start_time
+    parts = [f"{datasets} datasets", f"{variables} variables"]
+    if errors:
+        parts.append(f"{errors} errors")
     print(
-        f"  → {datasets} datasets, {variables} variables in {elapsed:.1f}s",
+        f"  → {', '.join(parts)} in {elapsed:.1f}s",
         file=sys.stderr,
     )

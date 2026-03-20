@@ -3,6 +3,7 @@
 ## 0.9.6 (2026-03-20)
 
 - add: validate unknown parameters with closest match suggestion on all public methods
+- add: scan continues on file/table error instead of crashing — errors logged and reported in summary
 
 ## 0.9.5 (2026-03-19)
 
