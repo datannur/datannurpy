@@ -27,6 +27,7 @@ from .schema import (
 from .scanner import read_csv, read_excel, read_statistical
 from .utils import log_done, log_section, log_warn
 from .utils.ids import build_value_id
+from .utils.params import validate_params
 
 if TYPE_CHECKING:
     from .catalog import Catalog
@@ -474,6 +475,7 @@ def _get_catalog_table(catalog: Catalog, entity_name: str) -> Any | None:
     return mapping.get(entity_name)
 
 
+@validate_params
 def add_metadata(
     self: Catalog,
     path: str | Path,

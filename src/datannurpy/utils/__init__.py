@@ -16,6 +16,7 @@ from .ids import (
 from .folder import upsert_folder
 from .log import (
     log_done,
+    log_error,
     log_folder,
     log_section,
     log_skip,
@@ -44,6 +45,7 @@ __all__ = [
     "sanitize_id",
     # log
     "log_done",
+    "log_error",
     "log_folder",
     "log_section",
     "log_start",

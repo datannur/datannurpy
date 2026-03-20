@@ -55,7 +55,13 @@ def scan_excel(
 
     con = ibis.duckdb.connect()
     try:
-        table = con.create_table("excel_data", df)
+        try:
+            table = con.create_table("excel_data", df)
+        except pa.ArrowTypeError:
+            for col in df.columns:
+                if df[col].dtype == "object":
+                    df[col] = df[col].astype(str)
+            table = con.create_table("excel_data", df)
         row_count: int = table.count().execute()
 
         variables, freq_table = build_variables(

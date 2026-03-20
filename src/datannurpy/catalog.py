@@ -17,6 +17,7 @@ from .finalize import finalize
 from .schema import DatannurDB
 from .utils import ModalityManager
 from .utils.ids import compute_runtime_ids
+from .utils.params import validate_params
 
 
 class Catalog(DatannurDB):
@@ -30,6 +31,7 @@ class Catalog(DatannurDB):
     export_db = export_db
     finalize = finalize
 
+    @validate_params
     def __init__(
         self,
         *,

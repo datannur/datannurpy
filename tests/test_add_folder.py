@@ -71,6 +71,22 @@ class TestAddFolderFormats:
         assert len(catalog.dataset.all()) == 1
         assert len(catalog.variable.all()) == 0
 
+    def test_add_folder_mixed_types_excel(self, tmp_path: Path):
+        """add_folder should handle Excel columns with mixed types."""
+        df = pd.DataFrame(
+            {
+                "COL_A": [1, b"bytes_value", "text", 3.14],
+                "COL_B": [10, 20, 30, 40],
+            }
+        )
+        df.to_excel(tmp_path / "mixed.xlsx", index=False)
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, quiet=True)
+
+        assert len(catalog.dataset.all()) == 1
+        assert len(catalog.variable.all()) == 2
+
     def test_add_folder_scans_parquet(self):
         """add_folder should scan Parquet files (.parquet extension)."""
         catalog = Catalog()

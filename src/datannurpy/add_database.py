@@ -14,6 +14,7 @@ from .utils import (
     get_prefix_folders,
     get_table_prefix,
     log_done,
+    log_error,
     log_folder,
     log_section,
     log_skip,
@@ -24,6 +25,7 @@ from .utils import (
     timestamp_to_iso,
     upsert_folder,
 )
+from .utils.params import validate_params
 from .scanner.filesystem import FileSystem
 from .scanner.utils import get_mtime_iso
 from .finalize import remove_dataset_cascade
@@ -64,6 +66,7 @@ def _is_remote_database_file(connection: str) -> bool:
     return scheme not in _DATABASE_SCHEMES and scheme != "file"
 
 
+@validate_params
 def add_database(
     catalog: Catalog,
     connection: str | ibis.BaseBackend,
@@ -197,6 +200,7 @@ def _add_database_impl(
     freq_threshold = catalog.freq_threshold if catalog.freq_threshold else None
 
     # Process each schema
+    scan_errors = 0
     for schema_name in schemas_to_scan:
         # Determine folder for this schema
         if schema_name is not None and len(schemas_to_scan) > 1:
@@ -260,8 +264,15 @@ def _add_database_impl(
             )
 
             # Compute signature and row count for comparison/storage
-            current_signature = compute_schema_signature(con, table_name, schema_name)
-            current_nb_row = get_table_row_count(con, table_name, schema_name)
+            try:
+                current_signature = compute_schema_signature(
+                    con, table_name, schema_name
+                )
+                current_nb_row = get_table_row_count(con, table_name, schema_name)
+            except Exception as exc:
+                log_error(table_name, exc, q)
+                scan_errors += 1
+                continue
 
             # Check if table exists in cache
             existing_dataset = catalog.dataset.get_by("data_path", table_data_path)
@@ -286,9 +297,6 @@ def _add_database_impl(
                 # Preserve timestamp if data unchanged (even with refresh)
                 if data_unchanged:
                     preserved_timestamp = existing_dataset.last_update_timestamp
-
-                # Modified or refresh forced - remove old dataset before rescan
-                remove_dataset_cascade(catalog, existing_dataset)
 
             # Determine folder for this table
             table_prefix: str | None = None
@@ -317,6 +325,8 @@ def _add_database_impl(
 
             # Structure mode: create dataset without scanning variables
             if resolved_depth == "structure":
+                if existing_dataset is not None:
+                    remove_dataset_cascade(catalog, existing_dataset)
                 dataset = Dataset(
                     id=dataset_id,
                     name=table_name,
@@ -335,15 +345,24 @@ def _add_database_impl(
 
             # Schema/Full mode: scan table
             schema_only = resolved_depth == "schema"
-            table_vars, nb_row, freq_table = scan_table(
-                con,
-                table_name,
-                schema=schema_name,
-                dataset_id=dataset_id,
-                infer_stats=infer_stats and not schema_only,
-                freq_threshold=freq_threshold,
-                sample_size=sample_size,
-            )
+            try:
+                table_vars, nb_row, freq_table = scan_table(
+                    con,
+                    table_name,
+                    schema=schema_name,
+                    dataset_id=dataset_id,
+                    infer_stats=infer_stats and not schema_only,
+                    freq_threshold=freq_threshold,
+                    sample_size=sample_size,
+                )
+            except Exception as exc:
+                log_error(table_name, exc, q)
+                scan_errors += 1
+                continue
+
+            # Remove old dataset only after successful scan
+            if existing_dataset is not None:
+                remove_dataset_cascade(catalog, existing_dataset)
 
             # Create dataset with incremental fields
             dataset = Dataset(
@@ -378,4 +397,4 @@ def _add_database_impl(
 
     datasets_added = catalog.dataset.count - datasets_before
     vars_added = catalog.variable.count - vars_before
-    log_summary(datasets_added, vars_added, q, start_time)
+    log_summary(datasets_added, vars_added, q, start_time, scan_errors)
