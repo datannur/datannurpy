@@ -263,6 +263,45 @@ def _add_database_impl(
                 backend_name, db_name, schema_name, table_name
             )
 
+            # Check if table exists in cache
+            existing_dataset = catalog.dataset.get_by("data_path", table_data_path)
+
+            # Structure mode: just enumerate tables, no queries
+            if resolved_depth == "structure":
+                if existing_dataset is not None and not do_refresh:
+                    catalog.dataset.update(existing_dataset.id, _seen=True)
+                    log_skip(table_name, q)
+                    continue
+
+                # Determine folder for this table
+                table_prefix: str | None = None
+                if valid_prefixes:
+                    table_prefix = get_table_prefix(
+                        table_name, valid_prefixes, sep=prefix_sep
+                    )
+                if table_prefix:
+                    table_folder_id = prefix_folder_ids[table_prefix]
+                else:
+                    table_folder_id = current_folder_id
+
+                dataset_id = make_id(table_folder_id, sanitize_id(table_name))
+
+                if existing_dataset is not None:
+                    remove_dataset_cascade(catalog, existing_dataset)
+                dataset = Dataset(
+                    id=dataset_id,
+                    name=table_name,
+                    folder_id=table_folder_id,
+                    delivery_format=backend_name,
+                    last_update_date=now_iso,
+                    data_path=table_data_path,
+                    last_update_timestamp=catalog._now,
+                    _seen=True,
+                )
+                catalog.dataset.add(dataset)
+                log_done(table_name, q)
+                continue
+
             # Compute signature and row count for comparison/storage
             try:
                 current_signature = compute_schema_signature(
@@ -273,9 +312,6 @@ def _add_database_impl(
                 log_error(table_name, exc, q)
                 scan_errors += 1
                 continue
-
-            # Check if table exists in cache
-            existing_dataset = catalog.dataset.get_by("data_path", table_data_path)
 
             # Preserve timestamp if data unchanged (for stable evolution tracking)
             preserved_timestamp: int | None = None
@@ -322,26 +358,6 @@ def _add_database_impl(
                 if preserved_timestamp is not None
                 else now_iso
             )
-
-            # Structure mode: create dataset without scanning variables
-            if resolved_depth == "structure":
-                if existing_dataset is not None:
-                    remove_dataset_cascade(catalog, existing_dataset)
-                dataset = Dataset(
-                    id=dataset_id,
-                    name=table_name,
-                    folder_id=table_folder_id,
-                    delivery_format=backend_name,
-                    last_update_date=effective_date,
-                    data_path=table_data_path,
-                    nb_row=current_nb_row,
-                    schema_signature=current_signature,
-                    last_update_timestamp=effective_timestamp,
-                    _seen=True,
-                )
-                catalog.dataset.add(dataset)
-                log_done(f"{table_name} ({current_nb_row:,} rows)", q)
-                continue
 
             # Schema/Full mode: scan table
             schema_only = resolved_depth == "schema"
