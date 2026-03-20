@@ -15,6 +15,7 @@ from .utils import (
     sanitize_id,
     upsert_folder,
 )
+from .utils.params import validate_params
 from .finalize import remove_dataset_cascade
 from .schema import Dataset, Folder
 from .scanner.filesystem import FileSystem, is_remote_url
@@ -95,6 +96,7 @@ def _create_dataset(
     )
 
 
+@validate_params
 def add_dataset(
     catalog: Catalog,
     path: str | Path,

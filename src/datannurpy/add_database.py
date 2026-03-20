@@ -24,6 +24,7 @@ from .utils import (
     timestamp_to_iso,
     upsert_folder,
 )
+from .utils.params import validate_params
 from .scanner.filesystem import FileSystem
 from .scanner.utils import get_mtime_iso
 from .finalize import remove_dataset_cascade
@@ -64,6 +65,7 @@ def _is_remote_database_file(connection: str) -> bool:
     return scheme not in _DATABASE_SCHEMES and scheme != "file"
 
 
+@validate_params
 def add_database(
     catalog: Catalog,
     connection: str | ibis.BaseBackend,

@@ -20,6 +20,7 @@ from .utils import (
     sanitize_id,
     upsert_folder,
 )
+from .utils.params import validate_params
 from .finalize import remove_dataset_cascade
 from .schema import Dataset, Folder
 from .scanner.discovery import DatasetInfo, compute_scan_plan, discover_datasets
@@ -51,6 +52,7 @@ def _build_series_folder_id(normalized: str, prefix: str) -> str:
     return prefix
 
 
+@validate_params
 def add_folder(
     catalog: Catalog,
     path: str | Path,

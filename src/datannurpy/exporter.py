@@ -9,10 +9,13 @@ import webbrowser
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from .utils.params import validate_params
+
 if TYPE_CHECKING:
     from .catalog import Catalog
 
 
+@validate_params
 def export_db(
     catalog: Catalog,
     output_dir: str | Path | None = None,
@@ -72,6 +75,7 @@ def _copy_app(output_dir: Path) -> None:
             shutil.copy2(item, dest)
 
 
+@validate_params
 def export_app(
     catalog: Catalog,
     output_dir: str | Path | None = None,

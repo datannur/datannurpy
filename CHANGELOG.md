@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.9.6 (2026-03-20)
+
+- add: validate unknown parameters with closest match suggestion on all public methods
+
 ## 0.9.5 (2026-03-19)
 
 - fix: Oracle < 23 compatibility (`ORA-00923`) — use `con.sql()` instead of `con.table()` to avoid boolean expressions unsupported before Oracle 23
