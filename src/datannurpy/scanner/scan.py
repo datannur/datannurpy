@@ -402,7 +402,21 @@ def _scan_schema_only_local(
         return ScanResult(variables=variables, nb_row=None)
 
     if delivery_format == "excel":
-        variables, _, _ = scan_excel(path, dataset_id=dataset_id, infer_stats=False)
+        import pandas as pd
+
+        file_path = Path(path)
+        suffix = file_path.suffix.lower()
+        engine = "xlrd" if suffix == ".xls" else "openpyxl"
+        df = pd.read_excel(file_path, nrows=0, engine=engine)
+        variables = [
+            Variable(
+                id=f"{dataset_id}---{col}",
+                name=col,
+                dataset_id=dataset_id,
+                type="string",
+            )
+            for col in df.columns
+        ]
         return ScanResult(variables=variables, nb_row=None)
 
     # statistical formats
