@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.9.7 (2026-03-20)
+
+- fix: Oracle crash on connection close (`DPY-1001: not connected`) — `close_connection` now ignores errors when internal connection is already closed
+
 ## 0.9.6 (2026-03-20)
 
 - add: validate unknown parameters with closest match suggestion on all public methods

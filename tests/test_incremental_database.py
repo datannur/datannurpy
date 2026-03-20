@@ -325,6 +325,17 @@ class TestCloseConnection:
         close_connection(mock_con)
         mock_con.disconnect.assert_called_once()
 
+    def test_close_connection_already_closed(self):
+        """close_connection ignores error when internal connection is already closed."""
+        from unittest.mock import MagicMock
+
+        mock_con = MagicMock(spec=["disconnect", "con"])
+        mock_con.con = MagicMock()
+        mock_con.con.close.side_effect = Exception("DPY-1001: not connected")
+        close_connection(mock_con)
+        mock_con.disconnect.assert_called_once()
+        mock_con.con.close.assert_called_once()
+
 
 class TestOracleBranches:
     """Tests for Oracle-specific branches using mocks."""

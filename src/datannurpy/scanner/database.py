@@ -119,7 +119,10 @@ def close_connection(con: ibis.BaseBackend) -> None:
     if hasattr(con, "con"):
         internal_con = getattr(con, "con")
         if hasattr(internal_con, "close"):
-            internal_con.close()
+            try:
+                internal_con.close()
+            except Exception:
+                pass  # Already closed (Oracle, etc.)
 
 
 def raise_driver_error(backend: str, original_error: Exception) -> NoReturn:
