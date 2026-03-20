@@ -303,6 +303,34 @@ def _scan_stat_schema_stream(
     return ScanResult(variables=variables, nb_row=None, description=description)
 
 
+def _scan_excel_schema_stream(
+    path: PurePath,
+    dataset_id: str,
+    fs: FileSystem,
+) -> ScanResult:
+    """Read xlsx headers via openpyxl streaming (avoids full file download)."""
+    import openpyxl
+
+    with fs.open(str(path), "rb") as f:
+        wb = openpyxl.load_workbook(f, read_only=True)
+        ws = wb.active
+        headers: list[str] = []
+        if ws is not None:  # pragma: no branch
+            for row in ws.iter_rows(min_row=1, max_row=1, values_only=True):
+                headers = [str(c) for c in row if c is not None]
+        wb.close()
+
+    variables = [
+        Variable(
+            id=f"{dataset_id}---{name}",
+            name=name,
+            dataset_id=dataset_id,
+        )
+        for name in headers
+    ]
+    return ScanResult(variables=variables, nb_row=None)
+
+
 def _scan_schema_only_remote(
     path: PurePath,
     delivery_format: str,
@@ -379,7 +407,11 @@ def _scan_schema_only_remote(
                 local_path, delivery_format, dataset_id, csv_encoding
             )
 
-    # Excel: no optimization possible (must download full file)
+    # Excel xlsx: openpyxl read_only streams only headers (no full download)
+    # xls: must download full file (xlrd doesn't support streaming)
+    suffix = PurePath(path).suffix.lower()
+    if suffix != ".xls":
+        return _scan_excel_schema_stream(path, dataset_id, fs)
     with fs.ensure_local(str(path)) as local_path:
         return _scan_schema_only_local(
             local_path, delivery_format, dataset_id, csv_encoding

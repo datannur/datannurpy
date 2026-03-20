@@ -4,6 +4,7 @@
 
 - fix: remote `depth="schema"` SAS/Stata scan no longer fails — use pandas streaming instead of partial download (pyreadstat needs full file)
 - fix: remote `depth="schema"` SPSS scan falls back to full download (no streaming support)
+- fix: remote `depth="schema"` Excel xlsx reads only headers via openpyxl streaming (no full download)
 
 ## 0.9.7 (2026-03-20)
 
