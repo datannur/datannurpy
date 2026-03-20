@@ -4,6 +4,7 @@
 
 - add: validate unknown parameters with closest match suggestion on all public methods
 - add: scan continues on file/table error instead of crashing — errors logged and reported in summary
+- fix: Excel files with mixed-type columns (`int`, `bytes`, etc.) no longer crash — fallback converts `object` columns to `str`
 
 ## 0.9.5 (2026-03-19)
 
