@@ -325,6 +325,17 @@ class TestCloseConnection:
         close_connection(mock_con)
         mock_con.disconnect.assert_called_once()
 
+    def test_close_connection_already_closed(self):
+        """close_connection ignores error when internal connection is already closed."""
+        from unittest.mock import MagicMock
+
+        mock_con = MagicMock(spec=["disconnect", "con"])
+        mock_con.con = MagicMock()
+        mock_con.con.close.side_effect = Exception("DPY-1001: not connected")
+        close_connection(mock_con)
+        mock_con.disconnect.assert_called_once()
+        mock_con.con.close.assert_called_once()
+
 
 class TestOracleBranches:
     """Tests for Oracle-specific branches using mocks."""
@@ -442,10 +453,9 @@ class TestDepthParameterDatabase:
         # But no variables
         assert len(catalog.variable.all()) == 0
 
-        # Datasets should have nb_row
+        # Structure mode: no queries, nb_row is None
         for ds in catalog.dataset.all():
-            assert ds.nb_row is not None
-            assert ds.nb_row > 0
+            assert ds.nb_row is None
 
     def test_depth_schema_creates_variables_without_stats(self, sample_db: Path):
         """depth='schema' should create variables without stats."""
@@ -483,3 +493,51 @@ class TestDepthParameterDatabase:
 
         assert len(catalog.dataset.all()) == 2
         assert len(catalog.variable.all()) > 0  # schema mode overrides
+
+    def test_depth_structure_skips_queries(self, sample_db: Path):
+        """depth='structure' should not compute schema_signature or nb_row."""
+        from unittest.mock import patch
+
+        conn_str = f"sqlite:////{sample_db}"
+        catalog = Catalog(quiet=True)
+
+        with (
+            patch("datannurpy.add_database.compute_schema_signature") as mock_sig,
+            patch("datannurpy.add_database.get_table_row_count") as mock_count,
+        ):
+            catalog.add_database(conn_str, depth="structure")
+
+        mock_sig.assert_not_called()
+        mock_count.assert_not_called()
+        assert len(catalog.dataset.all()) == 2
+
+    def test_depth_structure_incremental_skips_unchanged(self, sample_db: Path):
+        """depth='structure' second run marks existing datasets as seen."""
+        conn_str = f"sqlite:////{sample_db}"
+        catalog = Catalog(quiet=True)
+        catalog.add_database(conn_str, depth="structure")
+        assert len(catalog.dataset.all()) == 2
+
+        # Second run without refresh: should skip (mark seen)
+        catalog.add_database(conn_str, depth="structure")
+        assert len(catalog.dataset.all()) == 2
+
+    def test_depth_structure_with_prefix_grouping(self, tmp_path: Path):
+        """depth='structure' respects prefix-based folder grouping."""
+        db_path = tmp_path / "prefixed.db"
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("CREATE TABLE sales_orders (id INT)")
+        cursor.execute("CREATE TABLE sales_items (id INT)")
+        cursor.execute("CREATE TABLE hr_employees (id INT)")
+        cursor.execute("CREATE TABLE hr_departments (id INT)")
+        conn.commit()
+        conn.close()
+
+        conn_str = f"sqlite:////{db_path}"
+        catalog = Catalog(quiet=True)
+        catalog.add_database(conn_str, depth="structure")
+
+        assert len(catalog.dataset.all()) == 4
+        prefix_folders = [f for f in catalog.folder.all() if f.type == "table_prefix"]
+        assert len(prefix_folders) == 2  # sales, hr

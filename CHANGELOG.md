@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.9.7 (2026-03-20)
+
+- fix: Oracle crash on connection close (`DPY-1001: not connected`) — `close_connection` now ignores errors when internal connection is already closed
+- fix: `depth="structure"` for `add_database` no longer runs `COUNT(*)` and schema introspection on every table — just enumerates tables like `add_folder`
+
 ## 0.9.6 (2026-03-20)
 
 - add: validate unknown parameters with closest match suggestion on all public methods
