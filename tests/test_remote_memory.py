@@ -372,7 +372,7 @@ class TestSchemaOnlyRemoteOptimizations:
     def test_schema_only_excel_remote_full_download(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
     ) -> None:
-        """depth='schema' for Excel must still download full file (no optimization)."""
+        """depth='schema' for Excel xlsx should stream headers (no full download)."""
         from io import BytesIO
 
         # Create synthetic Excel by using openpyxl
@@ -398,8 +398,41 @@ class TestSchemaOnlyRemoteOptimizations:
             ds = catalog.dataset.all()[0]
             assert ds.delivery_format == "excel"
             assert ds.nb_row is None
+
+            var_names = [v.name for v in catalog.variable.all()]
+            assert "col1" in var_names
+            assert "col2" in var_names
         except ImportError:
             pytest.skip("openpyxl not installed")
+
+    def test_schema_only_xls_remote_full_download(
+        self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
+    ) -> None:
+        """depth='schema' for xls must download full file (xlrd, no streaming)."""
+        from pathlib import Path
+
+        from datannurpy.scanner.filesystem import FileSystem
+        from datannurpy.scanner.scan import scan_file
+
+        xls_path = (
+            Path(__file__).parent.parent / "data" / "subfolder1" / "employees_old.xls"
+        )
+        if not xls_path.exists():
+            pytest.skip("xls test file not found")
+
+        memory_fs.pipe(f"{memory_root}/test.xls", xls_path.read_bytes())
+
+        fs = FileSystem(f"memory://{memory_root}")
+        result = scan_file(
+            Path(f"{memory_root}/test.xls"),
+            "excel",
+            dataset_id="test",
+            schema_only=True,
+            fs=fs,
+        )
+
+        assert len(result.variables) > 0
+        assert result.nb_row is None
 
     def test_schema_only_hive_empty(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
@@ -514,8 +547,7 @@ class TestSchemaOnlyRemoteOptimizations:
     def test_schema_only_sas_remote(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
     ) -> None:
-        """depth='schema' for SAS should use partial download."""
-        pytest.importorskip("pyreadstat")
+        """depth='schema' for SAS should use pandas streaming (no full download)."""
         from pathlib import Path
 
         from datannurpy.scanner.filesystem import FileSystem
@@ -533,6 +565,61 @@ class TestSchemaOnlyRemoteOptimizations:
         result = scan_file(
             Path(f"{memory_root}/cars.sas7bdat"),
             "sas",
+            dataset_id="test",
+            schema_only=True,
+            fs=fs,
+        )
+
+        assert len(result.variables) > 0
+        assert result.nb_row is None
+
+    def test_schema_only_stata_remote(
+        self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
+    ) -> None:
+        """depth='schema' for Stata should use pandas streaming (no full download)."""
+        from pathlib import Path
+
+        from datannurpy.scanner.filesystem import FileSystem
+        from datannurpy.scanner.scan import scan_file
+
+        stata_path = Path(__file__).parent.parent / "data" / "datatypes_stata.dta"
+        if not stata_path.exists():
+            pytest.skip("Stata test file not found")
+
+        memory_fs.pipe(f"{memory_root}/datatypes_stata.dta", stata_path.read_bytes())
+
+        fs = FileSystem(f"memory://{memory_root}")
+        result = scan_file(
+            Path(f"{memory_root}/datatypes_stata.dta"),
+            "stata",
+            dataset_id="test",
+            schema_only=True,
+            fs=fs,
+        )
+
+        assert len(result.variables) > 0
+        assert result.nb_row is None
+
+    def test_schema_only_spss_remote(
+        self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
+    ) -> None:
+        """depth='schema' for SPSS should download full file (no streaming support)."""
+        pytest.importorskip("pyreadstat")
+        from pathlib import Path
+
+        from datannurpy.scanner.filesystem import FileSystem
+        from datannurpy.scanner.scan import scan_file
+
+        spss_path = Path(__file__).parent.parent / "data" / "datatypes_spss.sav"
+        if not spss_path.exists():
+            pytest.skip("SPSS test file not found")
+
+        memory_fs.pipe(f"{memory_root}/datatypes_spss.sav", spss_path.read_bytes())
+
+        fs = FileSystem(f"memory://{memory_root}")
+        result = scan_file(
+            Path(f"{memory_root}/datatypes_spss.sav"),
+            "spss",
             dataset_id="test",
             schema_only=True,
             fs=fs,

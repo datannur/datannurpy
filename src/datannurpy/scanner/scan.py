@@ -261,12 +261,74 @@ def _scan_schema_only(
     return _scan_schema_only_local(path, delivery_format, dataset_id, csv_encoding)
 
 
-# Bytes to download for schema-only reads of statistical formats
-_PARTIAL_BYTES = {
-    "sas": 16384,  # 16KB for SAS header
-    "spss": 2048,  # 2KB for SPSS header
-    "stata": 8192,  # 8KB for Stata header
-}
+def _scan_stat_schema_stream(
+    path: PurePath,
+    delivery_format: str,
+    dataset_id: str,
+    fs: FileSystem,
+) -> ScanResult:
+    """Read SAS/Stata schema via pandas streaming (avoids full file download)."""
+    description: str | None = None
+    names: list[str] = []
+    label_map: dict[str, str] = {}
+
+    with fs.open(str(path), "rb") as f:
+        if delivery_format == "sas":
+            from pandas.io.sas.sas7bdat import SAS7BDATReader
+
+            with SAS7BDATReader(f) as sas_reader:
+                names = [str(col.name) for col in sas_reader.columns]
+                label_map = {
+                    str(col.name): str(col.label)
+                    for col in sas_reader.columns
+                    if col.label
+                }
+        else:  # stata
+            from pandas.io.stata import StataReader
+
+            with StataReader(f) as stata_reader:
+                label_map = stata_reader.variable_labels()
+                names = list(label_map.keys())
+                description = stata_reader.data_label or None
+
+    variables = [
+        Variable(
+            id=f"{dataset_id}---{name}",
+            name=name,
+            dataset_id=dataset_id,
+            description=label_map.get(name) or None,
+        )
+        for name in names
+    ]
+    return ScanResult(variables=variables, nb_row=None, description=description)
+
+
+def _scan_excel_schema_stream(
+    path: PurePath,
+    dataset_id: str,
+    fs: FileSystem,
+) -> ScanResult:
+    """Read xlsx headers via openpyxl streaming (avoids full file download)."""
+    import openpyxl
+
+    with fs.open(str(path), "rb") as f:
+        wb = openpyxl.load_workbook(f, read_only=True)
+        ws = wb.active
+        headers: list[str] = []
+        if ws is not None:  # pragma: no branch
+            for row in ws.iter_rows(min_row=1, max_row=1, values_only=True):
+                headers = [str(c) for c in row if c is not None]
+        wb.close()
+
+    variables = [
+        Variable(
+            id=f"{dataset_id}---{name}",
+            name=name,
+            dataset_id=dataset_id,
+        )
+        for name in headers
+    ]
+    return ScanResult(variables=variables, nb_row=None)
 
 
 def _scan_schema_only_remote(
@@ -329,18 +391,14 @@ def _scan_schema_only_remote(
         variables = build_variables_from_schema(schema, dataset_id)
         return ScanResult(variables=variables, nb_row=None)
 
-    # SAS/SPSS/Stata: partial download + metadataonly
-    if delivery_format in _PARTIAL_BYTES:
-        max_bytes = _PARTIAL_BYTES[delivery_format]
-        with fs.ensure_local_partial(str(path), max_bytes) as local_path:
-            variables, _, _, metadata = scan_statistical(
-                local_path, dataset_id=dataset_id, infer_stats=False
-            )
-            return ScanResult(
-                variables=variables,
-                nb_row=None,
-                description=metadata.description if metadata else None,
-            )
+    # SAS/Stata: pandas streaming reads only header bytes (no full download)
+    if delivery_format in ("sas", "stata"):
+        return _scan_stat_schema_stream(path, delivery_format, dataset_id, fs)
+
+    # SPSS: must download full file (pd.read_spss wraps pyreadstat, no streaming)
+    if delivery_format == "spss":
+        with fs.ensure_local(str(path)) as local_path:
+            return _scan_schema_only_local(local_path, delivery_format, dataset_id)
 
     # CSV: partial download (4KB for header + some rows for type inference)
     if delivery_format == "csv":
@@ -349,7 +407,11 @@ def _scan_schema_only_remote(
                 local_path, delivery_format, dataset_id, csv_encoding
             )
 
-    # Excel: no optimization possible (must download full file)
+    # Excel xlsx: openpyxl read_only streams only headers (no full download)
+    # xls: must download full file (xlrd doesn't support streaming)
+    suffix = PurePath(path).suffix.lower()
+    if suffix != ".xls":
+        return _scan_excel_schema_stream(path, dataset_id, fs)
     with fs.ensure_local(str(path)) as local_path:
         return _scan_schema_only_local(
             local_path, delivery_format, dataset_id, csv_encoding
