@@ -1,5 +1,12 @@
 # datannurpy
 
+## 0.10.0 (2026-03-22)
+
+- add: `min`, `max`, `mean`, `std` statistics on Variable (numeric, string length, date as epoch seconds)
+- add: graceful fallback when loading a stale/incompatible database emits a warning and starts fresh instead of crashing
+- fix: `refresh=True` now skips loading the existing database entirely
+- fix: date statistics no longer overflow on dates before 1901 (epoch_seconds cast to int64)
+
 ## 0.9.8 (2026-03-20)
 
 - fix: remote `depth="schema"` SAS/Stata scan no longer fails — use pandas streaming instead of partial download (pyreadstat needs full file)

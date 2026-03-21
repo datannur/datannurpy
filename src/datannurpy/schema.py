@@ -71,6 +71,10 @@ class Variable:
     nb_distinct: int | None = None
     nb_duplicate: int | None = None
     nb_missing: int | None = None
+    min: float | None = None
+    max: float | None = None
+    mean: float | None = None
+    std: float | None = None
     start_date: str | None = None
     end_date: str | None = None
 
