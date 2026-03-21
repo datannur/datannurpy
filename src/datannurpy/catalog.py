@@ -47,13 +47,28 @@ class Catalog(DatannurDB):
         self.app_path = Path(app_path) if app_path is not None else None
         self.db_path = self.app_path / "data" / "db" if self.app_path else None
 
-        # Load existing db if present
+        # Load existing db if present (skip when refresh=True: full rescan)
         load_path: str | None = None
-        if self.db_path and self.db_path.exists():
+        if not refresh and self.db_path and self.db_path.exists():
             if (self.db_path / "__table__.json").exists():
                 load_path = str(self.db_path)
 
-        super().__init__(load_path)
+        try:
+            super().__init__(load_path)
+        except Exception:
+            if load_path is not None:
+                import warnings
+
+                warnings.warn(
+                    f"Could not load existing database at {load_path}. "
+                    "The schema may have changed after a datannurpy upgrade. "
+                    "Starting fresh (use refresh=True to avoid this warning).",
+                    stacklevel=2,
+                )
+                load_path = None
+                super().__init__(None)
+            else:
+                raise
 
         # Config
         self.depth = depth

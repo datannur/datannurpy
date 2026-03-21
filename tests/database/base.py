@@ -126,6 +126,11 @@ class BaseDatabaseTests(ABC):
         # department has 3 distinct values
         assert var_by_name["department"].nb_distinct == 3
         assert var_by_name["department"].nb_missing == 0
+        # salary stats
+        assert var_by_name["salary"].min == pytest.approx(60000.0)
+        assert var_by_name["salary"].max == pytest.approx(80000.0)
+        assert var_by_name["salary"].mean == pytest.approx(70000.0)
+        assert var_by_name["salary"].std is not None
 
     def test_scan_table_without_stats(
         self, db_with_employees: tuple[ibis.BaseBackend, str, str]

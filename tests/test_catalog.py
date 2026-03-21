@@ -105,6 +105,42 @@ class TestCatalogRefresh:
         catalog = Catalog(refresh=True)
         assert catalog.refresh is True
 
+    def test_refresh_skips_loading_existing_db(self, tmp_path: Path):
+        """Catalog with refresh=True should not load existing db."""
+        app_dir = tmp_path / "app"
+        catalog1 = Catalog(app_path=app_dir)
+        catalog1.folder.add(Folder(id="f1", name="Test", _seen=True))
+        catalog1.export_db()
+
+        catalog2 = Catalog(app_path=app_dir, refresh=True)
+        assert len(catalog2.folder.all()) == 0
+
+    def test_corrupted_db_falls_back_gracefully(self, tmp_path: Path):
+        """Catalog should warn and start fresh if existing db is corrupted."""
+        app_dir = tmp_path / "app"
+        db_dir = app_dir / "data" / "db"
+        db_dir.mkdir(parents=True)
+        (db_dir / "__table__.json").write_text('[{"name":"variable","last_modif":0}]')
+        (db_dir / "variable.json").write_text("NOT VALID JSON{{{{")
+
+        import warnings
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            catalog = Catalog(app_path=app_dir)
+            assert len(w) == 1
+            assert "Could not load" in str(w[0].message)
+        assert len(catalog.variable.all()) == 0
+
+    def test_init_error_without_db_reraised(self, monkeypatch: pytest.MonkeyPatch):
+        """Catalog should reraise init errors not caused by loading existing db."""
+        monkeypatch.setattr(
+            "datannurpy.catalog.DatannurDB.__init__",
+            lambda *a, **kw: (_ for _ in ()).throw(RuntimeError("boom")),
+        )
+        with pytest.raises(RuntimeError, match="boom"):
+            Catalog()
+
 
 class TestCatalogExportDbDefault:
     """Test Catalog.export_db with app_path default."""

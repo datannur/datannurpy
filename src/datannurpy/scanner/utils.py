@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from datetime import datetime, timezone
 from pathlib import Path, PurePath, PurePosixPath
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import ibis
 import ibis.expr.datatypes as dt
@@ -15,6 +15,21 @@ from ..schema import Variable
 
 if TYPE_CHECKING:
     from .filesystem import FileSystem
+
+
+def _to_float(val: Any) -> float | None:
+    """Convert a raw aggregation result to float, or None if null."""
+    if val is None:
+        return None
+    return float(val)
+
+
+def _round6(val: Any) -> float | None:
+    """Convert to float rounded to 6 decimals, or None if null."""
+    if val is None:
+        return None
+    return round(float(val), 6)
+
 
 # Supported file formats: suffix -> delivery_format
 SUPPORTED_FORMATS: dict[str, str] = {
@@ -255,17 +270,65 @@ def build_variables(
         if isinstance(col_type, (dt.Binary, dt.Unknown, dt.GeoSpatial)):
             skip_cols.add(col_name)
 
+    # Determine which columns support min/max/mean/std
+    _NUMERIC_TYPES = (
+        dt.Int8,
+        dt.Int16,
+        dt.Int32,
+        dt.Int64,
+        dt.UInt8,
+        dt.UInt16,
+        dt.UInt32,
+        dt.UInt64,
+        dt.Float32,
+        dt.Float64,
+        dt.Decimal,
+    )
+    _DATE_TYPES = (dt.Date, dt.Timestamp)
+
     # Compute stats only if needed
     stats: dict[str, tuple[int, int, int]] = {}
+    extra_stats: dict[
+        str, tuple[float | None, float | None, float | None, float | None]
+    ] = {}
     if infer_stats and nb_rows > 0:
         # Build aggregation expressions for distinct and null counts
         # Exclude columns that don't support aggregation (e.g., CLOB)
         cols_for_stats = [c for c in columns if c not in skip_cols]
         agg_exprs = []
+        cols_with_extra: list[str] = []
         for col in cols_for_stats:
             agg_exprs.append(table[col].nunique().name(f"{col}__distinct"))
             # count() excludes nulls, so nb_rows - count = nb_missing
             agg_exprs.append(table[col].count().name(f"{col}__non_null"))
+            # min/max/mean/std depending on type
+            col_type = schema[col]
+            if isinstance(col_type, _NUMERIC_TYPES):
+                col_expr: Any = table[col]
+                agg_exprs.append(col_expr.min().name(f"{col}__min"))
+                agg_exprs.append(col_expr.max().name(f"{col}__max"))
+                agg_exprs.append(col_expr.mean().name(f"{col}__mean"))
+                if nb_rows > 1:
+                    agg_exprs.append(col_expr.std().name(f"{col}__std"))
+                cols_with_extra.append(col)
+            elif isinstance(col_type, dt.String):
+                str_col: Any = table[col]
+                length_expr: Any = str_col.length()
+                agg_exprs.append(length_expr.min().name(f"{col}__min"))
+                agg_exprs.append(length_expr.max().name(f"{col}__max"))
+                agg_exprs.append(length_expr.mean().name(f"{col}__mean"))
+                if nb_rows > 1:
+                    agg_exprs.append(length_expr.std().name(f"{col}__std"))
+                cols_with_extra.append(col)
+            elif isinstance(col_type, _DATE_TYPES):
+                date_col: Any = table[col]
+                epoch: Any = date_col.epoch_seconds().cast("int64")
+                agg_exprs.append(epoch.min().name(f"{col}__min"))
+                agg_exprs.append(epoch.max().name(f"{col}__max"))
+                agg_exprs.append(epoch.mean().name(f"{col}__mean"))
+                if nb_rows > 1:
+                    agg_exprs.append(epoch.std().name(f"{col}__std"))
+                cols_with_extra.append(col)
 
         if agg_exprs:
             try:
@@ -276,9 +339,19 @@ def build_variables(
                     nb_missing = nb_rows - nb_non_null
                     nb_duplicate = nb_rows - nb_distinct
                     stats[col] = (nb_distinct, nb_duplicate, nb_missing)
+                for col in cols_with_extra:
+                    raw_min = stats_row[f"{col}__min"]
+                    raw_max = stats_row[f"{col}__max"]
+                    raw_mean = stats_row[f"{col}__mean"]
+                    raw_std = stats_row.get(f"{col}__std")
+                    extra_stats[col] = (
+                        _to_float(raw_min),
+                        _to_float(raw_max),
+                        _round6(raw_mean),
+                        _round6(raw_std),
+                    )
             except Exception as e:
                 # Oracle ORA-22849: CLOB columns don't support COUNT DISTINCT
-                # Skip stats for this table if aggregation fails (fallback safety)
                 if "ORA-22849" in str(e):
                     pass  # stats remains empty, all stats will be None
                 else:
@@ -313,6 +386,12 @@ def build_variables(
         val = stats[col][idx]
         return val if val >= 0 else None
 
+    def get_extra(col: str, idx: int) -> float | None:
+        """Get extra stat (min/max/mean/std), returning None if not computed."""
+        if col not in extra_stats:
+            return None
+        return extra_stats[col][idx]
+
     variables = [
         Variable(
             id=col_name,
@@ -322,6 +401,10 @@ def build_variables(
             nb_distinct=get_stat(col_name, 0),
             nb_duplicate=get_stat(col_name, 1),
             nb_missing=get_stat(col_name, 2),
+            min=get_extra(col_name, 0),
+            max=get_extra(col_name, 1),
+            mean=get_extra(col_name, 2),
+            std=get_extra(col_name, 3),
         )
         for col_name in columns
     ]

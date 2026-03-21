@@ -81,3 +81,106 @@ class TestBuildVariables:
 
         with pytest.raises(ValueError, match="Some other error"):
             build_variables(table, nb_rows=2, dataset_id="test", infer_stats=True)
+
+    def test_numeric_extra_stats(self):
+        """build_variables should compute min/max/mean/std for numeric columns."""
+        table = ibis.memtable({"val": [10, 20, 30, 40, 50]})
+        variables, _ = build_variables(
+            table, nb_rows=5, dataset_id="test", infer_stats=True
+        )
+        v = variables[0]
+        assert v.min == pytest.approx(10.0)
+        assert v.max == pytest.approx(50.0)
+        assert v.mean == pytest.approx(30.0)
+        assert v.std is not None
+
+    def test_float_extra_stats(self):
+        """build_variables should compute min/max/mean/std for float columns."""
+        table = ibis.memtable({"val": [1.5, 2.5, 3.5]})
+        variables, _ = build_variables(
+            table, nb_rows=3, dataset_id="test", infer_stats=True
+        )
+        v = variables[0]
+        assert v.min == pytest.approx(1.5)
+        assert v.max == pytest.approx(3.5)
+        assert v.mean == pytest.approx(2.5)
+
+    def test_string_extra_stats_on_length(self):
+        """build_variables should compute min/max/mean/std on string length."""
+        table = ibis.memtable({"name": ["ab", "abcd", "abcdef"]})
+        variables, _ = build_variables(
+            table, nb_rows=3, dataset_id="test", infer_stats=True
+        )
+        v = variables[0]
+        assert v.min == pytest.approx(2.0)
+        assert v.max == pytest.approx(6.0)
+        assert v.mean == pytest.approx(4.0)
+
+    def test_extra_stats_with_nulls(self):
+        """build_variables should exclude nulls from min/max/mean/std."""
+        table = ibis.memtable({"val": [10, None, 30, None, 50]})
+        variables, _ = build_variables(
+            table, nb_rows=5, dataset_id="test", infer_stats=True
+        )
+        v = variables[0]
+        assert v.min == pytest.approx(10.0)
+        assert v.max == pytest.approx(50.0)
+        assert v.mean == pytest.approx(30.0)
+        assert v.nb_missing == 2
+
+    def test_extra_stats_none_when_no_infer(self):
+        """Extra stats should be None when infer_stats=False."""
+        table = ibis.memtable({"val": [10, 20, 30]})
+        variables, _ = build_variables(
+            table, nb_rows=3, dataset_id="test", infer_stats=False
+        )
+        v = variables[0]
+        assert v.min is None
+        assert v.max is None
+        assert v.mean is None
+        assert v.std is None
+
+    def test_extra_stats_none_for_boolean(self):
+        """Boolean columns should not have extra stats."""
+        table = ibis.memtable({"flag": [True, False, True]})
+        variables, _ = build_variables(
+            table, nb_rows=3, dataset_id="test", infer_stats=True
+        )
+        v = variables[0]
+        assert v.min is None
+        assert v.max is None
+
+    def test_date_extra_stats(self):
+        """build_variables should compute min/max/mean/std on date columns as epoch seconds."""
+        import datetime
+
+        table = ibis.memtable(
+            {
+                "dt": [
+                    datetime.date(2020, 1, 1),
+                    datetime.date(2020, 7, 1),
+                    datetime.date(2021, 1, 1),
+                ]
+            }
+        )
+        variables, _ = build_variables(
+            table, nb_rows=3, dataset_id="test", infer_stats=True
+        )
+        v = variables[0]
+        assert v.min is not None
+        assert v.max is not None
+        assert v.mean is not None
+        assert v.std is not None
+        assert v.min < v.max
+
+    def test_single_row_skips_std(self):
+        """build_variables should skip std when table has only 1 row."""
+        import datetime
+
+        table = ibis.memtable({"dt": [datetime.date(2020, 1, 1)], "val": [42]})
+        variables, _ = build_variables(
+            table, nb_rows=1, dataset_id="test", infer_stats=True
+        )
+        for v in variables:
+            assert v.std is None
+            assert v.min is not None
