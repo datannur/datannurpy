@@ -113,18 +113,19 @@ class TestGeoPackage:
             con.disconnect()
 
     def test_geopackage_scan_table_with_geometry(self, gpkg_path: Path) -> None:
-        """Test scanning a table with geometry columns (Unknown type for POINT)."""
+        """Test scanning a table with geometry columns (POINT → geometry type)."""
         if not gpkg_path.exists():
             pytest.skip("GeoPackage test file not available")
         con, _ = connect(f"sqlite:////{gpkg_path}")
         try:
-            # Project has: id, geom (POINT/Unknown), ProjectName, etc.
+            # Project has: id, geom (POINT → geometry), ProjectName, etc.
             variables, row_count, freq_table = scan_table(
                 con, "Project", dataset_id="test", infer_stats=True, freq_threshold=100
             )
             assert row_count == 29  # 29 photovoltaic projects
             var_dict = {v.id: v for v in variables}
-            # geom (Unknown) should have None stats
+            # geom should be detected as geometry with no stats
+            assert var_dict["geom"].type == "geometry"
             assert var_dict["geom"].nb_distinct is None
             # Other columns should have stats
             assert var_dict["id"].nb_distinct is not None

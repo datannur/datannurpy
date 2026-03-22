@@ -32,6 +32,22 @@ class TestIbisTypeToStr:
         """Null should map to 'null'."""
         assert ibis_type_to_str(dt.Null()) == "null"
 
+    def test_geospatial(self):
+        """GeoSpatial types should map to 'geometry'."""
+        assert ibis_type_to_str(dt.GeoSpatial()) == "geometry"
+        assert ibis_type_to_str(dt.Point()) == "geometry"
+        assert ibis_type_to_str(dt.Polygon()) == "geometry"
+
+    def test_unknown_geometry(self):
+        """Unknown types with geometry raw_type should map to 'geometry'."""
+        mock_raw = MagicMock(**{"__str__.return_value": "point"})
+        assert ibis_type_to_str(dt.Unknown(raw_type=mock_raw)) == "geometry"
+
+    def test_unknown_non_geometry(self):
+        """Unknown types without geometry raw_type should stay 'unknown'."""
+        mock_raw = MagicMock(**{"__str__.return_value": "sometype"})
+        assert ibis_type_to_str(dt.Unknown(raw_type=mock_raw)) == "unknown"
+
 
 class TestBuildVariables:
     """Test build_variables function."""
