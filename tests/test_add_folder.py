@@ -87,6 +87,23 @@ class TestAddFolderFormats:
         assert len(catalog.dataset.all()) == 1
         assert len(catalog.variable.all()) == 2
 
+    def test_add_folder_excel_datetime_with_time(self, tmp_path: Path):
+        """Excel datetime columns with non-midnight times stay as datetime."""
+        df = pd.DataFrame(
+            {
+                "event": ["a", "b"],
+                "ts": pd.to_datetime(["2024-01-15 10:30:00", "2024-02-20 14:45:00"]),
+            }
+        )
+        df.to_excel(tmp_path / "events.xlsx", index=False)
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, quiet=True)
+
+        var = catalog.variable.get_by("name", "ts")
+        assert var is not None
+        assert var.type == "datetime"
+
     def test_add_folder_scans_parquet(self):
         """add_folder should scan Parquet files (.parquet extension)."""
         catalog = Catalog()

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import time as dt_time
 from pathlib import Path
 
 import ibis
@@ -11,6 +12,8 @@ import pyarrow as pa
 from ..schema import Variable
 from ..utils import log_warn
 from .utils import build_variables
+
+_MIDNIGHT = dt_time(0, 0)
 
 
 def read_excel(
@@ -52,6 +55,14 @@ def scan_excel(
     df = read_excel(path, sheet_name=sheet_name, quiet=quiet)
     if df is None:
         return [], 0, None
+
+    # Pandas reads Excel dates as datetime64 even for date-only cells.
+    # Detect columns where all values are at midnight and convert to date.
+    for col in df.columns:
+        if pd.api.types.is_datetime64_any_dtype(df[col]):
+            non_null = df[col].dropna()
+            if len(non_null) > 0 and (non_null.dt.time == _MIDNIGHT).all():
+                df[col] = df[col].dt.date
 
     con = ibis.duckdb.connect()
     try:

@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.10.1 (2026-03-22)
+
+- add: new `"geometry"` variable type for spatial columns (POINT, POLYGON, etc. from GeoPackage, PostGIS, etc.)
+- fix: Excel date-only columns (all values at midnight) now correctly detected as `"date"` instead of `"datetime"`
+
 ## 0.10.0 (2026-03-22)
 
 - add: `min`, `max`, `mean`, `std` statistics on Variable (numeric, string length, date as epoch seconds)

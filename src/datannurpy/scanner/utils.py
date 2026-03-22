@@ -220,6 +220,19 @@ def _find_files_with_fs(
     return sorted(PurePosixPath(p) for p in candidates)
 
 
+# Geometry keywords from OGC SQL/MM standard (matched case-insensitively)
+_GEOMETRY_KEYWORDS = {
+    "point",
+    "linestring",
+    "polygon",
+    "multipoint",
+    "multilinestring",
+    "multipolygon",
+    "geometrycollection",
+    "geometry",
+}
+
+
 def ibis_type_to_str(dtype: dt.DataType) -> str:
     """Convert Ibis dtype to string."""
     if isinstance(dtype, (dt.Int8, dt.Int16, dt.Int32, dt.Int64)):
@@ -240,8 +253,15 @@ def ibis_type_to_str(dtype: dt.DataType) -> str:
         return "time"
     if isinstance(dtype, dt.Interval):
         return "duration"
+    if isinstance(dtype, dt.GeoSpatial):
+        return "geometry"
     if isinstance(dtype, dt.Null):
         return "null"
+    if (
+        isinstance(dtype, dt.Unknown)
+        and str(dtype.raw_type).lower() in _GEOMETRY_KEYWORDS
+    ):
+        return "geometry"
     return "unknown"
 
 
