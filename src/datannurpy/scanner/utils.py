@@ -304,7 +304,7 @@ def build_variables(
             # min/max/mean/std depending on type
             col_type = schema[col]
             if isinstance(col_type, _NUMERIC_TYPES):
-                col_expr: Any = table[col]
+                col_expr: Any = table[col].cast("float64")
                 agg_exprs.append(col_expr.min().name(f"{col}__min"))
                 agg_exprs.append(col_expr.max().name(f"{col}__max"))
                 agg_exprs.append(col_expr.mean().name(f"{col}__mean"))
@@ -313,7 +313,7 @@ def build_variables(
                 cols_with_extra.append(col)
             elif isinstance(col_type, dt.String):
                 str_col: Any = table[col]
-                length_expr: Any = str_col.length()
+                length_expr: Any = str_col.length().cast("float64")
                 agg_exprs.append(length_expr.min().name(f"{col}__min"))
                 agg_exprs.append(length_expr.max().name(f"{col}__max"))
                 agg_exprs.append(length_expr.mean().name(f"{col}__mean"))
@@ -322,7 +322,7 @@ def build_variables(
                 cols_with_extra.append(col)
             elif isinstance(col_type, _DATE_TYPES):
                 date_col: Any = table[col]
-                epoch: Any = date_col.epoch_seconds().cast("int64")
+                epoch: Any = date_col.epoch_seconds().cast("float64")
                 agg_exprs.append(epoch.min().name(f"{col}__min"))
                 agg_exprs.append(epoch.max().name(f"{col}__max"))
                 agg_exprs.append(epoch.mean().name(f"{col}__mean"))
