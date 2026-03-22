@@ -184,3 +184,30 @@ class TestBuildVariables:
         for v in variables:
             assert v.std is None
             assert v.min is not None
+
+    def test_arrow_invalid_fallback(self):
+        """build_variables falls back to execute() when to_pyarrow() raises ArrowInvalid."""
+        from unittest.mock import patch
+
+        import pyarrow as pa
+
+        table = ibis.memtable({"val": [1, 2, 3]})
+        orig_to_pyarrow = type(table.aggregate([])).to_pyarrow
+
+        call_count = 0
+
+        def failing_to_pyarrow(self_expr, **kw):  # type: ignore[no-untyped-def]
+            nonlocal call_count
+            call_count += 1
+            # Fail on the first call (stats aggregation)
+            if call_count == 1:
+                raise pa.ArrowInvalid("Could not convert Decimal('1')")
+            return orig_to_pyarrow(self_expr, **kw)
+
+        with patch.object(type(table.aggregate([])), "to_pyarrow", failing_to_pyarrow):
+            variables, _ = build_variables(
+                table, nb_rows=3, dataset_id="test", infer_stats=True
+            )
+        v = variables[0]
+        assert v.min is not None
+        assert v.max is not None

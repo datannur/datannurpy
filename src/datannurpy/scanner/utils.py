@@ -332,7 +332,12 @@ def build_variables(
 
         if agg_exprs:
             try:
-                stats_row = table.aggregate(agg_exprs).to_pyarrow().to_pylist()[0]
+                agg_table = table.aggregate(agg_exprs)
+                try:
+                    stats_row = agg_table.to_pyarrow().to_pylist()[0]
+                except pa.ArrowInvalid:
+                    # Oracle: Decimal values can't convert via PyArrow
+                    stats_row = dict(agg_table.execute().iloc[0])
                 for col in cols_for_stats:
                     nb_distinct = int(stats_row[f"{col}__distinct"])
                     nb_non_null = int(stats_row[f"{col}__non_null"])
