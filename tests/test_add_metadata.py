@@ -12,6 +12,7 @@ import pandas as pd
 import pytest
 
 from datannurpy import Catalog, Folder
+from datannurpy.errors import ConfigError
 from datannurpy.schema import Value, Variable
 from datannurpy.utils.ids import build_value_id
 from datannurpy.add_metadata import (
@@ -772,7 +773,7 @@ class TestAddMetadataIntegration:
         """Should raise FileNotFoundError for missing folder."""
         catalog = Catalog()
 
-        with pytest.raises(FileNotFoundError, match="Metadata folder not found"):
+        with pytest.raises(ConfigError, match="Metadata folder not found"):
             catalog.add_metadata("/nonexistent/path", quiet=True)
 
     def test_add_metadata_not_a_directory(self, tmp_path: Path):
@@ -782,7 +783,7 @@ class TestAddMetadataIntegration:
 
         catalog = Catalog()
 
-        with pytest.raises(ValueError, match="must be a directory"):
+        with pytest.raises(ConfigError, match="must be a directory"):
             catalog.add_metadata(file_path, quiet=True)
 
     def test_add_metadata_no_files_found(self, tmp_path: Path, capsys):

@@ -310,7 +310,7 @@
     "min": 11.0,
     "max": 11.0,
     "mean": 11.0,
-    "std": 0.0,
+    "std": null,
     "start_date": null,
     "end_date": null
   },
@@ -1906,7 +1906,7 @@
     "min": 26.0,
     "max": 26.0,
     "mean": 26.0,
-    "std": 0.0,
+    "std": null,
     "start_date": null,
     "end_date": null
   },
@@ -3208,7 +3208,7 @@
     "min": 3.0,
     "max": 3.0,
     "mean": 3.0,
-    "std": 0.0,
+    "std": null,
     "start_date": null,
     "end_date": null
   },
@@ -3502,7 +3502,7 @@
     "min": 0.0,
     "max": 0.0,
     "mean": 0.0,
-    "std": 0.0,
+    "std": null,
     "start_date": null,
     "end_date": null
   },
@@ -3523,7 +3523,7 @@
     "min": 0.0,
     "max": 0.0,
     "mean": 0.0,
-    "std": 0.0,
+    "std": null,
     "start_date": null,
     "end_date": null
   },

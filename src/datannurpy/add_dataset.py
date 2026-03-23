@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Any, Literal, cast
@@ -16,6 +17,7 @@ from .utils import (
     upsert_folder,
 )
 from .utils.params import validate_params
+from .errors import ConfigError
 from .finalize import remove_dataset_cascade
 from .schema import Dataset, Folder
 from .scanner.filesystem import FileSystem, is_remote_url
@@ -99,7 +101,7 @@ def _create_dataset(
 @validate_params
 def add_dataset(
     catalog: Catalog,
-    path: str | Path,
+    path: str | Path | Sequence[str | Path],
     folder: Folder | None = None,
     *,
     depth: Literal["structure", "schema", "full"] | None = None,
@@ -125,6 +127,13 @@ def add_dataset(
     no_more_update: str | None = None,
 ) -> None:
     """Add a single dataset file or partitioned directory to the catalog."""
+    if isinstance(path, list):
+        kwargs = {k: v for k, v in locals().items() if k not in ("catalog", "path")}
+        for p in path:
+            add_dataset(catalog, p, **kwargs)
+        return
+    assert not isinstance(path, Sequence) or isinstance(path, (str, Path))
+
     catalog._has_scanned = True
     q = quiet if quiet is not None else catalog.quiet
     do_refresh = refresh if refresh is not None else catalog.refresh
@@ -141,14 +150,14 @@ def add_dataset(
     if is_remote or storage_options:
         fs = FileSystem(path, storage_options)
         if not fs.exists(fs.root):
-            raise FileNotFoundError(f"Path not found: {path}")
+            raise ConfigError(f"Path not found: {path}")
         dataset_path = PurePosixPath(fs.root)
         path_name = fs.root.rstrip("/").rsplit("/", 1)[-1]
     else:
         dataset_path = Path(path).resolve()
         path_name = dataset_path.name
         if not dataset_path.exists():
-            raise FileNotFoundError(f"Path not found: {dataset_path}")
+            raise ConfigError(f"Path not found: {dataset_path}")
 
     start_time = log_section("add_dataset", path_name, q)
 
@@ -156,7 +165,7 @@ def add_dataset(
     resolved_folder_id: str | None = None
     if folder is not None:
         if folder_id is not None:
-            raise ValueError("Cannot specify both folder and folder_id")
+            raise ConfigError("Cannot specify both folder and folder_id")
         upsert_folder(catalog, folder)
         resolved_folder_id = folder.id
     elif folder_id is not None:
@@ -204,7 +213,7 @@ def add_dataset(
     suffix = Path(path_name).suffix.lower()
     delivery_format = SUPPORTED_FORMATS.get(suffix)
     if delivery_format is None:
-        raise ValueError(
+        raise ConfigError(
             f"Unsupported format: {suffix}. "
             f"Supported: {', '.join(SUPPORTED_FORMATS.keys())}"
         )
@@ -339,7 +348,7 @@ def _add_parquet_directory(
     elif is_hive_partitioned(dir_path, fs=fs):
         dataset_type, delivery_format = DatasetType.HIVE, "parquet"
     else:
-        raise ValueError(
+        raise ConfigError(
             f"Directory is not a recognized Parquet format "
             f"(Delta, Hive, or Iceberg): {dir_path}"
         )

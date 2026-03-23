@@ -1,5 +1,14 @@
 # datannurpy
 
+## 0.10.2 (2026-03-23)
+
+- add: `add_folder` and `add_dataset` accept a list of paths, `add_database` accepts a list of schemas — shared options apply to all entries
+- add: `env:` section in YAML config for reusable non-sensitive variables (expanded alongside `env_file` and `.env`)
+- fix: Oracle date/timestamp stats computed via raw SQL — bypasses ibis `ExtractEpochSeconds` unsupported operation
+- fix: skip `std` computation when a single distinct value, skip all stats when all values are missing
+- fix: introduce `ConfigError` for user-facing errors — CLI no longer masks internal bugs (`ValueError`/`FileNotFoundError` from libraries) and now catches `TypeError` from parameter typos
+- fix: `last_update_date` for database tables is `None` on first scan instead of current date — populated only when a change is detected
+
 ## 0.10.1 (2026-03-22)
 
 - add: new `"geometry"` variable type for spatial columns (POINT, POLYGON, etc. from GeoPackage, PostGIS, etc.)

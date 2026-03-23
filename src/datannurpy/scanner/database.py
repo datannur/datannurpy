@@ -11,11 +11,13 @@ from urllib.parse import parse_qs, urlparse
 import ibis
 import pyarrow as pa
 
+from ..errors import ConfigError
 from ..schema import Variable
 from ._oracle import (
     ORACLE_SYSTEM_TABLE_PREFIXES,
     _init_oracle_client,
     _oracle_get_schema,
+    _oracle_patch_date_stats,
 )
 from .utils import build_variables
 
@@ -147,7 +149,7 @@ def raise_driver_error(backend: str, original_error: Exception) -> NoReturn:
         ),
     }
     msg = messages.get(backend, f"Missing driver for {backend}")
-    raise ImportError(msg) from original_error
+    raise ConfigError(msg) from original_error
 
 
 def parse_connection_string(connection: str) -> tuple[str, dict[str, str]]:
@@ -158,7 +160,7 @@ def parse_connection_string(connection: str) -> tuple[str, dict[str, str]]:
     backend = SCHEME_TO_BACKEND.get(scheme)
     if backend is None:
         supported = ", ".join(sorted(SCHEME_TO_BACKEND.keys()))
-        raise ValueError(
+        raise ConfigError(
             f"Unsupported database scheme: {scheme!r}. Supported: {supported}"
         )
 
@@ -264,7 +266,7 @@ def connect(
     if isinstance(connection, ibis.BaseBackend):
         backend_name = get_backend_name(connection)
         if backend_name in ("pyspark", "datafusion", "polars"):
-            raise ValueError(
+            raise ConfigError(
                 f"Backend {backend_name!r} is not supported for database scanning. "
                 "Use sqlite, postgres, mysql, oracle, mssql, or duckdb."
             )
@@ -483,7 +485,7 @@ def _get_table(
         # temporary views for schema inference (cross-schema access).
         # sql() lives on SQLBackend, not BaseBackend, so use getattr.
         if oracle_schema is None:
-            oracle_schema, _ = _oracle_get_schema(con, table_name, schema)
+            oracle_schema, _, _ = _oracle_get_schema(con, table_name, schema)
         sql_method = getattr(con, "sql")
         uc_table = table_name.upper().replace('"', '""')
         if schema:
@@ -548,14 +550,18 @@ def scan_table(
     """Scan a database table and return (variables, row_count, freq_table)."""
     backend = get_backend_name(con)
 
-    # Oracle: get schema + detect LOB columns in a single query
+    # Oracle: get schema + detect LOB/date columns in a single query
     skip_stats_columns: set[str] = set()
+    oracle_date_columns: set[str] = set()
     oracle_schema: ibis.Schema | None = None
     if backend == "oracle":
         try:
-            oracle_schema, lob_columns = _oracle_get_schema(con, table_name, schema)
+            oracle_schema, lob_columns, date_columns = _oracle_get_schema(
+                con, table_name, schema
+            )
             if infer_stats:
-                skip_stats_columns = lob_columns
+                skip_stats_columns = lob_columns | date_columns
+                oracle_date_columns = date_columns
         except Exception:
             pass  # If metadata fails, _get_table will retry
 
@@ -579,5 +585,11 @@ def scan_table(
         freq_threshold=freq_threshold,
         skip_stats_columns=skip_stats_columns if skip_stats_columns else None,
     )
+
+    # Oracle: compute date/timestamp stats via raw SQL (epoch_seconds unsupported)
+    if oracle_date_columns and infer_stats and row_count > 0:
+        _oracle_patch_date_stats(
+            con, table_name, schema, oracle_date_columns, variables
+        )
 
     return variables, row_count, freq_table

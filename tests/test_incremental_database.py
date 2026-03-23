@@ -283,15 +283,73 @@ class TestIncrementalScanDatabase:
             assert ds.schema_signature is not None
             assert len(ds.schema_signature) == 32  # MD5 hex
 
-    def test_last_update_timestamp_stored(self, sample_db: Path, tmp_path: Path):
-        """Tables should have last_update_timestamp stored."""
+    def test_first_scan_no_update_date(self, sample_db: Path, tmp_path: Path):
+        """First scan should set last_update_date/timestamp to None."""
         catalog = Catalog(quiet=True)
         conn_str = f"sqlite:////{sample_db}"
         catalog.add_database(conn_str, Folder(id="db", name="Database"))
 
         for ds in catalog.dataset.all():
-            assert ds.last_update_timestamp is not None
-            assert ds.last_update_timestamp > 0
+            assert ds.last_update_timestamp is None
+            assert ds.last_update_date is None
+
+    def test_change_detected_sets_update_date(self, sample_db: Path, tmp_path: Path):
+        """Rescan with change should populate last_update_date."""
+        app_dir = tmp_path / "catalog"
+        conn_str = f"sqlite:////{sample_db}"
+
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
+        catalog1.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog1.export_db()
+
+        # Modify table
+        conn = sqlite3.connect(sample_db)
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO users VALUES (3, 'Charlie')")
+        conn.commit()
+        conn.close()
+
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
+        catalog2.add_database(conn_str, Folder(id="db", name="Database"))
+
+        users = next(d for d in catalog2.dataset.all() if "users" in (d.name or ""))
+        assert users.last_update_date is not None
+        assert users.last_update_timestamp is not None
+
+    def test_refresh_preserves_timestamp_when_unchanged(
+        self, sample_db: Path, tmp_path: Path
+    ):
+        """refresh=True on unchanged data should preserve last_update_timestamp."""
+        app_dir = tmp_path / "catalog"
+        conn_str = f"sqlite:////{sample_db}"
+
+        # Scan 1: first scan (timestamps are None)
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
+        catalog1.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog1.export_db()
+
+        # Modify table to trigger a real change
+        conn = sqlite3.connect(sample_db)
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO users VALUES (3, 'Charlie')")
+        conn.commit()
+        conn.close()
+
+        # Scan 2: detects change → sets timestamp
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
+        catalog2.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog2.export_db()
+
+        users2 = next(d for d in catalog2.dataset.all() if "users" in (d.name or ""))
+        saved_ts = users2.last_update_timestamp
+        assert saved_ts is not None
+
+        # Scan 3: refresh=True but no change → preserves timestamp
+        catalog3 = Catalog(app_path=app_dir, quiet=True)
+        catalog3.add_database(conn_str, Folder(id="db", name="Database"), refresh=True)
+
+        users3 = next(d for d in catalog3.dataset.all() if "users" in (d.name or ""))
+        assert users3.last_update_timestamp == saved_ts
 
 
 class TestCloseConnection:
@@ -341,7 +399,7 @@ class TestOracleBranches:
     """Tests for Oracle-specific branches using mocks."""
 
     _oracle_schema_patch = "datannurpy.scanner.database._oracle_get_schema"
-    _mock_schema_result = (ibis.schema({"ID": "int64"}), set())
+    _mock_schema_result = (ibis.schema({"ID": "int64"}), set(), set())
 
     def test_compute_schema_signature_oracle_with_schema(self):
         """Oracle backend should use con.sql() with explicit schema."""

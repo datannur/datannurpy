@@ -73,7 +73,7 @@ def add_database(
     folder: Folder | None = None,
     *,
     depth: Literal["structure", "schema", "full"] | None = None,
-    schema: str | None = None,
+    schema: str | Sequence[str] | None = None,
     include: Sequence[str] | None = None,
     exclude: Sequence[str] | None = None,
     infer_stats: bool = True,
@@ -86,6 +86,13 @@ def add_database(
     oracle_client_path: str | None = None,
 ) -> None:
     """Scan a database and add its tables to the catalog."""
+    if isinstance(schema, list):
+        kwargs = {k: v for k, v in locals().items() if k not in ("catalog", "schema")}
+        for s in schema:
+            add_database(catalog, schema=s, **kwargs)
+        return
+    assert not isinstance(schema, Sequence) or isinstance(schema, str)
+
     # Handle remote SQLite files (sftp://, s3://, etc.)
     if isinstance(connection, str) and _is_remote_database_file(connection):
         remote_path = urlparse(connection).path
@@ -286,16 +293,17 @@ def _add_database_impl(
 
                 dataset_id = make_id(table_folder_id, sanitize_id(table_name))
 
-                if existing_dataset is not None:
+                is_change = existing_dataset is not None
+                if is_change:
                     remove_dataset_cascade(catalog, existing_dataset)
                 dataset = Dataset(
                     id=dataset_id,
                     name=table_name,
                     folder_id=table_folder_id,
                     delivery_format=backend_name,
-                    last_update_date=now_iso,
+                    last_update_date=now_iso if is_change else None,
                     data_path=table_data_path,
-                    last_update_timestamp=catalog._now,
+                    last_update_timestamp=catalog._now if is_change else None,
                     _seen=True,
                 )
                 catalog.dataset.add(dataset)
@@ -349,15 +357,16 @@ def _add_database_impl(
             # Build dataset ID
             dataset_id = make_id(table_folder_id, sanitize_id(table_name))
 
-            # Use preserved timestamp if available, otherwise current time
-            effective_timestamp = (
-                preserved_timestamp if preserved_timestamp is not None else catalog._now
-            )
-            effective_date = (
-                timestamp_to_iso(preserved_timestamp)
-                if preserved_timestamp is not None
-                else now_iso
-            )
+            # First scan → None; rescan with change → now; unchanged → preserved
+            if existing_dataset is None:
+                effective_timestamp = None
+                effective_date = None
+            elif preserved_timestamp is not None:
+                effective_timestamp = preserved_timestamp
+                effective_date = timestamp_to_iso(preserved_timestamp)
+            else:
+                effective_timestamp = catalog._now
+                effective_date = now_iso
 
             # Schema/Full mode: scan table
             schema_only = resolved_depth == "schema"

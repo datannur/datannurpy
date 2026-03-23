@@ -97,15 +97,24 @@ export_app:
   open_browser: true
 ```
 
-Environment variables (`$VAR` or `${VAR}`) are expanded in all values. Place a `.env` file next to the YAML, or specify a custom path with `env_file`:
+Environment variables (`$VAR` or `${VAR}`) are expanded in all values. Define reusable values with `env:`, load secrets from `env_file`, or place a `.env` next to the YAML:
 
 ```yaml
-env_file: /secure/path/.env # optional, defaults to .env next to YAML
+env:
+  data_dir: /shared/data
+  db_host: db.example.com
+env_file: /secure/path/.env # secrets: DB_USER, DB_PASSWORD
 
 add:
+  - type: folder
+    path: ${data_dir}/sales
+  - type: folder
+    path: ${data_dir}/hr
   - type: database
-    uri: oracle://${DB_USER}:${DB_PASSWORD}@host:1521/ORCL
+    uri: oracle://${DB_USER}:${DB_PASSWORD}@${db_host}:1521/ORCL
 ```
+
+Priority: system env vars > `env_file` / `.env` > `env:` section.
 
 Run with:
 

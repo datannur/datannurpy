@@ -10,10 +10,11 @@ import yaml
 from dotenv import load_dotenv
 
 from ..catalog import Catalog
+from ..errors import ConfigError
 from ..schema import Folder
 
 VALID_TYPES = {"folder", "dataset", "database", "metadata"}
-RESERVED_KEYS = {"add", "export_app", "export_db", "env_file"}
+RESERVED_KEYS = {"add", "export_app", "export_db", "env_file", "env"}
 
 
 def _expand_vars(obj: Any) -> Any:
@@ -37,13 +38,28 @@ def _resolve_path(p: str, base_dir: Path) -> str:
     return str(path)
 
 
+def _resolve_paths(p: str | list[str], base_dir: Path) -> str | list[str]:
+    """Resolve a path or list of paths relative to base_dir."""
+    if isinstance(p, list):
+        return [_resolve_path(x, base_dir) for x in p]
+    return _resolve_path(p, base_dir)
+
+
 def run_config(path: str | Path) -> Catalog:
     """Load and execute a YAML catalog configuration."""
     config_path = Path(path).resolve()
     base_dir = config_path.parent
 
-    with open(config_path, encoding="utf-8") as f:
-        config = yaml.safe_load(f)
+    try:
+        with open(config_path, encoding="utf-8") as f:
+            config = yaml.safe_load(f)
+    except FileNotFoundError:
+        raise ConfigError(f"Config file not found: {config_path}") from None
+    except yaml.YAMLError as e:
+        raise ConfigError(f"Invalid YAML in {config_path.name}: {e}") from None
+
+    if not isinstance(config, dict):
+        raise ConfigError(f"{config_path.name} must be a YAML mapping")
 
     # Load .env: explicit env_file path takes priority, fallback to .env next to YAML
     env_file = config.pop("env_file", None)
@@ -51,6 +67,14 @@ def run_config(path: str | Path) -> Catalog:
         load_dotenv(_resolve_path(env_file, base_dir), override=False)
     else:
         load_dotenv(base_dir / ".env", override=False)
+
+    # Inject env: vars (lowest priority — never overrides system or .env vars)
+    env_vars = config.pop("env", None)
+    if env_vars:
+        if not isinstance(env_vars, dict):
+            raise ConfigError("'env' must be a mapping of key: value pairs")
+        for key, val in env_vars.items():
+            os.environ.setdefault(str(key), str(val))
 
     # Expand environment variables in all string values
     config = _expand_vars(config)
@@ -70,10 +94,10 @@ def run_config(path: str | Path) -> Catalog:
             item["folder"] = Folder(**item["folder"])
 
         if item_type == "folder":
-            folder_path = _resolve_path(item.pop("path"), base_dir)
+            folder_path = _resolve_paths(item.pop("path"), base_dir)
             catalog.add_folder(folder_path, **item)
         elif item_type == "dataset":
-            dataset_path = _resolve_path(item.pop("path"), base_dir)
+            dataset_path = _resolve_paths(item.pop("path"), base_dir)
             catalog.add_dataset(dataset_path, **item)
         elif item_type == "database":
             uri = item.pop("uri")
@@ -87,7 +111,7 @@ def run_config(path: str | Path) -> Catalog:
             catalog.add_metadata(meta_path, **item)
         else:
             valid = ", ".join(sorted(VALID_TYPES))
-            raise ValueError(
+            raise ConfigError(
                 f"Unknown type '{item_type}' in config. Valid types: {valid}"
             )
 

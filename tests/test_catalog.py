@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from datannurpy import Catalog, Folder
+from datannurpy.errors import ConfigError
 
 
 class TestCatalogRepr:
@@ -164,7 +165,7 @@ class TestCatalogExportDbDefault:
         catalog = Catalog()
         catalog.folder.add(Folder(id="f1", name="Test", _seen=True))
 
-        with pytest.raises(ValueError, match="output_dir is required"):
+        with pytest.raises(ConfigError, match="output_dir is required"):
             catalog.export_db()
 
     def test_export_db_explicit_path_overrides_db_path(self, tmp_path: Path):

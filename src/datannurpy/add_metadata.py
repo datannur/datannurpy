@@ -28,6 +28,7 @@ from .scanner import read_csv, read_excel, read_statistical
 from .utils import log_done, log_section, log_warn
 from .utils.ids import build_value_id
 from .utils.params import validate_params
+from .errors import ConfigError
 
 if TYPE_CHECKING:
     from .catalog import Catalog
@@ -504,9 +505,9 @@ def add_metadata(
     else:
         folder_path = Path(path)
         if not folder_path.exists():
-            raise FileNotFoundError(f"Metadata folder not found: {folder_path}")
+            raise ConfigError(f"Metadata folder not found: {folder_path}")
         if not folder_path.is_dir():
-            raise ValueError(f"Path must be a directory: {folder_path}")
+            raise ConfigError(f"Path must be a directory: {folder_path}")
 
         start_time = log_section("add_metadata", str(folder_path), quiet)
         tables = _load_tables_from_folder(folder_path, allowed_entities, quiet=quiet)

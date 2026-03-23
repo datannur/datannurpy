@@ -12,10 +12,11 @@ def main() -> None:
         sys.exit(1)
 
     from .config import run_config
+    from .errors import ConfigError
 
     try:
         run_config(sys.argv[1])
-    except (ValueError, FileNotFoundError) as e:
+    except ConfigError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 

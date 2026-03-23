@@ -9,7 +9,32 @@ import ibis.expr.datatypes as dt
 from ibis.expr.datatypes.core import IntervalUnit
 import pytest
 
-from datannurpy.scanner.utils import build_variables, ibis_type_to_str
+from datannurpy.scanner.utils import (
+    build_variables,
+    ibis_type_to_str,
+    _to_float,
+    _round6,
+)
+
+
+class TestToFloat:
+    """Test _to_float helper."""
+
+    def test_none(self):
+        assert _to_float(None) is None
+
+    def test_value(self):
+        assert _to_float(42) == 42.0
+
+
+class TestRound6:
+    """Test _round6 helper."""
+
+    def test_none(self):
+        assert _round6(None) is None
+
+    def test_value(self):
+        assert _round6(3.14159265) == 3.141593
 
 
 class TestIbisTypeToStr:
@@ -227,3 +252,14 @@ class TestBuildVariables:
         v = variables[0]
         assert v.min is not None
         assert v.max is not None
+
+    def test_single_distinct_value_no_nan(self):
+        """std should be None when all values are identical (single distinct)."""
+        table = ibis.memtable({"val": [42, 42, 42]})
+        variables, _ = build_variables(
+            table, nb_rows=3, dataset_id="test", infer_stats=True
+        )
+        v = variables[0]
+        assert v.min == pytest.approx(42.0)
+        assert v.max == pytest.approx(42.0)
+        assert v.std is None

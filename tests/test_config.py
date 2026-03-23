@@ -9,6 +9,7 @@ import pytest
 
 from datannurpy import run_config
 from datannurpy.config.config import _expand_vars, _resolve_path
+from datannurpy.errors import ConfigError
 
 
 class TestRunConfig:
@@ -254,7 +255,26 @@ add:
   - type: unknown
     path: {data_dir}
 """)
-        with pytest.raises(ValueError, match="Unknown type 'unknown'"):
+        with pytest.raises(ConfigError, match="Unknown type 'unknown'"):
+            run_config(config_file)
+
+    def test_run_config_file_not_found(self, tmp_path: Path):
+        """Missing config file should raise ConfigError."""
+        with pytest.raises(ConfigError, match="Config file not found"):
+            run_config(tmp_path / "nonexistent.yml")
+
+    def test_run_config_invalid_yaml(self, tmp_path: Path):
+        """Invalid YAML should raise ConfigError."""
+        config_file = tmp_path / "bad.yml"
+        config_file.write_text("{ invalid yaml: [")
+        with pytest.raises(ConfigError, match="Invalid YAML"):
+            run_config(config_file)
+
+    def test_run_config_not_a_mapping(self, tmp_path: Path):
+        """Non-mapping YAML should raise ConfigError."""
+        config_file = tmp_path / "list.yml"
+        config_file.write_text("- item1\n- item2\n")
+        with pytest.raises(ConfigError, match="must be a YAML mapping"):
             run_config(config_file)
 
     def test_run_config_relative_paths(self, tmp_path: Path):
@@ -463,3 +483,167 @@ add:
             assert any(d.name == "custom_env" for d in catalog.dataset.all())
         finally:
             os.environ.pop("TEST_CUSTOM_DB", None)
+
+    def test_env_section_in_yaml(self, tmp_path: Path) -> None:
+        """env: section injects variables for expansion."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "test.csv").write_text("a,b\n1,2\n")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+quiet: true
+refresh: true
+env:
+  MY_DATA_DIR: {data_dir}
+
+add:
+  - type: folder
+    path: ${{MY_DATA_DIR}}
+""")
+        try:
+            catalog = run_config(config_file)
+            assert len(catalog.dataset.all()) == 1
+        finally:
+            os.environ.pop("MY_DATA_DIR", None)
+
+    def test_env_section_does_not_override_env_file(self, tmp_path: Path) -> None:
+        """env_file values take priority over env: section."""
+        import sqlite3
+
+        db_path = tmp_path / "test.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE priority_test (id INTEGER)")
+        conn.commit()
+        conn.close()
+
+        env_file = tmp_path / ".env"
+        env_file.write_text(f"TEST_PRIORITY_VAR={db_path}\n")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text("""
+quiet: true
+refresh: true
+env:
+  TEST_PRIORITY_VAR: /wrong/path
+
+add:
+  - type: database
+    uri: sqlite:///${TEST_PRIORITY_VAR}
+""")
+        try:
+            catalog = run_config(config_file)
+            assert any(d.name == "priority_test" for d in catalog.dataset.all())
+        finally:
+            os.environ.pop("TEST_PRIORITY_VAR", None)
+
+    def test_env_section_does_not_override_system_env(self, tmp_path: Path) -> None:
+        """System env vars take priority over env: section."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "test.csv").write_text("a,b\n1,2\n")
+
+        os.environ["TEST_SYS_VAR"] = str(data_dir)
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text("""
+quiet: true
+refresh: true
+env:
+  TEST_SYS_VAR: /wrong/path
+
+add:
+  - type: folder
+    path: ${TEST_SYS_VAR}
+""")
+        try:
+            catalog = run_config(config_file)
+            assert len(catalog.dataset.all()) == 1
+        finally:
+            os.environ.pop("TEST_SYS_VAR", None)
+
+    def test_env_section_invalid_type(self, tmp_path: Path) -> None:
+        """env: must be a mapping, not a list."""
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text("""
+quiet: true
+env:
+  - FOO
+  - BAR
+""")
+        with pytest.raises(ConfigError, match="'env' must be a mapping"):
+            run_config(config_file)
+
+
+class TestListParameters:
+    """Test list parameters in YAML config."""
+
+    def test_folder_path_list(self, tmp_path: Path):
+        """List of paths in folder config scans all paths."""
+        d1 = tmp_path / "a"
+        d1.mkdir()
+        (d1 / "f.csv").write_text("x\n1")
+        d2 = tmp_path / "b"
+        d2.mkdir()
+        (d2 / "g.csv").write_text("y\n2")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+quiet: true
+refresh: true
+
+add:
+  - type: folder
+    path:
+      - {d1}
+      - {d2}
+""")
+        catalog = run_config(config_file)
+        ids = {d.id for d in catalog.dataset.all()}
+        assert "a---f_csv" in ids
+        assert "b---g_csv" in ids
+
+    def test_dataset_path_list(self, tmp_path: Path):
+        """List of paths in dataset config scans all files."""
+        (tmp_path / "a.csv").write_text("x\n1")
+        (tmp_path / "b.csv").write_text("y\n2")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+quiet: true
+refresh: true
+
+add:
+  - type: dataset
+    path:
+      - {tmp_path / "a.csv"}
+      - {tmp_path / "b.csv"}
+""")
+        catalog = run_config(config_file)
+        ids = {d.id for d in catalog.dataset.all()}
+        assert "a" in ids
+        assert "b" in ids
+
+    def test_database_schema_list(self, tmp_path: Path):
+        """List of schemas in database config scans each schema."""
+        import sqlite3
+
+        db_path = tmp_path / "test.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE t1 (id INTEGER)")
+        conn.commit()
+        conn.close()
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+quiet: true
+refresh: true
+
+add:
+  - type: database
+    uri: sqlite:///{db_path}
+    schema:
+      - main
+""")
+        catalog = run_config(config_file)
+        assert any(d.name == "t1" for d in catalog.dataset.all())

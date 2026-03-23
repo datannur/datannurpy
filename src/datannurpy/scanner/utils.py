@@ -365,6 +365,11 @@ def build_variables(
                     nb_duplicate = nb_rows - nb_distinct
                     stats[col] = (nb_distinct, nb_duplicate, nb_missing)
                 for col in cols_with_extra:
+                    nb_distinct = stats[col][0] if col in stats else 0
+                    nb_non_null = nb_rows - (stats[col][2] if col in stats else nb_rows)
+                    if nb_non_null == 0:
+                        extra_stats[col] = (None, None, None, None)
+                        continue
                     raw_min = stats_row[f"{col}__min"]
                     raw_max = stats_row[f"{col}__max"]
                     raw_mean = stats_row[f"{col}__mean"]
@@ -373,7 +378,7 @@ def build_variables(
                         _to_float(raw_min),
                         _to_float(raw_max),
                         _round6(raw_mean),
-                        _round6(raw_std),
+                        _round6(raw_std) if nb_distinct > 1 else None,
                     )
             except Exception as e:
                 # Oracle ORA-22849: CLOB columns don't support COUNT DISTINCT

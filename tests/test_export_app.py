@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from datannurpy import Catalog, Folder
+from datannurpy.errors import ConfigError
 from datannurpy import exporter
 
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -93,7 +94,7 @@ class TestExportApp:
             DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
 
-        with pytest.raises(FileNotFoundError, match="datannur app not found"):
+        with pytest.raises(ConfigError, match="datannur app not found"):
             catalog.export_app(tmp_path)
 
     def test_export_app_uses_app_path_by_default(self, tmp_path):
@@ -116,5 +117,5 @@ class TestExportApp:
             DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
         )
 
-        with pytest.raises(ValueError, match="output_dir is required"):
+        with pytest.raises(ConfigError, match="output_dir is required"):
             catalog.export_app()
