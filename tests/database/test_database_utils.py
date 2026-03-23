@@ -11,6 +11,7 @@ from datannurpy.errors import ConfigError
 from datannurpy.scanner._oracle import (
     _init_oracle_client,
     _oracle_get_schema,
+    _oracle_patch_date_stats,
     _oracle_type_to_ibis,
 )
 from datannurpy.scanner.database import (
@@ -413,7 +414,9 @@ class TestOracleGetSchema:
         ]
         mock_con.raw_sql.return_value = mock_cursor
 
-        schema, lob_columns = _oracle_get_schema(mock_con, "employees", "hr")
+        schema, lob_columns, date_columns = _oracle_get_schema(
+            mock_con, "employees", "hr"
+        )
 
         query = mock_con.raw_sql.call_args[0][0]
         assert "all_tab_columns" in query
@@ -421,6 +424,7 @@ class TestOracleGetSchema:
         assert "EMPLOYEES" in query
         assert schema == ibis.schema({"ID": "int64", "NAME": "string"})
         assert lob_columns == set()
+        assert date_columns == set()
 
     def test_without_schema(self) -> None:
         """Queries user_tab_columns without owner filter."""
@@ -431,12 +435,15 @@ class TestOracleGetSchema:
         ]
         mock_con.raw_sql.return_value = mock_cursor
 
-        schema, lob_columns = _oracle_get_schema(mock_con, "employees", None)
+        schema, lob_columns, date_columns = _oracle_get_schema(
+            mock_con, "employees", None
+        )
 
         query = mock_con.raw_sql.call_args[0][0]
         assert "user_tab_columns" in query
         assert schema == ibis.schema({"ID": "int64"})
         assert lob_columns == set()
+        assert date_columns == set()
 
     def test_detects_lob_columns(self) -> None:
         """LOB columns are returned in the lob_columns set."""
@@ -449,9 +456,117 @@ class TestOracleGetSchema:
         ]
         mock_con.raw_sql.return_value = mock_cursor
 
-        _, lob_columns = _oracle_get_schema(mock_con, "docs", None)
+        _, lob_columns, date_columns = _oracle_get_schema(mock_con, "docs", None)
 
         assert lob_columns == {"notes", "data"}
+        assert date_columns == set()
+
+    def test_detects_date_columns(self) -> None:
+        """DATE and TIMESTAMP columns are returned in the date_columns set."""
+        mock_con = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchall.return_value = [
+            ("ID", "NUMBER", 10, 0),
+            ("CREATED", "DATE", None, None),
+            ("UPDATED", "TIMESTAMP(6)", None, None),
+            ("LOGGED", "TIMESTAMP(6) WITH TIME ZONE", None, None),
+        ]
+        mock_con.raw_sql.return_value = mock_cursor
+
+        _, _, date_columns = _oracle_get_schema(mock_con, "events", None)
+
+        assert date_columns == {"created", "updated", "logged"}
+
+
+class TestOraclePatchDateStats:
+    """Tests for _oracle_patch_date_stats raw SQL fallback."""
+
+    def test_patches_date_stats(self) -> None:
+        """Date stats are computed via raw SQL and patched onto variables."""
+        from datannurpy.schema import Variable
+
+        mock_con = MagicMock()
+        mock_cursor = MagicMock()
+        # min, max, avg, stddev for one date column
+        mock_cursor.fetchone.return_value = (0.0, 86400.0, 43200.0, 12345.6789)
+        mock_con.raw_sql.return_value = mock_cursor
+
+        var = Variable(id="created", name="created", dataset_id="ds", type="datetime")
+        _oracle_patch_date_stats(mock_con, "events", None, {"created"}, [var])
+
+        assert var.min == 0.0
+        assert var.max == 86400.0
+        assert var.mean == 43200.0
+        assert var.std == round(12345.6789, 6)
+
+    def test_handles_null_result(self) -> None:
+        """All-null column produces None stats."""
+        from datannurpy.schema import Variable
+
+        mock_con = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.return_value = (None, None, None, None)
+        mock_con.raw_sql.return_value = mock_cursor
+
+        var = Variable(id="created", name="created", dataset_id="ds", type="datetime")
+        _oracle_patch_date_stats(mock_con, "events", None, {"created"}, [var])
+
+        assert var.min is None
+        assert var.max is None
+        assert var.mean is None
+        assert var.std is None
+
+    def test_handles_sql_error(self) -> None:
+        """SQL error leaves stats as None."""
+        from datannurpy.schema import Variable
+
+        mock_con = MagicMock()
+        mock_con.raw_sql.side_effect = RuntimeError("ORA-00942")
+
+        var = Variable(id="created", name="created", dataset_id="ds", type="datetime")
+        _oracle_patch_date_stats(mock_con, "events", None, {"created"}, [var])
+
+        assert var.min is None
+        assert var.max is None
+
+    def test_with_schema_qualifies_table(self) -> None:
+        """Schema is used to qualify the table name."""
+        from datannurpy.schema import Variable
+
+        mock_con = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.return_value = (0.0, 86400.0, 43200.0, 1000.0)
+        mock_con.raw_sql.return_value = mock_cursor
+
+        var = Variable(id="created", name="created", dataset_id="ds", type="datetime")
+        _oracle_patch_date_stats(mock_con, "events", "hr", {"created"}, [var])
+
+        query = mock_con.raw_sql.call_args[0][0]
+        assert '"HR"."EVENTS"' in query
+
+    def test_fetchone_returns_none(self) -> None:
+        """Empty table returns None from fetchone."""
+        from datannurpy.schema import Variable
+
+        mock_con = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.return_value = None
+        mock_con.raw_sql.return_value = mock_cursor
+
+        var = Variable(id="created", name="created", dataset_id="ds", type="datetime")
+        _oracle_patch_date_stats(mock_con, "events", None, {"created"}, [var])
+
+        assert var.min is None
+
+    def test_skips_missing_variable(self) -> None:
+        """Date column not in variables list is silently skipped."""
+        mock_con = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.return_value = (0.0, 86400.0, 43200.0, 1000.0)
+        mock_con.raw_sql.return_value = mock_cursor
+
+        # No variable named "created" in the list
+        _oracle_patch_date_stats(mock_con, "events", None, {"created"}, [])
 
 
 class TestGetTable:
@@ -466,7 +581,7 @@ class TestGetTable:
 
         with patch(
             "datannurpy.scanner.database._oracle_get_schema",
-            return_value=(mock_schema, set()),
+            return_value=(mock_schema, set(), set()),
         ):
             _get_table(mock_con, "employees", "hr", "oracle")
 
@@ -485,7 +600,7 @@ class TestGetTable:
 
         with patch(
             "datannurpy.scanner.database._oracle_get_schema",
-            return_value=(mock_schema, set()),
+            return_value=(mock_schema, set(), set()),
         ):
             _get_table(mock_con, "employees", None, "oracle")
 
@@ -533,7 +648,7 @@ class TestScanTable:
     """Tests for scan_table function."""
 
     _oracle_schema_patch = "datannurpy.scanner.database._oracle_get_schema"
-    _mock_schema_result = (ibis.schema({"ID": "int64"}), set())
+    _mock_schema_result = (ibis.schema({"ID": "int64"}), set(), set())
 
     def _make_oracle_mock(self) -> tuple[MagicMock, MagicMock]:
         """Create a mock Oracle connection with con.sql() support."""
@@ -599,7 +714,7 @@ class TestScanTable:
 
         def side_effect(
             *args: object, **kwargs: object
-        ) -> tuple[ibis.Schema, set[str]]:
+        ) -> tuple[ibis.Schema, set[str], set[str]]:
             nonlocal call_count
             call_count += 1
             if call_count == 1:
@@ -618,6 +733,32 @@ class TestScanTable:
             call_count == 2
         )  # First fails in scan_table, second succeeds in _get_table
         mock_con.sql.assert_called_once()
+
+    def test_oracle_date_stats_computed_via_raw_sql(self) -> None:
+        """Oracle date columns get stats from raw SQL fallback."""
+        from datannurpy.schema import Variable
+
+        mock_con, mock_table = self._make_oracle_mock()
+        mock_table.count.return_value.to_pyarrow.return_value.as_py.return_value = 5
+
+        date_schema = (
+            ibis.schema({"ID": "int64", "CREATED": "timestamp"}),
+            set(),
+            {"created"},
+        )
+        var = Variable(id="created", name="created", dataset_id="ds", type="datetime")
+
+        with (
+            patch(self._oracle_schema_patch, return_value=date_schema),
+            patch(
+                "datannurpy.scanner.database.build_variables",
+                return_value=([var], None),
+            ),
+            patch("datannurpy.scanner.database._oracle_patch_date_stats") as mock_patch,
+        ):
+            scan_table(mock_con, "events", dataset_id="ds")
+
+        mock_patch.assert_called_once_with(mock_con, "events", None, {"created"}, [var])
 
 
 class TestInitOracleClient:

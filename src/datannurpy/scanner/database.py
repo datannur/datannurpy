@@ -17,6 +17,7 @@ from ._oracle import (
     ORACLE_SYSTEM_TABLE_PREFIXES,
     _init_oracle_client,
     _oracle_get_schema,
+    _oracle_patch_date_stats,
 )
 from .utils import build_variables
 
@@ -484,7 +485,7 @@ def _get_table(
         # temporary views for schema inference (cross-schema access).
         # sql() lives on SQLBackend, not BaseBackend, so use getattr.
         if oracle_schema is None:
-            oracle_schema, _ = _oracle_get_schema(con, table_name, schema)
+            oracle_schema, _, _ = _oracle_get_schema(con, table_name, schema)
         sql_method = getattr(con, "sql")
         uc_table = table_name.upper().replace('"', '""')
         if schema:
@@ -549,14 +550,18 @@ def scan_table(
     """Scan a database table and return (variables, row_count, freq_table)."""
     backend = get_backend_name(con)
 
-    # Oracle: get schema + detect LOB columns in a single query
+    # Oracle: get schema + detect LOB/date columns in a single query
     skip_stats_columns: set[str] = set()
+    oracle_date_columns: set[str] = set()
     oracle_schema: ibis.Schema | None = None
     if backend == "oracle":
         try:
-            oracle_schema, lob_columns = _oracle_get_schema(con, table_name, schema)
+            oracle_schema, lob_columns, date_columns = _oracle_get_schema(
+                con, table_name, schema
+            )
             if infer_stats:
-                skip_stats_columns = lob_columns
+                skip_stats_columns = lob_columns | date_columns
+                oracle_date_columns = date_columns
         except Exception:
             pass  # If metadata fails, _get_table will retry
 
@@ -580,5 +585,11 @@ def scan_table(
         freq_threshold=freq_threshold,
         skip_stats_columns=skip_stats_columns if skip_stats_columns else None,
     )
+
+    # Oracle: compute date/timestamp stats via raw SQL (epoch_seconds unsupported)
+    if oracle_date_columns and infer_stats and row_count > 0:
+        _oracle_patch_date_stats(
+            con, table_name, schema, oracle_date_columns, variables
+        )
 
     return variables, row_count, freq_table

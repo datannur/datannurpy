@@ -5,6 +5,7 @@
 - fix: introduce `ConfigError` for user-facing errors — CLI no longer masks internal bugs (`ValueError`/`FileNotFoundError` from libraries) and now catches `TypeError` from parameter typos
 - fix: `last_update_date` for database tables is `None` on first scan instead of current date — populated only when a change is detected
 - add: `add_folder` and `add_dataset` accept a list of paths, `add_database` accepts a list of schemas — shared options apply to all entries
+- fix: Oracle date/timestamp stats computed via raw SQL — bypasses ibis `ExtractEpochSeconds` unsupported operation
 
 ## 0.10.1 (2026-03-22)
 

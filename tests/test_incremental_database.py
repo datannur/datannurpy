@@ -399,7 +399,7 @@ class TestOracleBranches:
     """Tests for Oracle-specific branches using mocks."""
 
     _oracle_schema_patch = "datannurpy.scanner.database._oracle_get_schema"
-    _mock_schema_result = (ibis.schema({"ID": "int64"}), set())
+    _mock_schema_result = (ibis.schema({"ID": "int64"}), set(), set())
 
     def test_compute_schema_signature_oracle_with_schema(self):
         """Oracle backend should use con.sql() with explicit schema."""
