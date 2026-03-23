@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from datannurpy.catalog import Catalog
+from datannurpy.errors import ConfigError
 from datannurpy.utils.params import validate_params
 
 
@@ -16,7 +17,7 @@ class TestValidateParamsDecorator:
         def func(*, exclude: str = "") -> str:
             return exclude
 
-        with pytest.raises(TypeError, match="Did you mean 'exclude'"):
+        with pytest.raises(ConfigError, match="Did you mean 'exclude'"):
             func(exclude_patterns="x")  # type: ignore[call-arg]
 
     def test_unknown_param_without_suggestion(self) -> None:
@@ -24,7 +25,7 @@ class TestValidateParamsDecorator:
         def func(*, name: str = "a") -> str:
             return name
 
-        with pytest.raises(TypeError, match="unknown parameter 'zzz'") as exc_info:
+        with pytest.raises(ConfigError, match="unknown parameter 'zzz'") as exc_info:
             func(zzz="b")  # type: ignore[call-arg]
         assert "Did you mean" not in str(exc_info.value)
 
@@ -40,7 +41,7 @@ class TestCatalogParamValidation:
     """Test that public API methods raise helpful errors on unknown params."""
 
     def test_catalog_init(self) -> None:
-        with pytest.raises(TypeError, match="Did you mean 'quiet'"):
+        with pytest.raises(ConfigError, match="Did you mean 'quiet'"):
             Catalog(queit=True)  # type: ignore[call-arg]
 
     @pytest.mark.parametrize(
@@ -58,5 +59,5 @@ class TestCatalogParamValidation:
         self, method: str, args: tuple[str, ...], kwargs: dict[str, object]
     ) -> None:
         c = Catalog(quiet=True)
-        with pytest.raises(TypeError, match="unknown parameter"):
+        with pytest.raises(ConfigError, match="unknown parameter"):
             getattr(c, method)(*args, **kwargs)

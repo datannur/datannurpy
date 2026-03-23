@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 
 from datannurpy import Catalog, Folder
+from datannurpy.errors import ConfigError
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 CSV_DIR = DATA_DIR / "csv"
@@ -215,7 +216,7 @@ class TestAddFolderOther:
     def test_add_folder_not_found(self):
         """add_folder should raise FileNotFoundError for missing path."""
         catalog = Catalog()
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(ConfigError):
             catalog.add_folder("/nonexistent/path")
 
     def test_add_folder_default_folder(self):
@@ -486,13 +487,13 @@ class TestEdgeCases:
         file.write_text("x\n1")
 
         catalog = Catalog()
-        with pytest.raises(NotADirectoryError):
+        with pytest.raises(ConfigError):
             catalog.add_folder(file)
 
     def test_add_folder_rejects_dataset_path(self):
         """add_folder should raise for Delta/Hive/Iceberg paths."""
         catalog = Catalog()
-        with pytest.raises(ValueError, match="Use add_dataset"):
+        with pytest.raises(ConfigError, match="Use add_dataset"):
             catalog.add_folder(DATA_DIR / "test_delta")
 
     def test_unsupported_file_extension(self, tmp_path: Path):
@@ -763,7 +764,7 @@ class TestRemoteStorage:
 
         with patch("datannurpy.add_folder.FileSystem", return_value=mock_fs):
             catalog = Catalog()
-            with pytest.raises(FileNotFoundError, match="Folder not found"):
+            with pytest.raises(ConfigError, match="Folder not found"):
                 catalog.add_folder("memory://test/data")
 
     def test_remote_not_a_directory(self, tmp_path: Path):
@@ -777,7 +778,7 @@ class TestRemoteStorage:
 
         with patch("datannurpy.add_folder.FileSystem", return_value=mock_fs):
             catalog = Catalog()
-            with pytest.raises(NotADirectoryError, match="Not a directory"):
+            with pytest.raises(ConfigError, match="Not a directory"):
                 catalog.add_folder("memory://test/file.csv")
 
     def test_remote_folder_is_dataset(self, tmp_path: Path):
@@ -792,5 +793,5 @@ class TestRemoteStorage:
         with patch("datannurpy.add_folder.FileSystem", return_value=mock_fs):
             with patch("datannurpy.add_folder.is_delta_table", return_value=True):
                 catalog = Catalog()
-                with pytest.raises(ValueError, match="dataset, not a folder"):
+                with pytest.raises(ConfigError, match="dataset, not a folder"):
                     catalog.add_folder("memory://test/data")

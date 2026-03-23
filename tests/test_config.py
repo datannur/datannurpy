@@ -9,6 +9,7 @@ import pytest
 
 from datannurpy import run_config
 from datannurpy.config.config import _expand_vars, _resolve_path
+from datannurpy.errors import ConfigError
 
 
 class TestRunConfig:
@@ -254,7 +255,26 @@ add:
   - type: unknown
     path: {data_dir}
 """)
-        with pytest.raises(ValueError, match="Unknown type 'unknown'"):
+        with pytest.raises(ConfigError, match="Unknown type 'unknown'"):
+            run_config(config_file)
+
+    def test_run_config_file_not_found(self, tmp_path: Path):
+        """Missing config file should raise ConfigError."""
+        with pytest.raises(ConfigError, match="Config file not found"):
+            run_config(tmp_path / "nonexistent.yml")
+
+    def test_run_config_invalid_yaml(self, tmp_path: Path):
+        """Invalid YAML should raise ConfigError."""
+        config_file = tmp_path / "bad.yml"
+        config_file.write_text("{ invalid yaml: [")
+        with pytest.raises(ConfigError, match="Invalid YAML"):
+            run_config(config_file)
+
+    def test_run_config_not_a_mapping(self, tmp_path: Path):
+        """Non-mapping YAML should raise ConfigError."""
+        config_file = tmp_path / "list.yml"
+        config_file.write_text("- item1\n- item2\n")
+        with pytest.raises(ConfigError, match="must be a YAML mapping"):
             run_config(config_file)
 
     def test_run_config_relative_paths(self, tmp_path: Path):

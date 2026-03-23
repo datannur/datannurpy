@@ -14,6 +14,8 @@ from .utils.params import validate_params
 if TYPE_CHECKING:
     from .catalog import Catalog
 
+from .errors import ConfigError
+
 
 @validate_params
 def export_db(
@@ -31,7 +33,7 @@ def export_db(
     path = output_dir or catalog.db_path
     if path is None:
         msg = "output_dir is required when app_path was not set at init"
-        raise ValueError(msg)
+        raise ConfigError(msg)
 
     # Parent relations for cascade suppression in evolution tracking
     parent_relations = {
@@ -57,7 +59,7 @@ def _copy_app(output_dir: Path) -> None:
     """Copy datannur app to output directory."""
     app_src = _get_app_path()
     if not app_src.exists():
-        raise FileNotFoundError(
+        raise ConfigError(
             "datannur app not found. Run `make download-app` to download it, "
             "or install datannurpy with the app bundled."
         )
@@ -90,7 +92,7 @@ def export_app(
     if output_dir is None:
         if catalog.app_path is None:
             msg = "output_dir is required when app_path was not set at init"
-            raise ValueError(msg)
+            raise ConfigError(msg)
         output_dir = catalog.app_path
 
     q = quiet if quiet is not None else catalog.quiet

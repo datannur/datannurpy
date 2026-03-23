@@ -12,6 +12,7 @@ import fsspec
 import pytest
 
 from datannurpy import Catalog, Folder
+from datannurpy.errors import ConfigError
 from datannurpy.scanner.filesystem import FileSystem
 
 
@@ -232,13 +233,13 @@ class TestCatalogWithMemoryFS:
     def test_add_folder_memory_not_found(self) -> None:
         """add_folder should raise FileNotFoundError for missing memory:// path."""
         catalog = Catalog(quiet=True)
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(ConfigError):
             catalog.add_folder(f"memory:///{uuid.uuid4().hex}")
 
     def test_add_dataset_memory_not_found(self) -> None:
-        """add_dataset should raise FileNotFoundError for missing memory:// path."""
+        """add_dataset should raise ConfigError for missing memory:// path."""
         catalog = Catalog(quiet=True)
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(ConfigError):
             catalog.add_dataset(f"memory:///{uuid.uuid4().hex}/file.csv")
 
     def test_add_folder_memory_parquet(

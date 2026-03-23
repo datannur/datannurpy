@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.10.2 (2026-03-23)
+
+- fix: introduce `ConfigError` for user-facing errors — CLI no longer masks internal bugs (`ValueError`/`FileNotFoundError` from libraries) and now catches `TypeError` from parameter typos
+
 ## 0.10.1 (2026-03-22)
 
 - add: new `"geometry"` variable type for spatial columns (POINT, POLYGON, etc. from GeoPackage, PostGIS, etc.)

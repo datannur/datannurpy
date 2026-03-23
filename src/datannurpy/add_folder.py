@@ -22,6 +22,7 @@ from .utils import (
     upsert_folder,
 )
 from .utils.params import validate_params
+from .errors import ConfigError
 from .finalize import remove_dataset_cascade
 from .schema import Dataset, Folder
 from .scanner.discovery import DatasetInfo, compute_scan_plan, discover_datasets
@@ -83,9 +84,9 @@ def add_folder(
     if is_remote or storage_options:
         fs = FileSystem(path, storage_options)
         if not fs.exists(fs.root):
-            raise FileNotFoundError(f"Folder not found: {path}")
+            raise ConfigError(f"Folder not found: {path}")
         if not fs.isdir(fs.root):
-            raise NotADirectoryError(f"Not a directory: {path}")
+            raise ConfigError(f"Not a directory: {path}")
         # Use PurePosixPath to preserve forward slashes on Windows
         root = PurePosixPath(fs.root)
         root_name = fs.root.rstrip("/").rsplit("/", 1)[-1]
@@ -93,9 +94,9 @@ def add_folder(
         root = Path(path).resolve()
         root_name = root.name
         if not root.exists():
-            raise FileNotFoundError(f"Folder not found: {root}")
+            raise ConfigError(f"Folder not found: {root}")
         if not root.is_dir():
-            raise NotADirectoryError(f"Not a directory: {root}")
+            raise ConfigError(f"Not a directory: {root}")
 
     # Reject if path is a dataset (Delta/Hive/Iceberg) - use add_dataset instead
     if (
@@ -103,7 +104,7 @@ def add_folder(
         or is_hive_partitioned(root, fs=fs)
         or is_iceberg_table(root, fs=fs)
     ):
-        raise ValueError(
+        raise ConfigError(
             f"Path is a dataset, not a folder: {root}. Use add_dataset() instead."
         )
 

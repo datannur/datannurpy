@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import ibis
 import pytest
 
+from datannurpy.errors import ConfigError
 from datannurpy.scanner._oracle import (
     _init_oracle_client,
     _oracle_get_schema,
@@ -116,7 +117,7 @@ class TestParseConnectionString:
         assert kwargs["database"] == "TNS_NAME"
 
     def test_unsupported_scheme(self) -> None:
-        with pytest.raises(ValueError, match="Unsupported database scheme"):
+        with pytest.raises(ConfigError, match="Unsupported database scheme"):
             parse_connection_string("mongodb://user:pass@host/db")
 
 
@@ -124,11 +125,11 @@ class TestRaiseDriverError:
     """Tests for driver error messages."""
 
     def test_known_backend(self) -> None:
-        with pytest.raises(ImportError, match="PostgreSQL requires psycopg2"):
+        with pytest.raises(ConfigError, match="PostgreSQL requires psycopg2"):
             raise_driver_error("postgres", ModuleNotFoundError("psycopg2"))
 
     def test_unknown_backend(self) -> None:
-        with pytest.raises(ImportError, match="Missing driver for foo"):
+        with pytest.raises(ConfigError, match="Missing driver for foo"):
             raise_driver_error("foo", ModuleNotFoundError("foo"))
 
 
@@ -141,7 +142,7 @@ class TestConnect:
         with patch(
             "datannurpy.scanner.database.get_backend_name", return_value="pyspark"
         ):
-            with pytest.raises(ValueError, match="pyspark.*is not supported"):
+            with pytest.raises(ConfigError, match="pyspark.*is not supported"):
                 connect(mock_con)
 
     def test_external_backend_calls_helper(self) -> None:
@@ -652,6 +653,6 @@ class TestInitOracleClient:
 
         oracle_mod._oracle_client_initialized = False
         with patch.dict("sys.modules", {"oracledb": None}):
-            with pytest.raises(ImportError, match="oracledb"):
+            with pytest.raises(ConfigError, match="oracledb"):
                 _init_oracle_client("/opt/oracle/client", raise_driver_error)
         oracle_mod._oracle_client_initialized = False

@@ -11,6 +11,7 @@ from urllib.parse import parse_qs, urlparse
 import ibis
 import pyarrow as pa
 
+from ..errors import ConfigError
 from ..schema import Variable
 from ._oracle import (
     ORACLE_SYSTEM_TABLE_PREFIXES,
@@ -147,7 +148,7 @@ def raise_driver_error(backend: str, original_error: Exception) -> NoReturn:
         ),
     }
     msg = messages.get(backend, f"Missing driver for {backend}")
-    raise ImportError(msg) from original_error
+    raise ConfigError(msg) from original_error
 
 
 def parse_connection_string(connection: str) -> tuple[str, dict[str, str]]:
@@ -158,7 +159,7 @@ def parse_connection_string(connection: str) -> tuple[str, dict[str, str]]:
     backend = SCHEME_TO_BACKEND.get(scheme)
     if backend is None:
         supported = ", ".join(sorted(SCHEME_TO_BACKEND.keys()))
-        raise ValueError(
+        raise ConfigError(
             f"Unsupported database scheme: {scheme!r}. Supported: {supported}"
         )
 
@@ -264,7 +265,7 @@ def connect(
     if isinstance(connection, ibis.BaseBackend):
         backend_name = get_backend_name(connection)
         if backend_name in ("pyspark", "datafusion", "polars"):
-            raise ValueError(
+            raise ConfigError(
                 f"Backend {backend_name!r} is not supported for database scanning. "
                 "Use sqlite, postgres, mysql, oracle, mssql, or duckdb."
             )

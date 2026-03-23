@@ -10,6 +10,7 @@ import yaml
 from dotenv import load_dotenv
 
 from ..catalog import Catalog
+from ..errors import ConfigError
 from ..schema import Folder
 
 VALID_TYPES = {"folder", "dataset", "database", "metadata"}
@@ -42,8 +43,16 @@ def run_config(path: str | Path) -> Catalog:
     config_path = Path(path).resolve()
     base_dir = config_path.parent
 
-    with open(config_path, encoding="utf-8") as f:
-        config = yaml.safe_load(f)
+    try:
+        with open(config_path, encoding="utf-8") as f:
+            config = yaml.safe_load(f)
+    except FileNotFoundError:
+        raise ConfigError(f"Config file not found: {config_path}") from None
+    except yaml.YAMLError as e:
+        raise ConfigError(f"Invalid YAML in {config_path.name}: {e}") from None
+
+    if not isinstance(config, dict):
+        raise ConfigError(f"{config_path.name} must be a YAML mapping")
 
     # Load .env: explicit env_file path takes priority, fallback to .env next to YAML
     env_file = config.pop("env_file", None)
@@ -87,7 +96,7 @@ def run_config(path: str | Path) -> Catalog:
             catalog.add_metadata(meta_path, **item)
         else:
             valid = ", ".join(sorted(VALID_TYPES))
-            raise ValueError(
+            raise ConfigError(
                 f"Unknown type '{item_type}' in config. Valid types: {valid}"
             )
 

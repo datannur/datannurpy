@@ -7,6 +7,8 @@ import functools
 import inspect
 from typing import Any, Callable, TypeVar
 
+from ..errors import ConfigError
+
 F = TypeVar("F", bound=Callable[..., Any])
 
 
@@ -20,7 +22,9 @@ def validate_params(func: F) -> F:
             if key not in valid:
                 matches = difflib.get_close_matches(key, valid, n=1)
                 hint = f" Did you mean '{matches[0]}'?" if matches else ""
-                raise TypeError(f"{func.__name__}(): unknown parameter '{key}'.{hint}")
+                raise ConfigError(
+                    f"{func.__name__}(): unknown parameter '{key}'.{hint}"
+                )
         return func(*args, **kwargs)
 
     return wrapper  # type: ignore[return-value]
