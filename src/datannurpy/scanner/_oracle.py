@@ -133,20 +133,40 @@ def _oracle_patch_date_stats(
     else:
         qualified = f'"{uc_table}"'
 
-    # Build SELECT with MIN/MAX/AVG/STDDEV for each date column
+    # Filter out columns with all missing or no variable match
+    var_lookup = {v.name: v for v in variables}
+    eligible_cols: list[str] = []
+    for col in date_columns:
+        var = var_lookup.get(col)
+        if var is None or var.nb_missing is None:
+            continue
+        nb_non_null = (var.nb_distinct or 0) + (var.nb_duplicate or 0)
+        if nb_non_null == 0:
+            continue
+        eligible_cols.append(col)
+
+    if not eligible_cols:
+        return
+
+    # Build SELECT with MIN/MAX/AVG and optional STDDEV for each date column
     # CAST to DATE: TIMESTAMP - TIMESTAMP = INTERVAL, DATE - DATE = NUMBER
     epoch_expr = (
         "(CAST(\"{col}\" AS DATE) - TO_DATE('1970-01-01','YYYY-MM-DD')) * 86400"
     )
     select_parts: list[str] = []
     ordered_cols: list[str] = []
-    for col in date_columns:
+    has_stddev: list[bool] = []
+    for col in eligible_cols:
+        var = var_lookup[col]
         safe_col = col.upper().replace('"', '""')
         expr = epoch_expr.replace("{col}", safe_col)
         select_parts.append(f"MIN({expr})")
         select_parts.append(f"MAX({expr})")
         select_parts.append(f"AVG({expr})")
-        select_parts.append(f"STDDEV({expr})")
+        need_std = (var.nb_distinct or 0) > 1
+        if need_std:
+            select_parts.append(f"STDDEV({expr})")
+        has_stddev.append(need_std)
         ordered_cols.append(col)
 
     query = f"SELECT {', '.join(select_parts)} FROM {qualified}"
@@ -158,16 +178,18 @@ def _oracle_patch_date_stats(
     if row is None:
         return
 
-    var_lookup = {v.name: v for v in variables}
+    offset = 0
     for i, col in enumerate(ordered_cols):
-        var = var_lookup.get(col)
-        if var is None:
-            continue
-        offset = i * 4
-        raw_min, raw_max, raw_mean, raw_std = row[offset : offset + 4]
+        var = var_lookup[col]
+        raw_min = row[offset]
+        raw_max = row[offset + 1]
+        raw_mean = row[offset + 2]
         var.min = float(raw_min) if raw_min is not None else None
         var.max = float(raw_max) if raw_max is not None else None
-        if raw_mean is not None:
-            var.mean = round(float(raw_mean), 6)
-        if raw_std is not None:
-            var.std = round(float(raw_std), 6)
+        var.mean = round(float(raw_mean), 6) if raw_mean is not None else None
+        if has_stddev[i]:
+            raw_std = row[offset + 3]
+            var.std = round(float(raw_std), 6) if raw_std is not None else None
+            offset += 4
+        else:
+            offset += 3

@@ -491,7 +491,15 @@ class TestOraclePatchDateStats:
         mock_cursor.fetchone.return_value = (0.0, 86400.0, 43200.0, 12345.6789)
         mock_con.raw_sql.return_value = mock_cursor
 
-        var = Variable(id="created", name="created", dataset_id="ds", type="datetime")
+        var = Variable(
+            id="created",
+            name="created",
+            dataset_id="ds",
+            type="datetime",
+            nb_distinct=3,
+            nb_duplicate=2,
+            nb_missing=0,
+        )
         _oracle_patch_date_stats(mock_con, "events", None, {"created"}, [var])
 
         assert var.min == 0.0
@@ -500,7 +508,7 @@ class TestOraclePatchDateStats:
         assert var.std == round(12345.6789, 6)
 
     def test_handles_null_result(self) -> None:
-        """All-null column produces None stats."""
+        """All-null column returns None stats from SQL."""
         from datannurpy.schema import Variable
 
         mock_con = MagicMock()
@@ -508,13 +516,70 @@ class TestOraclePatchDateStats:
         mock_cursor.fetchone.return_value = (None, None, None, None)
         mock_con.raw_sql.return_value = mock_cursor
 
-        var = Variable(id="created", name="created", dataset_id="ds", type="datetime")
+        var = Variable(
+            id="created",
+            name="created",
+            dataset_id="ds",
+            type="datetime",
+            nb_distinct=2,
+            nb_duplicate=1,
+            nb_missing=2,
+        )
         _oracle_patch_date_stats(mock_con, "events", None, {"created"}, [var])
 
         assert var.min is None
         assert var.max is None
         assert var.mean is None
         assert var.std is None
+
+    def test_single_distinct_skips_stddev(self) -> None:
+        """Single distinct value → STDDEV not computed, std stays None."""
+        from datannurpy.schema import Variable
+
+        mock_con = MagicMock()
+        mock_cursor = MagicMock()
+        # Only 3 values returned (MIN, MAX, AVG) — no STDDEV requested
+        mock_cursor.fetchone.return_value = (86400.0, 86400.0, 86400.0)
+        mock_con.raw_sql.return_value = mock_cursor
+
+        var = Variable(
+            id="created",
+            name="created",
+            dataset_id="ds",
+            type="datetime",
+            nb_distinct=1,
+            nb_duplicate=2,
+            nb_missing=0,
+        )
+        _oracle_patch_date_stats(mock_con, "events", None, {"created"}, [var])
+
+        assert var.min == 86400.0
+        assert var.max == 86400.0
+        assert var.mean == 86400.0
+        assert var.std is None
+        # Verify STDDEV not in query
+        query = mock_con.raw_sql.call_args[0][0]
+        assert "STDDEV" not in query
+
+    def test_all_missing_skips_column(self) -> None:
+        """Column with all missing values → no SQL query at all."""
+        from datannurpy.schema import Variable
+
+        mock_con = MagicMock()
+
+        var = Variable(
+            id="created",
+            name="created",
+            dataset_id="ds",
+            type="datetime",
+            nb_distinct=0,
+            nb_duplicate=0,
+            nb_missing=5,
+        )
+        _oracle_patch_date_stats(mock_con, "events", None, {"created"}, [var])
+
+        mock_con.raw_sql.assert_not_called()
+        assert var.min is None
 
     def test_handles_sql_error(self) -> None:
         """SQL error leaves stats as None."""
@@ -523,7 +588,15 @@ class TestOraclePatchDateStats:
         mock_con = MagicMock()
         mock_con.raw_sql.side_effect = RuntimeError("ORA-00942")
 
-        var = Variable(id="created", name="created", dataset_id="ds", type="datetime")
+        var = Variable(
+            id="created",
+            name="created",
+            dataset_id="ds",
+            type="datetime",
+            nb_distinct=3,
+            nb_duplicate=2,
+            nb_missing=0,
+        )
         _oracle_patch_date_stats(mock_con, "events", None, {"created"}, [var])
 
         assert var.min is None
@@ -538,7 +611,15 @@ class TestOraclePatchDateStats:
         mock_cursor.fetchone.return_value = (0.0, 86400.0, 43200.0, 1000.0)
         mock_con.raw_sql.return_value = mock_cursor
 
-        var = Variable(id="created", name="created", dataset_id="ds", type="datetime")
+        var = Variable(
+            id="created",
+            name="created",
+            dataset_id="ds",
+            type="datetime",
+            nb_distinct=3,
+            nb_duplicate=2,
+            nb_missing=0,
+        )
         _oracle_patch_date_stats(mock_con, "events", "hr", {"created"}, [var])
 
         query = mock_con.raw_sql.call_args[0][0]
@@ -553,7 +634,15 @@ class TestOraclePatchDateStats:
         mock_cursor.fetchone.return_value = None
         mock_con.raw_sql.return_value = mock_cursor
 
-        var = Variable(id="created", name="created", dataset_id="ds", type="datetime")
+        var = Variable(
+            id="created",
+            name="created",
+            dataset_id="ds",
+            type="datetime",
+            nb_distinct=3,
+            nb_duplicate=2,
+            nb_missing=0,
+        )
         _oracle_patch_date_stats(mock_con, "events", None, {"created"}, [var])
 
         assert var.min is None
@@ -561,12 +650,21 @@ class TestOraclePatchDateStats:
     def test_skips_missing_variable(self) -> None:
         """Date column not in variables list is silently skipped."""
         mock_con = MagicMock()
-        mock_cursor = MagicMock()
-        mock_cursor.fetchone.return_value = (0.0, 86400.0, 43200.0, 1000.0)
-        mock_con.raw_sql.return_value = mock_cursor
 
-        # No variable named "created" in the list
+        # No variable named "created" in the list → no SQL query
         _oracle_patch_date_stats(mock_con, "events", None, {"created"}, [])
+
+        mock_con.raw_sql.assert_not_called()
+
+    def test_skips_variable_without_stats(self) -> None:
+        """Variable with nb_missing=None (schema-only) is skipped."""
+        from datannurpy.schema import Variable
+
+        mock_con = MagicMock()
+        var = Variable(id="created", name="created", dataset_id="ds", type="datetime")
+        _oracle_patch_date_stats(mock_con, "events", None, {"created"}, [var])
+
+        mock_con.raw_sql.assert_not_called()
 
 
 class TestGetTable:
