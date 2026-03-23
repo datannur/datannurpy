@@ -3,6 +3,7 @@
 ## 0.10.2 (2026-03-23)
 
 - fix: introduce `ConfigError` for user-facing errors — CLI no longer masks internal bugs (`ValueError`/`FileNotFoundError` from libraries) and now catches `TypeError` from parameter typos
+- add: `add_folder` and `add_dataset` accept a list of paths, `add_database` accepts a list of schemas — shared options apply to all entries
 
 ## 0.10.1 (2026-03-22)
 

@@ -57,7 +57,7 @@ def _build_series_folder_id(normalized: str, prefix: str) -> str:
 @validate_params
 def add_folder(
     catalog: Catalog,
-    path: str | Path,
+    path: str | Path | Sequence[str | Path],
     folder: Folder | None = None,
     *,
     depth: Literal["structure", "schema", "full"] | None = None,
@@ -72,6 +72,13 @@ def add_folder(
     storage_options: dict[str, Any] | None = None,
 ) -> None:
     """Scan a folder and add its contents to the catalog."""
+    if isinstance(path, list):
+        kwargs = {k: v for k, v in locals().items() if k not in ("catalog", "path")}
+        for p in path:
+            add_folder(catalog, p, **kwargs)
+        return
+    assert not isinstance(path, Sequence) or isinstance(path, (str, Path))
+
     catalog._has_scanned = True
     q = quiet if quiet is not None else catalog.quiet
     do_refresh = refresh if refresh is not None else catalog.refresh

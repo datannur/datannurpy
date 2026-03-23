@@ -73,7 +73,7 @@ def add_database(
     folder: Folder | None = None,
     *,
     depth: Literal["structure", "schema", "full"] | None = None,
-    schema: str | None = None,
+    schema: str | Sequence[str] | None = None,
     include: Sequence[str] | None = None,
     exclude: Sequence[str] | None = None,
     infer_stats: bool = True,
@@ -86,6 +86,13 @@ def add_database(
     oracle_client_path: str | None = None,
 ) -> None:
     """Scan a database and add its tables to the catalog."""
+    if isinstance(schema, list):
+        kwargs = {k: v for k, v in locals().items() if k not in ("catalog", "schema")}
+        for s in schema:
+            add_database(catalog, schema=s, **kwargs)
+        return
+    assert not isinstance(schema, Sequence) or isinstance(schema, str)
+
     # Handle remote SQLite files (sftp://, s3://, etc.)
     if isinstance(connection, str) and _is_remote_database_file(connection):
         remote_path = urlparse(connection).path

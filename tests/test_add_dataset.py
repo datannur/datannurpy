@@ -335,3 +335,34 @@ class TestRemoteStorage:
             assert "memory:" in datasets[0].data_path
             assert "bucket" in datasets[0].data_path
             assert datasets[0].delivery_format == "csv"
+
+
+class TestListPath:
+    """Test add_dataset with a list of paths."""
+
+    def test_add_dataset_list_of_paths(self, tmp_path: Path):
+        """add_dataset with a list scans each file."""
+        (tmp_path / "a.csv").write_text("x\n1")
+        (tmp_path / "b.csv").write_text("y\n2")
+
+        catalog = Catalog(quiet=True)
+        catalog.add_dataset([tmp_path / "a.csv", tmp_path / "b.csv"])
+
+        ids = {d.id for d in catalog.dataset.all()}
+        assert "a" in ids
+        assert "b" in ids
+
+    def test_add_dataset_list_shared_folder(self, tmp_path: Path):
+        """Shared folder is applied to all paths."""
+        (tmp_path / "a.csv").write_text("x\n1")
+        (tmp_path / "b.csv").write_text("y\n2")
+
+        catalog = Catalog(quiet=True)
+        catalog.add_dataset(
+            [tmp_path / "a.csv", tmp_path / "b.csv"],
+            folder=Folder(id="src", name="Source"),
+        )
+
+        ids = {d.id for d in catalog.dataset.all()}
+        assert "src---a" in ids
+        assert "src---b" in ids

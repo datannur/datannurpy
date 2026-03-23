@@ -483,3 +483,77 @@ add:
             assert any(d.name == "custom_env" for d in catalog.dataset.all())
         finally:
             os.environ.pop("TEST_CUSTOM_DB", None)
+
+
+class TestListParameters:
+    """Test list parameters in YAML config."""
+
+    def test_folder_path_list(self, tmp_path: Path):
+        """List of paths in folder config scans all paths."""
+        d1 = tmp_path / "a"
+        d1.mkdir()
+        (d1 / "f.csv").write_text("x\n1")
+        d2 = tmp_path / "b"
+        d2.mkdir()
+        (d2 / "g.csv").write_text("y\n2")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+quiet: true
+refresh: true
+
+add:
+  - type: folder
+    path:
+      - {d1}
+      - {d2}
+""")
+        catalog = run_config(config_file)
+        ids = {d.id for d in catalog.dataset.all()}
+        assert "a---f_csv" in ids
+        assert "b---g_csv" in ids
+
+    def test_dataset_path_list(self, tmp_path: Path):
+        """List of paths in dataset config scans all files."""
+        (tmp_path / "a.csv").write_text("x\n1")
+        (tmp_path / "b.csv").write_text("y\n2")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+quiet: true
+refresh: true
+
+add:
+  - type: dataset
+    path:
+      - {tmp_path / "a.csv"}
+      - {tmp_path / "b.csv"}
+""")
+        catalog = run_config(config_file)
+        ids = {d.id for d in catalog.dataset.all()}
+        assert "a" in ids
+        assert "b" in ids
+
+    def test_database_schema_list(self, tmp_path: Path):
+        """List of schemas in database config scans each schema."""
+        import sqlite3
+
+        db_path = tmp_path / "test.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE t1 (id INTEGER)")
+        conn.commit()
+        conn.close()
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+quiet: true
+refresh: true
+
+add:
+  - type: database
+    uri: sqlite:///{db_path}
+    schema:
+      - main
+""")
+        catalog = run_config(config_file)
+        assert any(d.name == "t1" for d in catalog.dataset.all())

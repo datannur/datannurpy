@@ -795,3 +795,39 @@ class TestRemoteStorage:
                 catalog = Catalog()
                 with pytest.raises(ConfigError, match="dataset, not a folder"):
                     catalog.add_folder("memory://test/data")
+
+
+class TestListPath:
+    """Test add_folder with a list of paths."""
+
+    def test_add_folder_list_of_paths(self, tmp_path: Path):
+        """add_folder with a list scans each path."""
+        d1 = tmp_path / "a"
+        d1.mkdir()
+        (d1 / "f.csv").write_text("x\n1")
+        d2 = tmp_path / "b"
+        d2.mkdir()
+        (d2 / "g.csv").write_text("y\n2")
+
+        catalog = Catalog(quiet=True)
+        catalog.add_folder([d1, d2])
+
+        names = {d.id for d in catalog.dataset.all()}
+        assert "a---f_csv" in names
+        assert "b---g_csv" in names
+
+    def test_add_folder_list_shared_options(self, tmp_path: Path):
+        """Options are shared across all paths in the list."""
+        d1 = tmp_path / "a"
+        d1.mkdir()
+        (d1 / "f.csv").write_text("x\n1")
+        (d1 / "skip.txt").write_text("no")
+        d2 = tmp_path / "b"
+        d2.mkdir()
+        (d2 / "g.csv").write_text("y\n2")
+        (d2 / "skip.txt").write_text("no")
+
+        catalog = Catalog(quiet=True)
+        catalog.add_folder([d1, d2], include=["*.csv"])
+
+        assert len(catalog.dataset.all()) == 2

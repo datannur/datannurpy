@@ -38,6 +38,13 @@ def _resolve_path(p: str, base_dir: Path) -> str:
     return str(path)
 
 
+def _resolve_paths(p: str | list[str], base_dir: Path) -> str | list[str]:
+    """Resolve a path or list of paths relative to base_dir."""
+    if isinstance(p, list):
+        return [_resolve_path(x, base_dir) for x in p]
+    return _resolve_path(p, base_dir)
+
+
 def run_config(path: str | Path) -> Catalog:
     """Load and execute a YAML catalog configuration."""
     config_path = Path(path).resolve()
@@ -79,10 +86,10 @@ def run_config(path: str | Path) -> Catalog:
             item["folder"] = Folder(**item["folder"])
 
         if item_type == "folder":
-            folder_path = _resolve_path(item.pop("path"), base_dir)
+            folder_path = _resolve_paths(item.pop("path"), base_dir)
             catalog.add_folder(folder_path, **item)
         elif item_type == "dataset":
-            dataset_path = _resolve_path(item.pop("path"), base_dir)
+            dataset_path = _resolve_paths(item.pop("path"), base_dir)
             catalog.add_dataset(dataset_path, **item)
         elif item_type == "database":
             uri = item.pop("uri")

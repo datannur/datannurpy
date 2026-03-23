@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Any, Literal, cast
@@ -100,7 +101,7 @@ def _create_dataset(
 @validate_params
 def add_dataset(
     catalog: Catalog,
-    path: str | Path,
+    path: str | Path | Sequence[str | Path],
     folder: Folder | None = None,
     *,
     depth: Literal["structure", "schema", "full"] | None = None,
@@ -126,6 +127,13 @@ def add_dataset(
     no_more_update: str | None = None,
 ) -> None:
     """Add a single dataset file or partitioned directory to the catalog."""
+    if isinstance(path, list):
+        kwargs = {k: v for k, v in locals().items() if k not in ("catalog", "path")}
+        for p in path:
+            add_dataset(catalog, p, **kwargs)
+        return
+    assert not isinstance(path, Sequence) or isinstance(path, (str, Path))
+
     catalog._has_scanned = True
     q = quiet if quiet is not None else catalog.quiet
     do_refresh = refresh if refresh is not None else catalog.refresh
