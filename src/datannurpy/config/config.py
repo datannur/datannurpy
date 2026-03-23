@@ -14,7 +14,7 @@ from ..errors import ConfigError
 from ..schema import Folder
 
 VALID_TYPES = {"folder", "dataset", "database", "metadata"}
-RESERVED_KEYS = {"add", "export_app", "export_db", "env_file"}
+RESERVED_KEYS = {"add", "export_app", "export_db", "env_file", "env"}
 
 
 def _expand_vars(obj: Any) -> Any:
@@ -67,6 +67,14 @@ def run_config(path: str | Path) -> Catalog:
         load_dotenv(_resolve_path(env_file, base_dir), override=False)
     else:
         load_dotenv(base_dir / ".env", override=False)
+
+    # Inject env: vars (lowest priority — never overrides system or .env vars)
+    env_vars = config.pop("env", None)
+    if env_vars:
+        if not isinstance(env_vars, dict):
+            raise ConfigError("'env' must be a mapping of key: value pairs")
+        for key, val in env_vars.items():
+            os.environ.setdefault(str(key), str(val))
 
     # Expand environment variables in all string values
     config = _expand_vars(config)

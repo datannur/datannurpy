@@ -484,6 +484,96 @@ add:
         finally:
             os.environ.pop("TEST_CUSTOM_DB", None)
 
+    def test_env_section_in_yaml(self, tmp_path: Path) -> None:
+        """env: section injects variables for expansion."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "test.csv").write_text("a,b\n1,2\n")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+quiet: true
+refresh: true
+env:
+  MY_DATA_DIR: {data_dir}
+
+add:
+  - type: folder
+    path: ${{MY_DATA_DIR}}
+""")
+        try:
+            catalog = run_config(config_file)
+            assert len(catalog.dataset.all()) == 1
+        finally:
+            os.environ.pop("MY_DATA_DIR", None)
+
+    def test_env_section_does_not_override_env_file(self, tmp_path: Path) -> None:
+        """env_file values take priority over env: section."""
+        import sqlite3
+
+        db_path = tmp_path / "test.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE priority_test (id INTEGER)")
+        conn.commit()
+        conn.close()
+
+        env_file = tmp_path / ".env"
+        env_file.write_text(f"TEST_PRIORITY_VAR={db_path}\n")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text("""
+quiet: true
+refresh: true
+env:
+  TEST_PRIORITY_VAR: /wrong/path
+
+add:
+  - type: database
+    uri: sqlite:///${TEST_PRIORITY_VAR}
+""")
+        try:
+            catalog = run_config(config_file)
+            assert any(d.name == "priority_test" for d in catalog.dataset.all())
+        finally:
+            os.environ.pop("TEST_PRIORITY_VAR", None)
+
+    def test_env_section_does_not_override_system_env(self, tmp_path: Path) -> None:
+        """System env vars take priority over env: section."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "test.csv").write_text("a,b\n1,2\n")
+
+        os.environ["TEST_SYS_VAR"] = str(data_dir)
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text("""
+quiet: true
+refresh: true
+env:
+  TEST_SYS_VAR: /wrong/path
+
+add:
+  - type: folder
+    path: ${TEST_SYS_VAR}
+""")
+        try:
+            catalog = run_config(config_file)
+            assert len(catalog.dataset.all()) == 1
+        finally:
+            os.environ.pop("TEST_SYS_VAR", None)
+
+    def test_env_section_invalid_type(self, tmp_path: Path) -> None:
+        """env: must be a mapping, not a list."""
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text("""
+quiet: true
+env:
+  - FOO
+  - BAR
+""")
+        with pytest.raises(ConfigError, match="'env' must be a mapping"):
+            run_config(config_file)
+
 
 class TestListParameters:
     """Test list parameters in YAML config."""
