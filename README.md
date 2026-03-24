@@ -173,8 +173,14 @@ catalog.add_folder(
     csv_encoding="utf-8",  # or "cp1252", "iso-8859-1" (auto-detected by default)
 )
 
+# Multiple folders with shared options
+catalog.add_folder(["./data/sales", "./data/hr"], include=["*.csv"])
+
 # Add a single file
 catalog.add_dataset("./data/sales.csv")
+
+# Multiple files
+catalog.add_dataset(["./data/sales.csv", "./data/products.csv"])
 ```
 
 ## Parquet formats
@@ -272,6 +278,13 @@ catalog.add_database(
     sample_size=10000,  # limit rows for stats on large tables
     group_by_prefix=True,  # group tables by common prefix (default)
     prefix_min_tables=2,  # minimum tables to form a group
+)
+
+# Multiple schemas with shared options
+catalog.add_database(
+    "postgresql://localhost/mydb",
+    schema=["public", "sales", "hr"],
+    infer_stats=True,
 )
 ```
 
@@ -382,7 +395,7 @@ catalog.add_folder(
 
 | Parameter       | Type                                      | Default  | Description                                   |
 | --------------- | ----------------------------------------- | -------- | --------------------------------------------- |
-| path            | str \| Path                               | required | Directory to scan (local or remote URL)       |
+| path            | str \| Path \| list[str \| Path]           | required | Directory or list of directories to scan      |
 | folder          | Folder \| None                            | None     | Custom folder metadata                        |
 | depth           | "structure" \| "schema" \| "full" \| None | None     | Scan depth (uses catalog.depth if None)       |
 | include         | list[str] \| None                         | None     | Glob patterns to include                      |
@@ -448,7 +461,7 @@ catalog.add_dataset(
 
 | Parameter       | Type                                      | Default  | Description                                   |
 | --------------- | ----------------------------------------- | -------- | --------------------------------------------- |
-| path            | str \| Path                               | required | File or partitioned directory (local/remote)  |
+| path            | str \| Path \| list[str \| Path]           | required | File(s) or partitioned directory (local/remote) |
 | folder          | Folder \| None                            | None     | Parent folder                                 |
 | folder_id       | str \| None                               | None     | Parent folder ID (alternative to folder)      |
 | depth           | "structure" \| "schema" \| "full" \| None | None     | Scan depth (uses catalog.depth if None)       |
@@ -489,7 +502,7 @@ catalog.add_database(
 | connection        | str                                             | required | Connection string (see formats below)    |
 | folder            | Folder \| None                                  | None     | Custom root folder                       |
 | depth             | \"structure\" \| \"schema\" \| \"full\" \| None | None     | Scan depth (uses catalog.depth if None)  |
-| schema            | str \| None                                     | None     | Specific schema to scan                  |
+| schema            | str \| list[str] \| None                         | None     | Schema(s) to scan                        |
 | include           | list[str] \| None                               | None     | Table name patterns to include           |
 | exclude           | list[str] \| None                               | None     | Table name patterns to exclude           |
 | infer_stats       | bool                                            | True     | Compute column statistics                |
