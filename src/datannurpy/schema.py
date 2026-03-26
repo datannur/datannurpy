@@ -154,6 +154,14 @@ class Doc:
     _seen: bool = False  # Runtime field for incremental scan
 
 
+@dataclass
+class Config:
+    """A key-value config entry for the web app."""
+
+    id: str
+    value: str = ""
+
+
 class DatannurDB(Jsonjsdb):
     """Typed datannur database with all tables."""
 
@@ -166,6 +174,7 @@ class DatannurDB(Jsonjsdb):
     institution: Table[Institution]
     tag: Table[Tag]
     doc: Table[Doc]
+    config: Table[Config]
 
     def __init__(self, path: str | None = None) -> None:
         super().__init__(path)
@@ -179,6 +188,7 @@ class DatannurDB(Jsonjsdb):
         self.institution._entity_type = Institution
         self.tag._entity_type = Tag
         self.doc._entity_type = Doc
+        self.config._entity_type = Config
         # Set runtime fields (not persisted)
         self.folder.runtime_fields = {"_seen"}
         self.dataset.runtime_fields = {"_seen"}

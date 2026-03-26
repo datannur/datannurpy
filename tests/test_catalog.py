@@ -251,3 +251,58 @@ class TestCatalogDepth:
         assert len(catalog.modality.all()) == 0
         assert len(catalog.value.all()) == 0
         assert len(catalog.freq.all()) == 0
+
+
+class TestAppConfig:
+    """Test Catalog app_config parameter."""
+
+    def test_default_app_config(self):
+        """Without app_config, config table is empty."""
+        catalog = Catalog()
+        assert catalog.config.count == 0
+
+    def test_app_config_partial(self):
+        """Providing some keys populates only those."""
+        catalog = Catalog(app_config={"contact_email": "a@b.com"})
+        assert catalog.config.count == 1
+        assert catalog.config.all()[0].id == "contact_email"
+        assert catalog.config.all()[0].value == "a@b.com"
+
+    def test_app_config_full(self):
+        """Providing multiple keys fills them all."""
+        cfg = {
+            "contact_email": "a@b.com",
+            "more_info": "https://example.com",
+        }
+        catalog = Catalog(app_config=cfg)
+        by_id = {c.id: c.value for c in catalog.config.all()}
+        assert by_id == cfg
+
+    def test_app_config_extra_keys(self):
+        """Any keys provided by user are stored."""
+        catalog = Catalog(app_config={"banner": "Welcome", "body": "text"})
+        by_id = {c.id: c.value for c in catalog.config.all()}
+        assert by_id["banner"] == "Welcome"
+        assert by_id["body"] == "text"
+
+    def test_export_db_writes_config_json(self, tmp_path: Path):
+        """export_db should write config.json alongside table files."""
+        catalog = Catalog(app_config={"contact_email": "test@test.com"})
+        catalog.export_db(tmp_path)
+
+        config_path = tmp_path / "config.json"
+        assert config_path.exists()
+        data = json.loads(config_path.read_text())
+        assert data == [{"id": "contact_email", "value": "test@test.com"}]
+
+        # Also writes .json.js
+        js_path = tmp_path / "config.json.js"
+        assert js_path.exists()
+        assert "jsonjs.data['config']" in js_path.read_text()
+
+    def test_export_db_no_config_no_file(self, tmp_path: Path):
+        """export_db without app_config writes no config.json."""
+        catalog = Catalog()
+        catalog.export_db(tmp_path)
+
+        assert not (tmp_path / "config.json").exists()

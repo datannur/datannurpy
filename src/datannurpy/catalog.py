@@ -14,7 +14,7 @@ from .add_folder import add_folder
 from .add_metadata import add_metadata
 from .exporter import export_app, export_db
 from .finalize import finalize
-from .schema import DatannurDB
+from .schema import Config, DatannurDB
 from .utils import ModalityManager
 from .utils.ids import compute_runtime_ids
 from .utils.params import validate_params
@@ -40,6 +40,7 @@ class Catalog(DatannurDB):
         refresh: bool = False,
         freq_threshold: int = 100,
         csv_encoding: str | None = None,
+        app_config: dict[str, str] | None = None,
         quiet: bool = False,
         _now: int | None = None,
     ) -> None:
@@ -77,6 +78,12 @@ class Catalog(DatannurDB):
         self.csv_encoding = csv_encoding
         self.quiet = quiet
         self._now = _now if _now is not None else int(time.time())
+
+        # Populate config table
+        self.config._df = self.config._df.clear()
+        if app_config is not None:
+            for key, val in app_config.items():
+                self.config.add(Config(id=key, value=val))
 
         # State
         self._loaded_from_db = load_path is not None
