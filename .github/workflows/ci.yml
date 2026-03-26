@@ -6,11 +6,27 @@ on:
   pull_request:
     branches: [main]
 
+permissions: read-all
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  audit:
+    name: CI (audit)
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - name: Audit production dependencies
+        run: >
+          uv export --no-dev --no-hashes |
+          uv run --with pip-audit pip-audit -r /dev/stdin
+          --ignore-vuln GHSA-5239-wwwm-4pmq
+
   lint:
     name: CI (lint)
     runs-on: ubuntu-24.04-arm
