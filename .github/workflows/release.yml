@@ -6,6 +6,8 @@ on:
     types: [completed]
     branches: [main]
 
+permissions: read-all
+
 jobs:
   check-version:
     name: Check Version
