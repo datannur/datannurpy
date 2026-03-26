@@ -357,7 +357,7 @@ catalog.export_app("./my-catalog", open_browser=True)
 ### `Catalog`
 
 ```python
-Catalog(app_path=None, depth="full", refresh=False, freq_threshold=100, csv_encoding=None, quiet=False)
+Catalog(app_path=None, depth="full", refresh=False, freq_threshold=100, csv_encoding=None, app_config=None, quiet=False)
 ```
 
 | Attribute      | Type                              | Description                                        |
@@ -367,6 +367,7 @@ Catalog(app_path=None, depth="full", refresh=False, freq_threshold=100, csv_enco
 | refresh        | bool                              | Force full rescan ignoring cache (default: False)  |
 | freq_threshold | int                               | Max distinct values for modality detection (0=off) |
 | csv_encoding   | str \| None                       | Default CSV encoding (utf-8, cp1252, etc.)         |
+| app_config     | dict[str, str] \| None            | Key-value config for the web app (see below)       |
 | quiet          | bool                              | Suppress progress logging (default: False)         |
 | folders        | list[Folder]                      | All folders in catalog                             |
 | datasets       | list[Dataset]                     | All datasets in catalog                            |
@@ -558,6 +559,22 @@ catalog.export_app(output_dir=None, open_browser=False, quiet=None)
 ```
 
 Exports complete standalone datannur app with data. Uses `db_path` by default if set at init.
+
+### `app_config`
+
+Pass a dictionary to `Catalog(app_config={...})` to configure the web app. Entries are written as `config.json` in the database directory.
+
+```python
+catalog = Catalog(
+    app_path="./my-catalog",
+    app_config={
+        "contact_email": "contact@example.com",
+        "more_info": "Data from [open data portal](https://example.com).",
+    },
+)
+```
+
+If `app_config` is not provided, no `config.json` is generated.
 
 ### `Folder`
 

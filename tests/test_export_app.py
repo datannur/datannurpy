@@ -1,5 +1,6 @@
 """Tests for Catalog.export_app method."""
 
+import json
 from pathlib import Path
 
 import pytest
@@ -119,3 +120,21 @@ class TestExportApp:
 
         with pytest.raises(ConfigError, match="output_dir is required"):
             catalog.export_app()
+
+    def test_export_app_writes_config_json(self, tmp_path):
+        """export_app should write config.json in data/db/."""
+        catalog = Catalog(app_config={"contact_email": "x@y.com", "banner": "Hi"})
+        catalog.add_folder(
+            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+        )
+        catalog.export_app(tmp_path, quiet=True)
+
+        config_path = tmp_path / "data" / "db" / "config.json"
+        assert config_path.exists()
+        data = json.loads(config_path.read_text())
+        by_id = {r["id"]: r["value"] for r in data}
+        assert by_id["contact_email"] == "x@y.com"
+        assert by_id["banner"] == "Hi"
+
+        js_path = tmp_path / "data" / "db" / "config.json.js"
+        assert js_path.exists()

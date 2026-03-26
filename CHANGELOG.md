@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.11.0 (2026-03-26)
+
+- add: `app_config` parameter on `Catalog` — pass a `dict[str, str]` to populate a `config.json` in the exported database (e.g. `contact_email`, `banner`, `more_info`)
+
 ## 0.10.2 (2026-03-23)
 
 - add: `add_folder` and `add_dataset` accept a list of paths, `add_database` accepts a list of schemas — shared options apply to all entries
