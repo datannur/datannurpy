@@ -6,6 +6,7 @@
 - add: CLI supports `--help` and `--version` flags
 - fix: ID conflict when scanning same database with different schemas in separate `add_database` calls
 - fix: Oracle DATE/TIMESTAMP columns now get `nb_distinct`/`nb_missing` stats from `build_variables`
+- fix: remote file warnings now show original filename instead of temporary path
 
 ## 0.11.0 (2026-03-26)
 

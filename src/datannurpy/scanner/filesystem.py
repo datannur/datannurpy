@@ -116,14 +116,14 @@ class FileSystem:
         if self.is_local:
             yield Path(full_path)
         else:
-            suffix = Path(path).suffix
-            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-                tmp_path = Path(tmp.name)
+            tmp_dir = Path(tempfile.mkdtemp())
+            tmp_path = tmp_dir / Path(path).name
             try:
                 self.fs.download(full_path, str(tmp_path))
                 yield tmp_path
             finally:
                 tmp_path.unlink(missing_ok=True)
+                tmp_dir.rmdir()
 
     @contextmanager
     def ensure_local_dir(self, path: str) -> Generator[Path, None, None]:
