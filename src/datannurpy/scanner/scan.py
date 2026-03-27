@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path, PurePath
 from typing import TYPE_CHECKING
@@ -400,12 +401,21 @@ def _scan_schema_only_remote(
         with fs.ensure_local(str(path)) as local_path:
             return _scan_schema_only_local(local_path, delivery_format, dataset_id)
 
-    # CSV: partial download (4KB for header + some rows for type inference)
+    # CSV: stream only the header line (readline guarantees a complete line)
     if delivery_format == "csv":
-        with fs.ensure_local_partial(str(path), 4096) as local_path:
+        full_path = fs._full_path(str(path))
+        with fs.fs.open(full_path, "rb") as f:
+            header_bytes = f.readline()
+        tmp_dir = Path(tempfile.mkdtemp())
+        tmp_path = tmp_dir / PurePath(path).name
+        try:
+            tmp_path.write_bytes(header_bytes)
             return _scan_schema_only_local(
-                local_path, delivery_format, dataset_id, csv_encoding
+                tmp_path, delivery_format, dataset_id, csv_encoding
             )
+        finally:
+            tmp_path.unlink(missing_ok=True)
+            tmp_dir.rmdir()
 
     # Excel xlsx: openpyxl read_only streams only headers (no full download)
     # xls: must download full file (xlrd doesn't support streaming)

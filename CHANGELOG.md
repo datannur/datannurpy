@@ -8,6 +8,7 @@
 - fix: Oracle DATE/TIMESTAMP columns now get `nb_distinct`/`nb_missing` stats from `build_variables`
 - fix: remote file warnings now show original filename instead of temporary path
 - fix: skip columns with empty names from trailing CSV separators or blank Excel headers
+- fix: remote CSV schema-only scan streams header line instead of fixed 4KB partial download
 
 ## 0.11.0 (2026-03-26)
 
