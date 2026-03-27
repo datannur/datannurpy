@@ -1,5 +1,9 @@
 # datannurpy
 
+## unreleased
+
+- remove: `datannurpy` console_scripts entry point — use `python -m datannurpy` instead
+
 ## 0.11.0 (2026-03-26)
 
 - add: `app_config` parameter on `Catalog` — pass a `dict[str, str]` to populate a `config.json` in the exported database (e.g. `contact_email`, `banner`, `more_info`)

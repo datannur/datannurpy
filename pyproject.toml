@@ -55,9 +55,6 @@ cloud = [
   "gcsfs>=2024.0; python_version >= '3.10'",
 ]
 
-[project.scripts]
-datannurpy = "datannurpy.__main__:main"
-
 [project.urls]
 Homepage = "https://github.com/datannur/datannurpy"
 Repository = "https://github.com/datannur/datannurpy"
