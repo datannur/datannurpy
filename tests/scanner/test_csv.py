@@ -92,3 +92,12 @@ class TestLegacyEncoding:
 
         sep = _detect_separator(csv_file)
         assert sep == ";"
+
+    def test_trailing_separator_drops_empty_column(self, tmp_path: Path):
+        """CSV with trailing separator should drop the empty-named column."""
+        csv_file = tmp_path / "trailing.csv"
+        csv_file.write_text("a;b;\n1;2;\n3;4;\n")
+
+        df = read_csv(csv_file)
+        assert df is not None
+        assert list(df.columns) == ["a", "b"]

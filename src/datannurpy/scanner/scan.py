@@ -451,7 +451,7 @@ def _scan_schema_only_local(
         from .csv import _read_csv_polars
 
         df = _read_csv_polars(path, csv_encoding, n_rows=0)
-        columns = list(df.columns) if df is not None else []
+        columns = [c for c in df.columns if c.strip() != ""] if df is not None else []
         variables = [
             Variable(
                 id=f"{dataset_id}---{col}",
@@ -476,6 +476,7 @@ def _scan_schema_only_local(
                 dataset_id=dataset_id,
             )
             for col in df.columns
+            if str(col).strip() != ""
         ]
         return ScanResult(variables=variables, nb_row=None)
 

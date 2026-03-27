@@ -55,7 +55,7 @@ def _read_csv_polars(
 
     for encoding in encodings:
         try:
-            return pl.read_csv(
+            df = pl.read_csv(
                 file_path,  # pyright: ignore[reportCallIssue]
                 encoding=encoding,
                 separator=separator,
@@ -63,6 +63,10 @@ def _read_csv_polars(
                 infer_schema_length=10000,
                 try_parse_dates=False,
             )
+            empty_cols = [c for c in df.columns if c.strip() == ""]
+            if empty_cols:
+                df = df.drop(empty_cols)
+            return df
         except Exception as e:
             last_error = str(e)
             continue

@@ -277,7 +277,7 @@ def build_variables(
 ) -> tuple[list[Variable], pa.Table | None]:
     """Build Variable entities from Ibis Table, return (variables, freq_table as PyArrow)."""
     schema = table.schema()
-    columns = list(schema)
+    columns = [c for c in schema if c.strip() != ""]
     skip_cols = set(skip_stats_columns) if skip_stats_columns else set()
     skip_extra = set(skip_extra_stats_columns) if skip_extra_stats_columns else set()
 
@@ -452,6 +452,7 @@ def build_variables_from_schema(
             type=pyarrow_type_to_str(field.type),
         )
         for field in schema
+        if field.name.strip() != ""
     ]
 
 
