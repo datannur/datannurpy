@@ -3,6 +3,7 @@
 ## unreleased
 
 - remove: `datannurpy` console_scripts entry point — use `python -m datannurpy` instead
+- add: CLI supports `--help` and `--version` flags
 
 ## 0.11.0 (2026-03-26)
 

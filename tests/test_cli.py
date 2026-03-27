@@ -20,6 +20,26 @@ def test_main_no_args() -> None:
         assert exc_info.value.code == 1
 
 
+@pytest.mark.parametrize("flag", ["-h", "--help"])
+def test_main_help(flag: str, capsys) -> None:
+    """main() with --help shows usage and exits 0."""
+    with patch.object(sys, "argv", ["datannurpy", flag]):
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 0
+    assert "Usage:" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("flag", ["-V", "--version"])
+def test_main_version(flag: str, capsys) -> None:
+    """main() with --version shows version and exits 0."""
+    with patch.object(sys, "argv", ["datannurpy", flag]):
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 0
+    assert "datannurpy" in capsys.readouterr().out
+
+
 def test_main_run_config(tmp_path: Path) -> None:
     """main() runs config file."""
     config = tmp_path / "test.yml"
