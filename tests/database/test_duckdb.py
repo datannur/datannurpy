@@ -78,3 +78,29 @@ class TestDuckDBIncrementalScan:
         # All schema folders should be kept (marked as seen) - same count
         schema_folders2 = [f for f in catalog2.folder.all() if f.type == "schema"]
         assert len(schema_folders2) == len(schema_folders)
+
+
+class TestDuckDBSeparateSchemas:
+    """Test separate add_database calls with different schemas."""
+
+    def test_separate_schema_calls_no_id_conflict(self) -> None:
+        """Two add_database calls with different schemas sharing a table name should not conflict."""
+        import ibis
+        import pyarrow as pa
+
+        con = ibis.duckdb.connect(":memory:")
+        con.raw_sql("CREATE SCHEMA schema_a")
+        con.raw_sql("CREATE SCHEMA schema_b")
+        con.create_table("shared_table", pa.table({"id": [1]}), database="schema_a")
+        con.create_table("shared_table", pa.table({"id": [2]}), database="schema_b")
+
+        catalog = Catalog(quiet=True)
+        catalog.add_database(con, Folder(id="db", name="DB"), schema="schema_a")
+        catalog.add_database(con, Folder(id="db", name="DB"), schema="schema_b")
+
+        datasets = catalog.dataset.all()
+        assert len(datasets) == 2
+        ids = {d.id for d in datasets}
+        assert "db---schema_a---shared_table" in ids
+        assert "db---schema_b---shared_table" in ids
+        con.disconnect()

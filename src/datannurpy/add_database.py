@@ -210,7 +210,7 @@ def _add_database_impl(
     scan_errors = 0
     for schema_name in schemas_to_scan:
         # Determine folder for this schema
-        if schema_name is not None and len(schemas_to_scan) > 1:
+        if schema_name is not None:
             log_folder(f"{schema_name} (schema)", q)
             # Multiple schemas: create sub-folder for each
             schema_folder_id = make_id(root_folder_id, sanitize_id(schema_name))

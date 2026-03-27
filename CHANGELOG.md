@@ -4,6 +4,7 @@
 
 - remove: `datannurpy` console_scripts entry point — use `python -m datannurpy` instead
 - add: CLI supports `--help` and `--version` flags
+- fix: ID conflict when scanning same database with different schemas in separate `add_database` calls
 
 ## 0.11.0 (2026-03-26)
 

@@ -364,10 +364,13 @@ class BaseSchemaTests(ABC):
             schema="sales",
         )
 
-        # +1 for _modalities folder (auto-created)
+        # Root folder + schema sub-folder
         user_folders = catalog.folder.where("id", "!=", "_modalities")
-        assert len(user_folders) == 1
+        assert len(user_folders) == 2
         assert user_folders[0].id == "sales_db"
+        schema_folder = next(f for f in user_folders if f.id == "sales_db---sales")
+        assert schema_folder.parent_id == "sales_db"
+        assert schema_folder.type == "schema"
 
         dataset_names = {d.name for d in catalog.dataset.all()}
         assert dataset_names == {"orders", "customers"}
