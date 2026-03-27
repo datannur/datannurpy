@@ -41,7 +41,10 @@ oracle = ["ibis-framework[oracle]>=11.0"]
 mssql = ["ibis-framework[mssql]>=11.0"]
 databases = ["ibis-framework[postgres,mysql,oracle,mssql]>=11.0"]
 delta = ["deltalake>=0.18.0"]
-iceberg = ["pyiceberg>=0.10.0; python_version >= '3.10'"]
+iceberg = [
+  "pyiceberg>=0.10.0; python_version >= '3.10'",
+  "requests>=2.33.0; python_version >= '3.10'",
+]
 stat = [
   "pyreadstat>=1.2.0,<=1.2.8; python_version < '3.10'",
   "pyreadstat>=1.2.0; python_version >= '3.10'",
