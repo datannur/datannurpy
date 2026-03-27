@@ -273,16 +273,13 @@ def build_variables(
     infer_stats: bool = True,
     freq_threshold: int | None = None,
     skip_stats_columns: set[str] | None = None,
+    skip_extra_stats_columns: set[str] | None = None,
 ) -> tuple[list[Variable], pa.Table | None]:
-    """Build Variable entities from Ibis Table, return (variables, freq_table as PyArrow).
-
-    Args:
-        skip_stats_columns: Column names to exclude from stats computation
-            (e.g., Oracle CLOB columns that don't support COUNT DISTINCT).
-    """
+    """Build Variable entities from Ibis Table, return (variables, freq_table as PyArrow)."""
     schema = table.schema()
     columns = list(schema)
     skip_cols = set(skip_stats_columns) if skip_stats_columns else set()
+    skip_extra = set(skip_extra_stats_columns) if skip_extra_stats_columns else set()
 
     # Auto-detect columns that can't be aggregated or cast to string
     # (Binary for BLOB, Unknown for geometry types like POINT/POLYGON, GeoSpatial for GEOMETRY)
@@ -340,7 +337,7 @@ def build_variables(
                 if nb_rows > 1:
                     agg_exprs.append(length_expr.std().name(f"{col}__std"))
                 cols_with_extra.append(col)
-            elif isinstance(col_type, _DATE_TYPES):
+            elif isinstance(col_type, _DATE_TYPES) and col not in skip_extra:
                 date_col: Any = table[col]
                 epoch: Any = date_col.epoch_seconds().cast("float64")
                 agg_exprs.append(epoch.min().name(f"{col}__min"))

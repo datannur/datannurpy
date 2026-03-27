@@ -560,7 +560,7 @@ def scan_table(
                 con, table_name, schema
             )
             if infer_stats:
-                skip_stats_columns = lob_columns | date_columns
+                skip_stats_columns = lob_columns
                 oracle_date_columns = date_columns
         except Exception:
             pass  # If metadata fails, _get_table will retry
@@ -584,6 +584,7 @@ def scan_table(
         infer_stats=infer_stats,
         freq_threshold=freq_threshold,
         skip_stats_columns=skip_stats_columns if skip_stats_columns else None,
+        skip_extra_stats_columns=oracle_date_columns if oracle_date_columns else None,
     )
 
     # Oracle: compute date/timestamp stats via raw SQL (epoch_seconds unsupported)

@@ -138,7 +138,7 @@ def _oracle_patch_date_stats(
     eligible_cols: list[str] = []
     for col in date_columns:
         var = var_lookup.get(col)
-        if var is None or var.nb_missing is None:
+        if var is None:
             continue
         nb_non_null = (var.nb_distinct or 0) + (var.nb_duplicate or 0)
         if nb_non_null == 0:

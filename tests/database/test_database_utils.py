@@ -657,7 +657,7 @@ class TestOraclePatchDateStats:
         mock_con.raw_sql.assert_not_called()
 
     def test_skips_variable_without_stats(self) -> None:
-        """Variable with nb_missing=None (schema-only) is skipped."""
+        """Variable without stats (schema-only) is skipped."""
         from datannurpy.schema import Variable
 
         mock_con = MagicMock()
