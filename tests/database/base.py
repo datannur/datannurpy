@@ -92,7 +92,7 @@ class BaseDatabaseTests(ABC):
     ) -> None:
         """Test scanning a table."""
         con, _, _ = db_with_employees
-        variables, row_count, _ = scan_table(con, "employees", dataset_id="test")
+        variables, row_count, _, _ = scan_table(con, "employees", dataset_id="test")
 
         assert row_count == 5
         assert len(variables) == 5  # id, name, department, salary, hire_date
@@ -105,7 +105,7 @@ class BaseDatabaseTests(ABC):
     ) -> None:
         """Test that variable types are correctly inferred."""
         con, _, _ = db_with_employees
-        variables, _, _ = scan_table(con, "employees", dataset_id="test")
+        variables, _, _, _ = scan_table(con, "employees", dataset_id="test")
 
         var_by_name = {v.name: v for v in variables}
         assert var_by_name["id"].type == "integer"
@@ -118,7 +118,7 @@ class BaseDatabaseTests(ABC):
     ) -> None:
         """Test scanning with statistics."""
         con, _, _ = db_with_employees
-        variables, _, _ = scan_table(
+        variables, _, _, _ = scan_table(
             con, "employees", dataset_id="test", infer_stats=True
         )
 
@@ -137,7 +137,7 @@ class BaseDatabaseTests(ABC):
     ) -> None:
         """Test scanning without statistics."""
         con, _, _ = db_with_employees
-        variables, _, _ = scan_table(
+        variables, _, _, _ = scan_table(
             con, "employees", dataset_id="test", infer_stats=False
         )
 
@@ -150,17 +150,58 @@ class BaseDatabaseTests(ABC):
     ) -> None:
         """Test scanning with sample size."""
         con, backend, _ = db_with_employees
-        variables, row_count, _ = scan_table(
-            con, "employees", dataset_id="test", sample_size=2
+        variables, row_count, sample_size, _ = scan_table(
+            con, "employees", dataset_id="test", sample_size=3
         )
 
         # Row count should still be the full count
         assert row_count == 5
 
-        # Stats are computed on sample
+        # sample_size reflects actual sampled rows
+        assert sample_size is not None
+        assert sample_size <= row_count
+
+        # min/max/mean/std are exact (from full table scan, not sample)
         var_by_name = {v.name: v for v in variables}
-        assert var_by_name["name"].nb_distinct is not None
-        assert var_by_name["name"].nb_distinct <= 2
+        assert var_by_name["salary"].min == pytest.approx(60000.0)
+        assert var_by_name["salary"].max == pytest.approx(80000.0)
+        assert var_by_name["salary"].mean == pytest.approx(70000.0)
+        # nb_missing exact from full table
+        assert var_by_name["name"].nb_missing == 0
+
+    def test_scan_table_no_sample_returns_none(
+        self, db_with_employees: tuple[ibis.BaseBackend, str, str]
+    ) -> None:
+        """Test that sample_size is None when no sampling occurs."""
+        con, _, _ = db_with_employees
+        _, row_count, sample_size, _ = scan_table(con, "employees", dataset_id="test")
+        assert row_count == 5
+        assert sample_size is None
+
+    def test_scan_table_sample_larger_than_table(
+        self, db_with_employees: tuple[ibis.BaseBackend, str, str]
+    ) -> None:
+        """Test that sample_size is None when sample >= row count."""
+        con, _, _ = db_with_employees
+        _, row_count, sample_size, _ = scan_table(
+            con, "employees", dataset_id="test", sample_size=1000
+        )
+        assert row_count == 5
+        assert sample_size is None
+
+    def test_catalog_add_database_with_sample(
+        self, db_with_employees: tuple[ibis.BaseBackend, str, str]
+    ) -> None:
+        """Test that add_database stores sample_size on Dataset."""
+        con, _, _ = db_with_employees
+        catalog = Catalog()
+        catalog.add_database(
+            con, folder=Folder(id="testdb", name="Test DB"), sample_size=3
+        )
+        emp = next(d for d in catalog.dataset.all() if d.name == "employees")
+        assert emp.nb_row == 5
+        assert emp.sample_size is not None
+        assert emp.sample_size <= emp.nb_row
 
     def test_catalog_add_database(
         self, db_with_employees: tuple[ibis.BaseBackend, str, str]
@@ -249,7 +290,7 @@ class BaseDatabaseTests(ABC):
     ) -> None:
         """Test scanning a table with no rows."""
         con, _, _ = db_with_employees
-        variables, row_count, freq_table = scan_table(
+        variables, row_count, _, freq_table = scan_table(
             con, "empty_table", dataset_id="test", infer_stats=True
         )
         assert row_count == 0
@@ -319,7 +360,7 @@ class BaseSchemaTests(ABC):
     ) -> None:
         """Test scanning a table in a schema."""
         con, _ = db_with_schemas
-        variables, row_count, _ = scan_table(
+        variables, row_count, _, _ = scan_table(
             con, "orders", schema="sales", dataset_id="test"
         )
         assert row_count == 2

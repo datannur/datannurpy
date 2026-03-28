@@ -263,3 +263,29 @@ class TestBuildVariables:
         assert v.min == pytest.approx(42.0)
         assert v.max == pytest.approx(42.0)
         assert v.std is None
+
+    def test_full_table_sampling_mode(self):
+        """build_variables with full_table splits streaming and cardinality queries."""
+        full = ibis.memtable(
+            {"val": [10, 20, 30, 40, 50], "flag": [True, False, True, False, True]}
+        )
+        sample = ibis.memtable({"val": [10, 30], "flag": [True, True]})
+        variables, _ = build_variables(
+            sample,
+            nb_rows=2,
+            dataset_id="test",
+            infer_stats=True,
+            full_table=full,
+            full_nb_rows=5,
+        )
+        var_by_name = {v.name: v for v in variables}
+        # min/max/mean from full table
+        assert var_by_name["val"].min == pytest.approx(10.0)
+        assert var_by_name["val"].max == pytest.approx(50.0)
+        assert var_by_name["val"].mean == pytest.approx(30.0)
+        # nb_missing exact from full table
+        assert var_by_name["val"].nb_missing == 0
+        # nb_distinct from sample
+        assert var_by_name["val"].nb_distinct == 2
+        # boolean column has no extra stats
+        assert var_by_name["flag"].min is None

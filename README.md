@@ -288,6 +288,25 @@ catalog.add_database(
 )
 ```
 
+**Sampling large tables:**
+
+Use `sample_size` to limit the number of rows used for statistics on large tables:
+
+```python
+catalog.add_database("postgresql://localhost/mydb", sample_size=100_000)
+```
+
+When a table has more rows than `sample_size`, a uniform random sample is materialized locally. Statistics are then split into two groups:
+
+| Computed on     | Statistics                                             |
+| --------------- | ------------------------------------------------------ |
+| **Full table**  | `nb_row`, `nb_missing`, `min`, `max`, `mean`, `std`   |
+| **Sample only** | `nb_distinct`, `nb_duplicate`, `freq`                  |
+
+This keeps exact values for lightweight streaming aggregates while avoiding expensive full-table scans for cardinality. When the table has fewer rows than `sample_size`, no sampling occurs and all stats are exact.
+
+The actual number of sampled rows is recorded in `Dataset.sample_size` (`None` when no sampling was applied).
+
 ## Manual metadata
 
 Load manually curated metadata from files or a database:
@@ -507,7 +526,7 @@ catalog.add_database(
 | include           | list[str] \| None                               | None     | Table name patterns to include           |
 | exclude           | list[str] \| None                               | None     | Table name patterns to exclude           |
 | infer_stats       | bool                                            | True     | Compute column statistics                |
-| sample_size       | int \| None                                     | None     | Limit rows for stats (large tables)      |
+| sample_size       | int \| None                                     | None     | Sample rows for cardinality/freq stats   |
 | group_by_prefix   | bool \| str                                     | True     | Group tables by prefix into subfolders   |
 | prefix_min_tables | int                                             | 2        | Min tables to form a prefix group        |
 | storage_options   | dict \| None                                    | None     | Options for remote SQLite/GeoPackage     |

@@ -545,8 +545,8 @@ def scan_table(
     infer_stats: bool = True,
     freq_threshold: int | None = None,
     sample_size: int | None = None,
-) -> tuple[list[Variable], int, pa.Table | None]:
-    """Scan a database table and return (variables, row_count, freq_table)."""
+) -> tuple[list[Variable], int, int | None, pa.Table | None]:
+    """Scan a database table and return (variables, row_count, sample_size, freq_table)."""
     backend = get_backend_name(con)
 
     # Oracle: get schema + detect LOB columns in a single query
@@ -567,21 +567,42 @@ def scan_table(
     # Get exact row count (always full count, not sampled)
     row_count = int(table.count().to_pyarrow().as_py())
 
-    # For stats, optionally sample
-    stats_table = table
-    stats_row_count = row_count
-    if sample_size is not None and row_count > sample_size:
+    # When sampling: materialize sample locally, compute streaming stats on full table
+    actual_sample_size: int | None = None
+    if sample_size is not None and row_count > sample_size and infer_stats:
         fraction = sample_size / row_count
-        stats_table = table.sample(fraction)
-        stats_row_count = int(stats_table.count().to_pyarrow().as_py())
+        if backend == "oracle":  # pragma: no cover
+            # TABLESAMPLE fails on subqueries from con.sql()
+            sampled = table.filter(ibis.random() <= ibis.literal(fraction))
+        elif backend == "sqlite":
+            # SQLite aggregates fail on random-filtered subqueries
+            sampled = table.order_by(ibis.random()).limit(sample_size)
+        else:
+            sampled = table.sample(fraction)
 
-    variables, freq_table = build_variables(
-        stats_table,
-        nb_rows=stats_row_count,
-        dataset_id=dataset_id,
-        infer_stats=infer_stats,
-        freq_threshold=freq_threshold,
-        skip_stats_columns=skip_stats_columns if skip_stats_columns else None,
-    )
+        # Materialize sample → local PyArrow → ibis memtable
+        sample_arrow = sampled.to_pyarrow()
+        actual_sample_size = len(sample_arrow)
+        sample_table = ibis.memtable(sample_arrow)
 
-    return variables, row_count, freq_table
+        variables, freq_table = build_variables(
+            sample_table,
+            nb_rows=actual_sample_size,
+            dataset_id=dataset_id,
+            infer_stats=True,
+            freq_threshold=freq_threshold,
+            skip_stats_columns=skip_stats_columns if skip_stats_columns else None,
+            full_table=table,
+            full_nb_rows=row_count,
+        )
+    else:
+        variables, freq_table = build_variables(
+            table,
+            nb_rows=row_count,
+            dataset_id=dataset_id,
+            infer_stats=infer_stats,
+            freq_threshold=freq_threshold,
+            skip_stats_columns=skip_stats_columns if skip_stats_columns else None,
+        )
+
+    return variables, row_count, actual_sample_size, freq_table

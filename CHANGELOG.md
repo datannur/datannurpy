@@ -10,6 +10,7 @@
 - fix: skip columns with empty names from trailing CSV separators or blank Excel headers
 - fix: remote CSV schema-only scan streams header line instead of fixed 4KB partial download
 - refactor: remove Oracle date/timestamp stats raw SQL fallback — date columns are now fully skipped for stats on Oracle (simplifies sampling support)
+- add: `sample_size` parameter on `add_database` for uniform random sampling on large tables — exact stats on full table, cardinality and freq on sample
 
 ## 0.11.0 (2026-03-26)
 

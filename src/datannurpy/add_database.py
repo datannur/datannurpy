@@ -371,7 +371,7 @@ def _add_database_impl(
             # Schema/Full mode: scan table
             schema_only = resolved_depth == "schema"
             try:
-                table_vars, nb_row, freq_table = scan_table(
+                table_vars, nb_row, actual_sample_size, freq_table = scan_table(
                     con,
                     table_name,
                     schema=schema_name,
@@ -398,6 +398,7 @@ def _add_database_impl(
                 last_update_date=effective_date,
                 data_path=table_data_path,
                 nb_row=nb_row,
+                sample_size=actual_sample_size,
                 schema_signature=current_signature,
                 last_update_timestamp=effective_timestamp,
                 _seen=True,
