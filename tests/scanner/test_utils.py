@@ -214,34 +214,6 @@ class TestBuildVariables:
         assert v.std is not None
         assert v.min < v.max
 
-    def test_skip_extra_stats_computes_distinct_missing(self):
-        """skip_extra_stats_columns should compute distinct/missing but not min/max/mean/std."""
-        import datetime
-
-        table = ibis.memtable(
-            {
-                "dt": [
-                    datetime.date(2020, 1, 1),
-                    datetime.date(2020, 7, 1),
-                    datetime.date(2021, 1, 1),
-                ]
-            }
-        )
-        variables, _ = build_variables(
-            table,
-            nb_rows=3,
-            dataset_id="test",
-            infer_stats=True,
-            skip_extra_stats_columns={"dt"},
-        )
-        v = variables[0]
-        assert v.nb_distinct == 3
-        assert v.nb_missing == 0
-        assert v.min is None
-        assert v.max is None
-        assert v.mean is None
-        assert v.std is None
-
     def test_single_row_skips_std(self):
         """build_variables should skip std when table has only 1 row."""
         import datetime

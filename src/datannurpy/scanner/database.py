@@ -17,7 +17,6 @@ from ._oracle import (
     ORACLE_SYSTEM_TABLE_PREFIXES,
     _init_oracle_client,
     _oracle_get_schema,
-    _oracle_patch_date_stats,
 )
 from .utils import build_variables
 
@@ -550,9 +549,8 @@ def scan_table(
     """Scan a database table and return (variables, row_count, freq_table)."""
     backend = get_backend_name(con)
 
-    # Oracle: get schema + detect LOB/date columns in a single query
+    # Oracle: get schema + detect LOB columns in a single query
     skip_stats_columns: set[str] = set()
-    oracle_date_columns: set[str] = set()
     oracle_schema: ibis.Schema | None = None
     if backend == "oracle":
         try:
@@ -560,8 +558,7 @@ def scan_table(
                 con, table_name, schema
             )
             if infer_stats:
-                skip_stats_columns = lob_columns
-                oracle_date_columns = date_columns
+                skip_stats_columns = lob_columns | date_columns
         except Exception:
             pass  # If metadata fails, _get_table will retry
 
@@ -574,8 +571,9 @@ def scan_table(
     stats_table = table
     stats_row_count = row_count
     if sample_size is not None and row_count > sample_size:
-        stats_table = table.limit(sample_size)
-        stats_row_count = sample_size
+        fraction = sample_size / row_count
+        stats_table = table.sample(fraction)
+        stats_row_count = int(stats_table.count().to_pyarrow().as_py())
 
     variables, freq_table = build_variables(
         stats_table,
@@ -584,13 +582,6 @@ def scan_table(
         infer_stats=infer_stats,
         freq_threshold=freq_threshold,
         skip_stats_columns=skip_stats_columns if skip_stats_columns else None,
-        skip_extra_stats_columns=oracle_date_columns if oracle_date_columns else None,
     )
-
-    # Oracle: compute date/timestamp stats via raw SQL (epoch_seconds unsupported)
-    if oracle_date_columns and infer_stats and row_count > 0:
-        _oracle_patch_date_stats(
-            con, table_name, schema, oracle_date_columns, variables
-        )
 
     return variables, row_count, freq_table
