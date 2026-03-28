@@ -137,10 +137,11 @@ class BaseDatabaseTests(ABC):
     ) -> None:
         """Test scanning without statistics."""
         con, _, _ = db_with_employees
-        variables, _, _, _ = scan_table(
+        variables, row_count, _, _ = scan_table(
             con, "employees", dataset_id="test", infer_stats=False
         )
 
+        assert row_count is None
         var_by_name = {v.name: v for v in variables}
         assert var_by_name["name"].nb_distinct is None
         assert var_by_name["name"].nb_missing is None

@@ -545,7 +545,8 @@ def scan_table(
     infer_stats: bool = True,
     freq_threshold: int | None = None,
     sample_size: int | None = None,
-) -> tuple[list[Variable], int, int | None, pa.Table | None]:
+    row_count: int | None = None,
+) -> tuple[list[Variable], int | None, int | None, pa.Table | None]:
     """Scan a database table and return (variables, row_count, sample_size, freq_table)."""
     backend = get_backend_name(con)
 
@@ -564,8 +565,19 @@ def scan_table(
 
     table = _get_table(con, table_name, schema, backend, oracle_schema=oracle_schema)
 
-    # Get exact row count (always full count, not sampled)
-    row_count = int(table.count().to_pyarrow().as_py())
+    # Schema-only mode: just column names + types, no row count
+    if not infer_stats:
+        variables, _ = build_variables(
+            table,
+            nb_rows=0,
+            dataset_id=dataset_id,
+            infer_stats=False,
+        )
+        return variables, None, None, None
+
+    # Get exact row count (use provided value or compute)
+    if row_count is None:
+        row_count = int(table.count().to_pyarrow().as_py())
 
     # When sampling: materialize sample locally, compute streaming stats on full table
     actual_sample_size: int | None = None

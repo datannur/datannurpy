@@ -273,8 +273,8 @@ def _add_database_impl(
             # Check if table exists in cache
             existing_dataset = catalog.dataset.get_by("data_path", table_data_path)
 
-            # Structure mode: just enumerate tables, no queries
-            if resolved_depth == "structure":
+            # Structure/Schema mode: no signature, no row count, no incremental check
+            if resolved_depth != "full":
                 if existing_dataset is not None and not do_refresh:
                     catalog.dataset.update(existing_dataset.id, _seen=True)
                     log_skip(table_name, q)
@@ -293,6 +293,22 @@ def _add_database_impl(
 
                 dataset_id = make_id(table_folder_id, sanitize_id(table_name))
 
+                # Schema mode: scan columns
+                table_vars = []
+                if resolved_depth == "schema":
+                    try:
+                        table_vars, _, _, _ = scan_table(
+                            con,
+                            table_name,
+                            schema=schema_name,
+                            dataset_id=dataset_id,
+                            infer_stats=False,
+                        )
+                    except Exception as exc:
+                        log_error(table_name, exc, q)
+                        scan_errors += 1
+                        continue
+
                 is_change = existing_dataset is not None
                 if is_change:
                     remove_dataset_cascade(catalog, existing_dataset)
@@ -307,7 +323,12 @@ def _add_database_impl(
                     _seen=True,
                 )
                 catalog.dataset.add(dataset)
-                log_done(table_name, q)
+                if table_vars:
+                    build_variable_ids(table_vars, dataset.id)
+                    catalog.variable.add_all(table_vars)
+                    log_done(f"{table_name} ({len(table_vars)} vars)", q)
+                else:
+                    log_done(table_name, q)
                 continue
 
             # Compute signature and row count for comparison/storage
@@ -368,17 +389,17 @@ def _add_database_impl(
                 effective_timestamp = catalog._now
                 effective_date = now_iso
 
-            # Schema/Full mode: scan table
-            schema_only = resolved_depth == "schema"
+            # Full mode: scan table with row count, stats, modalities
             try:
                 table_vars, nb_row, actual_sample_size, freq_table = scan_table(
                     con,
                     table_name,
                     schema=schema_name,
                     dataset_id=dataset_id,
-                    infer_stats=infer_stats and not schema_only,
+                    infer_stats=infer_stats,
                     freq_threshold=freq_threshold,
                     sample_size=sample_size,
+                    row_count=current_nb_row,
                 )
             except Exception as exc:
                 log_error(table_name, exc, q)
@@ -406,16 +427,12 @@ def _add_database_impl(
             catalog.dataset.add(dataset)
 
             var_id_mapping = build_variable_ids(table_vars, dataset.id)
-            if not schema_only:
-                catalog.modality_manager.assign_from_freq(
-                    table_vars, freq_table, var_id_mapping
-                )
+            catalog.modality_manager.assign_from_freq(
+                table_vars, freq_table, var_id_mapping
+            )
             catalog.variable.add_all(table_vars)
 
-            if schema_only:
-                log_done(f"{table_name} ({len(table_vars)} vars)", q)
-            else:
-                log_done(f"{table_name} ({nb_row:,} rows, {len(table_vars)} vars)", q)
+            log_done(f"{table_name} ({nb_row:,} rows, {len(table_vars)} vars)", q)
 
     # Close connection if we created it (string connection)
     if isinstance(connection, str):
