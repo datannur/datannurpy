@@ -17,7 +17,6 @@ from ._oracle import (
     ORACLE_SYSTEM_TABLE_PREFIXES,
     _init_oracle_client,
     _oracle_get_schema,
-    _oracle_patch_date_stats,
 )
 from .utils import build_variables
 
@@ -546,13 +545,13 @@ def scan_table(
     infer_stats: bool = True,
     freq_threshold: int | None = None,
     sample_size: int | None = None,
-) -> tuple[list[Variable], int, pa.Table | None]:
-    """Scan a database table and return (variables, row_count, freq_table)."""
+    row_count: int | None = None,
+) -> tuple[list[Variable], int | None, int | None, pa.Table | None]:
+    """Scan a database table and return (variables, row_count, sample_size, freq_table)."""
     backend = get_backend_name(con)
 
-    # Oracle: get schema + detect LOB/date columns in a single query
+    # Oracle: get schema + detect LOB columns in a single query
     skip_stats_columns: set[str] = set()
-    oracle_date_columns: set[str] = set()
     oracle_schema: ibis.Schema | None = None
     if backend == "oracle":
         try:
@@ -561,35 +560,61 @@ def scan_table(
             )
             if infer_stats:
                 skip_stats_columns = lob_columns | date_columns
-                oracle_date_columns = date_columns
         except Exception:
             pass  # If metadata fails, _get_table will retry
 
     table = _get_table(con, table_name, schema, backend, oracle_schema=oracle_schema)
 
-    # Get exact row count (always full count, not sampled)
-    row_count = int(table.count().to_pyarrow().as_py())
+    # Schema-only mode: just column names + types, no row count
+    if not infer_stats:
+        variables, _ = build_variables(
+            table,
+            nb_rows=0,
+            dataset_id=dataset_id,
+            infer_stats=False,
+        )
+        return variables, None, None, None
 
-    # For stats, optionally sample
-    stats_table = table
-    stats_row_count = row_count
-    if sample_size is not None and row_count > sample_size:
-        stats_table = table.limit(sample_size)
-        stats_row_count = sample_size
+    # Get exact row count (use provided value or compute)
+    if row_count is None:
+        row_count = int(table.count().to_pyarrow().as_py())
 
-    variables, freq_table = build_variables(
-        stats_table,
-        nb_rows=stats_row_count,
-        dataset_id=dataset_id,
-        infer_stats=infer_stats,
-        freq_threshold=freq_threshold,
-        skip_stats_columns=skip_stats_columns if skip_stats_columns else None,
-    )
+    # When sampling: materialize sample locally, compute streaming stats on full table
+    actual_sample_size: int | None = None
+    if sample_size is not None and row_count > sample_size and infer_stats:
+        fraction = sample_size / row_count
+        if backend == "oracle":  # pragma: no cover
+            # TABLESAMPLE fails on subqueries from con.sql()
+            sampled = table.filter(ibis.random() <= ibis.literal(fraction))
+        elif backend == "sqlite":
+            # SQLite aggregates fail on random-filtered subqueries
+            sampled = table.order_by(ibis.random()).limit(sample_size)
+        else:
+            sampled = table.sample(fraction)
 
-    # Oracle: compute date/timestamp stats via raw SQL (epoch_seconds unsupported)
-    if oracle_date_columns and infer_stats and row_count > 0:
-        _oracle_patch_date_stats(
-            con, table_name, schema, oracle_date_columns, variables
+        # Materialize sample → local PyArrow → ibis memtable
+        sample_arrow = sampled.to_pyarrow()
+        actual_sample_size = len(sample_arrow)
+        sample_table = ibis.memtable(sample_arrow)
+
+        variables, freq_table = build_variables(
+            sample_table,
+            nb_rows=actual_sample_size,
+            dataset_id=dataset_id,
+            infer_stats=True,
+            freq_threshold=freq_threshold,
+            skip_stats_columns=skip_stats_columns if skip_stats_columns else None,
+            full_table=table,
+            full_nb_rows=row_count,
+        )
+    else:
+        variables, freq_table = build_variables(
+            table,
+            nb_rows=row_count,
+            dataset_id=dataset_id,
+            infer_stats=infer_stats,
+            freq_threshold=freq_threshold,
+            skip_stats_columns=skip_stats_columns if skip_stats_columns else None,
         )
 
-    return variables, row_count, freq_table
+    return variables, row_count, actual_sample_size, freq_table

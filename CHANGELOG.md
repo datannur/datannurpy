@@ -1,5 +1,19 @@
 # datannurpy
 
+## 0.12.0 (2026-03-29)
+
+- remove: `datannurpy` console_scripts entry point — use `python -m datannurpy` instead
+- add: CLI supports `--help` and `--version` flags
+- fix: ID conflict when scanning same database with different schemas in separate `add_database` calls
+- fix: Oracle DATE/TIMESTAMP columns now get `nb_distinct`/`nb_missing` stats from `build_variables`
+- fix: remote file warnings now show original filename instead of temporary path
+- fix: skip columns with empty names from trailing CSV separators or blank Excel headers
+- fix: remote CSV schema-only scan streams header line instead of fixed 4KB partial download
+- refactor: remove Oracle date/timestamp stats raw SQL fallback — date columns are now fully skipped for stats on Oracle (simplifies sampling support)
+- add: `sample_size` parameter on `add_database` for uniform random sampling on large tables — exact stats on full table, cardinality and freq on sample
+- refactor: CSV scanner rewritten with DuckDB streaming — constant RAM regardless of file size, automatic UTF-8/cp1252 handling
+- add: `sample_size` on `add_folder` / `add_dataset` and `skip_copy` on `Catalog` / `add_folder` / `add_dataset` for CSV files
+
 ## 0.11.0 (2026-03-26)
 
 - add: `app_config` parameter on `Catalog` — pass a `dict[str, str]` to populate a `config.json` in the exported database (e.g. `contact_email`, `banner`, `more_info`)

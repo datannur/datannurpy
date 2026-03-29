@@ -288,6 +288,40 @@ catalog.add_database(
 )
 ```
 
+**Sampling large tables:**
+
+Use `sample_size` to limit the number of rows used for statistics on large tables:
+
+```python
+catalog.add_database("postgresql://localhost/mydb", sample_size=100_000)
+```
+
+When a table has more rows than `sample_size`, a uniform random sample is materialized locally. Statistics are then split into two groups:
+
+| Computed on     | Statistics                                             |
+| --------------- | ------------------------------------------------------ |
+| **Full table**  | `nb_row`, `nb_missing`, `min`, `max`, `mean`, `std`   |
+| **Sample only** | `nb_distinct`, `nb_duplicate`, `freq`                  |
+
+This keeps exact values for lightweight streaming aggregates while avoiding expensive full-table scans for cardinality. When the table has fewer rows than `sample_size`, no sampling occurs and all stats are exact.
+
+The actual number of sampled rows is recorded in `Dataset.sample_size` (`None` when no sampling was applied).
+
+**Sampling CSV files:**
+
+The same `sample_size` parameter is available on `add_folder` and `add_dataset` for large CSV files. DuckDB reads the file in streaming mode (constant RAM) and uses reservoir sampling:
+
+```python
+catalog.add_folder("./data", sample_size=100_000)
+catalog.add_dataset("./data/big.csv", sample_size=50_000)
+```
+
+Use `skip_copy=True` on the `Catalog` to avoid the UTF-8 temp copy when files are already local and UTF-8 (auto-fallback if encoding detection fails):
+
+```python
+catalog = Catalog(app_path="./output", skip_copy=True)
+```
+
 ## Manual metadata
 
 Load manually curated metadata from files or a database:
@@ -357,7 +391,7 @@ catalog.export_app("./my-catalog", open_browser=True)
 ### `Catalog`
 
 ```python
-Catalog(app_path=None, depth="full", refresh=False, freq_threshold=100, csv_encoding=None, app_config=None, quiet=False)
+Catalog(app_path=None, depth="full", refresh=False, freq_threshold=100, csv_encoding=None, skip_copy=False, app_config=None, quiet=False)
 ```
 
 | Attribute      | Type                              | Description                                        |
@@ -367,6 +401,7 @@ Catalog(app_path=None, depth="full", refresh=False, freq_threshold=100, csv_enco
 | refresh        | bool                              | Force full rescan ignoring cache (default: False)  |
 | freq_threshold | int                               | Max distinct values for modality detection (0=off) |
 | csv_encoding   | str \| None                       | Default CSV encoding (utf-8, cp1252, etc.)         |
+| skip_copy      | bool                              | Skip UTF-8 temp copy for local CSV (default: False)|
 | app_config     | dict[str, str] \| None            | Key-value config for the web app (see below)       |
 | quiet          | bool                              | Suppress progress logging (default: False)         |
 | folders        | list[Folder]                      | All folders in catalog                             |
@@ -387,6 +422,8 @@ catalog.add_folder(
     recursive=True,
     infer_stats=True,
     csv_encoding=None,
+    sample_size=None,
+    skip_copy=None,
     storage_options=None,
     refresh=None,
     quiet=None,
@@ -404,6 +441,8 @@ catalog.add_folder(
 | recursive       | bool                                      | True     | Scan subdirectories                           |
 | infer_stats     | bool                                      | True     | Compute distinct/missing/duplicate counts     |
 | csv_encoding    | str \| None                               | None     | Override CSV encoding                         |
+| sample_size     | int \| None                               | None     | Sample rows for CSV stats (see below)         |
+| skip_copy       | bool \| None                              | None     | Skip UTF-8 temp copy (overrides catalog)      |
 | storage_options | dict \| None                              | None     | Options for remote storage (passed to fsspec) |
 | refresh         | bool \| None                              | None     | Force rescan (overrides catalog setting)      |
 | quiet           | bool \| None                              | None     | Override catalog quiet setting                |
@@ -450,6 +489,8 @@ catalog.add_dataset(
     depth=None,
     infer_stats=True,
     csv_encoding=None,
+    sample_size=None,
+    skip_copy=None,
     storage_options=None,
     refresh=None,
     quiet=None,
@@ -468,6 +509,8 @@ catalog.add_dataset(
 | depth           | "structure" \| "schema" \| "full" \| None | None     | Scan depth (uses catalog.depth if None)       |
 | infer_stats     | bool                                      | True     | Compute statistics                            |
 | csv_encoding    | str \| None                               | None     | Override CSV encoding                         |
+| sample_size     | int \| None                               | None     | Sample rows for CSV stats (see below)         |
+| skip_copy       | bool \| None                              | None     | Skip UTF-8 temp copy (overrides catalog)      |
 | storage_options | dict \| None                              | None     | Options for remote storage (passed to fsspec) |
 | refresh         | bool \| None                              | None     | Force rescan (overrides catalog setting)      |
 | quiet           | bool \| None                              | None     | Override catalog quiet setting                |
@@ -507,7 +550,7 @@ catalog.add_database(
 | include           | list[str] \| None                               | None     | Table name patterns to include           |
 | exclude           | list[str] \| None                               | None     | Table name patterns to exclude           |
 | infer_stats       | bool                                            | True     | Compute column statistics                |
-| sample_size       | int \| None                                     | None     | Limit rows for stats (large tables)      |
+| sample_size       | int \| None                                     | None     | Sample rows for cardinality/freq stats   |
 | group_by_prefix   | bool \| str                                     | True     | Group tables by prefix into subfolders   |
 | prefix_min_tables | int                                             | 2        | Min tables to form a prefix group        |
 | storage_options   | dict \| None                                    | None     | Options for remote SQLite/GeoPackage     |

@@ -119,7 +119,7 @@ class TestGeoPackage:
         con, _ = connect(f"sqlite:////{gpkg_path}")
         try:
             # Project has: id, geom (POINT → geometry), ProjectName, etc.
-            variables, row_count, freq_table = scan_table(
+            variables, row_count, _, freq_table = scan_table(
                 con, "Project", dataset_id="test", infer_stats=True, freq_threshold=100
             )
             assert row_count == 29  # 29 photovoltaic projects

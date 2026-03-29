@@ -5,10 +5,23 @@ from __future__ import annotations
 import sys
 
 
+USAGE = "Usage: python -m datannurpy <config.yml>"
+
+
 def main() -> None:
     """Run datannurpy CLI."""
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-h", "--help"):
+        print(USAGE)
+        sys.exit(0)
+
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-V", "--version"):
+        from . import __version__
+
+        print(f"datannurpy {__version__}")
+        sys.exit(0)
+
     if len(sys.argv) < 2:
-        print("Usage: python -m datannurpy <config.yml>")
+        print(USAGE)
         sys.exit(1)
 
     from .config import run_config

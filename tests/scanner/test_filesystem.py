@@ -556,23 +556,20 @@ class TestRemoteScanWithEnsureLocal:
         assert result.nb_row == 1
 
     def test_scan_schema_only_with_remote_fs(self, tmp_path: Path) -> None:
-        """scan_file schema_only should use ensure_local_partial for remote CSV."""
+        """scan_file schema_only should stream header line for remote CSV."""
+        from io import BytesIO
         from unittest.mock import MagicMock
+
         from datannurpy.scanner.scan import scan_file
 
-        # Create a test CSV file
-        csv_file = tmp_path / "test.csv"
-        csv_file.write_text("name,age\nAlice,30\n")
-
-        # Mock a non-local FileSystem
+        # Mock a non-local FileSystem that returns header bytes via open()
         mock_fs = MagicMock()
         mock_fs.is_local = False
-        mock_fs.ensure_local_partial.return_value.__enter__ = MagicMock(
-            return_value=csv_file
+        mock_fs._full_path.return_value = "/remote/test.csv"
+        mock_fs.fs.open.return_value.__enter__ = MagicMock(
+            return_value=BytesIO(b"name,age\n")
         )
-        mock_fs.ensure_local_partial.return_value.__exit__ = MagicMock(
-            return_value=None
-        )
+        mock_fs.fs.open.return_value.__exit__ = MagicMock(return_value=None)
 
         result = scan_file(
             Path("/remote/test.csv"),
@@ -582,9 +579,9 @@ class TestRemoteScanWithEnsureLocal:
             fs=mock_fs,
         )
 
-        mock_fs.ensure_local_partial.assert_called_once()
+        mock_fs.fs.open.assert_called_once()
         assert len(result.variables) == 2
-        assert result.nb_row is None  # schema_only doesn't return row count
+        assert result.nb_row is None
 
 
 class TestRemoteScanStatistical:

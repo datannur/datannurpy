@@ -273,15 +273,12 @@ def build_variables(
     infer_stats: bool = True,
     freq_threshold: int | None = None,
     skip_stats_columns: set[str] | None = None,
+    full_table: ibis.Table | None = None,
+    full_nb_rows: int | None = None,
 ) -> tuple[list[Variable], pa.Table | None]:
-    """Build Variable entities from Ibis Table, return (variables, freq_table as PyArrow).
-
-    Args:
-        skip_stats_columns: Column names to exclude from stats computation
-            (e.g., Oracle CLOB columns that don't support COUNT DISTINCT).
-    """
+    """Build Variable entities from Ibis Table, return (variables, freq_table as PyArrow)."""
     schema = table.schema()
-    columns = list(schema)
+    columns = [c for c in schema if c.strip() != ""]
     skip_cols = set(skip_stats_columns) if skip_stats_columns else set()
 
     # Auto-detect columns that can't be aggregated or cast to string
@@ -312,68 +309,106 @@ def build_variables(
         str, tuple[float | None, float | None, float | None, float | None]
     ] = {}
     if infer_stats and nb_rows > 0:
-        # Build aggregation expressions for distinct and null counts
         # Exclude columns that don't support aggregation (e.g., CLOB)
         cols_for_stats = [c for c in columns if c not in skip_cols]
-        agg_exprs = []
         cols_with_extra: list[str] = []
+
+        # Detect which columns support min/max/mean/std
+        col_extra_exprs: dict[str, str] = {}  # col -> "numeric"|"string"|"date"
         for col in cols_for_stats:
-            agg_exprs.append(table[col].nunique().name(f"{col}__distinct"))
-            # count() excludes nulls, so nb_rows - count = nb_missing
-            agg_exprs.append(table[col].count().name(f"{col}__non_null"))
-            # min/max/mean/std depending on type
             col_type = schema[col]
             if isinstance(col_type, _NUMERIC_TYPES):
-                col_expr: Any = table[col].cast("float64")
-                agg_exprs.append(col_expr.min().name(f"{col}__min"))
-                agg_exprs.append(col_expr.max().name(f"{col}__max"))
-                agg_exprs.append(col_expr.mean().name(f"{col}__mean"))
-                if nb_rows > 1:
-                    agg_exprs.append(col_expr.std().name(f"{col}__std"))
+                col_extra_exprs[col] = "numeric"
                 cols_with_extra.append(col)
             elif isinstance(col_type, dt.String):
-                str_col: Any = table[col]
-                length_expr: Any = str_col.length().cast("float64")
-                agg_exprs.append(length_expr.min().name(f"{col}__min"))
-                agg_exprs.append(length_expr.max().name(f"{col}__max"))
-                agg_exprs.append(length_expr.mean().name(f"{col}__mean"))
-                if nb_rows > 1:
-                    agg_exprs.append(length_expr.std().name(f"{col}__std"))
+                col_extra_exprs[col] = "string"
                 cols_with_extra.append(col)
-            elif isinstance(col_type, _DATE_TYPES):
-                date_col: Any = table[col]
-                epoch: Any = date_col.epoch_seconds().cast("float64")
-                agg_exprs.append(epoch.min().name(f"{col}__min"))
-                agg_exprs.append(epoch.max().name(f"{col}__max"))
-                agg_exprs.append(epoch.mean().name(f"{col}__mean"))
-                if nb_rows > 1:
-                    agg_exprs.append(epoch.std().name(f"{col}__std"))
+            elif isinstance(col_type, _DATE_TYPES) and col not in skip_cols:
+                col_extra_exprs[col] = "date"
                 cols_with_extra.append(col)
 
-        if agg_exprs:
+        # When full_table is provided (sampling mode):
+        #   - Streaming aggregates (count, min, max, mean, std) on full_table
+        #   - Cardinality aggregates (nunique) on table (=sample memtable)
+        # Otherwise: everything on table (current behavior)
+        streaming_source = full_table if full_table is not None else table
+        streaming_nb_rows = full_nb_rows if full_nb_rows is not None else nb_rows
+
+        # Build streaming aggregation expressions (count, min, max, mean, std)
+        streaming_aggs: list[Any] = []
+        for col in cols_for_stats:
+            streaming_aggs.append(
+                streaming_source[col].count().name(f"{col}__non_null")
+            )
+            kind = col_extra_exprs.get(col)
+            expr: Any = None
+            if kind == "numeric":
+                expr = streaming_source[col].cast("float64")
+            elif kind == "string":
+                str_col: Any = streaming_source[col]
+                expr = str_col.length().cast("float64")
+            elif kind == "date":
+                date_col: Any = streaming_source[col]
+                expr = date_col.epoch_seconds().cast("float64")
+            if expr is not None:
+                streaming_aggs.append(expr.min().name(f"{col}__min"))
+                streaming_aggs.append(expr.max().name(f"{col}__max"))
+                streaming_aggs.append(expr.mean().name(f"{col}__mean"))
+                if streaming_nb_rows > 1:
+                    streaming_aggs.append(expr.std().name(f"{col}__std"))
+
+        # Build cardinality aggregation (nunique)
+        # With full_table (sampling): approx on full data (HyperLogLog, streaming)
+        # Without full_table: exact on table (all in memory)
+        cardinality_aggs: list[Any] = []
+        if full_table is not None:
+            for col in cols_for_stats:
+                streaming_aggs.append(
+                    streaming_source[col].approx_nunique().name(f"{col}__distinct")
+                )
+        else:
+            for col in cols_for_stats:
+                cardinality_aggs.append(table[col].nunique().name(f"{col}__distinct"))
+
+        if streaming_aggs or cardinality_aggs:
             try:
-                agg_table = table.aggregate(agg_exprs)
-                try:
-                    stats_row = agg_table.to_pyarrow().to_pylist()[0]
-                except pa.ArrowInvalid:
-                    # Oracle: Decimal values can't convert via PyArrow
-                    stats_row = dict(agg_table.execute().iloc[0])
+                streaming_row: dict[str, Any] = {}
+
+                if full_table is None:
+                    # No sampling: single combined query on table
+                    all_aggs = streaming_aggs + cardinality_aggs
+                    agg_table = table.aggregate(all_aggs)
+                    try:
+                        streaming_row = agg_table.to_pyarrow().to_pylist()[0]
+                    except pa.ArrowInvalid:
+                        # Oracle: Decimal values can't convert via PyArrow
+                        streaming_row = dict(agg_table.execute().iloc[0])
+                else:
+                    # Sampling: streaming aggs + approx_nunique on full_table
+                    agg_table = streaming_source.aggregate(streaming_aggs)
+                    try:
+                        streaming_row = agg_table.to_pyarrow().to_pylist()[0]
+                    except pa.ArrowInvalid:  # pragma: no cover
+                        streaming_row = dict(agg_table.execute().iloc[0])
+
                 for col in cols_for_stats:
-                    nb_distinct = int(stats_row[f"{col}__distinct"])
-                    nb_non_null = int(stats_row[f"{col}__non_null"])
-                    nb_missing = nb_rows - nb_non_null
+                    nb_distinct = int(streaming_row[f"{col}__distinct"])
+                    nb_non_null = int(streaming_row[f"{col}__non_null"])
+                    nb_missing = streaming_nb_rows - nb_non_null
                     nb_duplicate = nb_rows - nb_distinct
                     stats[col] = (nb_distinct, nb_duplicate, nb_missing)
                 for col in cols_with_extra:
                     nb_distinct = stats[col][0] if col in stats else 0
-                    nb_non_null = nb_rows - (stats[col][2] if col in stats else nb_rows)
+                    nb_non_null = streaming_nb_rows - (
+                        stats[col][2] if col in stats else streaming_nb_rows
+                    )
                     if nb_non_null == 0:
                         extra_stats[col] = (None, None, None, None)
                         continue
-                    raw_min = stats_row[f"{col}__min"]
-                    raw_max = stats_row[f"{col}__max"]
-                    raw_mean = stats_row[f"{col}__mean"]
-                    raw_std = stats_row.get(f"{col}__std")
+                    raw_min = streaming_row[f"{col}__min"]
+                    raw_max = streaming_row[f"{col}__max"]
+                    raw_mean = streaming_row[f"{col}__mean"]
+                    raw_std = streaming_row.get(f"{col}__std")
                     extra_stats[col] = (
                         _to_float(raw_min),
                         _to_float(raw_max),
@@ -455,6 +490,7 @@ def build_variables_from_schema(
             type=pyarrow_type_to_str(field.type),
         )
         for field in schema
+        if field.name.strip() != ""
     ]
 
 

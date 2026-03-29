@@ -516,7 +516,7 @@ class TestDepthParameterDatabase:
             assert ds.nb_row is None
 
     def test_depth_schema_creates_variables_without_stats(self, sample_db: Path):
-        """depth='schema' should create variables without stats."""
+        """depth='schema' should create variables without stats and no nb_row."""
         conn_str = f"sqlite:////{sample_db}"
 
         catalog = Catalog(quiet=True)
@@ -525,6 +525,10 @@ class TestDepthParameterDatabase:
         # Should have datasets and variables
         assert len(catalog.dataset.all()) == 2
         assert len(catalog.variable.all()) > 0
+
+        # No row count in schema mode (like files)
+        for ds in catalog.dataset.all():
+            assert ds.nb_row is None
 
         # Variables should have no stats (nb_distinct, nb_missing)
         for var in catalog.variable.all():
@@ -568,6 +572,24 @@ class TestDepthParameterDatabase:
         mock_sig.assert_not_called()
         mock_count.assert_not_called()
         assert len(catalog.dataset.all()) == 2
+
+    def test_depth_schema_skips_signature_and_row_count(self, sample_db: Path):
+        """depth='schema' should not compute schema_signature or nb_row."""
+        from unittest.mock import patch
+
+        conn_str = f"sqlite:////{sample_db}"
+        catalog = Catalog(quiet=True)
+
+        with (
+            patch("datannurpy.add_database.compute_schema_signature") as mock_sig,
+            patch("datannurpy.add_database.get_table_row_count") as mock_count,
+        ):
+            catalog.add_database(conn_str, depth="schema")
+
+        mock_sig.assert_not_called()
+        mock_count.assert_not_called()
+        assert len(catalog.dataset.all()) == 2
+        assert len(catalog.variable.all()) > 0
 
     def test_depth_structure_incremental_skips_unchanged(self, sample_db: Path):
         """depth='structure' second run marks existing datasets as seen."""
