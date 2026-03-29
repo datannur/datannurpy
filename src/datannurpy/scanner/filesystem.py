@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
+import codecs
 import shutil
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterator
+from typing import IO, TYPE_CHECKING, Any
 
 import fsspec
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Generator, Iterator
 
 
 def is_remote_url(path: str | Path) -> bool:
@@ -185,3 +186,42 @@ def get_filesystem(
 ) -> FileSystem:
     """Create a FileSystem instance for the given path."""
     return FileSystem(path, storage_options)
+
+
+_CHUNK_SIZE = 1_048_576  # 1 MB
+
+
+def ensure_local_utf8(
+    fin: IO[bytes], fout: IO[bytes], csv_encoding: str | None = None
+) -> None:
+    """Copy binary stream to output, ensuring UTF-8 encoding."""
+    if csv_encoding:
+        while chunk := fin.read(_CHUNK_SIZE):
+            fout.write(chunk.decode(csv_encoding).encode("utf-8"))
+        return
+
+    decoder = codecs.getincrementaldecoder("utf-8")("strict")
+    is_utf8 = True
+    carry = b""
+    while chunk := fin.read(_CHUNK_SIZE):
+        if is_utf8:
+            try:
+                decoder.decode(chunk, False)
+                pending = decoder.getstate()[0]
+                n = len(pending)
+                if n:
+                    fout.write(carry + chunk[:-n])
+                    carry = chunk[-n:]
+                else:
+                    fout.write(carry + chunk)
+                    carry = b""
+            except UnicodeDecodeError:
+                is_utf8 = False
+                fout.write(
+                    (carry + chunk).decode("cp1252", errors="replace").encode("utf-8")
+                )
+                carry = b""
+        else:
+            fout.write(chunk.decode("cp1252", errors="replace").encode("utf-8"))
+    if is_utf8 and carry:
+        fout.write(carry.decode("cp1252", errors="replace").encode("utf-8"))

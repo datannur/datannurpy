@@ -357,39 +357,42 @@ def build_variables(
                 if streaming_nb_rows > 1:
                     streaming_aggs.append(expr.std().name(f"{col}__std"))
 
-        # Build cardinality aggregation (nunique) — always on table
+        # Build cardinality aggregation (nunique)
+        # With full_table (sampling): approx on full data (HyperLogLog, streaming)
+        # Without full_table: exact on table (all in memory)
         cardinality_aggs: list[Any] = []
-        for col in cols_for_stats:
-            cardinality_aggs.append(table[col].nunique().name(f"{col}__distinct"))
+        if full_table is not None:
+            for col in cols_for_stats:
+                streaming_aggs.append(
+                    streaming_source[col].approx_nunique().name(f"{col}__distinct")
+                )
+        else:
+            for col in cols_for_stats:
+                cardinality_aggs.append(table[col].nunique().name(f"{col}__distinct"))
 
         if streaming_aggs or cardinality_aggs:
             try:
                 streaming_row: dict[str, Any] = {}
-                cardinality_row: dict[str, Any] = {}
 
                 if full_table is None:
                     # No sampling: single combined query on table
                     all_aggs = streaming_aggs + cardinality_aggs
                     agg_table = table.aggregate(all_aggs)
                     try:
-                        combined_row = agg_table.to_pyarrow().to_pylist()[0]
+                        streaming_row = agg_table.to_pyarrow().to_pylist()[0]
                     except pa.ArrowInvalid:
                         # Oracle: Decimal values can't convert via PyArrow
-                        combined_row = dict(agg_table.execute().iloc[0])
-                    streaming_row = combined_row
-                    cardinality_row = combined_row
+                        streaming_row = dict(agg_table.execute().iloc[0])
                 else:
-                    # Sampling: streaming aggs on full_table, cardinality on sample
+                    # Sampling: streaming aggs + approx_nunique on full_table
                     agg_table = streaming_source.aggregate(streaming_aggs)
                     try:
                         streaming_row = agg_table.to_pyarrow().to_pylist()[0]
                     except pa.ArrowInvalid:  # pragma: no cover
                         streaming_row = dict(agg_table.execute().iloc[0])
-                    card_table = table.aggregate(cardinality_aggs)
-                    cardinality_row = card_table.to_pyarrow().to_pylist()[0]
 
                 for col in cols_for_stats:
-                    nb_distinct = int(cardinality_row[f"{col}__distinct"])
+                    nb_distinct = int(streaming_row[f"{col}__distinct"])
                     nb_non_null = int(streaming_row[f"{col}__non_null"])
                     nb_missing = streaming_nb_rows - nb_non_null
                     nb_duplicate = nb_rows - nb_distinct

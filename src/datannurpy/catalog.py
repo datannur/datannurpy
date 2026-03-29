@@ -40,6 +40,7 @@ class Catalog(DatannurDB):
         refresh: bool = False,
         freq_threshold: int = 100,
         csv_encoding: str | None = None,
+        skip_copy: bool = False,
         app_config: dict[str, str] | None = None,
         quiet: bool = False,
         _now: int | None = None,
@@ -76,6 +77,7 @@ class Catalog(DatannurDB):
         self.refresh = refresh
         self.freq_threshold = freq_threshold
         self.csv_encoding = csv_encoding
+        self.skip_copy = skip_copy
         self.quiet = quiet
         self._now = _now if _now is not None else int(time.time())
 

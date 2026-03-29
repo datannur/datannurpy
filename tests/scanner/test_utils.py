@@ -285,7 +285,7 @@ class TestBuildVariables:
         assert var_by_name["val"].mean == pytest.approx(30.0)
         # nb_missing exact from full table
         assert var_by_name["val"].nb_missing == 0
-        # nb_distinct from sample
-        assert var_by_name["val"].nb_distinct == 2
+        # nb_distinct from full table (approx_nunique)
+        assert var_by_name["val"].nb_distinct == 5
         # boolean column has no extra stats
         assert var_by_name["flag"].min is None

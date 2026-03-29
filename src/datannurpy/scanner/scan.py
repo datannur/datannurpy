@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path, PurePath
 from typing import TYPE_CHECKING
@@ -44,6 +43,8 @@ def scan_file(
     infer_stats: bool = True,
     freq_threshold: int | None = None,
     csv_encoding: str | None = None,
+    sample_size: int | None = None,
+    skip_copy: bool = False,
     fs: FileSystem | None = None,
     quiet: bool = False,
 ) -> ScanResult:
@@ -67,6 +68,8 @@ def scan_file(
             infer_stats=infer_stats,
             freq_threshold=freq_threshold,
             csv_encoding=csv_encoding,
+            sample_size=sample_size,
+            skip_copy=skip_copy,
             fs=fs,
             quiet=quiet,
         )
@@ -113,12 +116,14 @@ def scan_file(
         )
 
     if delivery_format == "csv":
-        variables, nb_row, freq_table = scan_csv(
+        variables, nb_row, _actual_sample_size, freq_table = scan_csv(
             path,
             dataset_id=dataset_id,
             infer_stats=infer_stats,
             freq_threshold=freq_threshold,
             csv_encoding=csv_encoding,
+            sample_size=sample_size,
+            skip_copy=skip_copy,
             quiet=quiet,
         )
         return ScanResult(variables=variables, nb_row=nb_row, freq_table=freq_table)
@@ -142,6 +147,8 @@ def _scan_with_ensure_local(
     infer_stats: bool,
     freq_threshold: int | None,
     csv_encoding: str | None,
+    sample_size: int | None,
+    skip_copy: bool,
     fs: FileSystem,
     quiet: bool = False,
 ) -> ScanResult:
@@ -203,12 +210,14 @@ def _scan_with_ensure_local(
             )
 
         if delivery_format == "csv":
-            variables, nb_row, freq_table = scan_csv(
+            variables, nb_row, _actual_sample_size, freq_table = scan_csv(
                 local_path,
                 dataset_id=dataset_id,
                 infer_stats=infer_stats,
                 freq_threshold=freq_threshold,
                 csv_encoding=csv_encoding,
+                sample_size=sample_size,
+                skip_copy=skip_copy,
                 quiet=quiet,
             )
             return ScanResult(variables=variables, nb_row=nb_row, freq_table=freq_table)
@@ -403,19 +412,21 @@ def _scan_schema_only_remote(
 
     # CSV: stream only the header line (readline guarantees a complete line)
     if delivery_format == "csv":
+        from .csv import _read_csv_header
+
         full_path = fs._full_path(str(path))
         with fs.fs.open(full_path, "rb") as f:
             header_bytes = f.readline()
-        tmp_dir = Path(tempfile.mkdtemp())
-        tmp_path = tmp_dir / PurePath(path).name
-        try:
-            tmp_path.write_bytes(header_bytes)
-            return _scan_schema_only_local(
-                tmp_path, delivery_format, dataset_id, csv_encoding
+        columns = _read_csv_header(header_bytes, csv_encoding)
+        variables = [
+            Variable(
+                id=f"{dataset_id}---{col}",
+                name=col,
+                dataset_id=dataset_id,
             )
-        finally:
-            tmp_path.unlink(missing_ok=True)
-            tmp_dir.rmdir()
+            for col in columns
+        ]
+        return ScanResult(variables=variables, nb_row=None)
 
     # Excel xlsx: openpyxl read_only streams only headers (no full download)
     # xls: must download full file (xlrd doesn't support streaming)
@@ -458,10 +469,10 @@ def _scan_schema_only_local(
 ) -> ScanResult:
     """Schema-only scan for local files."""
     if delivery_format == "csv":
-        from .csv import _read_csv_polars
+        from .csv import _read_csv_header
 
-        df = _read_csv_polars(path, csv_encoding, n_rows=0)
-        columns = [c for c in df.columns if c.strip() != ""] if df is not None else []
+        with open(path, "rb") as f:
+            columns = _read_csv_header(f.readline(), csv_encoding)
         variables = [
             Variable(
                 id=f"{dataset_id}---{col}",
