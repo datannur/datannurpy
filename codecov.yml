@@ -19,7 +19,4 @@ flag_management:
     - name: mssql
       carryforward: true
 
-comment:
-  layout: "reach,diff,flags,files"
-  behavior: default
-  require_changes: true
+comment: false

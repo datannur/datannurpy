@@ -33,8 +33,18 @@ test-db-down:
 	docker compose -f docker-compose.test.yml down -v
 
 test-db: test-db-up
+	@echo "=== PostgreSQL ==="
 	TEST_POSTGRES_URL=postgresql://test:test@localhost:15432/testdb \
+	uv run pytest tests/database/test_postgres.py -v -n 0
+	@echo "=== MySQL ==="
 	TEST_MYSQL_URL=mysql://root:test@localhost:13306/testdb \
+	uv run pytest tests/database/test_mysql.py -v -n 0
+	@echo "=== SQL Server ==="
 	TEST_MSSQL_URL='mssql://sa:Test@123!@localhost:11433/testdb?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes' \
-	TEST_ORACLE_URL=oracle://system:test@localhost:11521/FREEPDB1 \
-	uv run pytest tests/database/ -v -n 0
+	uv run pytest tests/database/test_mssql.py -v -n 0
+	@echo "=== Oracle 18 ==="
+	TEST_ORACLE_URL=oracle://system:test@localhost:11518/XEPDB1 \
+	uv run pytest tests/database/test_oracle.py -v -n 0
+	@echo "=== Oracle 23 ==="
+	TEST_ORACLE_URL=oracle://system:test@localhost:11523/FREEPDB1 \
+	uv run pytest tests/database/test_oracle.py -v -n 0

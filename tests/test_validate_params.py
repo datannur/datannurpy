@@ -36,6 +36,28 @@ class TestValidateParamsDecorator:
 
         assert func(1, name="b") == "1:b"
 
+    def test_sample_size_below_minimum_raises(self) -> None:
+        @validate_params
+        def func(*, sample_size: int | None = None) -> int | None:
+            return sample_size
+
+        with pytest.raises(ConfigError, match="sample_size must be at least 100"):
+            func(sample_size=50)
+
+    def test_sample_size_at_minimum_passes(self) -> None:
+        @validate_params
+        def func(*, sample_size: int | None = None) -> int | None:
+            return sample_size
+
+        assert func(sample_size=100) == 100
+
+    def test_sample_size_none_passes(self) -> None:
+        @validate_params
+        def func(*, sample_size: int | None = None) -> int | None:
+            return sample_size
+
+        assert func(sample_size=None) is None
+
 
 class TestCatalogParamValidation:
     """Test that public API methods raise helpful errors on unknown params."""

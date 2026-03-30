@@ -6,6 +6,7 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import pyarrow as pa
 import pytest
 
 from datannurpy import Catalog, Folder
@@ -34,6 +35,27 @@ class TestSQLite(BaseDatabaseTests):
     ) -> Generator[tuple[ibis.BaseBackend, str, str], None, None]:
         con, _ = connect(f"sqlite:////{sample_sqlite_db}")
         yield con, "sqlite", "sqlite"
+        con.disconnect()
+
+    def test_scan_table_sampling_large_table(self) -> None:
+        """Sampling activates on tables with >= MIN_ROWS_FOR_SAMPLING rows."""
+        import ibis
+
+        con = ibis.sqlite.connect(":memory:")
+        n = 200
+        data = pa.table({"id": list(range(n)), "value": [float(i) for i in range(n)]})
+        con.create_table("big", data)
+        variables, row_count, sample_size, _ = scan_table(
+            con, "big", dataset_id="test", sample_size=100
+        )
+        assert row_count == n
+        assert sample_size is not None
+        assert sample_size <= row_count
+        var_by_name = {v.name: v for v in variables}
+        # min/max/mean are streaming stats from the full table
+        assert var_by_name["value"].min == pytest.approx(0.0)
+        assert var_by_name["value"].max == pytest.approx(199.0)
+        assert var_by_name["value"].mean == pytest.approx(99.5)
         con.disconnect()
 
 

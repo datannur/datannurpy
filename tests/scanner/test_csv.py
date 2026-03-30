@@ -127,7 +127,7 @@ class TestSampling:
         csv_file.write_text("".join(lines))
 
         catalog = Catalog()
-        catalog.add_dataset(csv_file, sample_size=50)
+        catalog.add_dataset(csv_file, sample_size=100)
 
         ds = catalog.dataset.all()[0]
         assert ds.nb_row == 200  # full row count preserved

@@ -6,6 +6,7 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import pyarrow as pa
 import pytest
 
 from datannurpy import Catalog, Folder
@@ -44,6 +45,28 @@ class TestDuckDB(BaseDatabaseTests, BaseSchemaTests):
     ) -> Generator[tuple[ibis.BaseBackend, str], None, None]:
         """Provide DuckDB with schemas for BaseSchemaTests."""
         yield duckdb_with_schemas, "duckdb"
+
+    def test_scan_table_sampling_large_table(self) -> None:
+        """Sampling activates on tables with more rows than sample_size."""
+        import ibis
+
+        from datannurpy.scanner.database import scan_table
+
+        con = ibis.duckdb.connect(":memory:")
+        n = 200
+        data = pa.table({"id": list(range(n)), "value": [float(i) for i in range(n)]})
+        con.create_table("big", data)
+        variables, row_count, sample_size, _ = scan_table(
+            con, "big", dataset_id="test", sample_size=100
+        )
+        assert row_count == n
+        assert sample_size is not None
+        assert sample_size <= row_count
+        var_by_name = {v.name: v for v in variables}
+        assert var_by_name["value"].min == pytest.approx(0.0)
+        assert var_by_name["value"].max == pytest.approx(199.0)
+        assert var_by_name["value"].mean == pytest.approx(99.5)
+        con.disconnect()
 
 
 class TestDuckDBIncrementalScan:
