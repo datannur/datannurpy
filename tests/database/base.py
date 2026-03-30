@@ -149,25 +149,23 @@ class BaseDatabaseTests(ABC):
     def test_scan_table_with_sample(
         self, db_with_employees: tuple[ibis.BaseBackend, str, str]
     ) -> None:
-        """Test scanning with sample size."""
+        """Small tables skip sampling when sample_size >= row count."""
         con, backend, _ = db_with_employees
         variables, row_count, sample_size, _ = scan_table(
-            con, "employees", dataset_id="test", sample_size=3
+            con, "employees", dataset_id="test", sample_size=100
         )
 
         # Row count should still be the full count
         assert row_count == 5
 
-        # sample_size reflects actual sampled rows
-        assert sample_size is not None
-        assert sample_size <= row_count
+        # Table too small for sampling → full scan, sample_size is None
+        assert sample_size is None
 
-        # min/max/mean/std are exact (from full table scan, not sample)
+        # Stats are exact (full table scan)
         var_by_name = {v.name: v for v in variables}
         assert var_by_name["salary"].min == pytest.approx(60000.0)
         assert var_by_name["salary"].max == pytest.approx(80000.0)
         assert var_by_name["salary"].mean == pytest.approx(70000.0)
-        # nb_missing exact from full table
         assert var_by_name["name"].nb_missing == 0
 
     def test_scan_table_no_sample_returns_none(
@@ -193,16 +191,15 @@ class BaseDatabaseTests(ABC):
     def test_catalog_add_database_with_sample(
         self, db_with_employees: tuple[ibis.BaseBackend, str, str]
     ) -> None:
-        """Test that add_database stores sample_size on Dataset."""
+        """Small tables skip sampling in add_database."""
         con, _, _ = db_with_employees
         catalog = Catalog()
         catalog.add_database(
-            con, folder=Folder(id="testdb", name="Test DB"), sample_size=3
+            con, folder=Folder(id="testdb", name="Test DB"), sample_size=100
         )
         emp = next(d for d in catalog.dataset.all() if d.name == "employees")
         assert emp.nb_row == 5
-        assert emp.sample_size is not None
-        assert emp.sample_size <= emp.nb_row
+        assert emp.sample_size is None
 
     def test_catalog_add_database(
         self, db_with_employees: tuple[ibis.BaseBackend, str, str]
