@@ -11,7 +11,7 @@ import pandas as pd
 import pyarrow as pa
 
 from ..schema import Variable
-from ..utils import log_warn
+from ..utils import log_error, log_warn
 from .utils import build_variables
 
 
@@ -64,11 +64,7 @@ def read_statistical(path: str | Path, *, quiet: bool = False) -> pd.DataFrame |
         df, _ = reader(file_path)
         return convert_float_to_int(df)
     except Exception as e:
-        error_msg = str(e).split("\n")[0]
-        log_warn(
-            f"Could not read statistical file '{file_path.name}': {error_msg}",
-            quiet,
-        )
+        log_error(file_path.name, e, quiet)
         return None
 
 
@@ -106,11 +102,7 @@ def scan_statistical(
     try:
         df, meta = reader(file_path)
     except Exception as e:
-        error_msg = str(e).split("\n")[0]
-        log_warn(
-            f"Could not read statistical file '{file_path.name}': {error_msg}",
-            quiet,
-        )
+        log_error(file_path.name, e, quiet)
         return [], 0, None, StatisticalMetadata()
 
     column_labels: dict[str, str | None] = meta.column_names_to_labels

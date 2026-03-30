@@ -15,7 +15,7 @@ from .add_metadata import add_metadata
 from .exporter import export_app, export_db
 from .finalize import finalize
 from .schema import Config, DatannurDB
-from .utils import ModalityManager
+from .utils import ModalityManager, configure_logging
 from .utils.ids import compute_runtime_ids
 from .utils.params import validate_params
 
@@ -43,6 +43,8 @@ class Catalog(DatannurDB):
         skip_copy: bool = False,
         app_config: dict[str, str] | None = None,
         quiet: bool = False,
+        verbose: bool = False,
+        log_file: str | Path | None = None,
         _now: int | None = None,
     ) -> None:
         # Paths
@@ -79,6 +81,9 @@ class Catalog(DatannurDB):
         self.csv_encoding = csv_encoding
         self.skip_copy = skip_copy
         self.quiet = quiet
+        self.verbose = verbose
+        self.log_file = log_file
+        configure_logging(verbose=verbose, log_file=log_file)
         self._now = _now if _now is not None else int(time.time())
 
         # Populate config table

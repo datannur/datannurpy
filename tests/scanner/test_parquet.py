@@ -96,7 +96,8 @@ class TestScanDeltaExceptions:
         catalog.add_dataset(DATA_DIR / "test_delta", quiet=False)
 
         captured = capsys.readouterr()
-        assert "Failed to extract Delta table metadata" in captured.err
+        assert "delta_metadata" in captured.err
+        assert "Some delta error" in captured.err
 
 
 class TestScanIcebergExceptions:

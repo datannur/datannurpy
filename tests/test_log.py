@@ -3,6 +3,7 @@
 import time
 
 from datannurpy.utils.log import (
+    configure_logging,
     log_done,
     log_error,
     log_folder,
@@ -51,3 +52,79 @@ def test_log_summary_without_errors(capsys):
     """log_summary should not show errors when errors=0."""
     log_summary(5, 10, quiet=False, start_time=time.perf_counter())
     assert "errors" not in capsys.readouterr().err
+
+
+def test_verbose_shows_traceback(capsys):
+    """log_error with verbose should print traceback to stderr."""
+    configure_logging(verbose=True)
+    try:
+        try:
+            raise ValueError("deep error")
+        except Exception as exc:
+            log_error("f.csv", exc, quiet=False)
+    finally:
+        configure_logging(verbose=False)
+
+    err = capsys.readouterr().err
+    assert "✗ f.csv" in err
+    assert "Traceback" in err
+    assert "deep error" in err
+
+
+def test_verbose_shows_errors_even_when_quiet(capsys):
+    """verbose=True + quiet=True should still show errors."""
+    configure_logging(verbose=True)
+    try:
+        try:
+            raise RuntimeError("hidden?")
+        except Exception as exc:
+            log_error("f.csv", exc, quiet=True)
+    finally:
+        configure_logging(verbose=False)
+
+    err = capsys.readouterr().err
+    assert "✗ f.csv" in err
+    assert "Traceback" in err
+
+
+def test_log_file_receives_tracebacks(tmp_path):
+    """log_file should capture full tracebacks."""
+    log_path = tmp_path / "errors.log"
+    configure_logging(log_file=log_path)
+    try:
+        try:
+            raise TypeError("type issue")
+        except Exception as exc:
+            log_error("data.csv", exc, quiet=True)
+    finally:
+        configure_logging()
+
+    content = log_path.read_text()
+    assert "data.csv" in content
+    assert "TypeError" in content
+    assert "Traceback" in content
+    assert "type issue" in content
+
+
+def test_log_file_truncated_each_run(tmp_path):
+    """configure_logging should truncate log file on each call."""
+    log_path = tmp_path / "errors.log"
+    log_path.write_text("old content\n")
+
+    configure_logging(log_file=log_path)
+    configure_logging()  # reset
+
+    assert log_path.read_text() == ""
+
+
+def test_configure_logging_defaults(capsys):
+    """Default configure_logging disables verbose and log_file."""
+    configure_logging()
+    try:
+        raise ValueError("no trace")
+    except Exception as exc:
+        log_error("f.csv", exc, quiet=False)
+
+    err = capsys.readouterr().err
+    assert "✗ f.csv" in err
+    assert "Traceback" not in err

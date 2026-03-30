@@ -57,7 +57,7 @@ class TestAddFolderFormats:
         catalog.add_folder(tmp_path, quiet=False)
 
         captured = capsys.readouterr()
-        assert "Could not read Excel file" in captured.err
+        assert "✗ corrupted.xlsx" in captured.err
 
         assert len(catalog.dataset.all()) == 1
         assert len(catalog.variable.all()) == 0

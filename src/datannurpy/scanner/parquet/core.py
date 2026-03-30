@@ -10,7 +10,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from ...schema import Variable
-from ...utils import log_warn
+from ...utils import log_error, log_warn
 from ..utils import build_variables
 from .discovery import DatasetType, ParquetDatasetInfo
 
@@ -123,7 +123,7 @@ def scan_delta(
             quiet,
         )
     except Exception as e:
-        log_warn(f"Failed to extract Delta table metadata: {e}", quiet)
+        log_error("delta_metadata", e, quiet)
 
     # Scan with Ibis
     con = ibis.duckdb.connect()

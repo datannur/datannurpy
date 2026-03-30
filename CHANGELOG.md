@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.12.1 (2026-03-31)
+
+- add: `verbose` and `log_file` parameters on `Catalog` for error diagnostics (full tracebacks on stderr or to file)
+- fix: scanner errors now use `log_error` instead of `log_warn` — consistent error reporting with traceback support
+
 ## 0.12.0 (2026-03-29)
 
 - remove: `datannurpy` console_scripts entry point — use `python -m datannurpy` instead

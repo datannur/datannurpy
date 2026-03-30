@@ -25,7 +25,7 @@ from .schema import (
     Variable,
 )
 from .scanner import read_csv, read_excel, read_statistical
-from .utils import log_done, log_section, log_warn
+from .utils import log_done, log_error, log_section, log_warn
 from .utils.ids import build_value_id
 from .utils.params import validate_params
 from .errors import ConfigError
@@ -202,7 +202,7 @@ def _read_json(file_path: Path, *, quiet: bool = False) -> pd.DataFrame | None:
 
         return pd.DataFrame(data)
     except Exception as e:
-        log_warn(f"Could not read JSON '{file_path.name}': {e}", quiet)
+        log_error(file_path.name, e, quiet)
         return None
 
 
@@ -239,7 +239,7 @@ def _load_tables_from_database(
     try:
         con = ibis.connect(connection)
     except Exception as e:
-        log_warn(f"Could not connect to database: {e}", quiet)
+        log_error("database", e, quiet)
         return tables
 
     try:
@@ -251,7 +251,7 @@ def _load_tables_from_database(
                     table = con.table(entity_name)
                     tables[entity_name] = (table.to_pandas(), f"table '{entity_name}'")
                 except Exception as e:
-                    log_warn(f"Could not read table '{entity_name}': {e}", quiet)
+                    log_error(entity_name, e, quiet)
     finally:
         if hasattr(con, "disconnect"):
             con.disconnect()

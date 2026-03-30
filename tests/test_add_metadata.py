@@ -369,7 +369,7 @@ class TestReadJson:
 
         result = _read_json(json_path, quiet=False)
         captured = capsys.readouterr()
-        assert "Could not read JSON" in captured.err
+        assert "✗ test.json" in captured.err
         assert result is None
 
     def test_non_array_json(self, tmp_path: Path):
@@ -453,7 +453,7 @@ class TestLoadTablesFromDatabase:
             "sqlite:///nonexistent/path/db.sqlite", ALL_ENTITIES, quiet=False
         )
         captured = capsys.readouterr()
-        assert "Could not connect" in captured.err
+        assert "✗ database" in captured.err
         assert tables == {}
 
     def test_ignores_non_entity_tables(self, tmp_path: Path):
@@ -910,7 +910,8 @@ class TestEdgeCases:
             )
 
             captured = capsys.readouterr()
-            assert "Could not read table" in captured.err
+            assert "✗ folder" in captured.err
+            assert "Table read error" in captured.err
             assert "folder" not in tables
 
     def test_add_metadata_shows_summary_with_updates_only(self, tmp_path: Path, capsys):
