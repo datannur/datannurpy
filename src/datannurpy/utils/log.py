@@ -4,6 +4,25 @@ from __future__ import annotations
 
 import sys
 import time
+import traceback
+from pathlib import Path
+
+# Module-level logging configuration
+_verbose: bool = False
+_log_file_path: Path | None = None
+
+
+def configure_logging(
+    *, verbose: bool = False, log_file: str | Path | None = None
+) -> None:
+    """Set logging verbosity and optional log file (truncated each run)."""
+    global _verbose, _log_file_path  # noqa: PLW0603
+    _verbose = verbose
+    if log_file is not None:
+        _log_file_path = Path(log_file)
+        _log_file_path.write_text("")
+    else:
+        _log_file_path = None
 
 
 def log_start(msg: str, quiet: bool) -> None:
@@ -56,10 +75,17 @@ def log_folder(name: str, quiet: bool) -> None:
 
 def log_error(name: str, error: BaseException, quiet: bool) -> None:
     """Log a scan error (replaces the 'start' line)."""
-    if quiet:
-        return
     msg = str(error).split("\n")[0]
-    print(f"\r  ✗ {name} — {type(error).__name__}: {msg}", file=sys.stderr)
+    header = f"\r  ✗ {name} — {type(error).__name__}: {msg}"
+    if not quiet or _verbose:
+        print(header, file=sys.stderr)
+    if _verbose:
+        traceback.print_exc(file=sys.stderr)
+    if _log_file_path is not None:
+        with open(_log_file_path, "a") as f:
+            f.write(f"✗ {name} — {type(error).__name__}: {error}\n")
+            traceback.print_exc(file=f)
+            f.write("\n")
 
 
 def log_summary(

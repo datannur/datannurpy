@@ -76,6 +76,8 @@ Alternative to Python scripts - define the catalog in YAML:
 # catalog.yml
 app_path: ./my-catalog
 refresh: true
+verbose: true          # show full tracebacks on errors
+log_file: ./errors.log  # write tracebacks to file
 
 add:
   - type: folder
@@ -391,7 +393,7 @@ catalog.export_app("./my-catalog", open_browser=True)
 ### `Catalog`
 
 ```python
-Catalog(app_path=None, depth="full", refresh=False, freq_threshold=100, csv_encoding=None, skip_copy=False, app_config=None, quiet=False)
+Catalog(app_path=None, depth="full", refresh=False, freq_threshold=100, csv_encoding=None, skip_copy=False, app_config=None, quiet=False, verbose=False, log_file=None)
 ```
 
 | Attribute      | Type                              | Description                                        |
@@ -404,6 +406,8 @@ Catalog(app_path=None, depth="full", refresh=False, freq_threshold=100, csv_enco
 | skip_copy      | bool                              | Skip UTF-8 temp copy for local CSV (default: False)|
 | app_config     | dict[str, str] \| None            | Key-value config for the web app (see below)       |
 | quiet          | bool                              | Suppress progress logging (default: False)         |
+| verbose        | bool                              | Show full tracebacks on errors (default: False)    |
+| log_file       | str \| Path \| None               | Write error tracebacks to file (truncated each run)|
 | folders        | list[Folder]                      | All folders in catalog                             |
 | datasets       | list[Dataset]                     | All datasets in catalog                            |
 | variables      | list[Variable]                    | All variables in catalog                           |

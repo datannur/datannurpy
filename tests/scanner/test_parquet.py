@@ -96,7 +96,8 @@ class TestScanDeltaExceptions:
         catalog.add_dataset(DATA_DIR / "test_delta", quiet=False)
 
         captured = capsys.readouterr()
-        assert "Failed to extract Delta table metadata" in captured.err
+        assert "delta_metadata" in captured.err
+        assert "Some delta error" in captured.err
 
 
 class TestScanIcebergExceptions:
@@ -125,6 +126,60 @@ class TestScanIcebergExceptions:
 
         with pytest.raises(FileNotFoundError, match="No Iceberg metadata files found"):
             scan_iceberg(tmp_path, "test", infer_stats=True, freq_threshold=None)
+
+    def test_iceberg_absolute_location_no_rewrite(self, tmp_path: Path):
+        """scan_iceberg should not rewrite paths when location is absolute."""
+        import json
+
+        from datannurpy.scanner.parquet.core import scan_iceberg
+
+        metadata_dir = tmp_path / "metadata"
+        metadata_dir.mkdir()
+        meta = {"location": str(tmp_path), "format-version": 2}
+        (metadata_dir / "00000-test.metadata.json").write_text(json.dumps(meta))
+
+        with pytest.raises(Exception):
+            scan_iceberg(tmp_path, "test", infer_stats=True, freq_threshold=None)
+
+    def test_iceberg_mismatched_relative_location_no_rewrite(self, tmp_path: Path):
+        """scan_iceberg should not rewrite when relative location doesn't match."""
+        import json
+
+        from datannurpy.scanner.parquet.core import scan_iceberg
+
+        metadata_dir = tmp_path / "metadata"
+        metadata_dir.mkdir()
+        meta = {"location": "wrong/path/structure", "format-version": 2}
+        (metadata_dir / "00000-test.metadata.json").write_text(json.dumps(meta))
+
+        with pytest.raises(Exception):
+            scan_iceberg(tmp_path, "test", infer_stats=True, freq_threshold=None)
+
+    def test_iceberg_absolute_location_no_chdir(self):
+        """scan_iceberg skips chdir when metadata has an absolute location."""
+        import json as json_mod
+
+        from datannurpy.scanner.parquet.core import scan_iceberg
+
+        iceberg_path = DATA_DIR / "iceberg_warehouse" / "default" / "test_table"
+        if not iceberg_path.exists():
+            pytest.skip("iceberg_warehouse table not found")
+
+        _original = json_mod.load
+
+        def _make_absolute(fp, **kw):
+            data = _original(fp, **kw)
+            if isinstance(data, dict) and "location" in data:
+                data["location"] = str(iceberg_path.resolve())
+            return data
+
+        import unittest.mock
+
+        with unittest.mock.patch.object(json_mod, "load", side_effect=_make_absolute):
+            _, row_count, _, _ = scan_iceberg(
+                iceberg_path, "test", infer_stats=True, freq_threshold=None
+            )
+        assert row_count > 0
 
 
 class TestParquetFormats:

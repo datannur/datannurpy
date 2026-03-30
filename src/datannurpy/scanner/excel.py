@@ -10,7 +10,7 @@ import pandas as pd
 import pyarrow as pa
 
 from ..schema import Variable
-from ..utils import log_warn
+from ..utils import log_error
 from .utils import build_variables
 
 _MIDNIGHT = dt_time(0, 0)
@@ -37,8 +37,7 @@ def read_excel(
             return None
         return df
     except Exception as e:
-        error_msg = str(e).split("\n")[0]
-        log_warn(f"Could not read Excel file '{file_path.name}': {error_msg}", quiet)
+        log_error(file_path.name, e, quiet)
         return None
 
 

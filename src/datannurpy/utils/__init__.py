@@ -15,6 +15,7 @@ from .ids import (
 )
 from .folder import upsert_folder
 from .log import (
+    configure_logging,
     log_done,
     log_error,
     log_folder,
@@ -44,6 +45,7 @@ __all__ = [
     "make_id",
     "sanitize_id",
     # log
+    "configure_logging",
     "log_done",
     "log_error",
     "log_folder",

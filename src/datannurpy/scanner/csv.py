@@ -13,7 +13,7 @@ import ibis
 import pandas as pd
 import pyarrow as pa
 
-from ..utils import log_warn
+from ..utils import log_error
 from .filesystem import ensure_local_utf8
 from .utils import build_variables
 
@@ -173,7 +173,7 @@ def scan_csv(
             finally:
                 con.disconnect()
     except Exception as e:
-        log_warn(f"Could not parse CSV file '{file_path.name}': {e}", quiet)
+        log_error(file_path.name, e, quiet)
         return [], 0, None, None
 
     return variables, row_count, actual_sample_size, freq_table
