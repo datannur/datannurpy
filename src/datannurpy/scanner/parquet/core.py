@@ -201,21 +201,53 @@ def scan_iceberg(
         raise FileNotFoundError(msg)
 
     # Load table via PyIceberg
-    table = StaticTable.from_metadata(str(metadata_files[0]))
+    # PyIceberg resolves ALL relative paths (in the metadata JSON AND in the
+    # binary avro manifests) via os.path.abspath(), i.e. against the cwd.
+    # When the metadata contains a relative `location`, we temporarily chdir
+    # to the root directory where that relative path is valid.  This is the
+    # only approach that covers every level of path resolution (JSON, avro
+    # manifest-list, manifests, data files) without reimplementing pyiceberg
+    # internals.  The try/finally ensures cwd is always restored.
+    import json
+    import os
 
-    # Extract metadata from PyIceberg schema
-    description = table.metadata.properties.get("comment")
-    column_descriptions = {
-        field.name: field.doc for field in table.schema().fields if field.doc
-    }
+    meta_path = metadata_files[0].resolve()
+    with open(meta_path, encoding="utf-8") as f:
+        raw_meta = json.load(f)
 
-    metadata = DatasetMetadata(
-        description=description,
-        column_descriptions=column_descriptions if column_descriptions else None,
-    )
+    location = raw_meta.get("location", "")
+    need_chdir = bool(location) and not Path(location).is_absolute()
+    saved_cwd = os.getcwd()
 
-    # Read data as Arrow table
-    arrow_table = table.scan().to_arrow()
+    if need_chdir:
+        resolved = path.resolve()
+        rel = Path(location)
+        root = resolved
+        for _ in rel.parts:
+            root = root.parent
+        if (root / rel).resolve() == resolved:
+            os.chdir(root)
+
+    try:
+        table = StaticTable.from_metadata(str(meta_path))
+
+        # Extract metadata from PyIceberg schema
+        description = table.metadata.properties.get("comment")
+        column_descriptions = {
+            field.name: field.doc for field in table.schema().fields if field.doc
+        }
+
+        metadata = DatasetMetadata(
+            description=description,
+            column_descriptions=column_descriptions if column_descriptions else None,
+        )
+
+        # Read data as Arrow table
+        arrow_table = table.scan().to_arrow()
+    finally:
+        if need_chdir:
+            os.chdir(saved_cwd)
+
     row_count = len(arrow_table)
 
     # Convert to Ibis for consistent processing

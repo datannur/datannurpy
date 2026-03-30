@@ -4,6 +4,7 @@
 
 - add: `verbose` and `log_file` parameters on `Catalog` for error diagnostics (full tracebacks on stderr or to file)
 - fix: scanner errors now use `log_error` instead of `log_warn` — consistent error reporting with traceback support
+- fix: Iceberg scan now works regardless of the caller's working directory
 
 ## 0.12.0 (2026-03-29)
 
