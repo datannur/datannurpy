@@ -593,7 +593,12 @@ def scan_table(
             sampled = table.sample(fraction)
 
         # Materialize sample → local PyArrow → ibis memtable
-        sample_arrow = sampled.to_pyarrow()
+        # Oracle returns Decimal for NUMBER columns that PyArrow can't convert;
+        # use execute() → pandas → Arrow as a workaround.
+        if backend == "oracle":  # pragma: no cover
+            sample_arrow = pa.Table.from_pandas(sampled.execute())
+        else:
+            sample_arrow = sampled.to_pyarrow()
         actual_sample_size = len(sample_arrow)
         sample_table = ibis.memtable(sample_arrow)
 

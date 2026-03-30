@@ -1,4 +1,4 @@
-.PHONY: test lint typecheck check download-app coverage test-cov update-snapshots
+.PHONY: test lint typecheck check download-app coverage test-cov update-snapshots test-db test-db-up test-db-down
 
 test:
 	uv run pytest
@@ -22,3 +22,19 @@ check: lint typecheck test-cov
 
 download-app:
 	uv run python scripts/download_app.py
+
+test-db-up:
+	docker compose -f docker-compose.test.yml up -d --wait
+	@docker exec datannurpy-mssql /opt/mssql-tools18/bin/sqlcmd \
+		-S localhost -U sa -P 'Test@123!' -C \
+		-Q "IF DB_ID('testdb') IS NULL CREATE DATABASE testdb"
+
+test-db-down:
+	docker compose -f docker-compose.test.yml down -v
+
+test-db: test-db-up
+	TEST_POSTGRES_URL=postgresql://test:test@localhost:15432/testdb \
+	TEST_MYSQL_URL=mysql://root:test@localhost:13306/testdb \
+	TEST_MSSQL_URL='mssql://sa:Test@123!@localhost:11433/testdb?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes' \
+	TEST_ORACLE_URL=oracle://system:test@localhost:11521/FREEPDB1 \
+	uv run pytest tests/database/ -v -n 0
