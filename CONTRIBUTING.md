@@ -18,6 +18,35 @@ make lint         # ruff check + format
 make typecheck    # pyright
 ```
 
+## Database Integration Tests (optional, macOS only)
+
+Tests PostgreSQL, MySQL, SQL Server and Oracle via Docker containers.
+
+**Prerequisites (one-time):**
+
+```bash
+# Container runtime
+brew install orbstack              # lightweight Docker alternative using Apple Virtualization.framework
+
+# Native client libraries
+brew install mysql-client          # required to build mysqlclient Python package
+brew tap microsoft/mssql-release https://github.com/Microsoft/homebrew-mssql-release
+HOMEBREW_ACCEPT_EULA=Y brew install msodbcsql18  # ODBC driver for SQL Server
+
+# Add to ~/.zshrc
+export PKG_CONFIG_PATH="/opt/homebrew/opt/mysql-client/lib/pkgconfig"
+
+# Python database drivers
+uv sync --extra databases
+```
+
+**Usage:**
+
+```bash
+make test-db       # starts containers, runs tests, keeps containers up
+make test-db-down  # stop and remove containers
+```
+
 ## Pull Requests
 
 1. Create a branch from `main`
