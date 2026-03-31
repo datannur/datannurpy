@@ -270,6 +270,27 @@ class TestScanStatisticalEdgeCases:
         assert "label" in var_by_name
         assert "t" in var_by_name
 
+    def test_fix_parquet_types_timetz_cast(self, tmp_path: Path):
+        """_fix_parquet_types casts TIMETZ→TIME regardless of Python/DuckDB version."""
+        import duckdb
+        import ibis
+
+        from datannurpy.scanner.statistical import _fix_parquet_types
+
+        parquet_path = tmp_path / "timetz.parquet"
+        dcon = duckdb.connect()
+        dcon.execute(
+            f"COPY (SELECT TIMETZ '10:30:00+00' AS t, 'a' AS label) "
+            f"TO '{parquet_path}' (FORMAT PARQUET)"
+        )
+        dcon.close()
+
+        con = ibis.duckdb.connect()
+        table = con.read_parquet(str(parquet_path))
+        result = _fix_parquet_types(con, table, parquet_path)
+        assert result is not table
+        assert result.schema()["t"].is_time()
+
     def test_multiple_chunks(self, tmp_path: Path):
         """_stat_to_parquet should write multiple chunks to Parquet."""
         from datannurpy.scanner.statistical import _stat_to_parquet
