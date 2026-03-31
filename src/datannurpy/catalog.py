@@ -40,7 +40,8 @@ class Catalog(DatannurDB):
         refresh: bool = False,
         freq_threshold: int = 100,
         csv_encoding: str | None = None,
-        skip_copy: bool = False,
+        sample_size: int | None = 100_000,
+        csv_skip_copy: bool = False,
         app_config: dict[str, str] | None = None,
         quiet: bool = False,
         verbose: bool = False,
@@ -79,7 +80,8 @@ class Catalog(DatannurDB):
         self.refresh = refresh
         self.freq_threshold = freq_threshold
         self.csv_encoding = csv_encoding
-        self.skip_copy = skip_copy
+        self.sample_size = sample_size
+        self.csv_skip_copy = csv_skip_copy
         self.quiet = quiet
         self.verbose = verbose
         self.log_file = log_file

@@ -4,6 +4,7 @@
 
 - refactor: SAS/SPSS/Stata scanner rewritten with streaming Parquet pipeline — constant RAM regardless of file size, fixes OOM on large files (10 Go+)
 - add: `sample_size` support for statistical files (SAS/SPSS/Stata) — same reservoir sampling as CSV
+- add: `sample_size=100_000` default on `Catalog` — all methods inherit it, override per-method with an int or disable with `None`
 
 ## 0.12.1 (2026-03-31)
 
@@ -23,7 +24,7 @@
 - refactor: remove Oracle date/timestamp stats raw SQL fallback — date columns are now fully skipped for stats on Oracle (simplifies sampling support)
 - add: `sample_size` parameter on `add_database` for uniform random sampling on large tables — exact stats on full table, cardinality and freq on sample
 - refactor: CSV scanner rewritten with DuckDB streaming — constant RAM regardless of file size, automatic UTF-8/cp1252 handling
-- add: `sample_size` on `add_folder` / `add_dataset` and `skip_copy` on `Catalog` / `add_folder` / `add_dataset` for CSV files
+- add: `sample_size` on `add_folder` / `add_dataset` and `csv_skip_copy` on `Catalog` / `add_folder` / `add_dataset` for CSV files
 
 ## 0.11.0 (2026-03-26)
 

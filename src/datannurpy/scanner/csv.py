@@ -52,10 +52,10 @@ def _read_csv_header(first_line: bytes, csv_encoding: str | None = None) -> list
 def _csv_source(
     file_path: Path,
     csv_encoding: str | None,
-    skip_copy: bool,
+    csv_skip_copy: bool,
 ) -> Generator[Path, None, None]:
     """Provide a local UTF-8 CSV file for DuckDB to read."""
-    if skip_copy:
+    if csv_skip_copy:
         try:
             con = ibis.duckdb.connect()
             try:
@@ -90,7 +90,7 @@ def read_csv(
         return None
 
     try:
-        with _csv_source(file_path, csv_encoding, skip_copy=False) as csv_path:
+        with _csv_source(file_path, csv_encoding, csv_skip_copy=False) as csv_path:
             con = ibis.duckdb.connect()
             try:
                 table = con.read_csv(str(csv_path))
@@ -118,7 +118,7 @@ def scan_csv(
     freq_threshold: int | None = None,
     csv_encoding: str | None = None,
     sample_size: int | None = None,
-    skip_copy: bool = False,
+    csv_skip_copy: bool = False,
     quiet: bool = False,
 ) -> tuple[list[Variable], int, int | None, pa.Table | None]:
     """Scan a CSV file and return (variables, row_count, actual_sample_size, freq_table)."""
@@ -128,7 +128,7 @@ def scan_csv(
         return [], 0, None, None
 
     try:
-        with _csv_source(file_path, csv_encoding, skip_copy) as csv_path:
+        with _csv_source(file_path, csv_encoding, csv_skip_copy) as csv_path:
             con = ibis.duckdb.connect()
             try:
                 table = con.read_csv(str(csv_path))

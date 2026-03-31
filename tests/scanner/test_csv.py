@@ -92,25 +92,25 @@ class TestLegacyEncoding:
 
 
 class TestSkipCopy:
-    """Test skip_copy parameter for CSV scanning."""
+    """Test csv_skip_copy parameter for CSV scanning."""
 
-    def test_skip_copy_utf8_csv(self, tmp_path: Path):
-        """skip_copy=True should read UTF-8 CSV directly without transcoding."""
+    def test_csv_skip_copy_utf8_csv(self, tmp_path: Path):
+        """csv_skip_copy=True should read UTF-8 CSV directly without transcoding."""
         csv_file = tmp_path / "utf8.csv"
         csv_file.write_text("id,name\n1,Alice\n2,Bob\n")
 
-        catalog = Catalog(skip_copy=True)
+        catalog = Catalog(csv_skip_copy=True)
         catalog.add_dataset(csv_file)
 
         assert catalog.dataset.all()[0].nb_row == 2
         assert len(catalog.variable.all()) == 2
 
-    def test_skip_copy_fallback_on_non_utf8(self, tmp_path: Path):
-        """skip_copy=True should fall back to ensure_local_utf8 for non-UTF-8."""
+    def test_csv_skip_copy_fallback_on_non_utf8(self, tmp_path: Path):
+        """csv_skip_copy=True should fall back to ensure_local_utf8 for non-UTF-8."""
         csv_file = tmp_path / "cp1252.csv"
         csv_file.write_bytes(b"nom,age\nRen\xe9,42\n")
 
-        catalog = Catalog(skip_copy=True)
+        catalog = Catalog(csv_skip_copy=True)
         catalog.add_dataset(csv_file)
 
         assert catalog.dataset.all()[0].nb_row == 1

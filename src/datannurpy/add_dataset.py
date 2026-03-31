@@ -16,7 +16,7 @@ from .utils import (
     sanitize_id,
     upsert_folder,
 )
-from .utils.params import validate_params
+from .utils.params import _UNSET, validate_params
 from .errors import ConfigError
 from .finalize import remove_dataset_cascade
 from .schema import Dataset, Folder
@@ -108,8 +108,8 @@ def add_dataset(
     folder_id: str | None = None,
     infer_stats: bool = True,
     csv_encoding: str | None = None,
-    sample_size: int | None = None,
-    skip_copy: bool | None = None,
+    sample_size: int | None = _UNSET,
+    csv_skip_copy: bool | None = None,
     quiet: bool | None = None,
     refresh: bool | None = None,
     storage_options: dict[str, Any] | None = None,
@@ -248,7 +248,12 @@ def add_dataset(
     resolved_encoding = (
         csv_encoding if csv_encoding is not None else catalog.csv_encoding
     )
-    resolved_skip_copy = skip_copy if skip_copy is not None else catalog.skip_copy
+    resolved_csv_skip_copy = (
+        csv_skip_copy if csv_skip_copy is not None else catalog.csv_skip_copy
+    )
+    resolved_sample_size = (
+        sample_size if sample_size is not _UNSET else catalog.sample_size
+    )
 
     # Structure mode: create dataset without scanning
     if resolved_depth == "structure":
@@ -277,8 +282,8 @@ def add_dataset(
         infer_stats=infer_stats and not schema_only,
         freq_threshold=catalog.freq_threshold or None,
         csv_encoding=resolved_encoding,
-        sample_size=sample_size,
-        skip_copy=resolved_skip_copy,
+        sample_size=resolved_sample_size,
+        csv_skip_copy=resolved_csv_skip_copy,
         fs=fs,
         quiet=q,
     )

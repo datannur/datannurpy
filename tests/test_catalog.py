@@ -29,6 +29,25 @@ class TestCatalogRepr:
         assert "docs=0" in result
 
 
+class TestCatalogSampleSize:
+    """Test Catalog sample_size default and override."""
+
+    def test_default_sample_size(self):
+        """Catalog should have sample_size=100_000 by default."""
+        catalog = Catalog()
+        assert catalog.sample_size == 100_000
+
+    def test_custom_sample_size(self):
+        """Catalog should accept custom sample_size."""
+        catalog = Catalog(sample_size=50_000)
+        assert catalog.sample_size == 50_000
+
+    def test_disable_sample_size(self):
+        """Catalog with sample_size=None should disable sampling."""
+        catalog = Catalog(sample_size=None)
+        assert catalog.sample_size is None
+
+
 class TestCatalogAppPath:
     """Test Catalog app_path parameter."""
 

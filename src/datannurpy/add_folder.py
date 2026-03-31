@@ -21,7 +21,7 @@ from .utils import (
     sanitize_id,
     upsert_folder,
 )
-from .utils.params import validate_params
+from .utils.params import _UNSET, validate_params
 from .errors import ConfigError
 from .finalize import remove_dataset_cascade
 from .schema import Dataset, Folder
@@ -67,8 +67,8 @@ def add_folder(
     infer_stats: bool = True,
     time_series: bool = True,
     csv_encoding: str | None = None,
-    sample_size: int | None = None,
-    skip_copy: bool | None = None,
+    sample_size: int | None = _UNSET,
+    csv_skip_copy: bool | None = None,
     quiet: bool | None = None,
     refresh: bool | None = None,
     storage_options: dict[str, Any] | None = None,
@@ -260,7 +260,12 @@ def add_folder(
     resolved_encoding = (
         csv_encoding if csv_encoding is not None else catalog.csv_encoding
     )
-    resolved_skip_copy = skip_copy if skip_copy is not None else catalog.skip_copy
+    resolved_csv_skip_copy = (
+        csv_skip_copy if csv_skip_copy is not None else catalog.csv_skip_copy
+    )
+    resolved_sample_size = (
+        sample_size if sample_size is not _UNSET else catalog.sample_size
+    )
     schema_only = resolved_depth == "schema"
 
     scan_errors = 0
@@ -278,8 +283,8 @@ def add_folder(
                     infer_stats=infer_stats,
                     freq_threshold=freq_threshold,
                     csv_encoding=resolved_encoding,
-                    sample_size=sample_size,
-                    skip_copy=resolved_skip_copy,
+                    sample_size=resolved_sample_size,
+                    csv_skip_copy=resolved_csv_skip_copy,
                     quiet=q,
                     fs=fs,
                 )
@@ -305,8 +310,8 @@ def add_folder(
                 infer_stats=infer_stats,
                 freq_threshold=freq_threshold,
                 csv_encoding=resolved_encoding,
-                sample_size=sample_size,
-                skip_copy=resolved_skip_copy,
+                sample_size=resolved_sample_size,
+                csv_skip_copy=resolved_csv_skip_copy,
                 fs=fs,
                 quiet=q,
             )
@@ -368,7 +373,7 @@ def _scan_time_series(
     freq_threshold: int | None,
     csv_encoding: str | None,
     sample_size: int | None,
-    skip_copy: bool,
+    csv_skip_copy: bool,
     quiet: bool,
     fs: FileSystem | None,
 ) -> None:
@@ -425,7 +430,7 @@ def _scan_time_series(
         freq_threshold=freq_threshold,
         csv_encoding=csv_encoding,
         sample_size=sample_size,
-        skip_copy=skip_copy,
+        csv_skip_copy=csv_skip_copy,
         fs=fs,
         quiet=quiet,
     )

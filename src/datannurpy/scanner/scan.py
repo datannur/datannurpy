@@ -44,7 +44,7 @@ def scan_file(
     freq_threshold: int | None = None,
     csv_encoding: str | None = None,
     sample_size: int | None = None,
-    skip_copy: bool = False,
+    csv_skip_copy: bool = False,
     fs: FileSystem | None = None,
     quiet: bool = False,
 ) -> ScanResult:
@@ -69,7 +69,7 @@ def scan_file(
             freq_threshold=freq_threshold,
             csv_encoding=csv_encoding,
             sample_size=sample_size,
-            skip_copy=skip_copy,
+            csv_skip_copy=csv_skip_copy,
             fs=fs,
             quiet=quiet,
         )
@@ -124,7 +124,7 @@ def scan_file(
             freq_threshold=freq_threshold,
             csv_encoding=csv_encoding,
             sample_size=sample_size,
-            skip_copy=skip_copy,
+            csv_skip_copy=csv_skip_copy,
             quiet=quiet,
         )
         return ScanResult(variables=variables, nb_row=nb_row, freq_table=freq_table)
@@ -149,7 +149,7 @@ def _scan_with_ensure_local(
     freq_threshold: int | None,
     csv_encoding: str | None,
     sample_size: int | None,
-    skip_copy: bool,
+    csv_skip_copy: bool,
     fs: FileSystem,
     quiet: bool = False,
 ) -> ScanResult:
@@ -221,7 +221,7 @@ def _scan_with_ensure_local(
                 freq_threshold=freq_threshold,
                 csv_encoding=csv_encoding,
                 sample_size=sample_size,
-                skip_copy=skip_copy,
+                csv_skip_copy=csv_skip_copy,
                 quiet=quiet,
             )
             return ScanResult(variables=variables, nb_row=nb_row, freq_table=freq_table)
