@@ -11,6 +11,7 @@ import pytest
 
 from datannurpy.scanner.utils import (
     build_variables,
+    get_dir_data_size,
     ibis_type_to_str,
     _to_float,
     _round6,
@@ -289,3 +290,24 @@ class TestBuildVariables:
         assert var_by_name["val"].nb_distinct == 5
         # boolean column has no extra stats
         assert var_by_name["flag"].min is None
+
+
+class TestGetDirDataSize:
+    """Test get_dir_data_size with remote filesystem."""
+
+    def test_remote_fs(self):
+        fs = MagicMock()
+        fs.glob.side_effect = [
+            ["bucket/dir/a.parquet", "bucket/dir/sub/b.parquet"],
+            [],
+        ]
+        fs.info.side_effect = [
+            {"size": 1000},
+            {"size": 2000},
+        ]
+        from pathlib import PurePosixPath
+
+        result = get_dir_data_size(PurePosixPath("bucket/dir"), fs=fs)
+        assert result == 3000
+        fs.glob.assert_any_call("bucket/dir/**/*.parquet")
+        fs.glob.assert_any_call("bucket/dir/**/*.pq")

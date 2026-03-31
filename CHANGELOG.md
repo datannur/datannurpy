@@ -2,6 +2,7 @@
 
 ## 0.13.0 (2026-03-31)
 
+- add: `data_size` field on `Dataset` — data size in bytes (files, database tables, and partitioned datasets)
 - refactor: SAS/SPSS/Stata scanner rewritten with streaming Parquet pipeline — constant RAM regardless of file size, fixes OOM on large files (10 Go+)
 - add: `sample_size` support for statistical files (SAS/SPSS/Stata) — same reservoir sampling as CSV
 - add: `sample_size=100_000` default on `Catalog` — all methods inherit it, override per-method with an int or disable with `None`

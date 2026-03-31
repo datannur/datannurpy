@@ -21,7 +21,13 @@ from .errors import ConfigError
 from .finalize import remove_dataset_cascade
 from .schema import Dataset, Folder
 from .scanner.filesystem import FileSystem, is_remote_url
-from .scanner.utils import SUPPORTED_FORMATS, get_mtime_iso, get_mtime_timestamp
+from .scanner.utils import (
+    SUPPORTED_FORMATS,
+    get_data_size,
+    get_dir_data_size,
+    get_mtime_iso,
+    get_mtime_timestamp,
+)
 from .scanner.parquet import (
     DatasetType,
     ParquetDatasetInfo,
@@ -67,6 +73,7 @@ def _create_dataset(
     delivery_format: str,
     meta: DatasetMeta,
     nb_row: int | None = None,
+    data_size: int | None = None,
     scanned_description: str | None = None,
     fs: FileSystem | None = None,
 ) -> Dataset:
@@ -80,6 +87,7 @@ def _create_dataset(
         last_update_timestamp=current_mtime,
         delivery_format=delivery_format,
         nb_row=nb_row,
+        data_size=data_size,
         description=meta.description
         if meta.description is not None
         else scanned_description,
@@ -266,6 +274,7 @@ def add_dataset(
             current_mtime,
             delivery_format,
             meta,
+            data_size=get_data_size(dataset_path, fs=fs),
             fs=fs,
         )
         catalog.dataset.add(dataset)
@@ -298,6 +307,7 @@ def add_dataset(
         delivery_format,
         meta,
         nb_row=result.nb_row,
+        data_size=get_data_size(dataset_path, fs=fs),
         scanned_description=result.description,
         fs=fs,
     )
@@ -378,6 +388,7 @@ def _add_parquet_directory(
             current_mtime,
             delivery_format,
             meta,
+            data_size=get_dir_data_size(dir_path, fs=fs),
             fs=fs,
         )
         catalog.dataset.add(dataset)
@@ -408,6 +419,7 @@ def _add_parquet_directory(
         delivery_format,
         meta,
         nb_row=nb_row,
+        data_size=pq_meta.data_size,
         scanned_description=scanned_desc,
         fs=fs,
     )

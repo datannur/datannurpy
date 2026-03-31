@@ -23,6 +23,7 @@ class DatasetMetadata:
     description: str | None = None
     name: str | None = None
     column_descriptions: dict[str, str] | None = None
+    data_size: int | None = None
 
 
 def apply_column_descriptions(
@@ -155,9 +156,12 @@ def scan_delta(
 
         dt = DeltaTable(str(path))
         meta = dt.metadata()
+        actions = dt.get_add_actions()
+        data_size = sum(actions.column("size_bytes").to_pylist())
         metadata = DatasetMetadata(
             description=meta.description,
             name=meta.name,
+            data_size=data_size,
         )
     except ImportError:
         log_warn(
@@ -203,7 +207,10 @@ def scan_hive(
     """Scan a Hive-partitioned Parquet dataset."""
     _ = quiet  # unused but kept for API consistency
     # Hive partitioned datasets don't have table-level metadata
-    metadata = DatasetMetadata()
+    # Compute data_size by summing parquet file sizes
+    pq_files = list(path.rglob("*.parquet")) + list(path.rglob("*.pq"))
+    data_size = sum(f.stat().st_size for f in pq_files) if pq_files else 0
+    metadata = DatasetMetadata(data_size=data_size)
 
     # Scan with Ibis using glob pattern
     con = ibis.duckdb.connect()
@@ -290,13 +297,17 @@ def scan_iceberg(
             field.name: field.doc for field in table.schema().fields if field.doc
         }
 
+        scan = table.scan()
+        data_size = sum(task.file.file_size_in_bytes for task in scan.plan_files())
+
         metadata = DatasetMetadata(
             description=description,
             column_descriptions=column_descriptions if column_descriptions else None,
+            data_size=data_size,
         )
 
         # Read data as Arrow table
-        arrow_table = table.scan().to_arrow()
+        arrow_table = scan.to_arrow()
     finally:
         if need_chdir:
             os.chdir(saved_cwd)

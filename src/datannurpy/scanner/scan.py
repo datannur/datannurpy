@@ -32,6 +32,7 @@ class ScanResult:
     freq_table: pa.Table | None = None
     description: str | None = None
     name: str | None = None  # Dataset name from metadata (Delta, Iceberg)
+    data_size: int | None = None
 
 
 def scan_file(
@@ -99,6 +100,7 @@ def scan_file(
             freq_table=freq_table,
             description=metadata.description if metadata else None,
             name=metadata.name if metadata else None,
+            data_size=metadata.data_size if metadata else None,
         )
 
     if delivery_format in ("sas", "spss", "stata"):
@@ -177,6 +179,7 @@ def _scan_with_ensure_local(
                 freq_table=freq_table,
                 description=metadata.description if metadata else None,
                 name=metadata.name if metadata else None,
+                data_size=metadata.data_size if metadata else None,
             )
 
     # File formats use ensure_local

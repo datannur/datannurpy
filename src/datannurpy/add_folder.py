@@ -34,7 +34,7 @@ from .scanner.timeseries import (
     get_series_folder_parts,
     normalize_path,
 )
-from .scanner.utils import get_mtime_iso
+from .scanner.utils import get_data_size, get_dir_data_size, get_mtime_iso
 from .scanner.parquet.discovery import (
     is_delta_table,
     is_hive_partitioned,
@@ -44,6 +44,8 @@ from .scanner.scan import scan_file
 
 if TYPE_CHECKING:
     from .catalog import Catalog
+
+_DIR_FORMATS = {"delta", "hive", "iceberg"}
 
 
 def _build_series_folder_id(normalized: str, prefix: str) -> str:
@@ -201,10 +203,16 @@ def add_folder(
             existing = catalog.dataset.get_by("data_path", data_path_str)
             if existing:
                 # Update metadata for modified dataset
+                data_size = (
+                    get_dir_data_size(info.path, fs=fs)
+                    if info.format in _DIR_FORMATS
+                    else get_data_size(info.path, fs=fs)
+                )
                 catalog.dataset.update(
                     existing.id,
                     last_update_date=get_mtime_iso(info.path, fs=fs),
                     last_update_timestamp=info.mtime,
+                    data_size=data_size,
                     _seen=True,
                 )
                 continue
@@ -237,6 +245,11 @@ def add_folder(
                 last_update_timestamp=info.mtime,
                 delivery_format=info.format,
                 nb_files=nb_files,
+                data_size=(
+                    get_dir_data_size(info.path, fs=fs)
+                    if info.format in _DIR_FORMATS
+                    else get_data_size(info.path, fs=fs)
+                ),
                 start_date=start_date,
                 end_date=end_date,
                 _seen=True,
@@ -336,6 +349,11 @@ def add_folder(
             delivery_format=info.format,
             description=result.description,
             nb_row=result.nb_row,
+            data_size=(
+                result.data_size
+                if info.format in _DIR_FORMATS
+                else get_data_size(info.path, fs=fs)
+            ),
             _seen=True,
         )
         catalog.dataset.add(dataset)
@@ -447,6 +465,7 @@ def _scan_time_series(
         description=result.description,
         nb_row=result.nb_row,
         nb_files=len(series_files),
+        data_size=get_data_size(last_path, fs=fs),
         start_date=first_period,
         end_date=last_period,
         _seen=True,

@@ -44,6 +44,7 @@ class Dataset:
     nb_row: int | None = None
     sample_size: int | None = None
     nb_files: int | None = None  # Number of files in series (>1 = time series)
+    data_size: int | None = None  # Data size in bytes
     start_date: str | None = None
     end_date: str | None = None
     last_update_date: str | None = None

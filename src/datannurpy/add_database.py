@@ -38,6 +38,7 @@ from .scanner.database import (
     get_database_name,
     get_database_path,
     get_schemas_to_scan,
+    get_table_data_size,
     get_table_row_count,
     list_tables,
     scan_table,
@@ -323,6 +324,7 @@ def _add_database_impl(
                     delivery_format=backend_name,
                     last_update_date=now_iso if is_change else None,
                     data_path=table_data_path,
+                    data_size=get_table_data_size(con, table_name, schema_name),
                     last_update_timestamp=catalog._now if is_change else None,
                     _seen=True,
                 )
@@ -423,6 +425,7 @@ def _add_database_impl(
                 last_update_date=effective_date,
                 data_path=table_data_path,
                 nb_row=nb_row,
+                data_size=get_table_data_size(con, table_name, schema_name),
                 sample_size=actual_sample_size,
                 schema_signature=current_signature,
                 last_update_timestamp=effective_timestamp,
