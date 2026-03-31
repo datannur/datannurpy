@@ -21,7 +21,7 @@ from .utils import (
     sanitize_id,
     upsert_folder,
 )
-from .utils.params import validate_params
+from .utils.params import _UNSET, validate_params
 from .errors import ConfigError
 from .finalize import remove_dataset_cascade
 from .schema import Dataset, Folder
@@ -34,7 +34,7 @@ from .scanner.timeseries import (
     get_series_folder_parts,
     normalize_path,
 )
-from .scanner.utils import get_mtime_iso
+from .scanner.utils import get_data_size, get_dir_data_size, get_mtime_iso
 from .scanner.parquet.discovery import (
     is_delta_table,
     is_hive_partitioned,
@@ -44,6 +44,8 @@ from .scanner.scan import scan_file
 
 if TYPE_CHECKING:
     from .catalog import Catalog
+
+_DIR_FORMATS = {"delta", "hive", "iceberg"}
 
 
 def _build_series_folder_id(normalized: str, prefix: str) -> str:
@@ -67,8 +69,8 @@ def add_folder(
     infer_stats: bool = True,
     time_series: bool = True,
     csv_encoding: str | None = None,
-    sample_size: int | None = None,
-    skip_copy: bool | None = None,
+    sample_size: int | None = _UNSET,
+    csv_skip_copy: bool | None = None,
     quiet: bool | None = None,
     refresh: bool | None = None,
     storage_options: dict[str, Any] | None = None,
@@ -201,10 +203,16 @@ def add_folder(
             existing = catalog.dataset.get_by("data_path", data_path_str)
             if existing:
                 # Update metadata for modified dataset
+                data_size = (
+                    get_dir_data_size(info.path, fs=fs)
+                    if info.format in _DIR_FORMATS
+                    else get_data_size(info.path, fs=fs)
+                )
                 catalog.dataset.update(
                     existing.id,
                     last_update_date=get_mtime_iso(info.path, fs=fs),
                     last_update_timestamp=info.mtime,
+                    data_size=data_size,
                     _seen=True,
                 )
                 continue
@@ -237,6 +245,11 @@ def add_folder(
                 last_update_timestamp=info.mtime,
                 delivery_format=info.format,
                 nb_files=nb_files,
+                data_size=(
+                    get_dir_data_size(info.path, fs=fs)
+                    if info.format in _DIR_FORMATS
+                    else get_data_size(info.path, fs=fs)
+                ),
                 start_date=start_date,
                 end_date=end_date,
                 _seen=True,
@@ -260,7 +273,12 @@ def add_folder(
     resolved_encoding = (
         csv_encoding if csv_encoding is not None else catalog.csv_encoding
     )
-    resolved_skip_copy = skip_copy if skip_copy is not None else catalog.skip_copy
+    resolved_csv_skip_copy = (
+        csv_skip_copy if csv_skip_copy is not None else catalog.csv_skip_copy
+    )
+    resolved_sample_size = (
+        sample_size if sample_size is not _UNSET else catalog.sample_size
+    )
     schema_only = resolved_depth == "schema"
 
     scan_errors = 0
@@ -278,8 +296,8 @@ def add_folder(
                     infer_stats=infer_stats,
                     freq_threshold=freq_threshold,
                     csv_encoding=resolved_encoding,
-                    sample_size=sample_size,
-                    skip_copy=resolved_skip_copy,
+                    sample_size=resolved_sample_size,
+                    csv_skip_copy=resolved_csv_skip_copy,
                     quiet=q,
                     fs=fs,
                 )
@@ -305,8 +323,8 @@ def add_folder(
                 infer_stats=infer_stats,
                 freq_threshold=freq_threshold,
                 csv_encoding=resolved_encoding,
-                sample_size=sample_size,
-                skip_copy=resolved_skip_copy,
+                sample_size=resolved_sample_size,
+                csv_skip_copy=resolved_csv_skip_copy,
                 fs=fs,
                 quiet=q,
             )
@@ -331,6 +349,11 @@ def add_folder(
             delivery_format=info.format,
             description=result.description,
             nb_row=result.nb_row,
+            data_size=(
+                result.data_size
+                if info.format in _DIR_FORMATS
+                else get_data_size(info.path, fs=fs)
+            ),
             _seen=True,
         )
         catalog.dataset.add(dataset)
@@ -368,7 +391,7 @@ def _scan_time_series(
     freq_threshold: int | None,
     csv_encoding: str | None,
     sample_size: int | None,
-    skip_copy: bool,
+    csv_skip_copy: bool,
     quiet: bool,
     fs: FileSystem | None,
 ) -> None:
@@ -425,7 +448,7 @@ def _scan_time_series(
         freq_threshold=freq_threshold,
         csv_encoding=csv_encoding,
         sample_size=sample_size,
-        skip_copy=skip_copy,
+        csv_skip_copy=csv_skip_copy,
         fs=fs,
         quiet=quiet,
     )
@@ -442,6 +465,7 @@ def _scan_time_series(
         description=result.description,
         nb_row=result.nb_row,
         nb_files=len(series_files),
+        data_size=get_data_size(last_path, fs=fs),
         start_date=first_period,
         end_date=last_period,
         _seen=True,

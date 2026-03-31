@@ -536,6 +536,65 @@ def get_table_row_count(
     return int(table.count().to_pyarrow().as_py())
 
 
+def get_table_data_size(
+    con: ibis.BaseBackend, table_name: str, schema: str | None
+) -> int | None:
+    """Get table size in bytes, or None if unsupported."""
+    backend = get_backend_name(con)
+    raw_sql = getattr(con, "raw_sql", None)
+    if raw_sql is None:
+        return None
+    try:
+        if backend == "sqlite":
+            row = raw_sql(
+                f"SELECT SUM(pgsize) FROM dbstat WHERE name = '{table_name}'"
+            ).fetchone()
+            return int(row[0]) if row and row[0] is not None else None
+        if backend == "postgres":
+            qualified = f"'{schema}.{table_name}'" if schema else f"'{table_name}'"
+            row = raw_sql(f"SELECT pg_total_relation_size({qualified})").fetchone()
+            return int(row[0]) if row and row[0] is not None else None
+        if backend == "mysql":
+            query = (
+                "SELECT data_length + index_length "
+                "FROM information_schema.tables "
+                f"WHERE table_name = '{table_name}'"
+            )
+            if schema:
+                query += f" AND table_schema = '{schema}'"
+            row = raw_sql(query).fetchone()
+            return int(row[0]) if row and row[0] is not None else None
+        if backend == "mssql":
+            qualified = f"'{schema}.{table_name}'" if schema else f"'{table_name}'"
+            row = raw_sql(
+                "SELECT SUM(a.total_pages) * 8 * 1024 "
+                "FROM sys.partitions p "
+                "JOIN sys.allocation_units a "
+                "ON p.partition_id = a.container_id "
+                f"WHERE p.object_id = OBJECT_ID({qualified})"
+            ).fetchone()
+            return int(row[0]) if row and row[0] is not None else None
+        if backend == "oracle":
+            uc_table = table_name.upper()
+            if schema:
+                uc_schema = schema.upper()
+                query = (
+                    "SELECT SUM(bytes) FROM all_segments "
+                    f"WHERE segment_name = '{uc_table}' "
+                    f"AND owner = '{uc_schema}'"
+                )
+            else:
+                query = (
+                    "SELECT SUM(bytes) FROM user_segments "
+                    f"WHERE segment_name = '{uc_table}'"
+                )
+            row = raw_sql(query).fetchone()
+            return int(row[0]) if row and row[0] is not None else None
+    except Exception:
+        return None
+    return None
+
+
 def scan_table(
     con: ibis.BaseBackend,
     table_name: str,

@@ -349,3 +349,60 @@ class TestDetectionWithFileSystem:
 
         fs = FileSystem(tmp_path)
         assert is_hive_partitioned(tmp_path, fs=fs) is False
+
+
+class TestParquetSampling:
+    """Test sample_size parameter for Parquet scanning."""
+
+    def test_sample_size_uses_approx_nunique(self, tmp_path: Path):
+        """sample_size should trigger sampling and preserve full row count."""
+        table = pa.table({"id": list(range(500)), "val": list(range(500))})
+        path = tmp_path / "big.parquet"
+        pq.write_table(table, path)
+
+        catalog = Catalog()
+        catalog.add_dataset(path, sample_size=200)
+
+        ds = catalog.dataset.all()[0]
+        assert ds.nb_row == 500
+        assert len(catalog.variable.all()) == 2
+
+    def test_sample_size_no_effect_when_small(self, tmp_path: Path):
+        """sample_size should have no effect when row count <= sample_size."""
+        table = pa.table({"id": [1, 2, 3], "val": [10, 20, 30]})
+        path = tmp_path / "small.parquet"
+        pq.write_table(table, path)
+
+        catalog = Catalog()
+        catalog.add_dataset(path, sample_size=100)
+
+        ds = catalog.dataset.all()[0]
+        assert ds.nb_row == 3
+        assert len(catalog.variable.all()) == 2
+
+    def test_scan_parquet_with_schema_description(self, tmp_path: Path):
+        """scan_parquet should extract schema-level description."""
+        schema = pa.schema(
+            [pa.field("col", pa.int64())],
+            metadata={b"description": b"My dataset"},
+        )
+        table = pa.table({"col": [1, 2]}, schema=schema)
+        path = tmp_path / "desc.parquet"
+        pq.write_table(table, path)
+
+        _, _, _, metadata = scan_parquet(path, dataset_id="test")
+        assert metadata.description == "My dataset"
+
+    def test_iceberg_sampling(self):
+        """scan_iceberg should support sampling on Iceberg tables."""
+        from datannurpy.scanner.parquet.core import scan_iceberg
+
+        iceberg_path = DATA_DIR / "iceberg_warehouse" / "default" / "test_table"
+        if not iceberg_path.exists():
+            pytest.skip("iceberg_warehouse table not found")
+
+        variables, row_count, _, _ = scan_iceberg(
+            iceberg_path, "test", infer_stats=True, freq_threshold=100, sample_size=2
+        )
+        assert row_count == 5
+        assert len(variables) > 0

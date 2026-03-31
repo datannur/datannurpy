@@ -25,7 +25,7 @@ from .utils import (
     timestamp_to_iso,
     upsert_folder,
 )
-from .utils.params import validate_params
+from .utils.params import _UNSET, validate_params
 from .scanner.filesystem import FileSystem
 from .scanner.utils import get_mtime_iso
 from .finalize import remove_dataset_cascade
@@ -38,6 +38,7 @@ from .scanner.database import (
     get_database_name,
     get_database_path,
     get_schemas_to_scan,
+    get_table_data_size,
     get_table_row_count,
     list_tables,
     scan_table,
@@ -77,7 +78,7 @@ def add_database(
     include: Sequence[str] | None = None,
     exclude: Sequence[str] | None = None,
     infer_stats: bool = True,
-    sample_size: int | None = None,
+    sample_size: int | None = _UNSET,
     group_by_prefix: bool | str = True,
     prefix_min_tables: int = 2,
     quiet: bool | None = None,
@@ -93,6 +94,10 @@ def add_database(
         return
     assert not isinstance(schema, Sequence) or isinstance(schema, str)
 
+    resolved_sample_size = (
+        sample_size if sample_size is not _UNSET else catalog.sample_size
+    )
+
     # Handle remote SQLite files (sftp://, s3://, etc.)
     if isinstance(connection, str) and _is_remote_database_file(connection):
         remote_path = urlparse(connection).path
@@ -107,7 +112,7 @@ def add_database(
                 include=include,
                 exclude=exclude,
                 infer_stats=infer_stats,
-                sample_size=sample_size,
+                sample_size=resolved_sample_size,
                 group_by_prefix=group_by_prefix,
                 prefix_min_tables=prefix_min_tables,
                 quiet=quiet,
@@ -125,7 +130,7 @@ def add_database(
         include=include,
         exclude=exclude,
         infer_stats=infer_stats,
-        sample_size=sample_size,
+        sample_size=resolved_sample_size,
         group_by_prefix=group_by_prefix,
         prefix_min_tables=prefix_min_tables,
         quiet=quiet,
@@ -319,6 +324,7 @@ def _add_database_impl(
                     delivery_format=backend_name,
                     last_update_date=now_iso if is_change else None,
                     data_path=table_data_path,
+                    data_size=get_table_data_size(con, table_name, schema_name),
                     last_update_timestamp=catalog._now if is_change else None,
                     _seen=True,
                 )
@@ -419,6 +425,7 @@ def _add_database_impl(
                 last_update_date=effective_date,
                 data_path=table_data_path,
                 nb_row=nb_row,
+                data_size=get_table_data_size(con, table_name, schema_name),
                 sample_size=actual_sample_size,
                 schema_signature=current_signature,
                 last_update_timestamp=effective_timestamp,

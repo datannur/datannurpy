@@ -13,6 +13,8 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 MIN_SAMPLE_SIZE = 100
 
+_UNSET: Any = object()
+
 
 def validate_params(func: F) -> F:
     """Validate kwargs and suggest closest parameter name on typo."""
@@ -27,9 +29,11 @@ def validate_params(func: F) -> F:
                 raise ConfigError(
                     f"{func.__name__}(): unknown parameter '{key}'.{hint}"
                 )
-        # Reject sample_size below minimum
+        # Reject sample_size below minimum (skip if _UNSET)
         if "sample_size" in kwargs and kwargs["sample_size"] is not None:
-            if kwargs["sample_size"] < MIN_SAMPLE_SIZE:
+            if kwargs["sample_size"] is _UNSET:
+                pass
+            elif kwargs["sample_size"] < MIN_SAMPLE_SIZE:
                 raise ConfigError(
                     f"sample_size must be at least {MIN_SAMPLE_SIZE}, "
                     f"got {kwargs['sample_size']}"

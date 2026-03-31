@@ -6,7 +6,7 @@ import pytest
 
 from datannurpy.catalog import Catalog
 from datannurpy.errors import ConfigError
-from datannurpy.utils.params import validate_params
+from datannurpy.utils.params import _UNSET, validate_params
 
 
 class TestValidateParamsDecorator:
@@ -57,6 +57,13 @@ class TestValidateParamsDecorator:
             return sample_size
 
         assert func(sample_size=None) is None
+
+    def test_sample_size_unset_passes(self) -> None:
+        @validate_params
+        def func(*, sample_size: int | None = _UNSET) -> int | None:
+            return sample_size
+
+        assert func() is _UNSET
 
 
 class TestCatalogParamValidation:

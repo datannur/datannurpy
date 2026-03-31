@@ -16,12 +16,18 @@ from .utils import (
     sanitize_id,
     upsert_folder,
 )
-from .utils.params import validate_params
+from .utils.params import _UNSET, validate_params
 from .errors import ConfigError
 from .finalize import remove_dataset_cascade
 from .schema import Dataset, Folder
 from .scanner.filesystem import FileSystem, is_remote_url
-from .scanner.utils import SUPPORTED_FORMATS, get_mtime_iso, get_mtime_timestamp
+from .scanner.utils import (
+    SUPPORTED_FORMATS,
+    get_data_size,
+    get_dir_data_size,
+    get_mtime_iso,
+    get_mtime_timestamp,
+)
 from .scanner.parquet import (
     DatasetType,
     ParquetDatasetInfo,
@@ -67,6 +73,7 @@ def _create_dataset(
     delivery_format: str,
     meta: DatasetMeta,
     nb_row: int | None = None,
+    data_size: int | None = None,
     scanned_description: str | None = None,
     fs: FileSystem | None = None,
 ) -> Dataset:
@@ -80,6 +87,7 @@ def _create_dataset(
         last_update_timestamp=current_mtime,
         delivery_format=delivery_format,
         nb_row=nb_row,
+        data_size=data_size,
         description=meta.description
         if meta.description is not None
         else scanned_description,
@@ -108,8 +116,8 @@ def add_dataset(
     folder_id: str | None = None,
     infer_stats: bool = True,
     csv_encoding: str | None = None,
-    sample_size: int | None = None,
-    skip_copy: bool | None = None,
+    sample_size: int | None = _UNSET,
+    csv_skip_copy: bool | None = None,
     quiet: bool | None = None,
     refresh: bool | None = None,
     storage_options: dict[str, Any] | None = None,
@@ -248,7 +256,12 @@ def add_dataset(
     resolved_encoding = (
         csv_encoding if csv_encoding is not None else catalog.csv_encoding
     )
-    resolved_skip_copy = skip_copy if skip_copy is not None else catalog.skip_copy
+    resolved_csv_skip_copy = (
+        csv_skip_copy if csv_skip_copy is not None else catalog.csv_skip_copy
+    )
+    resolved_sample_size = (
+        sample_size if sample_size is not _UNSET else catalog.sample_size
+    )
 
     # Structure mode: create dataset without scanning
     if resolved_depth == "structure":
@@ -261,6 +274,7 @@ def add_dataset(
             current_mtime,
             delivery_format,
             meta,
+            data_size=get_data_size(dataset_path, fs=fs),
             fs=fs,
         )
         catalog.dataset.add(dataset)
@@ -277,8 +291,8 @@ def add_dataset(
         infer_stats=infer_stats and not schema_only,
         freq_threshold=catalog.freq_threshold or None,
         csv_encoding=resolved_encoding,
-        sample_size=sample_size,
-        skip_copy=resolved_skip_copy,
+        sample_size=resolved_sample_size,
+        csv_skip_copy=resolved_csv_skip_copy,
         fs=fs,
         quiet=q,
     )
@@ -293,6 +307,7 @@ def add_dataset(
         delivery_format,
         meta,
         nb_row=result.nb_row,
+        data_size=get_data_size(dataset_path, fs=fs),
         scanned_description=result.description,
         fs=fs,
     )
@@ -373,6 +388,7 @@ def _add_parquet_directory(
             current_mtime,
             delivery_format,
             meta,
+            data_size=get_dir_data_size(dir_path, fs=fs),
             fs=fs,
         )
         catalog.dataset.add(dataset)
@@ -403,6 +419,7 @@ def _add_parquet_directory(
         delivery_format,
         meta,
         nb_row=nb_row,
+        data_size=pq_meta.data_size,
         scanned_description=scanned_desc,
         fs=fs,
     )

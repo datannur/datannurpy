@@ -32,6 +32,7 @@ class ScanResult:
     freq_table: pa.Table | None = None
     description: str | None = None
     name: str | None = None  # Dataset name from metadata (Delta, Iceberg)
+    data_size: int | None = None
 
 
 def scan_file(
@@ -44,7 +45,7 @@ def scan_file(
     freq_threshold: int | None = None,
     csv_encoding: str | None = None,
     sample_size: int | None = None,
-    skip_copy: bool = False,
+    csv_skip_copy: bool = False,
     fs: FileSystem | None = None,
     quiet: bool = False,
 ) -> ScanResult:
@@ -69,7 +70,7 @@ def scan_file(
             freq_threshold=freq_threshold,
             csv_encoding=csv_encoding,
             sample_size=sample_size,
-            skip_copy=skip_copy,
+            csv_skip_copy=csv_skip_copy,
             fs=fs,
             quiet=quiet,
         )
@@ -90,6 +91,7 @@ def scan_file(
             dataset_id=dataset_id,
             infer_stats=infer_stats,
             freq_threshold=freq_threshold,
+            sample_size=sample_size,
             quiet=quiet,
         )
         return ScanResult(
@@ -98,14 +100,16 @@ def scan_file(
             freq_table=freq_table,
             description=metadata.description if metadata else None,
             name=metadata.name if metadata else None,
+            data_size=metadata.data_size if metadata else None,
         )
 
     if delivery_format in ("sas", "spss", "stata"):
-        variables, nb_row, freq_table, metadata = scan_statistical(
+        variables, nb_row, _actual_sample_size, freq_table, metadata = scan_statistical(
             path,
             dataset_id=dataset_id,
             infer_stats=infer_stats,
             freq_threshold=freq_threshold,
+            sample_size=sample_size,
             quiet=quiet,
         )
         return ScanResult(
@@ -123,7 +127,7 @@ def scan_file(
             freq_threshold=freq_threshold,
             csv_encoding=csv_encoding,
             sample_size=sample_size,
-            skip_copy=skip_copy,
+            csv_skip_copy=csv_skip_copy,
             quiet=quiet,
         )
         return ScanResult(variables=variables, nb_row=nb_row, freq_table=freq_table)
@@ -148,7 +152,7 @@ def _scan_with_ensure_local(
     freq_threshold: int | None,
     csv_encoding: str | None,
     sample_size: int | None,
-    skip_copy: bool,
+    csv_skip_copy: bool,
     fs: FileSystem,
     quiet: bool = False,
 ) -> ScanResult:
@@ -166,6 +170,7 @@ def _scan_with_ensure_local(
                 dataset_id=dataset_id,
                 infer_stats=infer_stats,
                 freq_threshold=freq_threshold,
+                sample_size=sample_size,
                 quiet=quiet,
             )
             return ScanResult(
@@ -174,6 +179,7 @@ def _scan_with_ensure_local(
                 freq_table=freq_table,
                 description=metadata.description if metadata else None,
                 name=metadata.name if metadata else None,
+                data_size=metadata.data_size if metadata else None,
             )
 
     # File formats use ensure_local
@@ -184,6 +190,7 @@ def _scan_with_ensure_local(
                 dataset_id=dataset_id,
                 infer_stats=infer_stats,
                 freq_threshold=freq_threshold,
+                sample_size=sample_size,
                 quiet=quiet,
             )
             return ScanResult(
@@ -195,12 +202,15 @@ def _scan_with_ensure_local(
             )
 
         if delivery_format in ("sas", "spss", "stata"):
-            variables, nb_row, freq_table, metadata = scan_statistical(
-                local_path,
-                dataset_id=dataset_id,
-                infer_stats=infer_stats,
-                freq_threshold=freq_threshold,
-                quiet=quiet,
+            variables, nb_row, _actual_sample_size, freq_table, metadata = (
+                scan_statistical(
+                    local_path,
+                    dataset_id=dataset_id,
+                    infer_stats=infer_stats,
+                    freq_threshold=freq_threshold,
+                    sample_size=sample_size,
+                    quiet=quiet,
+                )
             )
             return ScanResult(
                 variables=variables,
@@ -217,7 +227,7 @@ def _scan_with_ensure_local(
                 freq_threshold=freq_threshold,
                 csv_encoding=csv_encoding,
                 sample_size=sample_size,
-                skip_copy=skip_copy,
+                csv_skip_copy=csv_skip_copy,
                 quiet=quiet,
             )
             return ScanResult(variables=variables, nb_row=nb_row, freq_table=freq_table)
@@ -502,7 +512,7 @@ def _scan_schema_only_local(
         return ScanResult(variables=variables, nb_row=None)
 
     # statistical formats
-    variables, _, _, metadata = scan_statistical(
+    variables, _, _, _, metadata = scan_statistical(
         path, dataset_id=dataset_id, infer_stats=False
     )
     return ScanResult(

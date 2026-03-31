@@ -19,6 +19,7 @@ from datannurpy.scanner.database import (
     get_database_name,
     get_database_path,
     get_schemas_to_scan,
+    get_table_data_size,
     list_schemas,
     list_tables,
     parse_connection_string,
@@ -703,3 +704,118 @@ class TestInitOracleClient:
             with pytest.raises(ConfigError, match="oracledb"):
                 _init_oracle_client("/opt/oracle/client", raise_driver_error)
         oracle_mod._oracle_client_initialized = False
+
+
+class TestGetTableDataSize:
+    """Tests for get_table_data_size per-engine dispatch."""
+
+    def _mock_con(self, result: list[tuple[object, ...]]) -> MagicMock:
+        mock = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.return_value = result[0] if result else None
+        mock.raw_sql.return_value = mock_cursor
+        return mock
+
+    def test_sqlite(self) -> None:
+        con = self._mock_con([(8192,)])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="sqlite"
+        ):
+            assert get_table_data_size(con, "users", None) == 8192
+
+    def test_postgres_no_schema(self) -> None:
+        con = self._mock_con([(16384,)])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="postgres"
+        ):
+            assert get_table_data_size(con, "orders", None) == 16384
+        query = con.raw_sql.call_args[0][0]
+        assert "pg_total_relation_size" in query
+        assert "'orders'" in query
+
+    def test_postgres_with_schema(self) -> None:
+        con = self._mock_con([(32768,)])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="postgres"
+        ):
+            assert get_table_data_size(con, "orders", "sales") == 32768
+        query = con.raw_sql.call_args[0][0]
+        assert "'sales.orders'" in query
+
+    def test_mysql_no_schema(self) -> None:
+        con = self._mock_con([(4096,)])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="mysql"
+        ):
+            assert get_table_data_size(con, "items", None) == 4096
+        query = con.raw_sql.call_args[0][0]
+        assert "information_schema.tables" in query
+        assert "table_schema" not in query
+
+    def test_mysql_with_schema(self) -> None:
+        con = self._mock_con([(4096,)])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="mysql"
+        ):
+            assert get_table_data_size(con, "items", "shop") == 4096
+        query = con.raw_sql.call_args[0][0]
+        assert "table_schema = 'shop'" in query
+
+    def test_mssql(self) -> None:
+        con = self._mock_con([(65536,)])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="mssql"
+        ):
+            assert get_table_data_size(con, "logs", None) == 65536
+        query = con.raw_sql.call_args[0][0]
+        assert "sys.partitions" in query
+
+    def test_oracle_no_schema(self) -> None:
+        con = self._mock_con([(131072,)])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="oracle"
+        ):
+            assert get_table_data_size(con, "employees", None) == 131072
+        query = con.raw_sql.call_args[0][0]
+        assert "user_segments" in query
+        assert "'EMPLOYEES'" in query
+
+    def test_oracle_with_schema(self) -> None:
+        con = self._mock_con([(131072,)])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="oracle"
+        ):
+            assert get_table_data_size(con, "employees", "hr") == 131072
+        query = con.raw_sql.call_args[0][0]
+        assert "all_segments" in query
+        assert "'HR'" in query
+
+    def test_no_raw_sql_returns_none(self) -> None:
+        con = MagicMock()
+        con.raw_sql = None
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="sqlite"
+        ):
+            assert get_table_data_size(con, "t", None) is None
+
+    def test_unknown_backend_returns_none(self) -> None:
+        con = self._mock_con([(0,)])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="unknown"
+        ):
+            assert get_table_data_size(con, "t", None) is None
+
+    def test_exception_returns_none(self) -> None:
+        con = MagicMock()
+        con.raw_sql.side_effect = Exception("dbstat not available")
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="sqlite"
+        ):
+            assert get_table_data_size(con, "t", None) is None
+
+    def test_null_result_returns_none(self) -> None:
+        con = self._mock_con([(None,)])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="sqlite"
+        ):
+            assert get_table_data_size(con, "empty_table", None) is None

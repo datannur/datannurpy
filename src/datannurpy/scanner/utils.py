@@ -90,6 +90,26 @@ def get_mtime_timestamp(path: PurePath, fs: FileSystem | None = None) -> int:
     return int(mtime)
 
 
+def get_data_size(path: PurePath, fs: FileSystem | None = None) -> int:
+    """Get file size in bytes."""
+    if fs is not None:
+        info = fs.info(str(path))
+        return int(info.get("size", 0))
+    assert isinstance(path, Path)
+    return path.stat().st_size
+
+
+def get_dir_data_size(path: PurePath, fs: FileSystem | None = None) -> int:
+    """Get total size of parquet files in a directory tree."""
+    if fs is not None:
+        path_str = str(path)
+        files = fs.glob(f"{path_str}/**/*.parquet") + fs.glob(f"{path_str}/**/*.pq")
+        return sum(int(fs.info(f).get("size", 0)) for f in files)
+    assert isinstance(path, Path)
+    files = list(path.rglob("*.parquet")) + list(path.rglob("*.pq"))
+    return sum(f.stat().st_size for f in files)
+
+
 def find_files(
     root: PurePath,
     include: Sequence[str] | None,
