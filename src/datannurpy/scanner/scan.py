@@ -101,11 +101,12 @@ def scan_file(
         )
 
     if delivery_format in ("sas", "spss", "stata"):
-        variables, nb_row, freq_table, metadata = scan_statistical(
+        variables, nb_row, _actual_sample_size, freq_table, metadata = scan_statistical(
             path,
             dataset_id=dataset_id,
             infer_stats=infer_stats,
             freq_threshold=freq_threshold,
+            sample_size=sample_size,
             quiet=quiet,
         )
         return ScanResult(
@@ -195,12 +196,15 @@ def _scan_with_ensure_local(
             )
 
         if delivery_format in ("sas", "spss", "stata"):
-            variables, nb_row, freq_table, metadata = scan_statistical(
-                local_path,
-                dataset_id=dataset_id,
-                infer_stats=infer_stats,
-                freq_threshold=freq_threshold,
-                quiet=quiet,
+            variables, nb_row, _actual_sample_size, freq_table, metadata = (
+                scan_statistical(
+                    local_path,
+                    dataset_id=dataset_id,
+                    infer_stats=infer_stats,
+                    freq_threshold=freq_threshold,
+                    sample_size=sample_size,
+                    quiet=quiet,
+                )
             )
             return ScanResult(
                 variables=variables,
@@ -502,7 +506,7 @@ def _scan_schema_only_local(
         return ScanResult(variables=variables, nb_row=None)
 
     # statistical formats
-    variables, _, _, metadata = scan_statistical(
+    variables, _, _, _, metadata = scan_statistical(
         path, dataset_id=dataset_id, infer_stats=False
     )
     return ScanResult(

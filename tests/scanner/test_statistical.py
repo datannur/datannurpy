@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 import pandas as pd
 import pyreadstat
@@ -11,6 +12,7 @@ import pytest
 
 from datannurpy import Catalog, Folder
 from datannurpy.scanner import read_statistical
+from datannurpy.scanner.statistical import scan_statistical
 
 DATA_DIR = Path(__file__).parent.parent.parent / "data"
 
@@ -154,3 +156,130 @@ class TestScanSasFiles:
         assert var_by_name["CYL"].type == "integer"
         # MPG contains decimals (14.5, 16.2, etc.)
         assert var_by_name["MPG"].type == "float"
+
+
+class TestScanStatisticalEdgeCases:
+    """Test edge cases: empty files, sampling, pipeline errors."""
+
+    def test_empty_file_returns_empty_variables(self, tmp_path: Path):
+        """scan_statistical should handle an empty SPSS file (0 rows)."""
+        df = pd.DataFrame({"a": pd.Series([], dtype="float64")})
+        spss_file = tmp_path / "empty.sav"
+        pyreadstat.write_sav(df, spss_file)
+
+        variables, row_count, actual_sample_size, freq_table, metadata = (
+            scan_statistical(spss_file, dataset_id="ds")
+        )
+        assert row_count == 0
+        assert actual_sample_size is None
+        assert freq_table is None
+        assert len(variables) == 1
+        assert variables[0].name == "a"
+
+    def test_sampling_when_rows_exceed_sample_size(self, tmp_path: Path):
+        """scan_statistical should sample when row_count > sample_size."""
+        df = pd.DataFrame({"x": list(range(100)), "y": [float(i) for i in range(100)]})
+        spss_file = tmp_path / "big.sav"
+        pyreadstat.write_sav(df, spss_file)
+
+        variables, row_count, actual_sample_size, freq_table, metadata = (
+            scan_statistical(spss_file, dataset_id="ds", sample_size=10)
+        )
+        assert row_count == 100
+        assert actual_sample_size is not None
+        assert actual_sample_size <= 100
+        assert len(variables) == 2
+
+    def test_pipeline_error_returns_empty(self, tmp_path: Path, capsys):
+        """scan_statistical should catch exceptions from the Parquet pipeline."""
+        df = pd.DataFrame({"a": [1, 2]})
+        spss_file = tmp_path / "ok.sav"
+        pyreadstat.write_sav(df, spss_file)
+
+        with patch(
+            "datannurpy.scanner.statistical._build_from_parquet",
+            side_effect=RuntimeError("boom"),
+        ):
+            variables, row_count, _, _, _ = scan_statistical(
+                spss_file, dataset_id="ds", quiet=False
+            )
+        captured = capsys.readouterr()
+        assert "✗ ok.sav" in captured.err
+        assert variables == []
+        assert row_count == 0
+
+    def test_string_only_file_no_fix_needed(self, tmp_path: Path):
+        """_fix_parquet_types should return early when no float or time columns."""
+        df = pd.DataFrame({"name": ["alice", "bob"], "city": ["paris", "lyon"]})
+        spss_file = tmp_path / "strings.sav"
+        pyreadstat.write_sav(df, spss_file)
+
+        variables, row_count, _, _, _ = scan_statistical(spss_file, dataset_id="ds")
+        assert row_count == 2
+        assert all(v.type == "string" for v in variables)
+
+    def test_float_column_not_all_int(self, tmp_path: Path):
+        """_fix_parquet_types should keep float columns that have non-integer values."""
+        df = pd.DataFrame({"val": [1.5, 2.7, 3.1]})
+        spss_file = tmp_path / "floats.sav"
+        pyreadstat.write_sav(df, spss_file)
+
+        variables, _, _, _, _ = scan_statistical(spss_file, dataset_id="ds")
+        var = variables[0]
+        assert var.type == "float"
+
+    def test_apply_labels_skips_none_labels(self, tmp_path: Path):
+        """scan_statistical should not set description when label is None."""
+        df = pd.DataFrame({"col_a": [1, 2]})
+        spss_file = tmp_path / "no_label.sav"
+        pyreadstat.write_sav(df, spss_file)
+
+        variables, _, _, _, _ = scan_statistical(
+            spss_file, dataset_id="ds", infer_stats=False
+        )
+        assert len(variables) == 1
+        assert variables[0].description is None
+
+    def test_read_statistical_mixed_types(self, tmp_path: Path):
+        """convert_float_to_int should skip non-float columns."""
+        df = pd.DataFrame({"name": ["alice", "bob"], "age": [30.0, 25.0]})
+        spss_file = tmp_path / "mixed.sav"
+        pyreadstat.write_sav(df, spss_file)
+
+        result = read_statistical(spss_file)
+        assert result is not None
+        assert result["name"].dtype == object
+        assert result["age"].dtype == "Int64"
+
+    def test_time_column_without_float(self, tmp_path: Path):
+        """_fix_parquet_types should handle time columns when no float columns exist."""
+        import datetime
+
+        df = pd.DataFrame(
+            {
+                "label": ["a", "b"],
+                "t": [datetime.time(10, 30), datetime.time(14, 0)],
+            }
+        )
+        spss_file = tmp_path / "time_only.sav"
+        pyreadstat.write_sav(df, spss_file)
+
+        variables, row_count, _, _, _ = scan_statistical(spss_file, dataset_id="ds")
+        assert row_count == 2
+        var_by_name = {v.name: v for v in variables}
+        assert "label" in var_by_name
+        assert "t" in var_by_name
+
+    def test_multiple_chunks(self, tmp_path: Path):
+        """_stat_to_parquet should write multiple chunks to Parquet."""
+        from datannurpy.scanner.statistical import _stat_to_parquet
+
+        df = pd.DataFrame({"x": list(range(10))})
+        spss_file = tmp_path / "multi_chunk.sav"
+        pyreadstat.write_sav(df, spss_file)
+
+        with _stat_to_parquet(pyreadstat.read_sav, spss_file, chunksize=3) as pq_path:
+            import pyarrow.parquet as pq_mod
+
+            table = pq_mod.read_table(pq_path)
+            assert len(table) == 10

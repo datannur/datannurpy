@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.13.0 (2026-03-31)
+
+- refactor: SAS/SPSS/Stata scanner rewritten with streaming Parquet pipeline — constant RAM regardless of file size, fixes OOM on large files (10 Go+)
+- add: `sample_size` support for statistical files (SAS/SPSS/Stata) — same reservoir sampling as CSV
+
 ## 0.12.1 (2026-03-31)
 
 - add: `verbose` and `log_file` parameters on `Catalog` for error diagnostics (full tracebacks on stderr or to file)
