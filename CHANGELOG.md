@@ -5,6 +5,8 @@
 - refactor: SAS/SPSS/Stata scanner rewritten with streaming Parquet pipeline — constant RAM regardless of file size, fixes OOM on large files (10 Go+)
 - add: `sample_size` support for statistical files (SAS/SPSS/Stata) — same reservoir sampling as CSV
 - add: `sample_size=100_000` default on `Catalog` — all methods inherit it, override per-method with an int or disable with `None`
+- add: `sample_size` support for Parquet, Delta, Hive, and Iceberg — DuckDB reservoir sampling, same pattern as CSV/databases
+- rename: `skip_copy` → `csv_skip_copy` (applies only to CSV)
 
 ## 0.12.1 (2026-03-31)
 

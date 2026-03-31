@@ -90,6 +90,7 @@ def scan_file(
             dataset_id=dataset_id,
             infer_stats=infer_stats,
             freq_threshold=freq_threshold,
+            sample_size=sample_size,
             quiet=quiet,
         )
         return ScanResult(
@@ -167,6 +168,7 @@ def _scan_with_ensure_local(
                 dataset_id=dataset_id,
                 infer_stats=infer_stats,
                 freq_threshold=freq_threshold,
+                sample_size=sample_size,
                 quiet=quiet,
             )
             return ScanResult(
@@ -185,6 +187,7 @@ def _scan_with_ensure_local(
                 dataset_id=dataset_id,
                 infer_stats=infer_stats,
                 freq_threshold=freq_threshold,
+                sample_size=sample_size,
                 quiet=quiet,
             )
             return ScanResult(
