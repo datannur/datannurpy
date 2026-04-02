@@ -2,6 +2,7 @@
 
 ## 0.13.1 (2026-04-02)
 
+- fix: Oracle sampling now uses native `SAMPLE(pct)` clause — `ibis.random()` was evaluated once as a scalar, returning all or no rows
 - fix: `log_file` now captures all log levels (warnings, skip, progress, summary) — previously only errors were written to the file
 - fix: `depth: "schema"` now sets variable types for SAS/SPSS/Stata files — previously all types were `null` (local and remote)
 - fix: Excel mixed-type columns now preserve `NaN` as missing instead of converting to `"nan"` string

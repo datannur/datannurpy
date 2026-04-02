@@ -552,6 +552,46 @@ class TestGetTable:
 
         mock_con.table.assert_called_once_with("employees")
 
+    def test_oracle_sample_pct_with_schema(self) -> None:
+        """Oracle SAMPLE clause is appended when sample_pct is provided."""
+        mock_con = MagicMock()
+        mock_table = MagicMock()
+        mock_con.sql.return_value = mock_table
+        mock_schema = ibis.schema({"ID": "int64"})
+
+        _get_table(
+            mock_con,
+            "employees",
+            "hr",
+            "oracle",
+            oracle_schema=mock_schema,
+            sample_pct=83.05,
+        )
+
+        mock_con.sql.assert_called_once_with(
+            'SELECT * FROM "HR"."EMPLOYEES" SAMPLE(83.05)', schema=mock_schema
+        )
+
+    def test_oracle_sample_pct_without_schema(self) -> None:
+        """Oracle SAMPLE clause works without schema."""
+        mock_con = MagicMock()
+        mock_table = MagicMock()
+        mock_con.sql.return_value = mock_table
+        mock_schema = ibis.schema({"ID": "int64"})
+
+        _get_table(
+            mock_con,
+            "employees",
+            None,
+            "oracle",
+            oracle_schema=mock_schema,
+            sample_pct=50.0,
+        )
+
+        mock_con.sql.assert_called_once_with(
+            'SELECT * FROM "EMPLOYEES" SAMPLE(50.0)', schema=mock_schema
+        )
+
 
 class TestScanTable:
     """Tests for scan_table function."""
@@ -666,6 +706,45 @@ class TestScanTable:
         # date columns should be in skip_stats_columns
         call_kwargs = mock_bv.call_args[1]
         assert "created" in call_kwargs["skip_stats_columns"]
+
+    def test_oracle_sampling_uses_sample_clause(self) -> None:
+        """Oracle sampling uses SAMPLE(pct) instead of ibis.random()."""
+        import pandas as pd
+
+        mock_con, mock_table = self._make_oracle_mock()
+        mock_table.count.return_value.to_pyarrow.return_value.as_py.return_value = (
+            200_000
+        )
+
+        # The sampled table returned by the second _get_table call
+        mock_sampled = MagicMock()
+        mock_sampled.rename.return_value = mock_sampled
+        mock_sampled.execute.return_value = pd.DataFrame({"id": [1, 2, 3]})
+
+        # First call returns the full table, second returns sampled
+        mock_con.sql.side_effect = [mock_table, mock_sampled]
+
+        with (
+            patch(self._oracle_schema_patch, return_value=self._mock_schema_result),
+            patch(
+                "datannurpy.scanner.database.build_variables",
+                return_value=([], None),
+            ),
+            patch("datannurpy.scanner.database.ibis.memtable"),
+        ):
+            scan_table(
+                mock_con,
+                "employees",
+                dataset_id="test",
+                sample_size=100_000,
+                row_count=200_000,
+            )
+
+        # Second sql() call should include SAMPLE clause
+        assert mock_con.sql.call_count == 2
+        second_call_sql = mock_con.sql.call_args_list[1][0][0]
+        assert "SAMPLE(" in second_call_sql
+        assert "50.0" in second_call_sql
 
 
 class TestInitOracleClient:
