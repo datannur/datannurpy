@@ -763,20 +763,32 @@ class TestRemoteStorage:
     """Test remote storage URL handling."""
 
     def test_remote_url_requires_provider_package(self):
-        """add_folder should raise ImportError when provider package is missing."""
+        """add_folder should propagate ImportError from missing provider."""
+        from unittest.mock import patch
+
         catalog = Catalog()
-        # S3 URLs require s3fs package
-        with pytest.raises(ImportError, match="s3fs"):
+        with (
+            patch(
+                "datannurpy.add_folder.FileSystem",
+                side_effect=ImportError("Install s3fs to access S3"),
+            ),
+            pytest.raises(ImportError, match="s3fs"),
+        ):
             catalog.add_folder("s3://bucket/data")
 
-    def test_remote_url_with_sftp_connection_error(self):
-        """add_folder should raise connection error for unreachable SFTP."""
+    def test_remote_url_with_connection_error(self):
+        """add_folder should propagate connection errors from remote storage."""
+        from unittest.mock import patch
+
         catalog = Catalog()
-        # Use a non-routable IP to get a quick timeout
-        with pytest.raises((TimeoutError, OSError)):
-            catalog.add_folder(
-                "sftp://10.255.255.1/data", storage_options={"timeout": 1}
-            )
+        with (
+            patch(
+                "datannurpy.add_folder.FileSystem",
+                side_effect=OSError("Connection refused"),
+            ),
+            pytest.raises(OSError, match="Connection refused"),
+        ):
+            catalog.add_folder("sftp://host/data", storage_options={"timeout": 1})
 
     def test_remote_folder_not_found(self, tmp_path: Path):
         """add_folder should raise FileNotFoundError for non-existent remote folder."""
