@@ -3,6 +3,8 @@
 ## 0.13.1 (2026-04-02)
 
 - fix: Oracle sampling now uses native `SAMPLE(pct)` clause — `ibis.random()` was evaluated once as a scalar, returning all or no rows
+- fix: Oracle tables no longer scanned twice when connected user's schema is already listed — `get_schemas_to_scan` now deduplicates via `SELECT USER FROM DUAL`
+- fix: Oracle `data_size` falls back to `user_segments` when `all_segments` returns NULL (insufficient privileges)
 - fix: `log_file` now captures all log levels (warnings, skip, progress, summary) — previously only errors were written to the file
 - fix: `depth: "schema"` now sets variable types for SAS/SPSS/Stata files — previously all types were `null` (local and remote)
 - fix: Excel mixed-type columns now preserve `NaN` as missing instead of converting to `"nan"` string

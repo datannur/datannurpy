@@ -253,14 +253,48 @@ class TestGetDatabasePath:
 class TestGetSchemasToScan:
     """Tests for get_schemas_to_scan function."""
 
-    def test_oracle_appends_none(self) -> None:
-        """Oracle backend appends None to schemas list."""
-        mock_con = MagicMock(spec=ibis.BaseBackend)
+    def test_oracle_appends_none_when_user_not_in_schemas(self) -> None:
+        """Oracle appends None when connected user is not in schemas list."""
+        mock_con = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.return_value = ("ADMIN",)
+        mock_con.raw_sql.return_value = mock_cursor
         with patch(
             "datannurpy.scanner.database.list_schemas", return_value=["hr", "sales"]
         ):
             result = get_schemas_to_scan(mock_con, None, "oracle")
         assert result == ["hr", "sales", None]
+
+    def test_oracle_skips_none_when_user_already_in_schemas(self) -> None:
+        """Oracle does not append None when connected user is already listed."""
+        mock_con = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.return_value = ("HR",)
+        mock_con.raw_sql.return_value = mock_cursor
+        with patch(
+            "datannurpy.scanner.database.list_schemas", return_value=["hr", "sales"]
+        ):
+            result = get_schemas_to_scan(mock_con, None, "oracle")
+        assert result == ["hr", "sales"]
+        assert None not in result
+
+    def test_oracle_no_raw_sql_appends_none(self) -> None:
+        """Oracle without raw_sql falls back to appending None."""
+        mock_con = MagicMock()
+        mock_con.raw_sql = None
+        with patch("datannurpy.scanner.database.list_schemas", return_value=["hr"]):
+            result = get_schemas_to_scan(mock_con, None, "oracle")
+        assert result == ["hr", None]
+
+    def test_oracle_null_fetchone_appends_none(self) -> None:
+        """Oracle with fetchone() returning None falls back to appending None."""
+        mock_con = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.return_value = None
+        mock_con.raw_sql.return_value = mock_cursor
+        with patch("datannurpy.scanner.database.list_schemas", return_value=["hr"]):
+            result = get_schemas_to_scan(mock_con, None, "oracle")
+        assert result == ["hr", None]
 
     def test_empty_schemas_returns_none(self) -> None:
         """When all schemas are system schemas, returns [None]."""
@@ -865,9 +899,25 @@ class TestGetTableDataSize:
             "datannurpy.scanner.database.get_backend_name", return_value="oracle"
         ):
             assert get_table_data_size(con, "employees", "hr") == 131072
-        query = con.raw_sql.call_args[0][0]
+        query = con.raw_sql.call_args_list[0][0][0]
         assert "all_segments" in query
         assert "'HR'" in query
+
+    def test_oracle_with_schema_fallback_to_user_segments(self) -> None:
+        """Oracle falls back to user_segments when all_segments returns NULL."""
+        mock_cursor_null = MagicMock()
+        mock_cursor_null.fetchone.return_value = (None,)
+        mock_cursor_ok = MagicMock()
+        mock_cursor_ok.fetchone.return_value = (131072,)
+        con = MagicMock()
+        con.raw_sql.side_effect = [mock_cursor_null, mock_cursor_ok]
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="oracle"
+        ):
+            assert get_table_data_size(con, "employees", "hr") == 131072
+        assert con.raw_sql.call_count == 2
+        assert "all_segments" in con.raw_sql.call_args_list[0][0][0]
+        assert "user_segments" in con.raw_sql.call_args_list[1][0][0]
 
     def test_no_raw_sql_returns_none(self) -> None:
         con = MagicMock()

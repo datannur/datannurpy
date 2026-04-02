@@ -337,7 +337,16 @@ def get_schemas_to_scan(
     system = SYSTEM_SCHEMAS[backend_name]
     schemas: list[str | None] = [s for s in available if s not in system]
     if backend_name == "oracle":
-        schemas.append(None)
+        # Append None (user_tables) only if the connected user isn't already
+        # in the schemas list — otherwise their tables would be scanned twice.
+        raw_sql = getattr(con, "raw_sql", None)
+        current_user = None
+        if raw_sql:
+            row = raw_sql("SELECT USER FROM DUAL").fetchone()
+            if row:
+                current_user = row[0].lower()
+        if current_user not in schemas:
+            schemas.append(None)
     elif not schemas:
         schemas = [None]
     return schemas
@@ -582,17 +591,19 @@ def get_table_data_size(
             uc_table = table_name.upper()
             if schema:
                 uc_schema = schema.upper()
-                query = (
+                row = raw_sql(
                     "SELECT SUM(bytes) FROM all_segments "
                     f"WHERE segment_name = '{uc_table}' "
                     f"AND owner = '{uc_schema}'"
-                )
-            else:
-                query = (
-                    "SELECT SUM(bytes) FROM user_segments "
-                    f"WHERE segment_name = '{uc_table}'"
-                )
-            row = raw_sql(query).fetchone()
+                ).fetchone()
+                if row and row[0] is not None:
+                    return int(row[0])
+                # Fallback: user_segments works for the connected user's tables
+                # when all_segments returns NULL (insufficient privileges).
+            row = raw_sql(
+                "SELECT SUM(bytes) FROM user_segments "
+                f"WHERE segment_name = '{uc_table}'"
+            ).fetchone()
             return int(row[0]) if row and row[0] is not None else None
     except Exception:
         return None
