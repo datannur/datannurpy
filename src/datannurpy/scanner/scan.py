@@ -13,7 +13,12 @@ import pyarrow.parquet as pq
 
 from ..schema import Variable
 from .csv import scan_csv
-from .excel import scan_excel
+from .excel import (
+    _MAX_PREVIEW_ROWS as _EXCEL_PREVIEW_ROWS,
+    _read_preview_rows,
+    is_valid_excel_dataset,
+    scan_excel,
+)
 from .parquet import scan_parquet
 from .parquet.core import scan_delta, scan_hive, scan_iceberg
 from .statistical import scan_statistical
@@ -340,16 +345,14 @@ def _scan_excel_schema_stream(
     fs: FileSystem,
 ) -> ScanResult:
     """Read xlsx headers via openpyxl streaming (avoids full file download)."""
-    import openpyxl
-
     with fs.open(str(path), "rb") as f:
-        wb = openpyxl.load_workbook(f, read_only=True)
-        ws = wb.active
-        headers: list[str] = []
-        if ws is not None:  # pragma: no branch
-            for row in ws.iter_rows(min_row=1, max_row=1, values_only=True):
-                headers = [str(c) for c in row if c is not None]
-        wb.close()
+        rows = _read_preview_rows(f)
+
+    valid, _reason = is_valid_excel_dataset(rows)
+    if not valid:
+        return ScanResult(variables=[], nb_row=None)
+
+    headers = [str(c) for c in rows[0] if c is not None]
 
     variables = [
         Variable(
@@ -505,20 +508,34 @@ def _scan_schema_only_local(
         return ScanResult(variables=variables, nb_row=None)
 
     if delivery_format == "excel":
-        import pandas as pd
-
         file_path = Path(path)
         suffix = file_path.suffix.lower()
-        engine = "xlrd" if suffix == ".xls" else "openpyxl"
-        df = pd.read_excel(file_path, nrows=0, engine=engine)
+
+        if suffix != ".xls":
+            rows = _read_preview_rows(file_path)
+            valid, _reason = is_valid_excel_dataset(rows)
+            if not valid:
+                return ScanResult(variables=[], nb_row=None)
+            headers = [str(c) for c in rows[0] if c is not None]
+        else:
+            import pandas as pd
+
+            engine = "xlrd"
+            df = pd.read_excel(file_path, nrows=_EXCEL_PREVIEW_ROWS, engine=engine)
+            header_row = tuple(df.columns)
+            data_rows = [tuple(row) for row in df.itertuples(index=False)]
+            valid, _reason = is_valid_excel_dataset([header_row, *data_rows])
+            if not valid:
+                return ScanResult(variables=[], nb_row=None)
+            headers = [str(c) for c in df.columns if str(c).strip() != ""]
+
         variables = [
             Variable(
                 id=f"{dataset_id}---{col}",
                 name=col,
                 dataset_id=dataset_id,
             )
-            for col in df.columns
-            if str(col).strip() != ""
+            for col in headers
         ]
         return ScanResult(variables=variables, nb_row=None)
 

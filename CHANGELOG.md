@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.13.2 (2026-04-02)
+
+- add: skip non-dataset Excel files (reports, pivots, merged cells) via header validation
+
 ## 0.13.1 (2026-04-02)
 
 - fix: time series period detection now works at group level — folder dates (e.g. `old_2024_08/data_2018.csv`) no longer override file dates, and constant dates in identifiers are ignored
