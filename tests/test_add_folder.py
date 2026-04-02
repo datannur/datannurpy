@@ -88,6 +88,30 @@ class TestAddFolderFormats:
         assert len(catalog.dataset.all()) == 1
         assert len(catalog.variable.all()) == 2
 
+    def test_add_folder_mixed_types_excel_nan_not_string(self, tmp_path: Path):
+        """NaN in mixed-type Excel columns should be counted as missing, not as 'nan' string."""
+        df = pd.DataFrame(
+            {
+                "COL_A": [1, b"bytes_value", None, 3.14],
+                "COL_B": ["hello", None, "world", "foo"],
+            }
+        )
+        df.to_excel(tmp_path / "mixed_nan.xlsx", index=False)
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, quiet=True, infer_stats=True)
+
+        var_a = catalog.variable.get_by("name", "COL_A")
+        assert var_a is not None
+        assert var_a.nb_missing == 1
+
+        var_b = catalog.variable.get_by("name", "COL_B")
+        assert var_b is not None
+        assert var_b.nb_missing == 1
+
+        for val in catalog.value.all():
+            assert val.value != "nan"
+
     def test_add_folder_excel_datetime_with_time(self, tmp_path: Path):
         """Excel datetime columns with non-midnight times stay as datetime."""
         df = pd.DataFrame(
@@ -739,20 +763,32 @@ class TestRemoteStorage:
     """Test remote storage URL handling."""
 
     def test_remote_url_requires_provider_package(self):
-        """add_folder should raise ImportError when provider package is missing."""
+        """add_folder should propagate ImportError from missing provider."""
+        from unittest.mock import patch
+
         catalog = Catalog()
-        # S3 URLs require s3fs package
-        with pytest.raises(ImportError, match="s3fs"):
+        with (
+            patch(
+                "datannurpy.add_folder.FileSystem",
+                side_effect=ImportError("Install s3fs to access S3"),
+            ),
+            pytest.raises(ImportError, match="s3fs"),
+        ):
             catalog.add_folder("s3://bucket/data")
 
-    def test_remote_url_with_sftp_connection_error(self):
-        """add_folder should raise connection error for unreachable SFTP."""
+    def test_remote_url_with_connection_error(self):
+        """add_folder should propagate connection errors from remote storage."""
+        from unittest.mock import patch
+
         catalog = Catalog()
-        # Use a non-routable IP to get a quick timeout
-        with pytest.raises((TimeoutError, OSError)):
-            catalog.add_folder(
-                "sftp://10.255.255.1/data", storage_options={"timeout": 1}
-            )
+        with (
+            patch(
+                "datannurpy.add_folder.FileSystem",
+                side_effect=OSError("Connection refused"),
+            ),
+            pytest.raises(OSError, match="Connection refused"),
+        ):
+            catalog.add_folder("sftp://host/data", storage_options={"timeout": 1})
 
     def test_remote_folder_not_found(self, tmp_path: Path):
         """add_folder should raise FileNotFoundError for non-existent remote folder."""

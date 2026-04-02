@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path, PurePath
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pyarrow as pa
 import pyarrow.fs
@@ -291,6 +291,7 @@ def _scan_stat_schema_stream(
     description: str | None = None
     names: list[str] = []
     label_map: dict[str, str] = {}
+    type_map: dict[str, str] = {}
 
     with fs.open(str(path), "rb") as f:
         if delivery_format == "sas":
@@ -303,6 +304,10 @@ def _scan_stat_schema_stream(
                     for col in sas_reader.columns
                     if col.label
                 }
+                type_map = {
+                    str(col.name): "number" if col.ctype == b"d" else "string"
+                    for col in sas_reader.columns
+                }
         else:  # stata
             from pandas.io.stata import StataReader
 
@@ -310,6 +315,11 @@ def _scan_stat_schema_stream(
                 label_map = stata_reader.variable_labels()
                 names = list(label_map.keys())
                 description = stata_reader.data_label or None
+                dt: Any = stata_reader._dtype
+                if dt is not None and dt.names:
+                    for i, name in enumerate(names):
+                        kind = dt.fields[dt.names[i]][0].kind
+                        type_map[name] = "number" if kind == "f" else "string"
 
     variables = [
         Variable(
@@ -317,6 +327,7 @@ def _scan_stat_schema_stream(
             name=name,
             dataset_id=dataset_id,
             description=label_map.get(name) or None,
+            type=type_map.get(name),
         )
         for name in names
     ]

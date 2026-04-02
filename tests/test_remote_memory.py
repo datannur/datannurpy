@@ -573,6 +573,8 @@ class TestSchemaOnlyRemoteOptimizations:
 
         assert len(result.variables) > 0
         assert result.nb_row is None
+        # SAS streaming should extract types from header
+        assert all(v.type == "number" for v in result.variables)
 
     def test_schema_only_stata_remote(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
@@ -600,6 +602,41 @@ class TestSchemaOnlyRemoteOptimizations:
 
         assert len(result.variables) > 0
         assert result.nb_row is None
+        # Stata streaming should extract types from header
+        var_types = {v.name: v.type for v in result.variables}
+        assert all(t in ("number", "string") for t in var_types.values())
+
+    def test_schema_only_stata_remote_no_dtype(
+        self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
+    ) -> None:
+        """Stata streaming should handle missing _dtype gracefully."""
+        from pathlib import Path
+        from unittest.mock import patch
+
+        from datannurpy.scanner.filesystem import FileSystem
+        from datannurpy.scanner.scan import scan_file
+
+        stata_path = Path(__file__).parent.parent / "data" / "datatypes_stata.dta"
+        if not stata_path.exists():
+            pytest.skip("Stata test file not found")
+
+        memory_fs.pipe(f"{memory_root}/datatypes_stata.dta", stata_path.read_bytes())
+
+        fs = FileSystem(f"memory://{memory_root}")
+        with patch(
+            "pandas.io.stata.StataReader._setup_dtype",
+            lambda self: setattr(self, "_dtype", None),
+        ):
+            result = scan_file(
+                Path(f"{memory_root}/datatypes_stata.dta"),
+                "stata",
+                dataset_id="test",
+                schema_only=True,
+                fs=fs,
+            )
+
+        assert len(result.variables) > 0
+        assert all(v.type is None for v in result.variables)
 
     def test_schema_only_spss_remote(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str

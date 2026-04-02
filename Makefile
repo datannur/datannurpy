@@ -4,7 +4,7 @@ test:
 	uv run pytest
 
 test-cov:
-	uv run pytest --cov=src/datannurpy --cov-report=xml --cov-report=html --cov-fail-under=100
+	uv run pytest --cov=src/datannurpy --cov-report=term-missing --cov-report=xml --cov-report=html --cov-fail-under=100
 
 update-snapshots:
 	UPDATE_SNAPSHOTS=1 uv run pytest tests/test_e2e_snapshot.py -v
@@ -18,12 +18,17 @@ lint:
 typecheck:
 	uv run pyright src/datannurpy tests
 
-check: lint typecheck test-cov
+check:
+	@uv run ruff check . && uv run ruff format --check . &
+	@uv run pyright src/datannurpy tests &
+	@wait
+	uv run pytest --cov=src/datannurpy --cov-report=term-missing --cov-report=xml --cov-report=html --cov-fail-under=100
 
 download-app:
 	uv run python scripts/download_app.py
 
 test-db-up:
+	@command -v orbctl >/dev/null && orbctl start || true
 	docker compose -f docker-compose.test.yml up -d --wait
 	@docker exec datannurpy-mssql /opt/mssql-tools18/bin/sqlcmd \
 		-S localhost -U sa -P 'Test@123!' -C \
