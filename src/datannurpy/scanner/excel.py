@@ -70,7 +70,7 @@ def scan_excel(
         except pa.ArrowTypeError:
             for col in df.columns:
                 if df[col].dtype == "object":
-                    df[col] = df[col].astype(str)
+                    df[col] = df[col].astype("string")
             table = con.create_table("excel_data", df)
         row_count: int = table.count().execute()
 

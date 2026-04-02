@@ -88,6 +88,30 @@ class TestAddFolderFormats:
         assert len(catalog.dataset.all()) == 1
         assert len(catalog.variable.all()) == 2
 
+    def test_add_folder_mixed_types_excel_nan_not_string(self, tmp_path: Path):
+        """NaN in mixed-type Excel columns should be counted as missing, not as 'nan' string."""
+        df = pd.DataFrame(
+            {
+                "COL_A": [1, b"bytes_value", None, 3.14],
+                "COL_B": ["hello", None, "world", "foo"],
+            }
+        )
+        df.to_excel(tmp_path / "mixed_nan.xlsx", index=False)
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, quiet=True, infer_stats=True)
+
+        var_a = catalog.variable.get_by("name", "COL_A")
+        assert var_a is not None
+        assert var_a.nb_missing == 1
+
+        var_b = catalog.variable.get_by("name", "COL_B")
+        assert var_b is not None
+        assert var_b.nb_missing == 1
+
+        for val in catalog.value.all():
+            assert val.value != "nan"
+
     def test_add_folder_excel_datetime_with_time(self, tmp_path: Path):
         """Excel datetime columns with non-midnight times stay as datetime."""
         df = pd.DataFrame(

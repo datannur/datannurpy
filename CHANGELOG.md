@@ -3,6 +3,7 @@
 ## 0.13.1 (2026-04-02)
 
 - fix: `depth: "schema"` now sets variable types for SAS/SPSS/Stata files — previously all types were `null` (local and remote)
+- fix: Excel mixed-type columns now preserve `NaN` as missing instead of converting to `"nan"` string
 
 ## 0.13.0 (2026-03-31)
 
