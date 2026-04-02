@@ -118,11 +118,10 @@ class ModalityManager:
         freq_by_var: dict[str, set[str]] = {}
         for row in freq_table.to_pylist():
             col_name = row["variable_id"]
-            val = row["value"]
+            val: str = row["value"]
             if col_name not in freq_by_var:
                 freq_by_var[col_name] = set()
-            if val is not None:
-                freq_by_var[col_name].add(val)
+            freq_by_var[col_name].add(val)
 
         # Assign modalities to variables
         for var in variables:

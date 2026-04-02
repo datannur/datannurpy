@@ -453,8 +453,9 @@ def build_variables(
         if eligible_cols:
             freq_tables: list[ibis.Table] = []
             for col in eligible_cols:
-                # Value counts: group by column, count occurrences
-                grouped = table.group_by(col).agg(freq=table.count())
+                # Value counts: group by column, count occurrences (nulls excluded)
+                non_null = table.filter(table[col].notnull())
+                grouped = non_null.group_by(col).agg(freq=non_null.count())
                 vc = grouped.select(
                     ibis.literal(col).name("variable_id"),
                     grouped[col].cast("string").name("value"),

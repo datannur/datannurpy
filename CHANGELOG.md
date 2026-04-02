@@ -4,6 +4,7 @@
 
 - fix: `depth: "schema"` now sets variable types for SAS/SPSS/Stata files — previously all types were `null` (local and remote)
 - fix: Excel mixed-type columns now preserve `NaN` as missing instead of converting to `"nan"` string
+- fix: nulls excluded from frequency tables — `nb_missing` already carries that information
 
 ## 0.13.0 (2026-03-31)
 
