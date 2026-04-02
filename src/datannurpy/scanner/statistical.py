@@ -50,6 +50,17 @@ def _apply_labels(
             var.description = label
 
 
+_READSTAT_TYPE_MAP: dict[str, str] = {"double": "number", "string": "string"}
+
+
+def _apply_types(variables: list[Variable], meta_types: dict[str, str]) -> None:
+    """Apply readstat variable types to variables."""
+    for var in variables:
+        raw = meta_types.get(var.name)
+        if raw:
+            var.type = _READSTAT_TYPE_MAP.get(raw, raw)
+
+
 def convert_float_to_int(df: pd.DataFrame) -> pd.DataFrame:
     """Convert float columns that contain only integer values to int64."""
     df = df.copy()
@@ -122,6 +133,7 @@ def scan_statistical(
             for col in meta.column_names
         ]
         _apply_labels(variables, column_labels)
+        _apply_types(variables, meta.readstat_variable_types)
         row_count = meta.number_rows or 0
         if not infer_stats:
             return variables, row_count, None, None, stat_metadata

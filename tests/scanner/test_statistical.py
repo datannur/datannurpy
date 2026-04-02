@@ -240,6 +240,39 @@ class TestScanStatisticalEdgeCases:
         assert len(variables) == 1
         assert variables[0].description is None
 
+    def test_schema_mode_sets_variable_types(self, tmp_path: Path):
+        """scan_statistical with infer_stats=False should set variable types from readstat metadata."""
+        df = pd.DataFrame({"num": [1.0, 2.0], "txt": ["a", "b"]})
+        spss_file = tmp_path / "typed.sav"
+        pyreadstat.write_sav(df, spss_file)
+
+        variables, _, _, _, _ = scan_statistical(
+            spss_file, dataset_id="ds", infer_stats=False
+        )
+        var_by_name = {v.name: v for v in variables}
+        assert var_by_name["num"].type == "number"
+        assert var_by_name["txt"].type == "string"
+
+    def test_apply_types_unknown_type_passes_through(self):
+        """_apply_types should pass through unknown readstat types as-is."""
+        from datannurpy.scanner.statistical import _apply_types
+
+        from datannurpy.schema import Variable
+
+        var = Variable(id="ds---col", name="col", dataset_id="ds")
+        _apply_types([var], {"col": "int32"})
+        assert var.type == "int32"
+
+    def test_apply_types_skips_missing_name(self):
+        """_apply_types should skip variables not present in meta_types."""
+        from datannurpy.scanner.statistical import _apply_types
+
+        from datannurpy.schema import Variable
+
+        var = Variable(id="ds---col", name="col", dataset_id="ds")
+        _apply_types([var], {})
+        assert var.type is None
+
     def test_read_statistical_mixed_types(self, tmp_path: Path):
         """convert_float_to_int should skip non-float columns."""
         df = pd.DataFrame({"name": ["alice", "bob"], "age": [30.0, 25.0]})

@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.13.1 (2026-04-02)
+
+- fix: `depth: "schema"` now sets variable types for SAS/SPSS/Stata files — previously all types were `null` (local and remote)
+
 ## 0.13.0 (2026-03-31)
 
 - add: `data_size` field on `Dataset` — data size in bytes (files, database tables, and partitioned datasets)
