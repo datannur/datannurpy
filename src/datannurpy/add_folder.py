@@ -32,7 +32,6 @@ from .scanner.timeseries import (
     build_series_dataset_name,
     compute_variable_periods,
     get_series_folder_parts,
-    normalize_path,
 )
 from .scanner.utils import get_data_size, get_dir_data_size, get_mtime_iso
 from .scanner.parquet.discovery import (
@@ -147,8 +146,8 @@ def add_folder(
         start_parent: PurePath | None = None
         if info.series_files is not None:
             # For time series: only add non-temporal parent folders
-            normalized = normalize_path(info.path, root)
-            non_temporal_parts = get_series_folder_parts(normalized)
+            assert info.series_normalized_path is not None
+            non_temporal_parts = get_series_folder_parts(info.series_normalized_path)
             if non_temporal_parts:
                 start_parent = root / "/".join(non_temporal_parts)
         else:
@@ -220,7 +219,8 @@ def add_folder(
             # Handle time series vs single file
             if info.series_files is not None:
                 periods = [period for period, _ in info.series_files]
-                normalized = normalize_path(info.path, root)
+                assert info.series_normalized_path is not None
+                normalized = info.series_normalized_path
                 dataset_id = build_series_dataset_id(normalized, prefix)
                 dataset_name = build_series_dataset_name(normalized, periods)
                 nb_files = len(info.series_files)
@@ -397,13 +397,14 @@ def _scan_time_series(
 ) -> None:
     """Scan a time series dataset (multiple files with temporal pattern)."""
     assert info.series_files is not None
+    assert info.series_normalized_path is not None
     series_files = info.series_files
     periods = [period for period, _ in series_files]
     first_period = periods[0]
     last_period, last_path = series_files[-1]
 
     # Build dataset ID using normalized path
-    normalized = normalize_path(info.path, root)
+    normalized = info.series_normalized_path
     dataset_id = build_series_dataset_id(normalized, prefix)
 
     # Build dataset name from normalized path

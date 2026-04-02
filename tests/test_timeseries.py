@@ -221,6 +221,136 @@ class TestGroupTimeSeries:
         assert len(singles) == 2
 
 
+class TestGroupLevelPeriodDetection:
+    """Test group-level period detection (constant vs variable positions)."""
+
+    def test_constant_folder_date_variable_file_date(self, tmp_path: Path):
+        """Constant date in folder should not be extracted as period."""
+        files = [
+            (tmp_path / "old_2024_08" / "data_2018.csv", 1000),
+            (tmp_path / "old_2024_08" / "data_2022.csv", 2000),
+        ]
+        series, singles = group_time_series(files, tmp_path)
+
+        assert len(series) == 1
+        assert len(singles) == 0
+        group = series[0]
+        periods = [p for p, _ in group.files]
+        assert periods == ["2018", "2022"]
+        assert "old_2024_08" in group.normalized_path
+        assert group.normalized_path.count(PERIOD_PLACEHOLDER) == 1
+
+    def test_constant_dates_in_filename(self, tmp_path: Path):
+        """Constant dates in filename should not be part of period."""
+        files = [
+            (tmp_path / "_1970abc_xyz1970_2000.sas7bdat", 1000),
+            (tmp_path / "_1980abc_xyz1970_2000.sas7bdat", 2000),
+        ]
+        series, singles = group_time_series(files, tmp_path)
+
+        assert len(series) == 1
+        group = series[0]
+        periods = [p for p, _ in group.files]
+        assert periods == ["1970", "1980"]
+        assert "xyz1970" in group.normalized_path
+        assert "2000" in group.normalized_path
+
+    def test_order_violation_creates_subgroups(self, tmp_path: Path):
+        """YYYY_MM folder + YYYY file with both varying → sub-group by folder."""
+        files = [
+            (tmp_path / "old_2024_08" / "data_2018.csv", 1000),
+            (tmp_path / "old_2024_08" / "data_2022.csv", 2000),
+            (tmp_path / "old_2025_01" / "data_2019.csv", 3000),
+            (tmp_path / "old_2025_01" / "data_2023.csv", 4000),
+        ]
+        series, singles = group_time_series(files, tmp_path)
+
+        assert len(series) == 2
+        series.sort(key=lambda g: g.files[0][0])
+
+        assert [p for p, _ in series[0].files] == ["2018", "2022"]
+        assert "old_2024_08" in series[0].normalized_path
+
+        assert [p for p, _ in series[1].files] == ["2019", "2023"]
+        assert "old_2025_01" in series[1].normalized_path
+
+    def test_year_month_hierarchy_both_variable(self, tmp_path: Path):
+        """Year and month in folders, both variable → combine."""
+        files = [
+            (tmp_path / "2024" / "01" / "data.csv", 1000),
+            (tmp_path / "2024" / "02" / "data.csv", 2000),
+            (tmp_path / "2025" / "01" / "data.csv", 3000),
+            (tmp_path / "2025" / "02" / "data.csv", 4000),
+        ]
+        series, singles = group_time_series(files, tmp_path)
+
+        assert len(series) == 1
+        group = series[0]
+        periods = [p for p, _ in group.files]
+        assert periods == ["2024/01", "2024/02", "2025/01", "2025/02"]
+
+    def test_constant_year_folder_variable_month_file(self, tmp_path: Path):
+        """Constant year in folder + variable month in file → include year context."""
+        files = [
+            (tmp_path / "2024" / "data_01.csv", 1000),
+            (tmp_path / "2024" / "data_02.csv", 2000),
+        ]
+        series, singles = group_time_series(files, tmp_path)
+
+        assert len(series) == 1
+        group = series[0]
+        periods = [p for p, _ in group.files]
+        assert periods == ["2024/01", "2024/02"]
+
+    def test_overlap_year_month_no_extra_position(self):
+        """Year-month match should suppress overlapping year match."""
+        from datannurpy.scanner.timeseries import _extract_period_from_segment
+
+        matches = _extract_period_from_segment("old_2024_08")
+        assert len(matches) == 1
+        original, info = matches[0]
+        assert original == "2024_08"
+        assert info.year == 2024
+        assert info.sub_period == 8
+
+    def test_overlap_quarter_no_extra_position(self):
+        """Quarter match should suppress overlapping year match."""
+        from datannurpy.scanner.timeseries import _extract_period_from_segment
+
+        matches = _extract_period_from_segment("rapport_2024Q1")
+        assert len(matches) == 1
+        assert matches[0][1].year == 2024
+        assert matches[0][1].sub_period == 13
+
+    def test_subgroup_singles_become_singles(self, tmp_path: Path):
+        """Sub-groups with only 1 file become singles."""
+        files = [
+            (tmp_path / "old_2024_08" / "data_2018.csv", 1000),
+            (tmp_path / "old_2025_01" / "data_2018.csv", 2000),
+        ]
+        series, singles = group_time_series(files, tmp_path)
+
+        # Both folder dates vary, file date is constant
+        # With only 1 variable position (folder date), each file gets a unique period
+        # Group has 2 files with different periods → valid series
+        assert len(series) == 1
+
+    def test_subgroup_with_single_file_goes_to_singles(self, tmp_path: Path):
+        """Sub-group with 1 file after split becomes a single."""
+        files = [
+            (tmp_path / "old_2024_08" / "data_2018.csv", 1000),
+            (tmp_path / "old_2024_08" / "data_2022.csv", 2000),
+            (tmp_path / "old_2025_01" / "data_2019.csv", 3000),
+        ]
+        series, singles = group_time_series(files, tmp_path)
+
+        # old_2024_08 sub-group has 2 files → series
+        # old_2025_01 sub-group has 1 file → single
+        assert len(series) == 1
+        assert len(singles) == 1
+        assert [p for p, _ in series[0].files] == ["2018", "2022"]
+
+
 class TestComputeVariablePeriods:
     """Test variable start_date/end_date computation."""
 
@@ -495,6 +625,105 @@ class TestPeriodEdgeCases:
         ]
         result = _combine_periods(periods)
         assert result is None
+
+    def test_combine_periods_year_plus_full_date(self):
+        """_combine_periods with year + date that has sub_period and day."""
+        from datannurpy.scanner.timeseries import PeriodInfo, _combine_periods
+
+        periods = [
+            PeriodInfo(2024, 0, 0, "2024"),
+            PeriodInfo(0, 3, 15, "03-15"),  # sub_period and day both set
+        ]
+        result = _combine_periods(periods)
+        assert result is not None
+        assert result.to_string() == "2024/03/15"
+
+    def test_combine_periods_year_month_day(self):
+        """_combine_periods combines year, month, and day from separate infos."""
+        from datannurpy.scanner.timeseries import PeriodInfo, _combine_periods
+
+        periods = [
+            PeriodInfo(2024, 0, 0, "2024"),
+            PeriodInfo(0, 3, 0, "03"),
+            PeriodInfo(0, 0, 15, "15"),
+        ]
+        result = _combine_periods(periods)
+        assert result is not None
+        assert result.to_string() == "2024/03/15"
+
+    def test_combine_periods_year_with_sub_and_day(self):
+        """_combine_periods with year+month info and separate day."""
+        from datannurpy.scanner.timeseries import PeriodInfo, _combine_periods
+
+        periods = [
+            PeriodInfo(2024, 3, 0, "2024_03"),  # year+month (sub_period set, day=0)
+            PeriodInfo(0, 0, 15, "15"),  # day only
+        ]
+        result = _combine_periods(periods)
+        assert result is not None
+        assert result.to_string() == "2024/03/15"
+
+    def test_context_year_month_not_used_as_context(self, tmp_path: Path):
+        """Constant year_month position should NOT be used as year context."""
+        # Only pure year (granularity 1) should be picked as context
+        files = [
+            (tmp_path / "old_2024_08" / "data_01.csv", 1000),
+            (tmp_path / "old_2024_08" / "data_02.csv", 2000),
+        ]
+        series, singles = group_time_series(files, tmp_path)
+        # The month-only position varies (01 vs 02), the year_month is constant
+        # year_month has granularity 2, should NOT be used as context
+        # So period should be just the month number (no year context available)
+        assert len(series) == 1
+
+    def test_period_granularity_day(self):
+        """_period_granularity returns 3 for day-level info."""
+        from datannurpy.scanner.timeseries import PeriodInfo, _period_granularity
+
+        assert _period_granularity(PeriodInfo(2024, 3, 15, "2024-03-15")) == 3
+        assert _period_granularity(PeriodInfo(0, 0, 15, "15")) == 3
+
+    def test_period_granularity_zero(self):
+        """_period_granularity returns 0 for empty info."""
+        from datannurpy.scanner.timeseries import PeriodInfo, _period_granularity
+
+        assert _period_granularity(PeriodInfo(0, 0, 0, "")) == 0
+
+    def test_refine_normalized_path_mismatch(self):
+        """_refine_normalized_path returns original on mismatch."""
+        from datannurpy.scanner.timeseries import PeriodInfo, _refine_normalized_path
+
+        path = f"a_{PERIOD_PLACEHOLDER}/b_{PERIOD_PLACEHOLDER}.csv"
+        # Provide only 1 position for 2 placeholders
+        result = _refine_normalized_path(path, [PeriodInfo(2024, 0, 0, "2024")], [True])
+        assert result == path
+
+    def test_refine_group_no_positions(self):
+        """_refine_group handles 0 period positions."""
+        from datannurpy.scanner.timeseries import _refine_group
+
+        result = _refine_group(
+            "no_date.csv",
+            [(Path("no_date.csv"), 1000, []), (Path("no_date.csv"), 2000, [])],
+        )
+        assert len(result) == 1
+        assert result[0][0] == "no_date.csv"
+
+    def test_refine_group_all_constant_positions(self):
+        """_refine_group falls back when all positions constant."""
+        from datannurpy.scanner.timeseries import PeriodInfo, _refine_group
+
+        # Two files with identical date → all constant → fallback to all positions
+        result = _refine_group(
+            f"data_{PERIOD_PLACEHOLDER}.csv",
+            [
+                (Path("data_2024.csv"), 1000, [PeriodInfo(2024, 0, 0, "2024")]),
+                (Path("data_2024.csv"), 2000, [PeriodInfo(2024, 0, 0, "2024")]),
+            ],
+        )
+        assert len(result) == 1
+        _, files = result[0]
+        assert all(period == "2024" for period, _, _ in files)
 
 
 class TestTimeSeriesRescan:

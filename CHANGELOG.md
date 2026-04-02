@@ -2,6 +2,7 @@
 
 ## 0.13.1 (2026-04-02)
 
+- fix: time series period detection now works at group level — folder dates (e.g. `old_2024_08/data_2018.csv`) no longer override file dates, and constant dates in identifiers are ignored
 - fix: Oracle sampling now uses native `SAMPLE(pct)` clause — `ibis.random()` was evaluated once as a scalar, returning all or no rows
 - fix: Oracle tables no longer scanned twice when connected user's schema is already listed — `get_schemas_to_scan` now deduplicates via `SELECT USER FROM DUAL`
 - fix: Oracle `data_size` falls back to `user_segments` when `all_segments` returns NULL (insufficient privileges)

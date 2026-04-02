@@ -66,15 +66,16 @@ def _extract_period_from_segment(segment: str) -> list[tuple[str, PeriodInfo]]:
     Returns only the most specific match for each segment position.
     """
     matches: list[tuple[str, PeriodInfo]] = []
-    matched_positions: set[tuple[int, int]] = (
-        set()
-    )  # (start, end) positions already matched
+    matched_ranges: list[tuple[int, int]] = []
+
+    def _overlaps(start: int, end: int) -> bool:
+        return any(start < me and end > ms for ms, me in matched_ranges)
 
     for pattern, pattern_type in _PERIOD_PATTERNS:
         for match in pattern.finditer(segment):
             start, end = match.span()
-            # Skip if this position already has a more specific match
-            if (start, end) in matched_positions:
+            # Skip if this position overlaps with a more specific match
+            if _overlaps(start, end):
                 continue
 
             original = match.group(0)
@@ -109,7 +110,7 @@ def _extract_period_from_segment(segment: str) -> list[tuple[str, PeriodInfo]]:
                 info = PeriodInfo(int(year), 0, 0, original)
 
             matches.append((original, info))
-            matched_positions.add((start, end))
+            matched_ranges.append((start, end))
 
     return matches
 
@@ -148,48 +149,52 @@ def _combine_periods(periods: list[PeriodInfo]) -> PeriodInfo | None:
     return PeriodInfo(year, sub_period, day, "-".join(original_parts))
 
 
-def extract_period(path: PurePath, root: PurePath | None = None) -> PeriodInfo | None:
-    """Extract the combined period from a file path."""
+def _extract_file_info(
+    path: PurePath,
+    root: PurePath | None = None,
+) -> tuple[str, list[PeriodInfo]]:
+    """Extract normalized path and period positions from a file path in one pass."""
     rel_path = path.relative_to(root) if root else path
-    all_periods: list[PeriodInfo] = []
+    normalized_parts: list[str] = []
+    positions: list[PeriodInfo] = []
 
-    # Process each path segment
     for segment in rel_path.parts:
         matches = _extract_period_from_segment(segment)
-        for _, info in matches:
-            all_periods.append(info)
 
-    return _combine_periods(all_periods)
+        # Build normalized segment (replace from end to preserve indices)
+        normalized_segment = segment
+        sorted_matches = sorted(
+            matches,
+            key=lambda m: segment.find(m[0]),
+            reverse=True,
+        )
+        for original, _ in sorted_matches:
+            idx = normalized_segment.find(original)
+            assert idx >= 0
+            normalized_segment = (
+                normalized_segment[:idx]
+                + PERIOD_PLACEHOLDER
+                + normalized_segment[idx + len(original) :]
+            )
+        normalized_parts.append(normalized_segment)
+
+        # Collect period positions (in order)
+        for _, info in matches:
+            positions.append(info)
+
+    return "/".join(normalized_parts), positions
+
+
+def extract_period(path: PurePath, root: PurePath | None = None) -> PeriodInfo | None:
+    """Extract the combined period from a file path."""
+    _, positions = _extract_file_info(path, root)
+    return _combine_periods(positions)
 
 
 def normalize_path(path: PurePath, root: PurePath | None = None) -> str:
-    """Normalize path by replacing temporal patterns with placeholder.
-
-    Returns the path with all period patterns replaced by PERIOD_PLACEHOLDER.
-    """
-    rel_path = path.relative_to(root) if root else path
-    normalized_parts: list[str] = []
-
-    for segment in rel_path.parts:
-        normalized_segment = segment
-        matches = _extract_period_from_segment(segment)
-
-        # Sort matches by position (reverse) to replace from end to start
-        sorted_matches = sorted(matches, key=lambda m: segment.find(m[0]), reverse=True)
-
-        for original, _ in sorted_matches:
-            # Replace only the first occurrence of this match
-            idx = normalized_segment.find(original)
-            if idx >= 0:
-                normalized_segment = (
-                    normalized_segment[:idx]
-                    + PERIOD_PLACEHOLDER
-                    + normalized_segment[idx + len(original) :]
-                )
-
-        normalized_parts.append(normalized_segment)
-
-    return "/".join(normalized_parts)
+    """Normalize path by replacing temporal patterns with placeholder."""
+    normalized, _ = _extract_file_info(path, root)
+    return normalized
 
 
 def period_sort_key(period: str | PeriodInfo) -> tuple[int, int, int]:
@@ -241,6 +246,147 @@ class TimeSeriesGroup:
     max_mtime: int
 
 
+def _period_granularity(info: PeriodInfo) -> int:
+    """Return temporal granularity: 1=year, 2=month/quarter, 3=day/full-date."""
+    if info.day > 0:
+        return 3
+    if info.sub_period > 0:
+        return 2
+    if info.year > 0:
+        return 1
+    return 0
+
+
+def _refine_normalized_path(
+    normalized_path: str,
+    positions: list[PeriodInfo],
+    is_period: list[bool],
+) -> str:
+    """Rebuild normalized path, restoring non-period positions to their original value."""
+    parts = normalized_path.split(PERIOD_PLACEHOLDER)
+    if len(parts) != len(positions) + 1:
+        return normalized_path
+    result = parts[0]
+    for i, info in enumerate(positions):
+        result += PERIOD_PLACEHOLDER if is_period[i] else info.original
+        result += parts[i + 1]
+    return result
+
+
+def _refine_group(
+    normalized_path: str,
+    file_list: list[tuple[PurePath, int, list[PeriodInfo]]],
+) -> list[tuple[str, list[tuple[str, PurePath, int]]]]:
+    """Classify period positions as variable/constant and build refined periods.
+
+    For each PERIOD_PLACEHOLDER position, compare values across all files:
+    - Variable (values differ): candidate for the period
+    - Constant (same value everywhere): restore to literal in the path
+
+    Among variable positions, checks temporal order (YYYY → MM/Q → DD).
+    An order violation triggers sub-grouping.
+
+    Returns list of (refined_normalized_path, [(period_str, path, mtime), ...]).
+    """
+    all_positions = [positions for _, _, positions in file_list]
+    n_positions = len(all_positions[0]) if all_positions else 0
+
+    if n_positions == 0:
+        return [(normalized_path, [("", p, m) for p, m, _ in file_list])]
+
+    # --- Classify each position as variable or constant ---
+    is_variable: list[bool] = []
+    for pos_idx in range(n_positions):
+        values = {
+            fp[pos_idx].to_sort_key() for fp in all_positions if pos_idx < len(fp)
+        }
+        is_variable.append(len(values) > 1)
+
+    variable_indices = [i for i, v in enumerate(is_variable) if v]
+
+    # Fallback: if all positions are constant, use all positions
+    if not variable_indices:
+        variable_indices = list(range(n_positions))
+        is_variable = [True] * n_positions
+
+    # --- Check temporal order among variable positions ---
+    # Valid: YYYY → MM/Q → DD (increasing granularity)
+    # Violation (e.g. YYYY_MM → YYYY): preceding positions become sub-group axes
+    period_indices: list[int] = []
+    subgroup_indices: list[int] = []
+
+    if len(variable_indices) == 1:
+        period_indices = variable_indices[:]
+    else:
+        prev_gran = 0
+        for idx in variable_indices:
+            gran = _period_granularity(all_positions[0][idx])
+            if prev_gran > 0 and gran <= prev_gran:
+                subgroup_indices.extend(period_indices)
+                period_indices = [idx]
+            else:
+                period_indices.append(idx)
+            prev_gran = gran
+
+    # --- Include constant year context if period has no year ---
+    # Example: 2024/data_01.csv → month varies, year is constant but needed for "2024/01"
+    context_indices: list[int] = []
+    has_year = any(all_positions[0][i].year > 0 for i in period_indices)
+    if not has_year:
+        sg_set = set(subgroup_indices)
+        for i in range(n_positions):
+            if not is_variable[i] and i not in sg_set:
+                if (
+                    all_positions[0][i].year > 0
+                    and _period_granularity(all_positions[0][i]) == 1
+                ):
+                    context_indices.append(i)
+                    break
+
+    all_period_indices = sorted(context_indices + period_indices)
+    period_set = set(period_indices)
+
+    def _build_result_files(
+        indexed_files: list[tuple[int, PurePath, int]],
+    ) -> list[tuple[str, PurePath, int]]:
+        result: list[tuple[str, PurePath, int]] = []
+        for fi, path, mtime in indexed_files:
+            infos = [all_positions[fi][j] for j in all_period_indices]
+            period = _combine_periods(infos) if infos else None
+            result.append((period.to_string() if period else "", path, mtime))
+        return result
+
+    # --- Build results (with or without sub-grouping) ---
+    indexed = [(fi, p, m) for fi, (p, m, _) in enumerate(file_list)]
+    is_period_marker = [i in period_set for i in range(n_positions)]
+
+    if not subgroup_indices:
+        refined = _refine_normalized_path(
+            normalized_path, all_positions[0], is_period_marker
+        )
+        return [(refined, _build_result_files(indexed))]
+
+    # Sub-group by subgroup positions (order violation case)
+    subgroups: dict[
+        tuple[tuple[int, int, int], ...], list[tuple[int, PurePath, int]]
+    ] = defaultdict(list)
+    for fi, path, mtime in indexed:
+        key = tuple(all_positions[fi][j].to_sort_key() for j in subgroup_indices)
+        subgroups[key].append((fi, path, mtime))
+
+    results: list[tuple[str, list[tuple[str, PurePath, int]]]] = []
+    for _key, sub_indexed in subgroups.items():
+        rep_idx = sub_indexed[0][0]
+        refined = _refine_normalized_path(
+            normalized_path,
+            all_positions[rep_idx],
+            is_period_marker,
+        )
+        results.append((refined, _build_result_files(sub_indexed)))
+
+    return results
+
+
 def group_time_series(
     files: Sequence[tuple[PurePath, int]],  # [(path, mtime), ...]
     root: PurePath,
@@ -252,39 +398,44 @@ def group_time_series(
         - time_series_groups: groups with ≥2 files
         - single_files: files that don't form a series
     """
-    # Group by normalized path
-    groups: dict[str, list[tuple[str, PurePath, int]]] = defaultdict(list)
+    # Extract info once per file, group by normalized path
+    raw_groups: dict[str, list[tuple[PurePath, int, list[PeriodInfo]]]] = defaultdict(
+        list
+    )
+    no_period: list[tuple[PurePath, int]] = []
 
     for path, mtime in files:
-        period_info = extract_period(path, root)
-        if period_info is None:
-            # No period found, treat as single file
-            groups["__no_period__" + str(path)].append(("", path, mtime))
+        normalized, positions = _extract_file_info(path, root)
+        if not positions:
+            no_period.append((path, mtime))
+            continue
+        raw_groups[normalized].append((path, mtime, positions))
+
+    # Refine groups with group-level period detection
+    time_series: list[TimeSeriesGroup] = []
+    singles: list[tuple[PurePath, int]] = list(no_period)
+
+    for normalized, file_list in raw_groups.items():
+        if len(file_list) < 2:
+            for path, mtime, _ in file_list:
+                singles.append((path, mtime))
             continue
 
-        normalized = normalize_path(path, root)
-        period_str = period_info.to_string()
-        groups[normalized].append((period_str, path, mtime))
-
-    # Separate series (≥2 files) from singles
-    time_series: list[TimeSeriesGroup] = []
-    singles: list[tuple[PurePath, int]] = []
-
-    for normalized, file_list in groups.items():
-        if len(file_list) >= 2:
-            # Sort by period
-            sorted_files = sorted(file_list, key=lambda x: period_sort_key(x[0]))
-            max_mtime = max(m for _, _, m in sorted_files)
-            time_series.append(
-                TimeSeriesGroup(
-                    normalized_path=normalized,
-                    files=[(period, path) for period, path, _ in sorted_files],
-                    max_mtime=max_mtime,
+        # Classify variable/constant positions and potentially sub-group
+        for refined_path, result_files in _refine_group(normalized, file_list):
+            if len(result_files) >= 2:
+                sorted_files = sorted(result_files, key=lambda x: period_sort_key(x[0]))
+                max_mtime = max(m for _, _, m in sorted_files)
+                time_series.append(
+                    TimeSeriesGroup(
+                        normalized_path=refined_path,
+                        files=[(period, path) for period, path, _ in sorted_files],
+                        max_mtime=max_mtime,
+                    )
                 )
-            )
-        else:
-            for _, path, mtime in file_list:
-                singles.append((path, mtime))
+            else:
+                for _, path, mtime in result_files:
+                    singles.append((path, mtime))
 
     return time_series, singles
 
