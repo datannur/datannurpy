@@ -28,6 +28,7 @@ download-app:
 	uv run python scripts/download_app.py
 
 test-db-up:
+	@command -v orbctl >/dev/null && orbctl start || true
 	docker compose -f docker-compose.test.yml up -d --wait
 	@docker exec datannurpy-mssql /opt/mssql-tools18/bin/sqlcmd \
 		-S localhost -U sa -P 'Test@123!' -C \
