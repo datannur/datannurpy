@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.14.0 (2026-04-03)
+
+- add: `add_database` automatically extracts structural metadata (primary keys, foreign keys, table/column comments, constraint tags) from system catalogs when `depth="schema"` or `"full"`
+
 ## 0.13.3 (2026-04-03)
 
 - fix: YAML config now enforces `add_metadata` execution after all other `add` entries, ensuring manual metadata always overrides auto-scanned values

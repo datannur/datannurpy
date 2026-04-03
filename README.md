@@ -290,6 +290,20 @@ catalog.add_database(
 )
 ```
 
+**Database metadata enrichment:**
+
+When `depth="schema"` or `"full"` (default), `add_database` automatically extracts structural metadata from system catalogs:
+
+| Metadata                | Target field          | Backends           |
+| ----------------------- | --------------------- | ------------------ |
+| Primary keys            | `Variable.key`        | All 6              |
+| Foreign keys            | `Variable.fk_var_id`  | All 6              |
+| Table/column comments   | `description`         | All except SQLite  |
+| NOT NULL, UNIQUE, INDEX | Auto tags (`db---*`)  | All 6              |
+| Auto-increment          | Auto tag              | All 6              |
+
+This metadata is always refreshed, even when table data is unchanged (cache hit).
+
 ## Sampling
 
 By default, `Catalog` sets `sample_size=100_000`. All methods (`add_folder`, `add_dataset`, `add_database`) inherit this value. Override per-method with an explicit int, or pass `sample_size=None` to disable sampling for a single call:

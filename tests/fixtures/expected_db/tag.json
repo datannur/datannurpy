@@ -1,5 +1,40 @@
 [
   {
+    "id": "db",
+    "parent_id": null,
+    "doc_ids": "",
+    "name": "Database",
+    "description": null
+  },
+  {
+    "id": "db---auto-increment",
+    "parent_id": "db",
+    "doc_ids": "",
+    "name": "Auto-increment",
+    "description": null
+  },
+  {
+    "id": "db---indexed",
+    "parent_id": "db",
+    "doc_ids": "",
+    "name": "Indexed",
+    "description": null
+  },
+  {
+    "id": "db---not-null",
+    "parent_id": "db",
+    "doc_ids": "",
+    "name": "Not Null",
+    "description": null
+  },
+  {
+    "id": "db---unique",
+    "parent_id": "db",
+    "doc_ids": "",
+    "name": "Unique",
+    "description": null
+  },
+  {
     "id": "finance",
     "parent_id": null,
     "doc_ids": "",

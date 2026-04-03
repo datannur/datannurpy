@@ -66,6 +66,7 @@ class Variable:
     modality_ids: list[str] = field(default_factory=list)
     tag_ids: list[str] = field(default_factory=list)
     source_var_ids: list[str] = field(default_factory=list)
+    fk_var_id: str | None = None
     original_name: str | None = None
     description: str | None = None
     type: str | None = None

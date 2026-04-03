@@ -191,6 +191,14 @@ def parse_connection_string(connection: str) -> tuple[str, dict[str, str]]:
     return backend, kwargs
 
 
+def is_remote_database_file(connection: str) -> bool:
+    """Check if connection is a remote file URL (sftp://, s3://, etc.), not a database URL."""
+    if "://" not in connection:
+        return False
+    scheme = urlparse(connection).scheme.lower()
+    return scheme not in SCHEME_TO_BACKEND and scheme not in ("file", "duckdb")
+
+
 def _connect_external_backend(
     backend: str,
     kwargs: dict[str, str],

@@ -40,31 +40,22 @@ from .scanner.database import (
     get_schemas_to_scan,
     get_table_data_size,
     get_table_row_count,
+    is_remote_database_file,
     list_tables,
     scan_table,
 )
 
+from .scanner.db_introspect import introspect_table
+from .utils.db_enrich import (
+    apply_metadata_to_new_vars,
+    collect_fk_refs,
+    ensure_db_tags,
+    resolve_foreign_keys,
+    update_cached_metadata,
+)
+
 if TYPE_CHECKING:
     from .catalog import Catalog
-
-
-_DATABASE_SCHEMES = {
-    "sqlite",
-    "postgresql",
-    "postgres",
-    "mysql",
-    "oracle",
-    "mssql",
-    "duckdb",
-}
-
-
-def _is_remote_database_file(connection: str) -> bool:
-    """Check if connection is a remote file URL (sftp://, s3://, etc.), not a database URL."""
-    if "://" not in connection:
-        return False
-    scheme = urlparse(connection).scheme.lower()
-    return scheme not in _DATABASE_SCHEMES and scheme != "file"
 
 
 @validate_params
@@ -99,7 +90,7 @@ def add_database(
     )
 
     # Handle remote SQLite files (sftp://, s3://, etc.)
-    if isinstance(connection, str) and _is_remote_database_file(connection):
+    if isinstance(connection, str) and is_remote_database_file(connection):
         remote_path = urlparse(connection).path
         fs = FileSystem(connection, storage_options)
         with fs.ensure_local(remote_path) as local_path:
@@ -211,6 +202,13 @@ def _add_database_impl(
 
     freq_threshold = catalog.freq_threshold if catalog.freq_threshold else None
 
+    # DB introspection setup (active for depth >= "schema")
+    do_introspect = resolved_depth != "structure"
+    if do_introspect:
+        ensure_db_tags(catalog)
+    raw_fk_refs: list[tuple[str, str | None, str, str]] = []
+    table_to_dataset_id: dict[tuple[str | None, str], str] = {}
+
     # Process each schema
     scan_errors = 0
     for schema_name in schemas_to_scan:
@@ -282,6 +280,19 @@ def _add_database_impl(
             if resolved_depth != "full":
                 if existing_dataset is not None and not do_refresh:
                     catalog.dataset.update(existing_dataset.id, _seen=True)
+                    if do_introspect:
+                        meta = introspect_table(
+                            con, backend_name, schema_name, table_name
+                        )
+                        update_cached_metadata(
+                            catalog,
+                            existing_dataset.id,
+                            meta,
+                        )
+                        table_to_dataset_id[(schema_name, table_name)] = (
+                            existing_dataset.id
+                        )
+                        collect_fk_refs(meta.fks, existing_dataset.id, raw_fk_refs)
                     log_skip(table_name, q)
                     continue
 
@@ -328,6 +339,11 @@ def _add_database_impl(
                     last_update_timestamp=catalog._now if is_change else None,
                     _seen=True,
                 )
+                if do_introspect:
+                    meta = introspect_table(con, backend_name, schema_name, table_name)
+                    apply_metadata_to_new_vars(table_vars, dataset, meta)
+                    table_to_dataset_id[(schema_name, table_name)] = dataset_id
+                    collect_fk_refs(meta.fks, dataset_id, raw_fk_refs)
                 catalog.dataset.add(dataset)
                 if table_vars:
                     build_variable_ids(table_vars, dataset.id)
@@ -359,9 +375,17 @@ def _add_database_impl(
                 )
 
                 if not do_refresh and data_unchanged:
-                    # Unchanged, skip
+                    # Unchanged, skip data scan but refresh structural metadata
                     catalog.dataset.update(existing_dataset.id, _seen=True)
                     catalog.modality_manager.mark_dataset_seen(existing_dataset.id)
+                    meta = introspect_table(con, backend_name, schema_name, table_name)
+                    update_cached_metadata(
+                        catalog,
+                        existing_dataset.id,
+                        meta,
+                    )
+                    table_to_dataset_id[(schema_name, table_name)] = existing_dataset.id
+                    collect_fk_refs(meta.fks, existing_dataset.id, raw_fk_refs)
                     log_skip(table_name, q)
                     continue
 
@@ -431,6 +455,10 @@ def _add_database_impl(
                 last_update_timestamp=effective_timestamp,
                 _seen=True,
             )
+            meta = introspect_table(con, backend_name, schema_name, table_name)
+            apply_metadata_to_new_vars(table_vars, dataset, meta)
+            table_to_dataset_id[(schema_name, table_name)] = dataset_id
+            collect_fk_refs(meta.fks, dataset_id, raw_fk_refs)
             catalog.dataset.add(dataset)
 
             var_id_mapping = build_variable_ids(table_vars, dataset.id)
@@ -440,6 +468,10 @@ def _add_database_impl(
             catalog.variable.add_all(table_vars)
 
             log_done(f"{table_name} ({nb_row:,} rows, {len(table_vars)} vars)", q)
+
+    # Resolve FK references after all tables processed
+    if do_introspect and raw_fk_refs:
+        resolve_foreign_keys(catalog, raw_fk_refs, table_to_dataset_id)
 
     # Close connection if we created it (string connection)
     if isinstance(connection, str):
