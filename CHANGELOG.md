@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.13.3 (2026-04-03)
+
+- fix: YAML config now enforces `add_metadata` execution after all other `add` entries, ensuring manual metadata always overrides auto-scanned values
+
 ## 0.13.2 (2026-04-02)
 
 - add: skip non-dataset Excel files (reports, pivots, merged cells) via header validation

@@ -363,6 +363,8 @@ source---employees_csv---department,"Department code","hr"
 - New entities are created
 - List fields (`tag_ids`, `doc_ids`, etc.) are merged
 
+**Ordering:** `add_metadata` should be called **after** `add_folder`, `add_dataset`, and `add_database` so manual values take precedence over auto-scanned metadata. In YAML configuration, this is enforced automatically regardless of declaration order. In Python, the caller controls the execution order.
+
 **Helper functions** for building IDs in preprocessing scripts:
 
 ```python

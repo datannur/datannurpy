@@ -86,8 +86,10 @@ def run_config(path: str | Path) -> Catalog:
 
     catalog = Catalog(**catalog_params)
 
-    # Process add entries
-    for item in config.get("add", []):
+    # Process add entries (metadata always last to override auto-scanned values)
+    entries = config.get("add", [])
+    entries.sort(key=lambda e: e.get("type") == "metadata")
+    for item in entries:
         item = dict(item)
         item_type = item.pop("type")
         if "folder" in item:
