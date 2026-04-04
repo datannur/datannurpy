@@ -1,8 +1,15 @@
 # datannurpy
 
-## 0.14.0 (2026-04-03)
+## 0.14.0 (2026-04-04)
 
 - add: `add_database` automatically extracts structural metadata (primary keys, foreign keys, table/column comments, constraint tags) from system catalogs when `depth="schema"` or `"full"`
+- add: `ssh_tunnel` parameter on `add_database` for databases behind firewalls (paramiko-based)
+- add: `time_series` parameter on `add_database` — groups temporal tables (e.g. `stats_2023`, `stats_2024`) into a single dataset with period tracking per variable
+- add: time series prefix grouping now uses effective table list — series datasets are placed in the correct prefix folder instead of year-specific subfolders
+- fix: `ibis_type_to_str` now maps `dt.Binary` to `"binary"` — MySQL `BINARY(n)`, `VARBINARY`, `BLOB`, `LONGBLOB` were reported as `"unknown"`
+- fix: frequency table `ibis.union` fallback to `pa.concat_tables` for MySQL mixed collations
+- fix: modality ID collision detection with `log_warn` for duplicate value/freq IDs
+- fix: YAML config `log_file` path now resolved relative to config file directory
 
 ## 0.13.3 (2026-04-03)
 

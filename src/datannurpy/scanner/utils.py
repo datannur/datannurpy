@@ -275,6 +275,8 @@ def ibis_type_to_str(dtype: dt.DataType) -> str:
         return "duration"
     if isinstance(dtype, dt.GeoSpatial):
         return "geometry"
+    if isinstance(dtype, dt.Binary):
+        return "binary"
     if isinstance(dtype, dt.Null):
         return "null"
     if (
@@ -462,8 +464,12 @@ def build_variables(
                     grouped["freq"],
                 )
                 freq_tables.append(vc)
-            # Materialize to PyArrow to allow closing the connection
-            freq_table = ibis.union(*freq_tables).to_pyarrow()
+            # Try server-side UNION first (fast on DuckDB/SQLite), fall back to
+            # individual materialization if it fails (MySQL mixed collations).
+            try:
+                freq_table = ibis.union(*freq_tables).to_pyarrow()
+            except Exception:
+                freq_table = pa.concat_tables([ft.to_pyarrow() for ft in freq_tables])
 
     def get_stat(col: str, idx: int) -> int | None:
         """Get stat value, returning None if not computed or -1 (unknown)."""

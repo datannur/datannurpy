@@ -64,6 +64,10 @@ class TestIbisTypeToStr:
         assert ibis_type_to_str(dt.Point()) == "geometry"
         assert ibis_type_to_str(dt.Polygon()) == "geometry"
 
+    def test_binary(self):
+        """Binary should map to 'binary'."""
+        assert ibis_type_to_str(dt.Binary()) == "binary"
+
     def test_unknown_geometry(self):
         """Unknown types with geometry raw_type should map to 'geometry'."""
         mock_raw = MagicMock(**{"__str__.return_value": "point"})
@@ -290,6 +294,27 @@ class TestBuildVariables:
         assert var_by_name["val"].nb_distinct == 5
         # boolean column has no extra stats
         assert var_by_name["flag"].min is None
+
+    def test_freq_union_fallback_on_error(self):
+        """build_variables falls back to pa.concat_tables when ibis.union fails."""
+        from unittest.mock import patch
+
+        table = ibis.memtable({"cat": ["a", "b", "a"], "num": [1, 2, 3]})
+
+        def failing_union(*args, **kwargs):
+            raise Exception("Illegal mix of collations for operation 'UNION'")
+
+        with patch("datannurpy.scanner.utils.ibis.union", side_effect=failing_union):
+            variables, freq_table = build_variables(
+                table,
+                nb_rows=3,
+                dataset_id="test",
+                infer_stats=True,
+                freq_threshold=10,
+            )
+
+        assert freq_table is not None
+        assert len(freq_table) == 5  # 2 cat values + 3 num values
 
 
 class TestGetDirDataSize:
