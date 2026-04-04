@@ -4,8 +4,7 @@
 .ruff_cache/
 __pycache__/
 src/datannurpy/app/
-examples/output/
-examples/output_remote/
+examples/output*/
 .env
 .python-version
 

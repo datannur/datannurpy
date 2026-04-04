@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -302,6 +303,26 @@ add:
         assert len(catalog.dataset.all()) == 1
         # Output should be created relative to config file
         assert (config_dir / "output" / "data" / "db").exists() is False  # no export
+
+    def test_run_config_log_file_relative_to_yaml(self, tmp_path: Path):
+        """log_file should be resolved relative to the config file location."""
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        (config_dir / "data.csv").write_text("a\n1\n")
+
+        config_file = config_dir / "catalog.yml"
+        config_file.write_text("""
+app_path: ./output
+log_file: ./scan.log
+quiet: true
+
+add:
+  - type: folder
+    path: .
+    include: ["data.csv"]
+""")
+        run_config(config_file)
+        assert (config_dir / "scan.log").exists()
 
     def test_run_config_relative_sqlite_path(self, tmp_path: Path):
         """Relative sqlite:/// paths should be resolved relative to config file."""
@@ -647,3 +668,26 @@ add:
 """)
         catalog = run_config(config_file)
         assert any(d.name == "t1" for d in catalog.dataset.all())
+
+    def test_database_ssh_tunnel(self, tmp_path: Path):
+        """ssh_tunnel config is passed through to add_database."""
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+quiet: true
+refresh: true
+
+add:
+  - type: database
+    uri: mysql://user:pass@dbhost/mydb
+    ssh_tunnel:
+      host: ssh.example.com
+      user: sshuser
+""")
+        with patch("datannurpy.catalog.Catalog.add_database") as mock_add_db:
+            run_config(config_file)
+            mock_add_db.assert_called_once()
+            _, kwargs = mock_add_db.call_args
+            assert kwargs["ssh_tunnel"] == {
+                "host": "ssh.example.com",
+                "user": "sshuser",
+            }

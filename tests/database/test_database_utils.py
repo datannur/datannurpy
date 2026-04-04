@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import ibis
@@ -15,6 +16,7 @@ from datannurpy.scanner._oracle import (
 )
 from datannurpy.scanner.database import (
     _get_table,
+    _tunnel_uri,
     connect,
     get_database_name,
     get_database_path,
@@ -180,6 +182,144 @@ class TestConnect:
             )
             assert con is mock_con
             assert backend == "oracle"
+
+
+class TestTunnelUri:
+    """Tests for _tunnel_uri helper."""
+
+    def test_mysql_full(self) -> None:
+        uri = "mysql://user:pass@dbhost:3306/mydb"
+        assert _tunnel_uri(uri, 12345) == "mysql://user:pass@localhost:12345/mydb"
+
+    def test_postgres_no_port(self) -> None:
+        uri = "postgresql://user:pass@remote.host/mydb"
+        assert _tunnel_uri(uri, 9999) == "postgresql://user:pass@localhost:9999/mydb"
+
+    def test_no_password(self) -> None:
+        uri = "mysql://user@dbhost/mydb"
+        assert _tunnel_uri(uri, 5555) == "mysql://user@localhost:5555/mydb"
+
+    def test_no_credentials(self) -> None:
+        uri = "postgresql://dbhost:5432/mydb"
+        assert _tunnel_uri(uri, 7777) == "postgresql://localhost:7777/mydb"
+
+
+class TestOpenSshTunnel:
+    """Tests for open_ssh_tunnel context manager."""
+
+    def _run_tunnel(
+        self, ssh_config: dict[str, Any], uri: str, local_port: int = 54321
+    ) -> tuple[str, Any]:
+        """Helper: open tunnel with mocked paramiko + socket, return (tunneled_uri, mock_client)."""
+        mock_transport = MagicMock()
+        mock_client = MagicMock()
+        mock_client.get_transport.return_value = mock_transport
+
+        mock_sock = MagicMock()
+        mock_sock.getsockname.return_value = ("127.0.0.1", local_port)
+
+        with (
+            patch("datannurpy.scanner.database.paramiko") as mock_paramiko,
+            patch("datannurpy.scanner.database.socket") as mock_socket_mod,
+            patch("datannurpy.scanner.database.select") as mock_select,
+        ):
+            mock_paramiko.SSHClient.return_value = mock_client
+            mock_paramiko.AutoAddPolicy.return_value = "auto_policy"
+            mock_socket_mod.AF_INET = 2
+            mock_socket_mod.SOCK_STREAM = 1
+            mock_socket_mod.socket.return_value = mock_sock
+            # select never returns readable sockets (no actual forwarding)
+            mock_select.select.return_value = ([], [], [])
+
+            from datannurpy.scanner.database import open_ssh_tunnel
+
+            with open_ssh_tunnel(ssh_config, uri) as tunneled:
+                result = tunneled
+        return result, mock_client
+
+    def test_opens_and_closes_tunnel(self) -> None:
+        ssh_config: dict[str, Any] = {"host": "ssh.example.com", "user": "myuser"}
+        tunneled, mock_client = self._run_tunnel(
+            ssh_config, "mysql://dbuser:dbpass@dbhost/mydb"
+        )
+        assert tunneled == "mysql://dbuser:dbpass@localhost:54321/mydb"
+        mock_client.connect.assert_called_once_with(
+            hostname="ssh.example.com", port=22, username="myuser"
+        )
+        mock_client.close.assert_called_once()
+
+    def test_with_password_and_port(self) -> None:
+        ssh_config: dict[str, Any] = {
+            "host": "ssh.host",
+            "port": 2222,
+            "user": "u",
+            "password": "p",
+        }
+        tunneled, mock_client = self._run_tunnel(
+            ssh_config, "postgresql://a:b@pghost:5432/db", local_port=11111
+        )
+        assert tunneled == "postgresql://a:b@localhost:11111/db"
+        mock_client.connect.assert_called_once_with(
+            hostname="ssh.host", port=2222, username="u", password="p"
+        )
+
+    def test_with_key_file(self) -> None:
+        ssh_config: dict[str, Any] = {
+            "host": "ssh.host",
+            "user": "u",
+            "key_file": "/home/u/.ssh/id_rsa",
+        }
+        tunneled, mock_client = self._run_tunnel(
+            ssh_config, "mysql://a:b@dbhost/mydb", local_port=22222
+        )
+        assert tunneled == "mysql://a:b@localhost:22222/mydb"
+        mock_client.connect.assert_called_once_with(
+            hostname="ssh.host",
+            port=22,
+            username="u",
+            key_filename="/home/u/.ssh/id_rsa",
+        )
+
+    def test_minimal_config(self) -> None:
+        """SSH config with only host (no user/password/key)."""
+        ssh_config: dict[str, Any] = {"host": "ssh.host"}
+        tunneled, mock_client = self._run_tunnel(
+            ssh_config, "mysql://a:b@dbhost/mydb", local_port=33333
+        )
+        assert tunneled == "mysql://a:b@localhost:33333/mydb"
+        mock_client.connect.assert_called_once_with(hostname="ssh.host", port=22)
+
+
+class TestAddDatabaseSshTunnel:
+    """Tests for add_database with ssh_tunnel parameter."""
+
+    def test_ssh_tunnel_calls_open_ssh_tunnel(self) -> None:
+        """add_database with ssh_tunnel opens a tunnel and scans the tunneled URI."""
+        from datannurpy import Catalog
+        from datannurpy.add_database import add_database
+
+        catalog = Catalog(quiet=True, refresh=True)
+        ssh_config = {"host": "ssh.example.com", "user": "u"}
+        with (
+            patch("datannurpy.add_database.open_ssh_tunnel") as mock_tunnel,
+            patch("datannurpy.add_database._add_database_impl") as mock_impl,
+        ):
+            mock_tunnel.return_value.__enter__ = MagicMock(
+                return_value="mysql://user:pass@localhost:54321/mydb"
+            )
+            mock_tunnel.return_value.__exit__ = MagicMock(return_value=False)
+            add_database(
+                catalog,
+                "mysql://user:pass@dbhost/mydb",
+                ssh_tunnel=ssh_config,
+            )
+            mock_tunnel.assert_called_once_with(
+                ssh_config, "mysql://user:pass@dbhost/mydb"
+            )
+            mock_impl.assert_called_once()
+            call_args = mock_impl.call_args
+            assert call_args[0][1] == "mysql://user:pass@localhost:54321/mydb"
+            assert call_args[1]["remote_path"] == "mysql://user:pass@dbhost/mydb"
 
 
 class TestGetDatabaseName:

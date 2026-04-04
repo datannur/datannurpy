@@ -116,6 +116,17 @@ add:
     uri: oracle://${DB_USER}:${DB_PASSWORD}@${db_host}:1521/ORCL
 ```
 
+SSH tunnel support in YAML:
+
+```yaml
+add:
+  - type: database
+    uri: mysql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/${DB_NAME}
+    ssh_tunnel:
+      host: ${SSH_HOST}
+      user: ${SSH_USER}
+```
+
 Priority: system env vars > `env_file` / `.env` > `env:` section.
 
 Run with:
@@ -287,6 +298,22 @@ catalog.add_database(
     "postgresql://localhost/mydb",
     schema=["public", "sales", "hr"],
     infer_stats=True,
+)
+
+# SSH tunnel (for databases behind a firewall)
+catalog.add_database(
+    "mysql://user:pass@dbhost/mydb",
+    ssh_tunnel={"host": "ssh.example.com", "user": "sshuser"},
+)
+# Also supports: port, password, key_file
+catalog.add_database(
+    "postgresql://user:pass@dbhost/mydb",
+    ssh_tunnel={
+        "host": "bastion.example.com",
+        "port": 2222,
+        "user": "admin",
+        "key_file": "~/.ssh/id_rsa",
+    },
 )
 ```
 
