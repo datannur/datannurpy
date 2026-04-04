@@ -1,0 +1,16 @@
+app_path: ./output_db
+env_file: ../.env
+log_file: ./scan.log
+verbose: true
+refresh: true
+
+add:
+  - type: database
+    uri: mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@${MYSQL_HOST}/${MYSQL_DATABASE}
+    ssh_tunnel:
+      host: ${SSH_HOST}
+      user: ${SSH_USER}
+      password: ${SSH_PASSWORD}
+
+export_app:
+  open_browser: true
