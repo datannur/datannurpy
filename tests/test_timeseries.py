@@ -10,6 +10,7 @@ from datannurpy.scanner.timeseries import (
     build_series_dataset_name,
     compute_variable_periods,
     extract_period,
+    group_table_time_series,
     group_time_series,
     normalize_path,
     period_sort_key,
@@ -795,3 +796,67 @@ class TestTimeSeriesRescan:
         assert "root" in folder_ids
         # No subfolders like "2020" or "2021" should exist
         assert not any(f.id.startswith("root---") for f in catalog.folder.all())
+
+
+class TestGroupTableTimeSeries:
+    """Tests for group_table_time_series (database table grouping)."""
+
+    def test_yearly_tables(self):
+        """Group tables with yearly pattern."""
+        tables = ["stats_2022", "stats_2023", "stats_2024"]
+        series, singles = group_table_time_series(tables)
+        assert len(series) == 1
+        assert len(singles) == 0
+        assert len(series[0].tables) == 3
+        assert series[0].tables[0] == ("2022", "stats_2022")
+        assert series[0].tables[-1] == ("2024", "stats_2024")
+        assert PERIOD_PLACEHOLDER in series[0].normalized_name
+
+    def test_no_temporal_pattern(self):
+        """Tables without temporal pattern remain singles."""
+        tables = ["users", "orders", "products"]
+        series, singles = group_table_time_series(tables)
+        assert len(series) == 0
+        assert sorted(singles) == sorted(tables)
+
+    def test_single_table_with_year_not_grouped(self):
+        """A single table with a year pattern stays as single."""
+        tables = ["stats_2024", "users", "orders"]
+        series, singles = group_table_time_series(tables)
+        assert len(series) == 0
+        assert "stats_2024" in singles
+
+    def test_mixed_tables(self):
+        """Mix of series and non-series tables."""
+        tables = ["stats_2022", "stats_2023", "users", "logs_2023", "logs_2024"]
+        series, singles = group_table_time_series(tables)
+        assert len(series) == 2
+        assert "users" in singles
+
+    def test_year_month_tables(self):
+        """Tables with year-month pattern."""
+        tables = ["log_2024_01", "log_2024_02", "log_2024_03"]
+        series, singles = group_table_time_series(tables)
+        assert len(series) == 1
+        assert series[0].tables[0][0] == "2024/01"
+
+    def test_sorted_by_period(self):
+        """Series tables are sorted chronologically."""
+        tables = ["data_2024", "data_2020", "data_2022"]
+        series, singles = group_table_time_series(tables)
+        assert len(series) == 1
+        periods = [p for p, _ in series[0].tables]
+        assert periods == ["2020", "2022", "2024"]
+
+    def test_empty_input(self):
+        """Empty table list returns empty results."""
+        series, singles = group_table_time_series([])
+        assert series == []
+        assert singles == []
+
+    def test_name_entirely_temporal_not_grouped(self):
+        """Tables named 't1', 't2' etc. should not be grouped as time series."""
+        tables = ["t1", "t2", "t3", "t4"]
+        series, singles = group_table_time_series(tables)
+        assert len(series) == 0
+        assert sorted(singles) == sorted(tables)
