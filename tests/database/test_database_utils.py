@@ -15,6 +15,7 @@ from datannurpy.scanner._oracle import (
     _oracle_type_to_ibis,
 )
 from datannurpy.scanner.database import (
+    _connect_external_backend,
     _get_table,
     _tunnel_uri,
     connect,
@@ -182,6 +183,54 @@ class TestConnect:
             )
             assert con is mock_con
             assert backend == "oracle"
+
+    def test_connection_error_gives_config_error(self) -> None:
+        """Connection failures are wrapped in ConfigError with context."""
+        with patch(
+            "datannurpy.scanner.database._connect_external_backend",
+            side_effect=ConfigError(
+                "Failed to connect to mysql (myhost:3306): SSL connection error"
+            ),
+        ):
+            with pytest.raises(ConfigError, match="Failed to connect to mysql.*SSL"):
+                connect("mysql://user:pass@myhost:3306/mydb")
+
+
+class TestConnectExternalBackendErrors:
+    """Tests for _connect_external_backend error wrapping."""
+
+    def test_mysql_connection_error(self) -> None:
+        """MySQL connection error is wrapped in ConfigError."""
+        with patch(
+            "ibis.mysql.connect",
+            side_effect=Exception("SSL connection error: unsupported protocol"),
+        ):
+            with pytest.raises(
+                ConfigError, match=r"Failed to connect to mysql \(myhost:3306\).*SSL"
+            ):
+                _connect_external_backend("mysql", {"host": "myhost", "port": "3306"})
+
+    def test_postgres_connection_error(self) -> None:
+        """Postgres connection error is wrapped in ConfigError."""
+        with patch(
+            "ibis.postgres.connect",
+            side_effect=Exception("could not connect to server: Connection refused"),
+        ):
+            with pytest.raises(
+                ConfigError, match=r"Failed to connect to postgres \(dbhost\)"
+            ):
+                _connect_external_backend("postgres", {"host": "dbhost"})
+
+    def test_driver_not_found_not_wrapped(self) -> None:
+        """ModuleNotFoundError still raises ConfigError via raise_driver_error."""
+        with patch(
+            "ibis.mysql.connect",
+            side_effect=ModuleNotFoundError("No module named 'MySQLdb'"),
+        ):
+            with pytest.raises(ConfigError, match="MySQL requires"):
+                _connect_external_backend(
+                    "mysql", {"host": "localhost", "port": "3306"}
+                )
 
 
 class TestTunnelUri:

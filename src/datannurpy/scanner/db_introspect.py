@@ -35,21 +35,31 @@ def _quote(value: str) -> str:
     return value.replace("'", "''")
 
 
+def introspect_schema(
+    con: object,
+    backend: str,
+    schema: str | None,
+    tables: list[str],
+) -> dict[str, TableMetadata]:
+    """Batch-extract structural metadata for all tables in a schema."""
+    raw: Any = getattr(con, "raw_sql", None)
+    if raw is None:
+        return {t: TableMetadata() for t in tables}
+    if backend == "sqlite":
+        return {t: _introspect_sqlite(raw, t) for t in tables}
+    if backend == "oracle":
+        return _introspect_oracle_batch(raw, schema, tables)
+    return _introspect_info_schema_batch(raw, backend, schema, tables)
+
+
 def introspect_table(
     con: object,
     backend: str,
     schema: str | None,
     table: str,
 ) -> TableMetadata:
-    """Extract all structural metadata for a table. Each query fails independently."""
-    raw: Any = getattr(con, "raw_sql", None)
-    if raw is None:
-        return TableMetadata()
-    if backend == "sqlite":
-        return _introspect_sqlite(raw, table)
-    if backend == "oracle":
-        return _introspect_oracle(raw, schema, table)
-    return _introspect_info_schema(raw, backend, schema, table)
+    """Extract structural metadata for a single table."""
+    return introspect_schema(con, backend, schema, [table]).get(table, TableMetadata())
 
 
 # ---------------------------------------------------------------------------
@@ -97,59 +107,54 @@ def _introspect_sqlite(raw: Any, table: str) -> TableMetadata:
 
 
 # ---------------------------------------------------------------------------
-# Oracle
+# Oracle (batch — all tables in one pass)
 # ---------------------------------------------------------------------------
 
 
-def _ora(
-    raw: Any,
-    schema: str | None,
-    table: str,
-    all_sql: str,
-    user_sql: str,
-) -> list[Any]:
-    """Run Oracle catalog query, choosing all_* or user_* view variant."""
-    t = _quote(table.upper())
-    if schema:
-        return raw(all_sql.format(owner=_quote(schema.upper()), table=t)).fetchall()
-    return raw(user_sql.format(table=t)).fetchall()
+def _introspect_oracle_batch(
+    raw: Any, schema: str | None, tables: list[str]
+) -> dict[str, TableMetadata]:
+    result = {t: TableMetadata() for t in tables}
+    upper_to_orig = {t.upper(): t for t in tables}
 
+    def _meta(tname_upper: str) -> TableMetadata | None:
+        orig = upper_to_orig.get(tname_upper)
+        return result[orig] if orig else None
 
-def _introspect_oracle(raw: Any, schema: str | None, table: str) -> TableMetadata:
-    meta = TableMetadata()
+    def _run(all_sql: str, user_sql: str) -> list[Any]:
+        if schema:
+            return raw(all_sql.format(owner=_quote(schema.upper()))).fetchall()
+        return raw(user_sql).fetchall()
 
-    # 1) PK + UNIQUE in one query on all_constraints/user_constraints
+    # 1) PK + UNIQUE
     try:
-        rows = _ora(
-            raw,
-            schema,
-            table,
-            "SELECT c.constraint_type, cc.column_name, cc.position "
+        rows = _run(
+            "SELECT c.table_name, c.constraint_type, cc.column_name, cc.position "
             "FROM all_constraints c "
             "JOIN all_cons_columns cc ON c.owner = cc.owner "
             "  AND c.constraint_name = cc.constraint_name "
-            "WHERE c.owner = '{owner}' AND c.table_name = '{table}' "
-            "AND c.constraint_type IN ('P', 'U')",
-            "SELECT c.constraint_type, cc.column_name, cc.position "
+            "WHERE c.owner = '{owner}' AND c.constraint_type IN ('P', 'U')",
+            "SELECT c.table_name, c.constraint_type, cc.column_name, cc.position "
             "FROM user_constraints c "
             "JOIN user_cons_columns cc ON c.constraint_name = cc.constraint_name "
-            "WHERE c.table_name = '{table}' AND c.constraint_type IN ('P', 'U')",
+            "WHERE c.constraint_type IN ('P', 'U')",
         )
-        for ctype, col, pos in rows:
+        for tname, ctype, col, pos in rows:
+            m = _meta(tname)
+            if m is None:
+                continue
             if ctype == "P":
-                meta.pk_map[col.lower()] = int(pos)
+                m.pk_map[col.lower()] = int(pos)
             else:
-                meta.unique.add(col.lower())
+                m.unique.add(col.lower())
     except Exception:
         pass
 
-    # 2) FK (complex join, kept separate)
+    # 2) FK
     try:
-        rows = _ora(
-            raw,
-            schema,
-            table,
-            "SELECT cc.column_name, rc.owner, rc.table_name, rcc.column_name "
+        rows = _run(
+            "SELECT c.table_name, cc.column_name, rc.owner, "
+            "  rc.table_name, rcc.column_name "
             "FROM all_constraints c "
             "JOIN all_cons_columns cc ON c.owner = cc.owner "
             "  AND c.constraint_name = cc.constraint_name "
@@ -158,9 +163,9 @@ def _introspect_oracle(raw: Any, schema: str | None, table: str) -> TableMetadat
             "JOIN all_cons_columns rcc ON rc.owner = rcc.owner "
             "  AND rc.constraint_name = rcc.constraint_name "
             "  AND cc.position = rcc.position "
-            "WHERE c.owner = '{owner}' AND c.table_name = '{table}' "
-            "AND c.constraint_type = 'R'",
-            "SELECT cc.column_name, rc.owner, rc.table_name, rcc.column_name "
+            "WHERE c.owner = '{owner}' AND c.constraint_type = 'R'",
+            "SELECT c.table_name, cc.column_name, rc.owner, "
+            "  rc.table_name, rcc.column_name "
             "FROM user_constraints c "
             "JOIN user_cons_columns cc ON c.constraint_name = cc.constraint_name "
             "JOIN all_constraints rc ON c.r_owner = rc.owner "
@@ -168,109 +173,106 @@ def _introspect_oracle(raw: Any, schema: str | None, table: str) -> TableMetadat
             "JOIN all_cons_columns rcc ON rc.owner = rcc.owner "
             "  AND rc.constraint_name = rcc.constraint_name "
             "  AND cc.position = rcc.position "
-            "WHERE c.table_name = '{table}' AND c.constraint_type = 'R'",
+            "WHERE c.constraint_type = 'R'",
         )
-        meta.fks = [
-            ForeignKey(
-                local_col=r[0].lower(),
-                ref_schema=r[1].lower(),
-                ref_table=r[2].lower(),
-                ref_col=r[3].lower(),
+        for tname, col, ref_owner, ref_table, ref_col in rows:
+            m = _meta(tname)
+            if m is None:
+                continue
+            m.fks.append(
+                ForeignKey(
+                    local_col=col.lower(),
+                    ref_schema=ref_owner.lower(),
+                    ref_table=ref_table.lower(),
+                    ref_col=ref_col.lower(),
+                )
             )
-            for r in rows
-        ]
     except Exception:
         pass
 
-    # 3) Comments (table + column, one try/except)
+    # 3) Comments (table + column)
     try:
-        tc = _ora(
-            raw,
-            schema,
-            table,
-            "SELECT comments FROM all_tab_comments "
-            "WHERE owner = '{owner}' AND table_name = '{table}'",
-            "SELECT comments FROM user_tab_comments WHERE table_name = '{table}'",
-        )
-        if tc and tc[0][0]:
-            meta.table_comment = tc[0][0]
-        cc = _ora(
-            raw,
-            schema,
-            table,
-            "SELECT column_name, comments FROM all_col_comments "
-            "WHERE owner = '{owner}' AND table_name = '{table}'",
-            "SELECT column_name, comments FROM user_col_comments "
-            "WHERE table_name = '{table}'",
-        )
-        for r in cc:
-            if r[1]:
-                meta.col_comments[r[0].lower()] = r[1]
+        for tname, comment in _run(
+            "SELECT table_name, comments FROM all_tab_comments "
+            "WHERE owner = '{owner}' AND comments IS NOT NULL",
+            "SELECT table_name, comments FROM user_tab_comments "
+            "WHERE comments IS NOT NULL",
+        ):
+            m = _meta(tname)
+            if m and comment:
+                m.table_comment = comment
+        for tname, col, comment in _run(
+            "SELECT table_name, column_name, comments FROM all_col_comments "
+            "WHERE owner = '{owner}' AND comments IS NOT NULL",
+            "SELECT table_name, column_name, comments FROM user_col_comments "
+            "WHERE comments IS NOT NULL",
+        ):
+            m = _meta(tname)
+            if m and comment:
+                m.col_comments[col.lower()] = comment
     except Exception:
         pass
 
-    # 4) NOT NULL + auto-increment in one query via LEFT JOIN
+    # 4) NOT NULL + auto-increment
     try:
-        rows = _ora(
-            raw,
-            schema,
-            table,
-            "SELECT c.column_name, c.nullable, i.column_name "
+        rows = _run(
+            "SELECT c.table_name, c.column_name, c.nullable, i.column_name "
             "FROM all_tab_columns c "
             "LEFT JOIN all_tab_identity_cols i "
             "  ON c.owner = i.owner AND c.table_name = i.table_name "
             "  AND c.column_name = i.column_name "
-            "WHERE c.owner = '{owner}' AND c.table_name = '{table}'",
-            "SELECT c.column_name, c.nullable, i.column_name "
+            "WHERE c.owner = '{owner}'",
+            "SELECT c.table_name, c.column_name, c.nullable, i.column_name "
             "FROM user_tab_columns c "
             "LEFT JOIN user_tab_identity_cols i "
             "  ON c.table_name = i.table_name "
-            "  AND c.column_name = i.column_name "
-            "WHERE c.table_name = '{table}'",
+            "  AND c.column_name = i.column_name",
         )
-        for col, nullable, identity_col in rows:
+        for tname, col, nullable, identity_col in rows:
+            m = _meta(tname)
+            if m is None:
+                continue
             if nullable == "N":
-                meta.not_null.add(col.lower())
+                m.not_null.add(col.lower())
             if identity_col is not None:
-                meta.auto_inc.add(col.lower())
+                m.auto_inc.add(col.lower())
     except Exception:
         pass
 
     # 5) Indexes
     try:
-        rows = _ora(
-            raw,
-            schema,
-            table,
-            "SELECT column_name FROM all_ind_columns "
-            "WHERE table_owner = '{owner}' AND table_name = '{table}'",
-            "SELECT column_name FROM user_ind_columns WHERE table_name = '{table}'",
-        )
-        meta.indexed = {r[0].lower() for r in rows}
+        for tname, col in _run(
+            "SELECT table_name, column_name FROM all_ind_columns "
+            "WHERE table_owner = '{owner}'",
+            "SELECT table_name, column_name FROM user_ind_columns",
+        ):
+            m = _meta(tname)
+            if m:
+                m.indexed.add(col.lower())
     except Exception:
         pass
 
-    return meta
+    return result
 
 
 # ---------------------------------------------------------------------------
-# Information Schema (postgres, mysql, mssql, duckdb)
+# Information Schema — batch (postgres, mysql, mssql, duckdb)
 # ---------------------------------------------------------------------------
 
 
-def _introspect_info_schema(
+def _introspect_info_schema_batch(
     raw: Any,
     backend: str,
     schema: str | None,
-    table: str,
-) -> TableMetadata:
-    meta = TableMetadata()
-    qt = _quote(table)
+    tables: list[str],
+) -> dict[str, TableMetadata]:
+    result = {t: TableMetadata() for t in tables}
     sf = f" AND table_schema = '{_quote(schema)}'" if schema else ""
 
+    # 1) PK
     try:
         q = (
-            "SELECT kcu.column_name, kcu.ordinal_position "
+            "SELECT tc.table_name, kcu.column_name, kcu.ordinal_position "
             "FROM information_schema.table_constraints tc "
             "JOIN information_schema.key_column_usage kcu "
             "  ON tc.constraint_name = kcu.constraint_name"
@@ -278,26 +280,27 @@ def _introspect_info_schema(
         if backend != "mysql":
             q += " AND tc.table_schema = kcu.table_schema"
         tsf = f" AND tc.table_schema = '{_quote(schema)}'" if schema else ""
-        q += (
-            f" WHERE tc.table_name = '{qt}'{tsf} AND tc.constraint_type = 'PRIMARY KEY'"
-        )
-        meta.pk_map = {r[0]: int(r[1]) for r in raw(q).fetchall()}
+        q += f" WHERE tc.constraint_type = 'PRIMARY KEY'{tsf}"
+        for tname, col, pos in raw(q).fetchall():
+            m = result.get(tname)
+            if m:
+                m.pk_map[col] = int(pos)
     except Exception:
         pass
 
+    # 2) FK (backend-specific)
     try:
         if backend == "mysql":
             rows = raw(
-                "SELECT column_name, referenced_table_schema, "
+                "SELECT table_name, column_name, referenced_table_schema, "
                 "  referenced_table_name, referenced_column_name "
                 "FROM information_schema.key_column_usage "
-                f"WHERE table_name = '{qt}'"
-                f"{sf} AND referenced_table_name IS NOT NULL"
+                f"WHERE referenced_table_name IS NOT NULL{sf}"
             ).fetchall()
         elif backend in ("postgres", "mssql"):
             tsf = f" AND tc.table_schema = '{_quote(schema)}'" if schema else ""
             rows = raw(
-                "SELECT kcu.column_name, "
+                "SELECT tc.table_name, kcu.column_name, "
                 "  ccu.table_schema, ccu.table_name, ccu.column_name "
                 "FROM information_schema.table_constraints tc "
                 "JOIN information_schema.key_column_usage kcu "
@@ -306,13 +309,12 @@ def _introspect_info_schema(
                 "JOIN information_schema.constraint_column_usage ccu "
                 "  ON tc.constraint_name = ccu.constraint_name "
                 "  AND tc.table_schema = ccu.table_schema "
-                f"WHERE tc.table_name = '{qt}'"
-                f"{tsf} AND tc.constraint_type = 'FOREIGN KEY'"
+                f"WHERE tc.constraint_type = 'FOREIGN KEY'{tsf}"
             ).fetchall()
         else:
-            kcu_sf = f" AND kcu.table_schema = '{_quote(schema)}'" if schema else ""
+            kcu_sf = f" WHERE kcu.table_schema = '{_quote(schema)}'" if schema else ""
             rows = raw(
-                "SELECT kcu.column_name, "
+                "SELECT kcu.table_name, kcu.column_name, "
                 "  rkcu.table_schema, rkcu.table_name, rkcu.column_name "
                 "FROM information_schema.referential_constraints rc "
                 "JOIN information_schema.key_column_usage kcu "
@@ -320,57 +322,57 @@ def _introspect_info_schema(
                 "  AND rc.constraint_name = kcu.constraint_name "
                 "JOIN information_schema.key_column_usage rkcu "
                 "  ON rc.unique_constraint_schema = rkcu.constraint_schema "
-                "  AND rc.unique_constraint_name = rkcu.constraint_name "
-                f"WHERE kcu.table_name = '{qt}'"
+                "  AND rc.unique_constraint_name = rkcu.constraint_name"
                 f"{kcu_sf}"
             ).fetchall()
-        meta.fks = [
-            ForeignKey(
-                local_col=r[0],
-                ref_schema=r[1],
-                ref_table=r[2],
-                ref_col=r[3],
-            )
-            for r in rows
-        ]
+        for row in rows:
+            m = result.get(row[0])
+            if m:
+                m.fks.append(
+                    ForeignKey(
+                        local_col=row[1],
+                        ref_schema=row[2],
+                        ref_table=row[3],
+                        ref_col=row[4],
+                    )
+                )
     except Exception:
         pass
 
+    # 3) Comments (backend-specific)
     try:
-        meta.table_comment, meta.col_comments = _comments_info_schema(
-            raw,
-            backend,
-            schema,
-            table,
-        )
+        _comments_batch(raw, backend, schema, result)
     except Exception:
         pass
 
+    # 4) NOT NULL
     try:
-        meta.not_null = {
-            r[0]
-            for r in raw(
-                "SELECT column_name FROM information_schema.columns "
-                f"WHERE table_name = '{qt}'{sf} AND is_nullable = 'NO'"
-            ).fetchall()
-        }
+        for tname, col in raw(
+            "SELECT table_name, column_name FROM information_schema.columns "
+            f"WHERE is_nullable = 'NO'{sf}"
+        ).fetchall():
+            m = result.get(tname)
+            if m:
+                m.not_null.add(col)
     except Exception:
         pass
 
+    # 5) UNIQUE
     try:
         if backend == "duckdb":
             dsf = f" AND schema_name = '{_quote(schema)}'" if schema else ""
             rows = raw(
-                "SELECT constraint_column_names FROM duckdb_constraints() "
-                f"WHERE table_name = '{qt}'"
-                f"{dsf} AND constraint_type = 'UNIQUE'"
+                "SELECT table_name, constraint_column_names "
+                "FROM duckdb_constraints() "
+                f"WHERE constraint_type = 'UNIQUE'{dsf}"
             ).fetchall()
-            meta.unique = {
-                r[0][0] for r in rows if isinstance(r[0], list) and len(r[0]) == 1
-            }
+            for tname, cols in rows:
+                m = result.get(tname)
+                if m and isinstance(cols, list) and len(cols) == 1:
+                    m.unique.add(cols[0])
         else:
             q = (
-                "SELECT kcu.column_name "
+                "SELECT tc.table_name, kcu.column_name "
                 "FROM information_schema.table_constraints tc "
                 "JOIN information_schema.key_column_usage kcu "
                 "  ON tc.constraint_name = kcu.constraint_name"
@@ -378,205 +380,222 @@ def _introspect_info_schema(
             if backend != "mysql":
                 q += " AND tc.table_schema = kcu.table_schema"
             tsf = f" AND tc.table_schema = '{_quote(schema)}'" if schema else ""
-            q += f" WHERE tc.table_name = '{qt}'{tsf} AND tc.constraint_type = 'UNIQUE'"
-            meta.unique = {r[0] for r in raw(q).fetchall()}
+            q += f" WHERE tc.constraint_type = 'UNIQUE'{tsf}"
+            for tname, col in raw(q).fetchall():
+                m = result.get(tname)
+                if m:
+                    m.unique.add(col)
     except Exception:
         pass
 
+    # 6) Indexed
     try:
-        meta.indexed = _indexed_info_schema(raw, backend, schema, table)
+        _indexed_batch(raw, backend, schema, result)
     except Exception:
         pass
 
+    # 7) Auto-increment
     try:
-        meta.auto_inc = _auto_inc_info_schema(raw, backend, schema, table)
+        _auto_inc_batch(raw, backend, schema, result)
     except Exception:
         pass
 
-    return meta
+    return result
 
 
-def _comments_info_schema(
+# ---------------------------------------------------------------------------
+# Batch helpers for info_schema backends
+# ---------------------------------------------------------------------------
+
+
+def _comments_batch(
     raw: Any,
     backend: str,
     schema: str | None,
-    table: str,
-) -> tuple[str | None, dict[str, str]]:
-    qt = _quote(table)
-    table_comment: str | None = None
-    col_comments: dict[str, str] = {}
-
+    result: dict[str, TableMetadata],
+) -> None:
     if backend == "postgres":
         sn = _quote(schema or "public")
-        row = raw(
-            "SELECT obj_description(c.oid) "
+        for tname, comment in raw(
+            "SELECT c.relname, obj_description(c.oid) "
             "FROM pg_class c "
             "JOIN pg_namespace n ON n.oid = c.relnamespace "
-            f"WHERE c.relname = '{qt}' AND n.nspname = '{sn}'"
-        ).fetchone()
-        if row and row[0]:
-            table_comment = row[0]
-        rows = raw(
-            "SELECT a.attname, d.description "
+            f"WHERE n.nspname = '{sn}' AND c.relkind = 'r'"
+        ).fetchall():
+            m = result.get(tname)
+            if m and comment:
+                m.table_comment = comment
+        for tname, col, desc in raw(
+            "SELECT c.relname, a.attname, d.description "
             "FROM pg_attribute a "
             "JOIN pg_class c ON a.attrelid = c.oid "
             "JOIN pg_namespace n ON n.oid = c.relnamespace "
             "LEFT JOIN pg_description d "
             "  ON d.objoid = c.oid AND d.objsubid = a.attnum "
-            f"WHERE c.relname = '{qt}' AND n.nspname = '{sn}' "
+            f"WHERE n.nspname = '{sn}' AND c.relkind = 'r' "
             "AND a.attnum > 0 AND NOT a.attisdropped "
             "AND d.description IS NOT NULL"
-        ).fetchall()
-        col_comments = {r[0]: r[1] for r in rows}
+        ).fetchall():
+            m = result.get(tname)
+            if m:
+                m.col_comments[col] = desc
 
     elif backend == "mysql":
         sf = f" AND table_schema = '{_quote(schema)}'" if schema else ""
-        row = raw(
-            "SELECT table_comment FROM information_schema.tables "
-            f"WHERE table_name = '{qt}'{sf}"
-        ).fetchone()
-        if row and row[0]:
-            table_comment = row[0]
-        rows = raw(
-            "SELECT column_name, column_comment "
+        for tname, comment in raw(
+            "SELECT table_name, table_comment FROM information_schema.tables "
+            f"WHERE table_comment != ''{sf}"
+        ).fetchall():
+            m = result.get(tname)
+            if m and comment:
+                m.table_comment = comment
+        for tname, col, comment in raw(
+            "SELECT table_name, column_name, column_comment "
             "FROM information_schema.columns "
-            f"WHERE table_name = '{qt}'{sf} AND column_comment != ''"
-        ).fetchall()
-        col_comments = {r[0]: r[1] for r in rows}
+            f"WHERE column_comment != ''{sf}"
+        ).fetchall():
+            m = result.get(tname)
+            if m:
+                m.col_comments[col] = comment
 
     elif backend == "mssql":
         sn = _quote(schema or "dbo")
-        row = raw(
-            "SELECT CAST(ep.value AS NVARCHAR(MAX)) "
+        for tname, comment in raw(
+            "SELECT t.name, CAST(ep.value AS NVARCHAR(MAX)) "
             "FROM sys.extended_properties ep "
             "JOIN sys.tables t ON ep.major_id = t.object_id "
             "JOIN sys.schemas s ON t.schema_id = s.schema_id "
-            f"WHERE t.name = '{qt}' AND s.name = '{sn}' "
+            f"WHERE s.name = '{sn}' "
             "AND ep.minor_id = 0 AND ep.name = 'MS_Description'"
-        ).fetchone()
-        if row and row[0]:
-            table_comment = row[0]
-        rows = raw(
-            "SELECT c.name, CAST(ep.value AS NVARCHAR(MAX)) "
+        ).fetchall():
+            m = result.get(tname)
+            if m and comment:
+                m.table_comment = comment
+        for tname, col, comment in raw(
+            "SELECT t.name, c.name, CAST(ep.value AS NVARCHAR(MAX)) "
             "FROM sys.extended_properties ep "
             "JOIN sys.columns c ON ep.major_id = c.object_id "
             "  AND ep.minor_id = c.column_id "
             "JOIN sys.tables t ON c.object_id = t.object_id "
             "JOIN sys.schemas s ON t.schema_id = s.schema_id "
-            f"WHERE t.name = '{qt}' AND s.name = '{sn}' "
-            "AND ep.name = 'MS_Description'"
-        ).fetchall()
-        for r in rows:
-            if r[1]:
-                col_comments[r[0]] = r[1]
+            f"WHERE s.name = '{sn}' AND ep.name = 'MS_Description'"
+        ).fetchall():
+            m = result.get(tname)
+            if m and comment:
+                m.col_comments[col] = comment
 
     elif backend == "duckdb":
         dsf = f" AND schema_name = '{_quote(schema)}'" if schema else ""
-        row = raw(
-            f"SELECT comment FROM duckdb_tables() WHERE table_name = '{qt}'{dsf}"
-        ).fetchone()
-        if row and row[0]:
-            table_comment = row[0]
-        rows = raw(
-            "SELECT column_name, comment FROM duckdb_columns() "
-            f"WHERE table_name = '{qt}'{dsf} AND comment IS NOT NULL"
-        ).fetchall()
-        col_comments = {r[0]: r[1] for r in rows}
+        for tname, comment in raw(
+            "SELECT table_name, comment FROM duckdb_tables() "
+            f"WHERE comment IS NOT NULL{dsf}"
+        ).fetchall():
+            m = result.get(tname)
+            if m:
+                m.table_comment = comment
+        for tname, col, comment in raw(
+            "SELECT table_name, column_name, comment FROM duckdb_columns() "
+            f"WHERE comment IS NOT NULL{dsf}"
+        ).fetchall():
+            m = result.get(tname)
+            if m:
+                m.col_comments[col] = comment
 
-    return table_comment, col_comments
 
-
-def _indexed_info_schema(
+def _indexed_batch(
     raw: Any,
     backend: str,
     schema: str | None,
-    table: str,
-) -> set[str]:
-    qt = _quote(table)
-
+    result: dict[str, TableMetadata],
+) -> None:
     if backend == "postgres":
         sn = _quote(schema or "public")
-        rows = raw(
-            "SELECT a.attname "
+        for tname, col in raw(
+            "SELECT c.relname, a.attname "
             "FROM pg_index i "
             "JOIN pg_class c ON c.oid = i.indrelid "
             "JOIN pg_namespace n ON n.oid = c.relnamespace "
             "JOIN pg_attribute a ON a.attrelid = c.oid "
             "  AND a.attnum = ANY(i.indkey) "
-            f"WHERE c.relname = '{qt}' AND n.nspname = '{sn}'"
-        ).fetchall()
-        return {r[0] for r in rows}
+            f"WHERE n.nspname = '{sn}'"
+        ).fetchall():
+            m = result.get(tname)
+            if m:
+                m.indexed.add(col)
 
-    if backend == "mysql":
+    elif backend == "mysql":
         sf = f" AND table_schema = '{_quote(schema)}'" if schema else ""
-        rows = raw(
-            "SELECT DISTINCT column_name "
+        for tname, col in raw(
+            "SELECT table_name, column_name "
             "FROM information_schema.statistics "
-            f"WHERE table_name = '{qt}'{sf}"
-        ).fetchall()
-        return {r[0] for r in rows}
+            f"WHERE 1=1{sf}"
+        ).fetchall():
+            m = result.get(tname)
+            if m:
+                m.indexed.add(col)
 
-    if backend == "mssql":
+    elif backend == "mssql":
         sn = _quote(schema or "dbo")
-        rows = raw(
-            "SELECT c.name "
+        for tname, col in raw(
+            "SELECT t.name, c.name "
             "FROM sys.index_columns ic "
             "JOIN sys.columns c ON ic.object_id = c.object_id "
             "  AND ic.column_id = c.column_id "
             "JOIN sys.tables t ON ic.object_id = t.object_id "
             "JOIN sys.schemas s ON t.schema_id = s.schema_id "
-            f"WHERE t.name = '{qt}' AND s.name = '{sn}'"
-        ).fetchall()
-        return {r[0] for r in rows}
+            f"WHERE s.name = '{sn}'"
+        ).fetchall():
+            m = result.get(tname)
+            if m:
+                m.indexed.add(col)
 
-    return set()
 
-
-def _auto_inc_info_schema(
+def _auto_inc_batch(
     raw: Any,
     backend: str,
     schema: str | None,
-    table: str,
-) -> set[str]:
-    qt = _quote(table)
-
+    result: dict[str, TableMetadata],
+) -> None:
     if backend == "postgres":
         sn = _quote(schema or "public")
-        rows = raw(
-            "SELECT column_name FROM information_schema.columns "
-            f"WHERE table_name = '{qt}' AND table_schema = '{sn}' "
+        for tname, col in raw(
+            "SELECT table_name, column_name FROM information_schema.columns "
+            f"WHERE table_schema = '{sn}' "
             "AND (column_default LIKE 'nextval%' OR is_identity = 'YES')"
-        ).fetchall()
-        return {r[0] for r in rows}
+        ).fetchall():
+            m = result.get(tname)
+            if m:
+                m.auto_inc.add(col)
 
-    if backend == "mysql":
+    elif backend == "mysql":
         sf = f" AND table_schema = '{_quote(schema)}'" if schema else ""
-        rows = raw(
-            "SELECT column_name FROM information_schema.columns "
-            f"WHERE table_name = '{qt}'{sf} "
-            "AND extra LIKE '%auto_increment%'"
-        ).fetchall()
-        return {r[0] for r in rows}
+        for tname, col in raw(
+            "SELECT table_name, column_name FROM information_schema.columns "
+            f"WHERE extra LIKE '%auto_increment%'{sf}"
+        ).fetchall():
+            m = result.get(tname)
+            if m:
+                m.auto_inc.add(col)
 
-    if backend == "mssql":
+    elif backend == "mssql":
         sn = _quote(schema or "dbo")
-        rows = raw(
-            "SELECT c.name "
+        for tname, col in raw(
+            "SELECT t.name, c.name "
             "FROM sys.columns c "
             "JOIN sys.tables t ON c.object_id = t.object_id "
             "JOIN sys.schemas s ON t.schema_id = s.schema_id "
-            f"WHERE t.name = '{qt}' AND s.name = '{sn}' "
-            "AND c.is_identity = 1"
-        ).fetchall()
-        return {r[0] for r in rows}
+            f"WHERE s.name = '{sn}' AND c.is_identity = 1"
+        ).fetchall():
+            m = result.get(tname)
+            if m:
+                m.auto_inc.add(col)
 
-    if backend == "duckdb":
+    elif backend == "duckdb":
         sf = f" AND table_schema = '{_quote(schema)}'" if schema else ""
-        rows = raw(
-            "SELECT column_name FROM information_schema.columns "
-            f"WHERE table_name = '{qt}'{sf} "
-            "AND column_default LIKE 'nextval%'"
-        ).fetchall()
-        return {r[0] for r in rows}
-
-    return set()
+        for tname, col in raw(
+            "SELECT table_name, column_name FROM information_schema.columns "
+            f"WHERE column_default LIKE 'nextval%'{sf}"
+        ).fetchall():
+            m = result.get(tname)
+            if m:
+                m.auto_inc.add(col)

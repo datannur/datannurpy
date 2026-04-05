@@ -31,38 +31,40 @@ if TYPE_CHECKING:
 class TestMSSQL(BaseDatabaseTests, BaseSchemaTests):
     """SQL Server integration tests."""
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def mssql_url(self) -> str:
         url = os.environ.get("TEST_MSSQL_URL")
         if not url:
             pytest.skip("SQL Server not available (set TEST_MSSQL_URL)")
         return url
 
-    @pytest.fixture
-    def db(
-        self, mssql_url: str
-    ) -> Generator[tuple[ibis.BaseBackend, str, str], None, None]:
+    @pytest.fixture(scope="class")
+    def _mssql_con(self, mssql_url: str) -> Generator[ibis.BaseBackend, None, None]:
         con, _ = connect(mssql_url)
-        yield con, "mssql", "mssql"
+        yield con
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
+    def db(
+        self, _mssql_con: ibis.BaseBackend
+    ) -> Generator[tuple[ibis.BaseBackend, str, str], None, None]:
+        yield _mssql_con, "mssql", "mssql"
+
+    @pytest.fixture(scope="class")
     def db_with_employees(
-        self, mssql_url: str
+        self, _mssql_con: ibis.BaseBackend
     ) -> Generator[tuple[ibis.BaseBackend, str, str], None, None]:
         """Create employees/departments tables in SQL Server."""
-        con, _ = connect(mssql_url)
-        drop_test_tables(con, "mssql")
-        create_test_tables(con, "mssql")
-        yield con, "mssql", "mssql"
-        drop_test_tables(con, "mssql")
+        drop_test_tables(_mssql_con, "mssql")
+        create_test_tables(_mssql_con, "mssql")
+        yield _mssql_con, "mssql", "mssql"
+        drop_test_tables(_mssql_con, "mssql")
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def db_with_schemas(
-        self, mssql_url: str
+        self, _mssql_con: ibis.BaseBackend
     ) -> Generator[tuple[ibis.BaseBackend, str], None, None]:
         """Create schemas and tables in SQL Server."""
-        con, _ = connect(mssql_url)
-        drop_schema_tables(con, "mssql")
-        create_schema_tables(con, "mssql")
-        yield con, "mssql"
-        drop_schema_tables(con, "mssql")
+        drop_schema_tables(_mssql_con, "mssql")
+        create_schema_tables(_mssql_con, "mssql")
+        yield _mssql_con, "mssql"
+        drop_schema_tables(_mssql_con, "mssql")

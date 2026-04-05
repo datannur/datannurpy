@@ -46,7 +46,7 @@ from .scanner.database import (
     scan_table,
 )
 
-from .scanner.db_introspect import introspect_table
+from .scanner.db_introspect import TableMetadata, introspect_schema
 from .scanner.timeseries import (
     PERIOD_PLACEHOLDER,
     TableSeriesGroup,
@@ -279,6 +279,12 @@ def _add_database_impl(
                 for _, tname in group.tables:
                     series_table_names.add(tname)
 
+        # Batch introspection: one pass per schema instead of per table
+        if do_introspect:
+            schema_meta = introspect_schema(con, backend_name, schema_name, tables)
+        else:
+            schema_meta = {t: TableMetadata() for t in tables}
+
         # Group tables by prefix if enabled
         prefix_folder_ids: dict[str, str] = {}  # prefix → folder_id
         valid_prefixes: set[str] = set()
@@ -335,9 +341,7 @@ def _add_database_impl(
                 if existing_dataset is not None and not do_refresh:
                     catalog.dataset.update(existing_dataset.id, _seen=True)
                     if do_introspect:
-                        meta = introspect_table(
-                            con, backend_name, schema_name, table_name
-                        )
+                        meta = schema_meta[table_name]
                         update_cached_metadata(
                             catalog,
                             existing_dataset.id,
@@ -394,7 +398,7 @@ def _add_database_impl(
                     _seen=True,
                 )
                 if do_introspect:
-                    meta = introspect_table(con, backend_name, schema_name, table_name)
+                    meta = schema_meta[table_name]
                     apply_metadata_to_new_vars(table_vars, dataset, meta)
                     table_to_dataset_id[(schema_name, table_name)] = dataset_id
                     collect_fk_refs(meta.fks, dataset_id, raw_fk_refs)
@@ -432,7 +436,7 @@ def _add_database_impl(
                     # Unchanged, skip data scan but refresh structural metadata
                     catalog.dataset.update(existing_dataset.id, _seen=True)
                     catalog.modality_manager.mark_dataset_seen(existing_dataset.id)
-                    meta = introspect_table(con, backend_name, schema_name, table_name)
+                    meta = schema_meta[table_name]
                     update_cached_metadata(
                         catalog,
                         existing_dataset.id,
@@ -509,7 +513,7 @@ def _add_database_impl(
                 last_update_timestamp=effective_timestamp,
                 _seen=True,
             )
-            meta = introspect_table(con, backend_name, schema_name, table_name)
+            meta = schema_meta[table_name]
             apply_metadata_to_new_vars(table_vars, dataset, meta)
             table_to_dataset_id[(schema_name, table_name)] = dataset_id
             collect_fk_refs(meta.fks, dataset_id, raw_fk_refs)

@@ -31,38 +31,40 @@ if TYPE_CHECKING:
 class TestOracle(BaseDatabaseTests, BaseSchemaTests):
     """Oracle integration tests."""
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def oracle_url(self) -> str:
         url = os.environ.get("TEST_ORACLE_URL")
         if not url:
             pytest.skip("Oracle not available (set TEST_ORACLE_URL)")
         return url
 
-    @pytest.fixture
-    def db(
-        self, oracle_url: str
-    ) -> Generator[tuple[ibis.BaseBackend, str, str], None, None]:
+    @pytest.fixture(scope="class")
+    def _oracle_con(self, oracle_url: str) -> Generator[ibis.BaseBackend, None, None]:
         con, _ = connect(oracle_url)
-        yield con, "oracle", "oracle"
+        yield con
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
+    def db(
+        self, _oracle_con: ibis.BaseBackend
+    ) -> Generator[tuple[ibis.BaseBackend, str, str], None, None]:
+        yield _oracle_con, "oracle", "oracle"
+
+    @pytest.fixture(scope="class")
     def db_with_employees(
-        self, oracle_url: str
+        self, _oracle_con: ibis.BaseBackend
     ) -> Generator[tuple[ibis.BaseBackend, str, str], None, None]:
         """Create employees/departments tables in Oracle."""
-        con, _ = connect(oracle_url)
-        drop_test_tables(con, "oracle")
-        create_test_tables(con, "oracle")
-        yield con, "oracle", "oracle"
-        drop_test_tables(con, "oracle")
+        drop_test_tables(_oracle_con, "oracle")
+        create_test_tables(_oracle_con, "oracle")
+        yield _oracle_con, "oracle", "oracle"
+        drop_test_tables(_oracle_con, "oracle")
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def db_with_schemas(
-        self, oracle_url: str
+        self, _oracle_con: ibis.BaseBackend
     ) -> Generator[tuple[ibis.BaseBackend, str], None, None]:
         """Create schemas and tables in Oracle."""
-        con, _ = connect(oracle_url)
-        drop_schema_tables(con, "oracle")
-        create_schema_tables(con, "oracle")
-        yield con, "oracle"
-        drop_schema_tables(con, "oracle")
+        drop_schema_tables(_oracle_con, "oracle")
+        create_schema_tables(_oracle_con, "oracle")
+        yield _oracle_con, "oracle"
+        drop_schema_tables(_oracle_con, "oracle")

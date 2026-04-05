@@ -366,6 +366,11 @@ def _connect_external_backend(
         return ibis.mssql.connect(**mssql_kwargs)
     except ModuleNotFoundError as e:
         raise_driver_error(backend, e)
+    except Exception as e:
+        host = kwargs.get("host", "localhost")
+        port = kwargs.get("port")
+        target = f"{host}:{port}" if port else host
+        raise ConfigError(f"Failed to connect to {backend} ({target}): {e}") from e
 
 
 def connect(

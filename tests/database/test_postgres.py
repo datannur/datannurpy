@@ -31,38 +31,40 @@ if TYPE_CHECKING:
 class TestPostgreSQL(BaseDatabaseTests, BaseSchemaTests):
     """PostgreSQL integration tests."""
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def postgres_url(self) -> str:
         url = os.environ.get("TEST_POSTGRES_URL")
         if not url:
             pytest.skip("PostgreSQL not available (set TEST_POSTGRES_URL)")
         return url
 
-    @pytest.fixture
-    def db(
-        self, postgres_url: str
-    ) -> Generator[tuple[ibis.BaseBackend, str, str], None, None]:
+    @pytest.fixture(scope="class")
+    def _pg_con(self, postgres_url: str) -> Generator[ibis.BaseBackend, None, None]:
         con, _ = connect(postgres_url)
-        yield con, "postgres", "postgres"
+        yield con
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
+    def db(
+        self, _pg_con: ibis.BaseBackend
+    ) -> Generator[tuple[ibis.BaseBackend, str, str], None, None]:
+        yield _pg_con, "postgres", "postgres"
+
+    @pytest.fixture(scope="class")
     def db_with_employees(
-        self, postgres_url: str
+        self, _pg_con: ibis.BaseBackend
     ) -> Generator[tuple[ibis.BaseBackend, str, str], None, None]:
         """Create employees/departments tables in PostgreSQL."""
-        con, _ = connect(postgres_url)
-        drop_test_tables(con)
-        create_test_tables(con)
-        yield con, "postgres", "postgres"
-        drop_test_tables(con)
+        drop_test_tables(_pg_con)
+        create_test_tables(_pg_con)
+        yield _pg_con, "postgres", "postgres"
+        drop_test_tables(_pg_con)
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def db_with_schemas(
-        self, postgres_url: str
+        self, _pg_con: ibis.BaseBackend
     ) -> Generator[tuple[ibis.BaseBackend, str], None, None]:
         """Create schemas and tables in PostgreSQL."""
-        con, _ = connect(postgres_url)
-        drop_schema_tables(con, "postgres")
-        create_schema_tables(con, "postgres")
-        yield con, "postgres"
-        drop_schema_tables(con, "postgres")
+        drop_schema_tables(_pg_con, "postgres")
+        create_schema_tables(_pg_con, "postgres")
+        yield _pg_con, "postgres"
+        drop_schema_tables(_pg_con, "postgres")

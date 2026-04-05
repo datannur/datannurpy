@@ -5,6 +5,7 @@
 __pycache__/
 src/datannurpy/app/
 examples/output*/
+examples/test_*
 .env
 .python-version
 *.log
