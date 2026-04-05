@@ -1,4 +1,4 @@
-.PHONY: test lint typecheck check download-app coverage test-cov update-snapshots test-db test-db-up test-db-down
+.PHONY: test lint typecheck check download-app coverage test-cov update-snapshots test-db test-db-all test-db-oracle18 test-db-up test-db-down
 
 test:
 	uv run pytest
@@ -47,9 +47,13 @@ test-db: test-db-up
 	@echo "=== SQL Server ==="
 	TEST_MSSQL_URL='mssql://sa:Test@123!@localhost:11433/testdb?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes' \
 	uv run pytest tests/database/test_mssql.py -v -n 0
-	@echo "=== Oracle 18 ==="
-	TEST_ORACLE_URL=oracle://system:test@localhost:11518/XEPDB1 \
-	uv run pytest tests/database/test_oracle.py -v -n 0
 	@echo "=== Oracle 23 ==="
 	TEST_ORACLE_URL=oracle://system:test@localhost:11523/FREEPDB1 \
 	uv run pytest tests/database/test_oracle.py -v -n 0
+
+test-db-oracle18: test-db-up
+	@echo "=== Oracle 18 ==="
+	TEST_ORACLE_URL=oracle://system:test@localhost:11518/XEPDB1 \
+	uv run pytest tests/database/test_oracle.py -v -n 0
+
+test-db-all: test-db test-db-oracle18

@@ -15,6 +15,8 @@ from datannurpy.scanner._oracle import (
     _oracle_type_to_ibis,
 )
 from datannurpy.scanner.database import (
+    _connect_external_backend,
+    _encode_uri_credentials,
     _get_table,
     _tunnel_uri,
     connect,
@@ -26,6 +28,7 @@ from datannurpy.scanner.database import (
     list_tables,
     parse_connection_string,
     raise_driver_error,
+    sanitize_connection_url,
     scan_table,
 )
 
@@ -123,6 +126,41 @@ class TestParseConnectionString:
         with pytest.raises(ConfigError, match="Unsupported database scheme"):
             parse_connection_string("mongodb://user:pass@host/db")
 
+    def test_special_chars_in_password(self) -> None:
+        backend, kwargs = parse_connection_string("mysql://user:p@ss:w0rd@host/db")
+        assert backend == "mysql"
+        assert kwargs["user"] == "user"
+        assert kwargs["password"] == "p@ss:w0rd"
+        assert kwargs["host"] == "host"
+        assert kwargs["database"] == "db"
+
+    def test_at_sign_in_password(self) -> None:
+        backend, kwargs = parse_connection_string(
+            "postgresql://admin:s3cr3t@@localhost:5432/mydb"
+        )
+        assert backend == "postgres"
+        assert kwargs["user"] == "admin"
+        assert kwargs["password"] == "s3cr3t@"
+        assert kwargs["host"] == "localhost"
+        assert kwargs["port"] == "5432"
+
+
+class TestEncodeUriCredentials:
+    """Tests for _encode_uri_credentials."""
+
+    def test_no_credentials(self) -> None:
+        assert _encode_uri_credentials("mysql://host/db") == "mysql://host/db"
+
+    def test_no_scheme(self) -> None:
+        assert _encode_uri_credentials("host/db") == "host/db"
+
+    def test_user_only(self) -> None:
+        assert _encode_uri_credentials("mysql://user@host/db") == "mysql://user@host/db"
+
+    def test_encodes_special_chars(self) -> None:
+        result = _encode_uri_credentials("mysql://u:p@ss@host/db")
+        assert result == "mysql://u:p%40ss@host/db"
+
 
 class TestRaiseDriverError:
     """Tests for driver error messages."""
@@ -183,6 +221,57 @@ class TestConnect:
             assert con is mock_con
             assert backend == "oracle"
 
+    def test_connection_error_gives_config_error(self) -> None:
+        """Connection failures are wrapped in ConfigError with context."""
+        with patch(
+            "datannurpy.scanner.database._connect_external_backend",
+            side_effect=ConfigError(
+                "Failed to connect to mysql (myhost:3306): SSL connection error"
+            ),
+        ):
+            with pytest.raises(ConfigError, match="Failed to connect to mysql.*SSL"):
+                connect("mysql://user:pass@myhost:3306/mydb")
+
+
+class TestConnectExternalBackendErrors:
+    """Tests for _connect_external_backend error wrapping."""
+
+    def test_mysql_connection_error(self) -> None:
+        """MySQL connection error is wrapped in ConfigError."""
+        pytest.importorskip("MySQLdb", reason="mysqlclient not installed")
+        with patch(
+            "ibis.mysql.connect",
+            side_effect=Exception("SSL connection error: unsupported protocol"),
+        ):
+            with pytest.raises(
+                ConfigError, match=r"Failed to connect to mysql \(myhost:3306\).*SSL"
+            ):
+                _connect_external_backend("mysql", {"host": "myhost", "port": "3306"})
+
+    def test_postgres_connection_error(self) -> None:
+        """Postgres connection error is wrapped in ConfigError."""
+        pytest.importorskip("psycopg2", reason="psycopg2 not installed")
+        with patch(
+            "ibis.postgres.connect",
+            side_effect=Exception("could not connect to server: Connection refused"),
+        ):
+            with pytest.raises(
+                ConfigError, match=r"Failed to connect to postgres \(dbhost\)"
+            ):
+                _connect_external_backend("postgres", {"host": "dbhost"})
+
+    def test_driver_not_found_not_wrapped(self) -> None:
+        """ModuleNotFoundError still raises ConfigError via raise_driver_error."""
+        pytest.importorskip("MySQLdb", reason="mysqlclient not installed")
+        with patch(
+            "ibis.mysql.connect",
+            side_effect=ModuleNotFoundError("No module named 'MySQLdb'"),
+        ):
+            with pytest.raises(ConfigError, match="MySQL requires"):
+                _connect_external_backend(
+                    "mysql", {"host": "localhost", "port": "3306"}
+                )
+
 
 class TestTunnelUri:
     """Tests for _tunnel_uri helper."""
@@ -202,6 +291,30 @@ class TestTunnelUri:
     def test_no_credentials(self) -> None:
         uri = "postgresql://dbhost:5432/mydb"
         assert _tunnel_uri(uri, 7777) == "postgresql://localhost:7777/mydb"
+
+
+class TestSanitizeConnectionUrl:
+    """Tests for sanitize_connection_url helper."""
+
+    def test_strips_credentials_and_query(self) -> None:
+        uri = "mysql://user:pass@host:3306/mydb?ssl_mode=DISABLED"
+        assert sanitize_connection_url(uri) == "mysql://host:3306/mydb"
+
+    def test_strips_credentials_no_query(self) -> None:
+        uri = "postgresql://user:pass@host:5432/mydb"
+        assert sanitize_connection_url(uri) == "postgresql://host:5432/mydb"
+
+    def test_no_credentials_no_query_passthrough(self) -> None:
+        uri = "memory:///path/to/file.gpkg"
+        assert sanitize_connection_url(uri) == uri
+
+    def test_query_only(self) -> None:
+        uri = "mysql://host:3306/mydb?ssl_mode=DISABLED"
+        assert sanitize_connection_url(uri) == "mysql://host:3306/mydb"
+
+    def test_strips_credentials_no_port(self) -> None:
+        uri = "mysql://user:pass@host/mydb"
+        assert sanitize_connection_url(uri) == "mysql://host/mydb"
 
 
 class TestOpenSshTunnel:

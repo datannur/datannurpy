@@ -31,38 +31,40 @@ if TYPE_CHECKING:
 class TestMySQL(BaseDatabaseTests, BaseSchemaTests):
     """MySQL integration tests."""
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def mysql_url(self) -> str:
         url = os.environ.get("TEST_MYSQL_URL")
         if not url:
             pytest.skip("MySQL not available (set TEST_MYSQL_URL)")
         return url
 
-    @pytest.fixture
-    def db(
-        self, mysql_url: str
-    ) -> Generator[tuple[ibis.BaseBackend, str, str], None, None]:
+    @pytest.fixture(scope="class")
+    def _mysql_con(self, mysql_url: str) -> Generator[ibis.BaseBackend, None, None]:
         con, _ = connect(mysql_url)
-        yield con, "mysql", "mysql"
+        yield con
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
+    def db(
+        self, _mysql_con: ibis.BaseBackend
+    ) -> Generator[tuple[ibis.BaseBackend, str, str], None, None]:
+        yield _mysql_con, "mysql", "mysql"
+
+    @pytest.fixture(scope="class")
     def db_with_employees(
-        self, mysql_url: str
+        self, _mysql_con: ibis.BaseBackend
     ) -> Generator[tuple[ibis.BaseBackend, str, str], None, None]:
         """Create employees/departments tables in MySQL."""
-        con, _ = connect(mysql_url)
-        drop_test_tables(con)
-        create_test_tables(con)
-        yield con, "mysql", "mysql"
-        drop_test_tables(con)
+        drop_test_tables(_mysql_con)
+        create_test_tables(_mysql_con)
+        yield _mysql_con, "mysql", "mysql"
+        drop_test_tables(_mysql_con)
 
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def db_with_schemas(
-        self, mysql_url: str
+        self, _mysql_con: ibis.BaseBackend
     ) -> Generator[tuple[ibis.BaseBackend, str], None, None]:
         """Create schemas and tables in MySQL."""
-        con, _ = connect(mysql_url)
-        drop_schema_tables(con, "mysql")
-        create_schema_tables(con, "mysql")
-        yield con, "mysql"
-        drop_schema_tables(con, "mysql")
+        drop_schema_tables(_mysql_con, "mysql")
+        create_schema_tables(_mysql_con, "mysql")
+        yield _mysql_con, "mysql"
+        drop_schema_tables(_mysql_con, "mysql")

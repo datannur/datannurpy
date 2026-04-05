@@ -305,6 +305,11 @@ def ibis_type_to_str(dtype: dt.DataType) -> str:
     return "unknown"
 
 
+def _cast_float(expr: Any, *, use_multiply: bool) -> Any:
+    """Cast expression to float64, using multiplication for old MySQL compat."""
+    return expr * 1.0 if use_multiply else expr.cast("float64")
+
+
 def build_variables(
     table: ibis.Table,
     *,
@@ -379,6 +384,13 @@ def build_variables(
         streaming_source = full_table if full_table is not None else table
         streaming_nb_rows = full_nb_rows if full_nb_rows is not None else nb_rows
 
+        # MySQL < 8.0.17 doesn't support CAST(... AS DOUBLE)
+        try:
+            backend_name = streaming_source._find_backend().name
+        except Exception:  # pragma: no cover
+            backend_name = ""
+        mul = backend_name == "mysql"
+
         # Build streaming aggregation expressions (count, min, max, mean, std)
         streaming_aggs: list[Any] = []
         for col in cols_for_stats:
@@ -388,13 +400,13 @@ def build_variables(
             kind = col_extra_exprs.get(col)
             expr: Any = None
             if kind == "numeric":
-                expr = streaming_source[col].cast("float64")
+                expr = _cast_float(streaming_source[col], use_multiply=mul)
             elif kind == "string":
                 str_col: Any = streaming_source[col]
-                expr = str_col.length().cast("float64")
+                expr = _cast_float(str_col.length(), use_multiply=mul)
             elif kind == "date":
                 date_col: Any = streaming_source[col]
-                expr = date_col.epoch_seconds().cast("float64")
+                expr = _cast_float(date_col.epoch_seconds(), use_multiply=mul)
             if expr is not None:
                 streaming_aggs.append(expr.min().name(f"{col}__min"))
                 streaming_aggs.append(expr.max().name(f"{col}__max"))

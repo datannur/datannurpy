@@ -289,7 +289,7 @@ class TestDuckDBIntrospection:
                 _fc(),
                 _fc(),
                 _fc(),
-                _FakeCursor([(["a", "b"],), (["email"],)]),
+                _FakeCursor([("t", ["a", "b"]), ("t", ["email"])]),
                 _fc(),
             ]
         )
@@ -361,10 +361,10 @@ class TestExceptionHandling:
         con = _make_con(
             [
                 _RaiseCursor(),  # pk+unique fails
-                _FakeCursor([("DEPT_ID", "HR", "DEPARTMENTS", "ID")]),  # fk
+                _FakeCursor([("T", "DEPT_ID", "HR", "DEPARTMENTS", "ID")]),  # fk
                 _fc(),
                 _fc(),  # comments
-                _FakeCursor([("COL_A", "N", None)]),  # not_null+auto_inc
+                _FakeCursor([("T", "COL_A", "N", None)]),  # not_null+auto_inc
                 _fc(),  # indexed
             ]
         )
@@ -404,14 +404,20 @@ class TestOracleMock:
     def test_with_schema(self) -> None:
         con = _make_con(
             [
-                _FakeCursor([("P", "ID", 1), ("U", "EMAIL", 1)]),  # pk+unique
-                _FakeCursor([("DEPT_ID", "HR", "DEPARTMENTS", "ID")]),  # fk
-                _FakeCursor([("Table desc",)]),  # table comment
-                _FakeCursor([("COL_A", "Column A"), ("COL_B", None)]),  # col comments
+                _FakeCursor([("T", "P", "ID", 1), ("T", "U", "EMAIL", 1)]),  # pk+unique
+                _FakeCursor([("T", "DEPT_ID", "HR", "DEPARTMENTS", "ID")]),  # fk
+                _FakeCursor([("T", "Table desc")]),  # table comment
                 _FakeCursor(
-                    [("ID", "N", "ID"), ("NAME", "N", None), ("EMAIL", "Y", None)]
+                    [("T", "COL_A", "Column A"), ("T", "COL_B", None)]
+                ),  # col comments
+                _FakeCursor(
+                    [
+                        ("T", "ID", "N", "ID"),
+                        ("T", "NAME", "N", None),
+                        ("T", "EMAIL", "Y", None),
+                    ]
                 ),  # not_null+auto_inc
-                _FakeCursor([("COL_A",), ("COL_B",)]),  # indexed
+                _FakeCursor([("T", "COL_A"), ("T", "COL_B")]),  # indexed
             ]
         )
         meta = introspect_table(con, "oracle", "HR", "t")
@@ -434,12 +440,14 @@ class TestOracleMock:
     def test_without_schema(self) -> None:
         con = _make_con(
             [
-                _FakeCursor([("P", "COL_A", 1), ("P", "COL_B", 2)]),  # pk+unique
+                _FakeCursor(
+                    [("T", "P", "COL_A", 1), ("T", "P", "COL_B", 2)]
+                ),  # pk+unique
                 _fc(),  # fk
-                _FakeCursor([("Desc",)]),  # table comment
-                _FakeCursor([("COL", "c")]),  # col comments
-                _FakeCursor([("COL", "N", None)]),  # not_null+auto_inc
-                _FakeCursor([("IX",)]),  # indexed
+                _FakeCursor([("T", "Desc")]),  # table comment
+                _FakeCursor([("T", "COL", "c")]),  # col comments
+                _FakeCursor([("T", "COL", "N", None)]),  # not_null+auto_inc
+                _FakeCursor([("T", "IX")]),  # indexed
             ]
         )
         meta = introspect_table(con, "oracle", None, "t")
@@ -453,7 +461,7 @@ class TestOracleMock:
             [
                 _fc(),  # pk+unique
                 _fc(),  # fk
-                _FakeCursor([(None,)]),  # table comment = None
+                _FakeCursor([("T", None)]),  # table comment = None
                 _fc(),  # col comments
                 _fc(),  # not_null+auto_inc
                 _fc(),  # indexed
@@ -472,14 +480,14 @@ class TestPostgresMock:
     def test_full(self) -> None:
         con = _make_con(
             [
-                _FakeCursor([("id", 1)]),  # pk
-                _FakeCursor([("dept_id", "public", "depts", "id")]),  # fk
-                _FakeCursor([("Table X",)]),  # pg table comment
-                _FakeCursor([("col_a", "desc A")]),  # pg col comments
-                _FakeCursor([("id",), ("name",)]),  # not_null
-                _FakeCursor([("email",)]),  # unique
-                _FakeCursor([("col_a",)]),  # indexed
-                _FakeCursor([("id",)]),  # auto_inc
+                _FakeCursor([("t", "id", 1)]),  # pk
+                _FakeCursor([("t", "dept_id", "public", "depts", "id")]),  # fk
+                _FakeCursor([("t", "Table X")]),  # pg table comment
+                _FakeCursor([("t", "col_a", "desc A")]),  # pg col comments
+                _FakeCursor([("t", "id"), ("t", "name")]),  # not_null
+                _FakeCursor([("t", "email")]),  # unique
+                _FakeCursor([("t", "col_a")]),  # indexed
+                _FakeCursor([("t", "id")]),  # auto_inc
             ]
         )
         meta = introspect_table(con, "postgres", "public", "t")
@@ -502,14 +510,14 @@ class TestMySQLMock:
     def test_full(self) -> None:
         con = _make_con(
             [
-                _FakeCursor([("id", 1)]),  # pk
-                _FakeCursor([("fk_col", "mydb", "ref", "pk_col")]),  # fk
-                _FakeCursor([("My table",)]),  # mysql table comment
-                _FakeCursor([("col_a", "desc A")]),  # mysql col comments
-                _FakeCursor([("id",)]),  # not_null
-                _FakeCursor([("code",)]),  # unique
-                _FakeCursor([("col_a",)]),  # indexed
-                _FakeCursor([("id",)]),  # auto_inc
+                _FakeCursor([("t", "id", 1)]),  # pk
+                _FakeCursor([("t", "fk_col", "mydb", "ref", "pk_col")]),  # fk
+                _FakeCursor([("t", "My table")]),  # mysql table comment
+                _FakeCursor([("t", "col_a", "desc A")]),  # mysql col comments
+                _FakeCursor([("t", "id")]),  # not_null
+                _FakeCursor([("t", "code")]),  # unique
+                _FakeCursor([("t", "col_a")]),  # indexed
+                _FakeCursor([("t", "id")]),  # auto_inc
             ]
         )
         meta = introspect_table(con, "mysql", "mydb", "t")
@@ -530,14 +538,16 @@ class TestMSSQLMock:
     def test_full(self) -> None:
         con = _make_con(
             [
-                _FakeCursor([("id", 1)]),  # pk
-                _FakeCursor([("fk_col", "dbo", "ref", "pk_col")]),  # fk
-                _FakeCursor([("Desc",)]),  # mssql table comment
-                _FakeCursor([("col_a", "A"), ("col_b", None)]),  # mssql col comments
-                _FakeCursor([("id",)]),  # not_null
-                _FakeCursor([("email",)]),  # unique
-                _FakeCursor([("col_a",)]),  # indexed
-                _FakeCursor([("id",)]),  # auto_inc
+                _FakeCursor([("t", "id", 1)]),  # pk
+                _FakeCursor([("t", "fk_col", "dbo", "ref", "pk_col")]),  # fk
+                _FakeCursor([("t", "Desc")]),  # mssql table comment
+                _FakeCursor(
+                    [("t", "col_a", "A"), ("t", "col_b", None)]
+                ),  # mssql col comments
+                _FakeCursor([("t", "id")]),  # not_null
+                _FakeCursor([("t", "email")]),  # unique
+                _FakeCursor([("t", "col_a")]),  # indexed
+                _FakeCursor([("t", "id")]),  # auto_inc
             ]
         )
         meta = introspect_table(con, "mssql", "dbo", "t")
@@ -557,13 +567,13 @@ class TestDuckDBMock:
         # DuckDB: 7 cursors (no indexed raw_sql call)
         con = _make_con(
             [
-                _FakeCursor([("id", 1)]),  # pk
-                _FakeCursor([("fk_col", "main", "ref", "pk_col")]),  # fk
-                _FakeCursor([("Table comment",)]),  # duckdb table comment
-                _FakeCursor([("col_a", "desc")]),  # duckdb col comments
-                _FakeCursor([("id",)]),  # not_null
-                _FakeCursor([(["email"],)]),  # unique (duckdb_constraints)
-                _FakeCursor([("id",)]),  # auto_inc
+                _FakeCursor([("t", "id", 1)]),  # pk
+                _FakeCursor([("t", "fk_col", "main", "ref", "pk_col")]),  # fk
+                _FakeCursor([("t", "Table comment")]),  # duckdb table comment
+                _FakeCursor([("t", "col_a", "desc")]),  # duckdb col comments
+                _FakeCursor([("t", "id")]),  # not_null
+                _FakeCursor([("t", ["email"])]),  # unique (duckdb_constraints)
+                _FakeCursor([("t", "id")]),  # auto_inc
             ]
         )
         meta = introspect_table(con, "duckdb", None, "t")
@@ -589,6 +599,84 @@ class TestUnknownBackend:
         meta = introspect_table(con, "unknown_db", None, "t")
         assert meta.indexed == set()
         assert meta.auto_inc == set()
+
+
+class TestBatchIgnoresUnknownTables:
+    """Batch queries may return rows for tables not requested — they must be skipped."""
+
+    def test_oracle(self) -> None:
+        con = _make_con(
+            [
+                _FakeCursor([("T", "P", "ID", 1), ("X", "P", "Z", 1)]),
+                _FakeCursor([("X", "COL", "HR", "REF", "ID")]),
+                _FakeCursor([("X", "c")]),
+                _FakeCursor([("X", "C", "d")]),
+                _FakeCursor([("X", "C", "N", None)]),
+                _FakeCursor([("X", "C")]),
+            ]
+        )
+        meta = introspect_table(con, "oracle", "HR", "t")
+        assert meta.pk_map == {"id": 1}
+        assert meta.fks == []
+
+    def test_postgres(self) -> None:
+        con = _make_con(
+            [
+                _FakeCursor([("x", "z", 1)]),
+                _FakeCursor([("x", "c", "public", "ref", "id")]),
+                _FakeCursor([("x", "d")]),
+                _FakeCursor([("x", "c", "d")]),
+                _FakeCursor([("x", "c")]),
+                _FakeCursor([("x", "c")]),
+                _FakeCursor([("x", "c")]),
+                _FakeCursor([("x", "c")]),
+            ]
+        )
+        assert introspect_table(con, "postgres", "public", "t") == TableMetadata()
+
+    def test_mysql(self) -> None:
+        con = _make_con(
+            [
+                _FakeCursor([("x", "z", 1)]),
+                _FakeCursor([("x", "c", "db", "ref", "id")]),
+                _FakeCursor([("x", "d")]),
+                _FakeCursor([("x", "c", "d")]),
+                _FakeCursor([("x", "c")]),
+                _FakeCursor([("x", "c")]),
+                _FakeCursor([("x", "c")]),
+                _FakeCursor([("x", "c")]),
+            ]
+        )
+        assert introspect_table(con, "mysql", "mydb", "t") == TableMetadata()
+
+    def test_mssql(self) -> None:
+        con = _make_con(
+            [
+                _FakeCursor([("x", "z", 1)]),
+                _FakeCursor([("x", "c", "dbo", "ref", "id")]),
+                _FakeCursor([("x", "d")]),
+                _FakeCursor([("x", "c", "d")]),
+                _FakeCursor([("x", "c")]),
+                _FakeCursor([("x", "c")]),
+                _FakeCursor([("x", "c")]),
+                _FakeCursor([("x", "c")]),
+            ]
+        )
+        assert introspect_table(con, "mssql", "dbo", "t") == TableMetadata()
+
+    def test_duckdb(self) -> None:
+        con = _make_con(
+            [
+                _FakeCursor([("x", "z", 1)]),
+                _FakeCursor([("x", "c", "main", "ref", "id")]),
+                _FakeCursor([("x", "d")]),
+                _FakeCursor([("x", "c", "d")]),
+                _FakeCursor([("x", "c")]),
+                _FakeCursor([("x", ["c"])]),
+                _FakeCursor([("x", "c")]),
+            ]
+        )
+        assert introspect_table(con, "duckdb", None, "t") == TableMetadata()
 
 
 # ===========================================================================
@@ -780,8 +868,8 @@ class TestCatalogIncrementalIntrospection:
     ) -> None:
         """Empty introspection result should not break the scan."""
         with patch(
-            "datannurpy.add_database.introspect_table",
-            return_value=TableMetadata(),
+            "datannurpy.add_database.introspect_schema",
+            side_effect=lambda _c, _b, _s, tables: {t: TableMetadata() for t in tables},
         ):
             catalog = Catalog()
             catalog.add_database(

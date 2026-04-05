@@ -7,10 +7,11 @@ import hashlib
 import select
 import socket
 import threading
+import warnings
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NoReturn
-from urllib.parse import parse_qs, urlparse, urlunparse
+from urllib.parse import parse_qs, quote, unquote, urlparse, urlunparse
 
 import ibis
 import paramiko
@@ -139,16 +140,45 @@ def close_connection(con: ibis.BaseBackend) -> None:
                 pass  # Already closed (Oracle, etc.)
 
 
+def _encode_uri_credentials(uri: str) -> str:
+    """URL-encode credentials in a database URI so urlparse handles special chars."""
+    scheme_end = uri.find("://")
+    if scheme_end == -1:
+        return uri
+    rest = uri[scheme_end + 3 :]
+    at_idx = rest.rfind("@")
+    if at_idx == -1:
+        return uri
+    userinfo = rest[:at_idx]
+    colon_idx = userinfo.find(":")
+    if colon_idx == -1:
+        return uri
+    user = quote(userinfo[:colon_idx], safe="")
+    password = quote(userinfo[colon_idx + 1 :], safe="")
+    return f"{uri[:scheme_end]}://{user}:{password}@{rest[at_idx + 1 :]}"
+
+
 def _tunnel_uri(uri: str, local_port: int) -> str:
     """Replace host:port in a database URI with localhost:local_port."""
-    parsed = urlparse(uri)
+    parsed = urlparse(_encode_uri_credentials(uri))
     userinfo = ""
     if parsed.username and parsed.password:
-        userinfo = f"{parsed.username}:{parsed.password}@"
+        userinfo = f"{unquote(parsed.username)}:{unquote(parsed.password)}@"
     elif parsed.username:
-        userinfo = f"{parsed.username}@"
+        userinfo = f"{unquote(parsed.username)}@"
     new_netloc = f"{userinfo}localhost:{local_port}"
     return urlunparse(parsed._replace(netloc=new_netloc))
+
+
+def sanitize_connection_url(uri: str) -> str:
+    """Strip credentials and query params from a database URI for safe storage."""
+    parsed = urlparse(_encode_uri_credentials(uri))
+    if not parsed.username and not parsed.query:
+        return uri
+    netloc = parsed.hostname or ""
+    if parsed.port:
+        netloc = f"{netloc}:{parsed.port}"
+    return urlunparse(parsed._replace(netloc=netloc, query="", fragment=""))
 
 
 @contextmanager
@@ -257,7 +287,7 @@ def raise_driver_error(backend: str, original_error: Exception) -> NoReturn:
 
 def parse_connection_string(connection: str) -> tuple[str, dict[str, str]]:
     """Parse a connection string into (backend_name, kwargs)."""
-    parsed = urlparse(connection)
+    parsed = urlparse(_encode_uri_credentials(connection))
     scheme = parsed.scheme.lower()
 
     backend = SCHEME_TO_BACKEND.get(scheme)
@@ -280,9 +310,9 @@ def parse_connection_string(connection: str) -> tuple[str, dict[str, str]]:
         if parsed.port:
             kwargs["port"] = str(parsed.port)
         if parsed.username:
-            kwargs["user"] = parsed.username
+            kwargs["user"] = unquote(parsed.username)
         if parsed.password:
-            kwargs["password"] = parsed.password
+            kwargs["password"] = unquote(parsed.password)
         if parsed.path and parsed.path != "/":
             kwargs["database"] = parsed.path.lstrip("/")
 
@@ -320,13 +350,25 @@ def _connect_external_backend(
                 database=kwargs.get("database"),
             )
         if backend == "mysql":
-            return ibis.mysql.connect(
-                host=kwargs.get("host", "localhost"),
-                port=int(kwargs.get("port", 3306)),
-                user=kwargs.get("user"),
-                password=kwargs.get("password"),
-                database=kwargs.get("database"),
-            )
+            known_mysql = {"host", "port", "user", "password", "database"}
+            mysql_kwargs: dict[str, str | int] = {
+                "host": kwargs.get("host", "localhost"),
+                "port": int(kwargs.get("port", 3306)),
+            }
+            if kwargs.get("user"):
+                mysql_kwargs["user"] = kwargs["user"]
+            if kwargs.get("password"):
+                mysql_kwargs["password"] = kwargs["password"]
+            if kwargs.get("database"):
+                mysql_kwargs["database"] = kwargs["database"]
+            for key, value in kwargs.items():
+                if key not in known_mysql:
+                    mysql_kwargs[key] = value
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore", message="Unable to set session timezone"
+                )
+                return ibis.mysql.connect(**mysql_kwargs)
         if backend == "oracle":
             if oracle_client_path:
                 _init_oracle_client(oracle_client_path, raise_driver_error)
@@ -366,6 +408,11 @@ def _connect_external_backend(
         return ibis.mssql.connect(**mssql_kwargs)
     except ModuleNotFoundError as e:
         raise_driver_error(backend, e)
+    except Exception as e:
+        host = kwargs.get("host", "localhost")
+        port = kwargs.get("port")
+        target = f"{host}:{port}" if port else host
+        raise ConfigError(f"Failed to connect to {backend} ({target}): {e}") from e
 
 
 def connect(
