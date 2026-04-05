@@ -27,6 +27,7 @@ from datannurpy.scanner.database import (
     list_tables,
     parse_connection_string,
     raise_driver_error,
+    sanitize_connection_url,
     scan_table,
 )
 
@@ -251,6 +252,30 @@ class TestTunnelUri:
     def test_no_credentials(self) -> None:
         uri = "postgresql://dbhost:5432/mydb"
         assert _tunnel_uri(uri, 7777) == "postgresql://localhost:7777/mydb"
+
+
+class TestSanitizeConnectionUrl:
+    """Tests for sanitize_connection_url helper."""
+
+    def test_strips_credentials_and_query(self) -> None:
+        uri = "mysql://user:pass@host:3306/mydb?ssl_mode=DISABLED"
+        assert sanitize_connection_url(uri) == "mysql://host:3306/mydb"
+
+    def test_strips_credentials_no_query(self) -> None:
+        uri = "postgresql://user:pass@host:5432/mydb"
+        assert sanitize_connection_url(uri) == "postgresql://host:5432/mydb"
+
+    def test_no_credentials_no_query_passthrough(self) -> None:
+        uri = "memory:///path/to/file.gpkg"
+        assert sanitize_connection_url(uri) == uri
+
+    def test_query_only(self) -> None:
+        uri = "mysql://host:3306/mydb?ssl_mode=DISABLED"
+        assert sanitize_connection_url(uri) == "mysql://host:3306/mydb"
+
+    def test_strips_credentials_no_port(self) -> None:
+        uri = "mysql://user:pass@host/mydb"
+        assert sanitize_connection_url(uri) == "mysql://host/mydb"
 
 
 class TestOpenSshTunnel:

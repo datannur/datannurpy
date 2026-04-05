@@ -151,6 +151,17 @@ def _tunnel_uri(uri: str, local_port: int) -> str:
     return urlunparse(parsed._replace(netloc=new_netloc))
 
 
+def sanitize_connection_url(uri: str) -> str:
+    """Strip credentials and query params from a database URI for safe storage."""
+    parsed = urlparse(uri)
+    if not parsed.username and not parsed.query:
+        return uri
+    netloc = parsed.hostname or ""
+    if parsed.port:
+        netloc = f"{netloc}:{parsed.port}"
+    return urlunparse(parsed._replace(netloc=netloc, query="", fragment=""))
+
+
 @contextmanager
 def open_ssh_tunnel(
     ssh_config: dict[str, Any],
@@ -321,8 +332,7 @@ def _connect_external_backend(
             )
         if backend == "mysql":
             known_mysql = {"host", "port", "user", "password", "database"}
-            bool_mysql = {"ssl_disabled", "ssl_verify_cert", "ssl_verify_identity"}
-            mysql_kwargs: dict[str, str | int | bool] = {
+            mysql_kwargs: dict[str, str | int] = {
                 "host": kwargs.get("host", "localhost"),
                 "port": int(kwargs.get("port", 3306)),
             }
@@ -334,11 +344,7 @@ def _connect_external_backend(
                 mysql_kwargs["database"] = kwargs["database"]
             for key, value in kwargs.items():
                 if key not in known_mysql:
-                    mysql_kwargs[key] = (
-                        value.lower() not in ("0", "false", "no")
-                        if key in bool_mysql
-                        else value
-                    )
+                    mysql_kwargs[key] = value
             return ibis.mysql.connect(**mysql_kwargs)
         if backend == "oracle":
             if oracle_client_path:

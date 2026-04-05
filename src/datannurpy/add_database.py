@@ -43,6 +43,7 @@ from .scanner.database import (
     is_remote_database_file,
     list_tables,
     open_ssh_tunnel,
+    sanitize_connection_url,
     scan_table,
 )
 
@@ -195,7 +196,8 @@ def _add_database_impl(
 
     # Determine database name for folder
     if remote_path:
-        db_name = PurePosixPath(remote_path).stem
+        # Strip query string before extracting stem (e.g. ?ssl_mode=DISABLED)
+        db_name = PurePosixPath(urlparse(remote_path).path).stem
     else:
         db_name = get_database_name(connection, con, backend_name)
 
@@ -218,7 +220,7 @@ def _add_database_impl(
 
     # Set data_path: use remote_path if remote, otherwise local path
     if remote_path:
-        folder.data_path = remote_path
+        folder.data_path = sanitize_connection_url(remote_path)
         folder.last_update_date = None  # Can't get mtime from remote
     else:
         folder.data_path = (

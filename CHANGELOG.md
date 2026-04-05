@@ -4,6 +4,9 @@
 
 - perf: batch database introspection — one set of system catalog queries per schema instead of per table
 - fix: MySQL connection now forwards extra URL parameters (SSL options, charset, etc.) to the driver
+- fix: MySQL `CAST(... AS DOUBLE)` replaced with implicit float conversion for MySQL 5.x compatibility
+- fix: database folder name and ID no longer include URL query parameters (e.g. `?ssl_mode=DISABLED`)
+- fix: credentials and query parameters stripped from `data_path` in exported database folders
 - fix: clearer error message when database connection fails
 
 ## 0.14.0 (2026-04-04)
