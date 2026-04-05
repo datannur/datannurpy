@@ -116,6 +116,17 @@ add:
     uri: oracle://${DB_USER}:${DB_PASSWORD}@${db_host}:1521/ORCL
 ```
 
+SSH tunnel support in YAML:
+
+```yaml
+add:
+  - type: database
+    uri: mysql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/${DB_NAME}
+    ssh_tunnel:
+      host: ${SSH_HOST}
+      user: ${SSH_USER}
+```
+
 Priority: system env vars > `env_file` / `.env` > `env:` section.
 
 Run with:
@@ -288,7 +299,37 @@ catalog.add_database(
     schema=["public", "sales", "hr"],
     infer_stats=True,
 )
+
+# SSH tunnel (for databases behind a firewall)
+catalog.add_database(
+    "mysql://user:pass@dbhost/mydb",
+    ssh_tunnel={"host": "ssh.example.com", "user": "sshuser"},
+)
+# Also supports: port, password, key_file
+catalog.add_database(
+    "postgresql://user:pass@dbhost/mydb",
+    ssh_tunnel={
+        "host": "bastion.example.com",
+        "port": 2222,
+        "user": "admin",
+        "key_file": "~/.ssh/id_rsa",
+    },
+)
 ```
+
+**Database metadata enrichment:**
+
+When `depth="schema"` or `"full"` (default), `add_database` automatically extracts structural metadata from system catalogs:
+
+| Metadata                | Target field          | Backends           |
+| ----------------------- | --------------------- | ------------------ |
+| Primary keys            | `Variable.key`        | All 6              |
+| Foreign keys            | `Variable.fk_var_id`  | All 6              |
+| Table/column comments   | `description`         | All except SQLite  |
+| NOT NULL, UNIQUE, INDEX | Auto tags (`db---*`)  | All 6              |
+| Auto-increment          | Auto tag              | All 6              |
+
+This metadata is always refreshed, even when table data is unchanged (cache hit).
 
 ## Sampling
 
@@ -362,6 +403,8 @@ source---employees_csv---department,"Department code","hr"
 - Existing entities are updated (manual values override auto-scanned values)
 - New entities are created
 - List fields (`tag_ids`, `doc_ids`, etc.) are merged
+
+**Ordering:** `add_metadata` should be called **after** `add_folder`, `add_dataset`, and `add_database` so manual values take precedence over auto-scanned metadata. In YAML configuration, this is enforced automatically regardless of declaration order. In Python, the caller controls the execution order.
 
 **Helper functions** for building IDs in preprocessing scripts:
 
@@ -455,7 +498,7 @@ When `time_series=True` (default), files with temporal patterns in their names a
 ```
 data/
 ├── enquete_2020.csv    ─┐
-├── enquete_2021.csv     ├─→ Single dataset "enquete" with nb_files=3
+├── enquete_2021.csv     ├─→ Single dataset "enquete" with nb_resources=3
 ├── enquete_2022.csv    ─┘
 └── reference.csv       ─→ Separate dataset "reference"
 ```
@@ -464,7 +507,7 @@ Detected patterns: year (`2024`), quarter (`2024Q1`, `2024T2`), month (`2024-03`
 
 The resulting dataset includes:
 
-- `nb_files`: number of files in the series
+- `nb_resources`: number of resources in the series
 - `start_date` / `end_date`: temporal coverage
 - Variables track their own `start_date` / `end_date` based on presence across periods
 

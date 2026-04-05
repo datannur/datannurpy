@@ -64,6 +64,10 @@ class TestIbisTypeToStr:
         assert ibis_type_to_str(dt.Point()) == "geometry"
         assert ibis_type_to_str(dt.Polygon()) == "geometry"
 
+    def test_binary(self):
+        """Binary should map to 'binary'."""
+        assert ibis_type_to_str(dt.Binary()) == "binary"
+
     def test_unknown_geometry(self):
         """Unknown types with geometry raw_type should map to 'geometry'."""
         mock_raw = MagicMock(**{"__str__.return_value": "point"})
@@ -73,6 +77,36 @@ class TestIbisTypeToStr:
         """Unknown types without geometry raw_type should stay 'unknown'."""
         mock_raw = MagicMock(**{"__str__.return_value": "sometype"})
         assert ibis_type_to_str(dt.Unknown(raw_type=mock_raw)) == "unknown"
+
+    def test_unknown_double(self):
+        """Unknown types with raw_type 'double' should map to 'float'."""
+        assert ibis_type_to_str(dt.Unknown(raw_type="double")) == "float"
+
+    def test_unknown_double_with_precision(self):
+        """Unknown types with raw_type 'double(17,6)' should map to 'float'."""
+        assert ibis_type_to_str(dt.Unknown(raw_type="double(17,6)")) == "float"
+
+    def test_unknown_udouble(self):
+        """Unknown types with raw_type 'UDOUBLE(17, 6)' should map to 'float'."""
+        assert ibis_type_to_str(dt.Unknown(raw_type="UDOUBLE(17, 6)")) == "float"
+
+    def test_unknown_float(self):
+        """Unknown types with raw_type 'float' should map to 'float'."""
+        assert ibis_type_to_str(dt.Unknown(raw_type="float")) == "float"
+
+    def test_unknown_integer_raw_types(self):
+        """Unknown types with integer raw_types should map to 'integer'."""
+        for raw in ("tinyint", "smallint", "mediumint", "int", "bigint"):
+            assert ibis_type_to_str(dt.Unknown(raw_type=raw)) == "integer"
+
+    def test_unknown_unsigned_integer_raw_types(self):
+        """Unsigned integer raw_types should map to 'integer'."""
+        for raw in ("utinyint", "usmallint", "umediumint", "uint", "ubigint"):
+            assert ibis_type_to_str(dt.Unknown(raw_type=raw)) == "integer"
+
+    def test_unmapped_type_returns_unknown(self):
+        """Non-Unknown unmapped types should return 'unknown'."""
+        assert ibis_type_to_str(dt.Array(value_type=dt.String())) == "unknown"
 
 
 class TestBuildVariables:
@@ -290,6 +324,49 @@ class TestBuildVariables:
         assert var_by_name["val"].nb_distinct == 5
         # boolean column has no extra stats
         assert var_by_name["flag"].min is None
+
+    def test_freq_union_fallback_on_error(self):
+        """build_variables falls back to pa.concat_tables when ibis.union fails."""
+        from unittest.mock import patch
+
+        table = ibis.memtable({"cat": ["a", "b", "a"], "num": [1, 2, 3]})
+
+        def failing_union(*args, **kwargs):
+            raise Exception("Illegal mix of collations for operation 'UNION'")
+
+        with patch("datannurpy.scanner.utils.ibis.union", side_effect=failing_union):
+            variables, freq_table = build_variables(
+                table,
+                nb_rows=3,
+                dataset_id="test",
+                infer_stats=True,
+                freq_threshold=10,
+            )
+
+        assert freq_table is not None
+        assert len(freq_table) == 5  # 2 cat values + 3 num values
+
+    def test_unknown_mappable_raw_type_not_skipped(self):
+        """Unknown columns with mappable raw_type should not be skipped for stats."""
+        table = ibis.memtable({"val": [1.5, 2.5, 3.5]})
+        # Patch schema to report val as Unknown(raw_type="double")
+        fake_schema = ibis.Schema.from_tuples([("val", dt.Unknown(raw_type="double"))])
+        original_schema = type(table).schema
+
+        def patched_schema(self):  # type: ignore[no-untyped-def]
+            if self is table:
+                return fake_schema
+            return original_schema(self)
+
+        from unittest.mock import patch
+
+        with patch.object(type(table), "schema", patched_schema):
+            variables, _ = build_variables(
+                table, nb_rows=3, dataset_id="test", infer_stats=True
+            )
+        v = variables[0]
+        assert v.type == "float"
+        assert v.nb_distinct is not None
 
 
 class TestGetDirDataSize:

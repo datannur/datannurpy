@@ -83,11 +83,15 @@ def run_config(path: str | Path) -> Catalog:
     catalog_params = {k: v for k, v in config.items() if k not in RESERVED_KEYS}
     if "app_path" in catalog_params:
         catalog_params["app_path"] = _resolve_path(catalog_params["app_path"], base_dir)
+    if "log_file" in catalog_params:
+        catalog_params["log_file"] = _resolve_path(catalog_params["log_file"], base_dir)
 
     catalog = Catalog(**catalog_params)
 
-    # Process add entries
-    for item in config.get("add", []):
+    # Process add entries (metadata always last to override auto-scanned values)
+    entries = config.get("add", [])
+    entries.sort(key=lambda e: e.get("type") == "metadata")
+    for item in entries:
         item = dict(item)
         item_type = item.pop("type")
         if "folder" in item:

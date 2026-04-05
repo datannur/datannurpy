@@ -4,11 +4,16 @@ from __future__ import annotations
 
 import fnmatch
 import hashlib
+import select
+import socket
+import threading
+from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, NoReturn
-from urllib.parse import parse_qs, urlparse
+from typing import TYPE_CHECKING, Any, NoReturn
+from urllib.parse import parse_qs, urlparse, urlunparse
 
 import ibis
+import paramiko
 import pyarrow as pa
 
 from ..errors import ConfigError
@@ -32,6 +37,14 @@ SCHEME_TO_BACKEND: dict[str, str] = {
     "mysql": "mysql",
     "oracle": "oracle",
     "mssql": "mssql",
+}
+
+# Default ports per backend (used for SSH tunnel)
+DEFAULT_PORTS: dict[str, int] = {
+    "postgres": 5432,
+    "mysql": 3306,
+    "oracle": 1521,
+    "mssql": 1433,
 }
 
 # System schemas to exclude when scanning (per backend)
@@ -126,6 +139,97 @@ def close_connection(con: ibis.BaseBackend) -> None:
                 pass  # Already closed (Oracle, etc.)
 
 
+def _tunnel_uri(uri: str, local_port: int) -> str:
+    """Replace host:port in a database URI with localhost:local_port."""
+    parsed = urlparse(uri)
+    userinfo = ""
+    if parsed.username and parsed.password:
+        userinfo = f"{parsed.username}:{parsed.password}@"
+    elif parsed.username:
+        userinfo = f"{parsed.username}@"
+    new_netloc = f"{userinfo}localhost:{local_port}"
+    return urlunparse(parsed._replace(netloc=new_netloc))
+
+
+@contextmanager
+def open_ssh_tunnel(
+    ssh_config: dict[str, Any],
+    connection: str,
+) -> Any:
+    """Open an SSH tunnel to a database and yield the tunneled URI."""
+    backend, kwargs = parse_connection_string(connection)
+    remote_host = kwargs.get("host", "localhost")
+    remote_port = int(kwargs.get("port", DEFAULT_PORTS.get(backend, 3306)))
+
+    ssh_host = ssh_config["host"]
+    ssh_port = int(ssh_config.get("port", 22))
+
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    connect_kwargs: dict[str, Any] = {
+        "hostname": ssh_host,
+        "port": ssh_port,
+    }
+    if "user" in ssh_config:
+        connect_kwargs["username"] = ssh_config["user"]
+    if "password" in ssh_config:
+        connect_kwargs["password"] = ssh_config["password"]
+    if "key_file" in ssh_config:
+        connect_kwargs["key_filename"] = ssh_config["key_file"]
+
+    client.connect(**connect_kwargs)
+    transport = client.get_transport()
+    assert transport is not None
+
+    # Bind a local socket to get a free port
+    local_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    local_sock.bind(("127.0.0.1", 0))
+    local_sock.listen(1)
+    local_port = local_sock.getsockname()[1]
+
+    stop_event = threading.Event()
+
+    def _forward() -> None:  # pragma: no cover  # pragma: no cover
+        while not stop_event.is_set():
+            readable, _, _ = select.select([local_sock], [], [], 0.5)
+            if local_sock in readable:
+                conn, _ = local_sock.accept()
+                channel = transport.open_channel(
+                    "direct-tcpip",
+                    (remote_host, remote_port),
+                    conn.getpeername(),
+                )
+                if channel is None:
+                    conn.close()
+                    continue
+                while True:
+                    r, _, _ = select.select([conn, channel], [], [], 1.0)
+                    if conn in r:
+                        data = conn.recv(4096)
+                        if not data:
+                            break
+                        channel.sendall(data)
+                    if channel in r:
+                        data = channel.recv(4096)
+                        if not data:
+                            break
+                        conn.sendall(data)
+                channel.close()
+                conn.close()
+
+    thread = threading.Thread(target=_forward, daemon=True)
+    thread.start()
+
+    try:
+        yield _tunnel_uri(connection, local_port)
+    finally:
+        stop_event.set()
+        thread.join(timeout=2)
+        local_sock.close()
+        client.close()
+
+
 def raise_driver_error(backend: str, original_error: Exception) -> NoReturn:
     """Raise clear error message for missing database drivers."""
     messages = {
@@ -189,6 +293,14 @@ def parse_connection_string(connection: str) -> tuple[str, dict[str, str]]:
                 kwargs[key] = values[0]
 
     return backend, kwargs
+
+
+def is_remote_database_file(connection: str) -> bool:
+    """Check if connection is a remote file URL (sftp://, s3://, etc.), not a database URL."""
+    if "://" not in connection:
+        return False
+    scheme = urlparse(connection).scheme.lower()
+    return scheme not in SCHEME_TO_BACKEND and scheme not in ("file", "duckdb")
 
 
 def _connect_external_backend(

@@ -720,24 +720,24 @@ class TestRemoteDatabase:
     """Test add_database with remote SQLite/GeoPackage files."""
 
     def test_is_remote_database_file(self) -> None:
-        """Test _is_remote_database_file correctly identifies remote file URLs."""
-        from datannurpy.add_database import _is_remote_database_file
+        """Test is_remote_database_file correctly identifies remote file URLs."""
+        from datannurpy.scanner.database import is_remote_database_file
 
         # Database URLs are NOT remote files
-        assert not _is_remote_database_file("sqlite:///test.db")
-        assert not _is_remote_database_file("postgresql://localhost/db")
-        assert not _is_remote_database_file("mysql://user:pass@host/db")
-        assert not _is_remote_database_file("duckdb://md:mydb")
+        assert not is_remote_database_file("sqlite:///test.db")
+        assert not is_remote_database_file("postgresql://localhost/db")
+        assert not is_remote_database_file("mysql://user:pass@host/db")
+        assert not is_remote_database_file("duckdb://md:mydb")
 
         # Local paths are NOT remote files
-        assert not _is_remote_database_file("/path/to/file.db")
-        assert not _is_remote_database_file("file:///path/to/file.db")
+        assert not is_remote_database_file("/path/to/file.db")
+        assert not is_remote_database_file("file:///path/to/file.db")
 
         # Remote file URLs ARE remote files
-        assert _is_remote_database_file("sftp://server/path/file.db")
-        assert _is_remote_database_file("s3://bucket/path/file.db")
-        assert _is_remote_database_file("gcs://bucket/path/file.gpkg")
-        assert _is_remote_database_file("az://container/path/file.db")
+        assert is_remote_database_file("sftp://server/path/file.db")
+        assert is_remote_database_file("s3://bucket/path/file.db")
+        assert is_remote_database_file("gcs://bucket/path/file.gpkg")
+        assert is_remote_database_file("az://container/path/file.db")
 
     def test_add_database_remote_sqlite(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str, tmp_path

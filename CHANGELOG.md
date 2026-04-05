@@ -1,5 +1,25 @@
 # datannurpy
 
+## 0.14.0 (2026-04-04)
+
+- add: `add_database` automatically extracts structural metadata (primary keys, foreign keys, table/column comments, constraint tags) from system catalogs when `depth="schema"` or `"full"`
+- add: `ssh_tunnel` parameter on `add_database` for databases behind firewalls (paramiko-based)
+- add: `time_series` parameter on `add_database` — groups temporal tables (e.g. `stats_2023`, `stats_2024`) into a single dataset with period tracking per variable
+- add: time series prefix grouping now uses effective table list — series datasets are placed in the correct prefix folder instead of year-specific subfolders
+- fix: `ibis_type_to_str` now maps `dt.Binary` to `"binary"` — MySQL `BINARY(n)`, `VARBINARY`, `BLOB`, `LONGBLOB` were reported as `"unknown"`
+- fix: frequency table `ibis.union` fallback to `pa.concat_tables` for MySQL mixed collations
+- fix: modality value/freq IDs now use hash-based keys instead of `sanitize_id` — eliminates ID collisions for values with special characters (JSON, URLs with `$@~`)
+- fix: YAML config `log_file` path now resolved relative to config file directory
+- fix: `ibis_type_to_str` now resolves `dt.Unknown` columns with known `raw_type` (e.g. MySQL `DOUBLE` → `"float"`, `TINYINT`/`MEDIUMINT` → `"integer"`) — previously reported as `"unknown"` with no stats
+
+## 0.13.3 (2026-04-03)
+
+- fix: YAML config now enforces `add_metadata` execution after all other `add` entries, ensuring manual metadata always overrides auto-scanned values
+
+## 0.13.2 (2026-04-02)
+
+- add: skip non-dataset Excel files (reports, pivots, merged cells) via header validation
+
 ## 0.13.1 (2026-04-02)
 
 - fix: time series period detection now works at group level — folder dates (e.g. `old_2024_08/data_2018.csv`) no longer override file dates, and constant dates in identifiers are ignored

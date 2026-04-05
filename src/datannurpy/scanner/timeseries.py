@@ -440,6 +440,75 @@ def group_time_series(
     return time_series, singles
 
 
+@dataclass
+class TableSeriesGroup:
+    """A group of database tables forming a time series."""
+
+    normalized_name: str  # e.g., "stats_---PERIOD---"
+    tables: list[tuple[str, str]]  # [(period_str, table_name), ...] sorted
+
+
+def group_table_time_series(
+    table_names: list[str],
+) -> tuple[list[TableSeriesGroup], list[str]]:
+    """Group database table names by temporal pattern.
+
+    Returns (series_groups, single_tables).
+    """
+    raw_groups: dict[str, list[tuple[str, list[PeriodInfo]]]] = defaultdict(list)
+    no_period: list[str] = []
+
+    for name in table_names:
+        matches = _extract_period_from_segment(name)
+        if not matches:
+            no_period.append(name)
+            continue
+
+        # Build normalized name (replace temporal parts with placeholder)
+        normalized = name
+        for original, _ in sorted(matches, key=lambda m: name.find(m[0]), reverse=True):
+            idx = normalized.find(original)
+            normalized = (
+                normalized[:idx]
+                + PERIOD_PLACEHOLDER
+                + normalized[idx + len(original) :]
+            )
+
+        # Skip if entire name is consumed by temporal pattern (e.g. "t1", "t2")
+        base = normalized.replace(PERIOD_PLACEHOLDER, "").strip("_- ")
+        if not base:
+            no_period.append(name)
+            continue
+
+        raw_groups[normalized].append((name, [info for _, info in matches]))
+
+    series: list[TableSeriesGroup] = []
+    singles: list[str] = list(no_period)
+
+    for normalized, table_list in raw_groups.items():
+        if len(table_list) < 2:
+            singles.append(table_list[0][0])
+            continue
+
+        # Pre-compute combined periods for sort + display
+        enriched: list[tuple[str, str, tuple[int, int, int]]] = []
+        for table_name, periods in table_list:
+            combined = _combine_periods(periods)
+            sort_key = combined.to_sort_key() if combined else (0, 0, 0)
+            period_str = combined.to_string() if combined else table_name
+            enriched.append((period_str, table_name, sort_key))
+        enriched.sort(key=lambda x: x[2])
+
+        series.append(
+            TableSeriesGroup(
+                normalized_name=normalized,
+                tables=[(p, t) for p, t, _ in enriched],
+            )
+        )
+
+    return series, singles
+
+
 def get_series_folder_parts(normalized_path: str) -> list[str]:
     """Get non-temporal parent folder parts from normalized path."""
     parent_parts = PurePosixPath(normalized_path).parent.parts

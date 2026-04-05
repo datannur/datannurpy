@@ -93,9 +93,10 @@ class ModalityManager:
 
         # Create values
         for val in sorted(values):
+            value_id = build_value_id(modality_id, val)
             self._catalog.value.add(
                 Value(
-                    id=build_value_id(modality_id, val),
+                    id=value_id,
                     modality_id=modality_id,
                     value=val,
                 )
@@ -144,8 +145,9 @@ class ModalityManager:
             old_var_id: str = row["variable_id"]
             new_var_id = var_id_mapping.get(old_var_id, old_var_id)
             value: str | None = row["value"]
+            freq_id = build_freq_id(new_var_id, value)
             freq = Freq(
-                id=build_freq_id(new_var_id, value),
+                id=freq_id,
                 variable_id=new_var_id,
                 value=value,
                 freq=int(row["freq"]),
