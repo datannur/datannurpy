@@ -320,13 +320,26 @@ def _connect_external_backend(
                 database=kwargs.get("database"),
             )
         if backend == "mysql":
-            return ibis.mysql.connect(
-                host=kwargs.get("host", "localhost"),
-                port=int(kwargs.get("port", 3306)),
-                user=kwargs.get("user"),
-                password=kwargs.get("password"),
-                database=kwargs.get("database"),
-            )
+            known_mysql = {"host", "port", "user", "password", "database"}
+            bool_mysql = {"ssl_disabled", "ssl_verify_cert", "ssl_verify_identity"}
+            mysql_kwargs: dict[str, str | int | bool] = {
+                "host": kwargs.get("host", "localhost"),
+                "port": int(kwargs.get("port", 3306)),
+            }
+            if kwargs.get("user"):
+                mysql_kwargs["user"] = kwargs["user"]
+            if kwargs.get("password"):
+                mysql_kwargs["password"] = kwargs["password"]
+            if kwargs.get("database"):
+                mysql_kwargs["database"] = kwargs["database"]
+            for key, value in kwargs.items():
+                if key not in known_mysql:
+                    mysql_kwargs[key] = (
+                        value.lower() not in ("0", "false", "no")
+                        if key in bool_mysql
+                        else value
+                    )
+            return ibis.mysql.connect(**mysql_kwargs)
         if backend == "oracle":
             if oracle_client_path:
                 _init_oracle_client(oracle_client_path, raise_driver_error)

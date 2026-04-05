@@ -3,6 +3,7 @@
 ## 0.14.1 (2026-04-05)
 
 - perf: batch database introspection — one set of system catalog queries per schema instead of per table
+- fix: MySQL connection now forwards extra URL parameters (SSL options, charset, etc.) to the driver
 - fix: clearer error message when database connection fails
 
 ## 0.14.0 (2026-04-04)
