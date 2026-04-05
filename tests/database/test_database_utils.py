@@ -299,7 +299,7 @@ class TestAddDatabaseSshTunnel:
         from datannurpy.add_database import add_database
 
         catalog = Catalog(quiet=True, refresh=True)
-        ssh_config = {"host": "ssh.example.com", "user": "u"}
+        ssh_config: dict[str, str | int] = {"host": "ssh.example.com", "user": "u"}
         with (
             patch("datannurpy.add_database.open_ssh_tunnel") as mock_tunnel,
             patch("datannurpy.add_database._add_database_impl") as mock_impl,

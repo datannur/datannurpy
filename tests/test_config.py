@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -672,7 +672,7 @@ add:
     def test_database_ssh_tunnel(self, tmp_path: Path):
         """ssh_tunnel config is passed through to add_database."""
         config_file = tmp_path / "catalog.yml"
-        config_file.write_text(f"""
+        config_file.write_text("""
 quiet: true
 refresh: true
 

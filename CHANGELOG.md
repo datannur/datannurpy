@@ -8,8 +8,9 @@
 - add: time series prefix grouping now uses effective table list — series datasets are placed in the correct prefix folder instead of year-specific subfolders
 - fix: `ibis_type_to_str` now maps `dt.Binary` to `"binary"` — MySQL `BINARY(n)`, `VARBINARY`, `BLOB`, `LONGBLOB` were reported as `"unknown"`
 - fix: frequency table `ibis.union` fallback to `pa.concat_tables` for MySQL mixed collations
-- fix: modality ID collision detection with `log_warn` for duplicate value/freq IDs
+- fix: modality value/freq IDs now use hash-based keys instead of `sanitize_id` — eliminates ID collisions for values with special characters (JSON, URLs with `$@~`)
 - fix: YAML config `log_file` path now resolved relative to config file directory
+- fix: `ibis_type_to_str` now resolves `dt.Unknown` columns with known `raw_type` (e.g. MySQL `DOUBLE` → `"float"`, `TINYINT`/`MEDIUMINT` → `"integer"`) — previously reported as `"unknown"` with no stats
 
 ## 0.13.3 (2026-04-03)
 

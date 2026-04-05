@@ -252,6 +252,23 @@ _GEOMETRY_KEYWORDS = {
     "geometry",
 }
 
+# Mapping from Unknown raw_type to our type strings
+_UNKNOWN_RAW_TYPE_MAP: dict[str, str] = {
+    "double": "float",
+    "udouble": "float",
+    "float": "float",
+    "tinyint": "integer",
+    "utinyint": "integer",
+    "smallint": "integer",
+    "usmallint": "integer",
+    "mediumint": "integer",
+    "umediumint": "integer",
+    "int": "integer",
+    "uint": "integer",
+    "bigint": "integer",
+    "ubigint": "integer",
+}
+
 
 def ibis_type_to_str(dtype: dt.DataType) -> str:
     """Convert Ibis dtype to string."""
@@ -279,11 +296,12 @@ def ibis_type_to_str(dtype: dt.DataType) -> str:
         return "binary"
     if isinstance(dtype, dt.Null):
         return "null"
-    if (
-        isinstance(dtype, dt.Unknown)
-        and str(dtype.raw_type).lower() in _GEOMETRY_KEYWORDS
-    ):
-        return "geometry"
+    if isinstance(dtype, dt.Unknown):
+        raw = str(dtype.raw_type).split("(")[0].lower()
+        if raw in _GEOMETRY_KEYWORDS:
+            return "geometry"
+        if raw in _UNKNOWN_RAW_TYPE_MAP:
+            return _UNKNOWN_RAW_TYPE_MAP[raw]
     return "unknown"
 
 
@@ -305,9 +323,14 @@ def build_variables(
 
     # Auto-detect columns that can't be aggregated or cast to string
     # (Binary for BLOB, Unknown for geometry types like POINT/POLYGON, GeoSpatial for GEOMETRY)
+    # Skip Unknown columns only if their raw_type is not a known mappable type.
     for col_name, col_type in schema.items():
-        if isinstance(col_type, (dt.Binary, dt.Unknown, dt.GeoSpatial)):
+        if isinstance(col_type, (dt.Binary, dt.GeoSpatial)):
             skip_cols.add(col_name)
+        elif isinstance(col_type, dt.Unknown):
+            raw = str(col_type.raw_type).split("(")[0].lower()
+            if raw not in _UNKNOWN_RAW_TYPE_MAP:
+                skip_cols.add(col_name)
 
     # Determine which columns support min/max/mean/std
     _NUMERIC_TYPES = (
