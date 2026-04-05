@@ -681,7 +681,7 @@ def _scan_table_series(
         delivery_format=backend_name,
         data_path=data_path,
         nb_row=nb_row,
-        nb_files=len(tables),
+        nb_resources=len(tables),
         start_date=first_period,
         end_date=last_period,
         sample_size=actual_sample_size,

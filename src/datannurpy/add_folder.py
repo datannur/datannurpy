@@ -223,7 +223,7 @@ def add_folder(
                 normalized = info.series_normalized_path
                 dataset_id = build_series_dataset_id(normalized, prefix)
                 dataset_name = build_series_dataset_name(normalized, periods)
-                nb_files = len(info.series_files)
+                nb_resources = len(info.series_files)
                 start_date = periods[0]
                 end_date = periods[-1]
                 folder_id = _build_series_folder_id(normalized, prefix)
@@ -231,7 +231,7 @@ def add_folder(
                 dataset_id, dataset_name = build_dataset_id_name(
                     info.path, root, prefix
                 )
-                nb_files = None
+                nb_resources = None
                 start_date = None
                 end_date = None
                 folder_id = get_folder_id(info.path, root, prefix, subdir_ids)
@@ -244,7 +244,7 @@ def add_folder(
                 last_update_date=get_mtime_iso(info.path, fs=fs),
                 last_update_timestamp=info.mtime,
                 delivery_format=info.format,
-                nb_files=nb_files,
+                nb_resources=nb_resources,
                 data_size=(
                     get_dir_data_size(info.path, fs=fs)
                     if info.format in _DIR_FORMATS
@@ -465,7 +465,7 @@ def _scan_time_series(
         delivery_format=info.format,
         description=result.description,
         nb_row=result.nb_row,
-        nb_files=len(series_files),
+        nb_resources=len(series_files),
         data_size=get_data_size(last_path, fs=fs),
         start_date=first_period,
         end_date=last_period,

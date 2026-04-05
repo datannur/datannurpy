@@ -443,7 +443,7 @@ class TestAddFolderTimeSeries:
         datasets = catalog.dataset.all()
         assert len(datasets) == 1
         ds = datasets[0]
-        assert ds.nb_files == 3
+        assert ds.nb_resources == 3
         assert ds.start_date == "2020"
         assert ds.end_date == "2023"
 
@@ -458,7 +458,7 @@ class TestAddFolderTimeSeries:
 
         datasets = catalog.dataset.all()
         assert len(datasets) == 1
-        assert datasets[0].nb_files == 3
+        assert datasets[0].nb_resources == 3
         assert datasets[0].start_date == "2023Q1"
         assert datasets[0].end_date == "2024Q1"
 
@@ -518,7 +518,7 @@ class TestAddFolderTimeSeries:
         datasets = catalog.dataset.all()
         assert len(datasets) == 3  # One per file
         for ds in datasets:
-            assert ds.nb_files is None
+            assert ds.nb_resources is None
 
     def test_variables_union(self):
         """All variables from all files are in the union."""
@@ -547,7 +547,7 @@ class TestAddFolderTimeSeries:
 
         datasets = catalog.dataset.all()
         assert len(datasets) == 1
-        assert datasets[0].nb_files == 3
+        assert datasets[0].nb_resources == 3
         assert datasets[0].start_date == "2020"
         assert datasets[0].end_date == "2023"
         # No variables in structure mode
@@ -745,7 +745,7 @@ class TestTimeSeriesRescan:
         catalog.add_folder(ts_dir, Folder(id="test", name="Test"), quiet=True)
         datasets = catalog.dataset.all()
         assert len(datasets) == 1
-        assert datasets[0].nb_files == 2
+        assert datasets[0].nb_resources == 2
 
         # Modify a file
         time.sleep(0.1)  # Ensure mtime changes
@@ -789,7 +789,7 @@ class TestTimeSeriesRescan:
         # Should have one grouped dataset
         datasets = catalog.dataset.all()
         assert len(datasets) == 1
-        assert datasets[0].nb_files == 2
+        assert datasets[0].nb_resources == 2
         # No child folders should be created from file paths
         # (only the scanned folder and system folders like _modalities exist)
         folder_ids = {f.id for f in catalog.folder.all()}

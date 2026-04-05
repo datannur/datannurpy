@@ -132,10 +132,10 @@ class TestDatabaseTimeSeries:
         # stats_2022, stats_2023, stats_2024 → 1 series + users → 2 datasets
         assert len(datasets) == 2
         assert "users" in datasets
-        series = [d for d in datasets.values() if d.nb_files is not None]
+        series = [d for d in datasets.values() if d.nb_resources is not None]
         assert len(series) == 1
         ds = series[0]
-        assert ds.nb_files == 3
+        assert ds.nb_resources == 3
         assert ds.start_date == "2022"
         assert ds.end_date == "2024"
 
@@ -147,7 +147,7 @@ class TestDatabaseTimeSeries:
             Folder(id="db", name="DB"),
             group_by_prefix=False,
         )
-        series = [d for d in catalog.dataset.all() if d.nb_files is not None]
+        series = [d for d in catalog.dataset.all() if d.nb_resources is not None]
         assert len(series) == 1
         vars_by_name = {
             v.name: v for v in catalog.variable.all() if v.dataset_id == series[0].id
@@ -181,9 +181,9 @@ class TestDatabaseTimeSeries:
             depth="structure",
             group_by_prefix=False,
         )
-        series = [d for d in catalog.dataset.all() if d.nb_files is not None]
+        series = [d for d in catalog.dataset.all() if d.nb_resources is not None]
         assert len(series) == 1
-        assert series[0].nb_files == 3
+        assert series[0].nb_resources == 3
         assert series[0].nb_row is None  # Not scanned
         assert catalog.variable.count == 0
 
@@ -196,9 +196,9 @@ class TestDatabaseTimeSeries:
             depth="schema",
             group_by_prefix=False,
         )
-        series = [d for d in catalog.dataset.all() if d.nb_files is not None]
+        series = [d for d in catalog.dataset.all() if d.nb_resources is not None]
         assert len(series) == 1
-        assert series[0].nb_files == 3
+        assert series[0].nb_resources == 3
         # Variables should be present (from schema scan)
         series_vars = [
             v for v in catalog.variable.all() if v.dataset_id == series[0].id
@@ -235,7 +235,7 @@ class TestDatabaseTimeSeries:
         datasets = {d.name: d for d in catalog.dataset.all()}
         # 5 datasets: 2 series + 2 singles + other_table
         assert len(datasets) == 5
-        series = {d.name: d for d in datasets.values() if d.nb_files is not None}
+        series = {d.name: d for d in datasets.values() if d.nb_resources is not None}
         assert len(series) == 2
 
         # Both series should be in the "wp_archive" prefix folder
@@ -264,7 +264,7 @@ class TestDatabaseTimeSeries:
             group_by_prefix=False,
             refresh=True,
         )
-        series = [d for d in catalog.dataset.all() if d.nb_files is not None]
+        series = [d for d in catalog.dataset.all() if d.nb_resources is not None]
         assert len(series) == 1
 
     def test_time_series_full_scan_error(self, tmp_path: Path) -> None:
@@ -300,7 +300,7 @@ class TestDatabaseTimeSeries:
                 group_by_prefix=False,
             )
         # Series dataset should not be created (error during full scan)
-        series = [d for d in catalog.dataset.all() if d.nb_files is not None]
+        series = [d for d in catalog.dataset.all() if d.nb_resources is not None]
         assert len(series) == 0
 
     def test_time_series_schema_scan_error(self, tmp_path: Path) -> None:
@@ -327,7 +327,7 @@ class TestDatabaseTimeSeries:
                 depth="schema",
                 group_by_prefix=False,
             )
-        series = [d for d in catalog.dataset.all() if d.nb_files is not None]
+        series = [d for d in catalog.dataset.all() if d.nb_resources is not None]
         assert len(series) == 0
 
     def test_time_series_schema_scan_partial_error(self, tmp_path: Path) -> None:
@@ -363,7 +363,7 @@ class TestDatabaseTimeSeries:
                 group_by_prefix=False,
             )
         # Series should still be created (partial schema data)
-        series = [d for d in catalog.dataset.all() if d.nb_files is not None]
+        series = [d for d in catalog.dataset.all() if d.nb_resources is not None]
         assert len(series) == 1
 
 

@@ -498,7 +498,7 @@ When `time_series=True` (default), files with temporal patterns in their names a
 ```
 data/
 ├── enquete_2020.csv    ─┐
-├── enquete_2021.csv     ├─→ Single dataset "enquete" with nb_files=3
+├── enquete_2021.csv     ├─→ Single dataset "enquete" with nb_resources=3
 ├── enquete_2022.csv    ─┘
 └── reference.csv       ─→ Separate dataset "reference"
 ```
@@ -507,7 +507,7 @@ Detected patterns: year (`2024`), quarter (`2024Q1`, `2024T2`), month (`2024-03`
 
 The resulting dataset includes:
 
-- `nb_files`: number of files in the series
+- `nb_resources`: number of resources in the series
 - `start_date` / `end_date`: temporal coverage
 - Variables track their own `start_date` / `end_date` based on presence across periods
 
