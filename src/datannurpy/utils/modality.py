@@ -15,7 +15,6 @@ from .ids import (
     compute_modality_hash,
     make_id,
 )
-from .log import log_warn
 from ..schema import Folder, Freq, Modality, Value, Variable
 
 if TYPE_CHECKING:
@@ -92,17 +91,9 @@ class ModalityManager:
         )
         self._catalog.modality.add(modality)
 
-        # Create values (skip if sanitized ID collides)
-        seen_ids: set[str] = set()
+        # Create values
         for val in sorted(values):
             value_id = build_value_id(modality_id, val)
-            if value_id in seen_ids:
-                log_warn(
-                    f"Value '{val}' skipped (ID collision: {value_id})",
-                    self._catalog.quiet,
-                )
-                continue
-            seen_ids.add(value_id)
             self._catalog.value.add(
                 Value(
                     id=value_id,
@@ -150,19 +141,11 @@ class ModalityManager:
     ) -> None:
         """Convert freq table to Freq objects and add to catalog."""
         freqs: list[Freq] = []
-        seen_ids: set[str] = set()
         for row in freq_table.to_pylist():
             old_var_id: str = row["variable_id"]
             new_var_id = var_id_mapping.get(old_var_id, old_var_id)
             value: str | None = row["value"]
             freq_id = build_freq_id(new_var_id, value)
-            if freq_id in seen_ids:
-                log_warn(
-                    f"Freq '{value}' skipped (ID collision: {freq_id})",
-                    self._catalog.quiet,
-                )
-                continue
-            seen_ids.add(freq_id)
             freq = Freq(
                 id=freq_id,
                 variable_id=new_var_id,

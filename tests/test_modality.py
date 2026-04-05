@@ -180,16 +180,14 @@ class TestModalityGeneration:
 
         assert id1 == id2
 
-    def test_sanitized_id_collision_skips_duplicate(self, capsys):
-        """Values that sanitize to same ID should log warning and skip."""
+    def test_hash_based_ids_no_collision(self):
+        """Values with similar sanitized forms get distinct hash-based IDs."""
         catalog = Catalog(quiet=False)
-        # ".idle" and "_idle" both sanitize to "_idle"
+        # ".idle" and "_idle" would collide with sanitize_id but not with hashing
         modality_id = catalog.modality_manager.get_or_create({".idle", "_idle"})
         assert modality_id is not None
-        # Only one value stored (first in sorted order wins)
-        assert len(catalog.value.all()) == 1
-        captured = capsys.readouterr()
-        assert "skipped" in captured.err.lower()
+        # Both values stored (hash-based IDs are unique)
+        assert len(catalog.value.all()) == 2
 
 
 class TestModalityExport:
@@ -361,12 +359,12 @@ class TestStoreFreqTable:
         catalog.modality_manager.store_freq_table(empty_table, {})
         assert len(catalog.freq.all()) == 0
 
-    def test_freq_sanitized_id_collision_skips_duplicate(self, capsys):
-        """Freq values that sanitize to same ID should log warning and skip."""
+    def test_freq_hash_based_ids_no_collision(self):
+        """Freq values with similar sanitized forms get distinct hash-based IDs."""
         import pyarrow as pa
 
         catalog = Catalog(quiet=False)
-        # ".idle" and "_idle" both sanitize to "_idle"
+        # ".idle" and "_idle" would collide with sanitize_id but not with hashing
         table = pa.table(
             {
                 "variable_id": ["var1", "var1"],
@@ -375,6 +373,4 @@ class TestStoreFreqTable:
             }
         )
         catalog.modality_manager.store_freq_table(table, {"var1": "v1"})
-        assert len(catalog.freq.all()) == 1
-        captured = capsys.readouterr()
-        assert "skipped" in captured.err.lower()
+        assert len(catalog.freq.all()) == 2

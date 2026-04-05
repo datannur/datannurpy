@@ -76,16 +76,21 @@ def build_modality_name(values: set[str]) -> str:
     return name
 
 
+def _hash_value(value: str | None) -> str:
+    """Hash a raw value into a short deterministic ID-safe string."""
+    if value is None:
+        return "_null_"
+    return hashlib.md5(value.encode()).hexdigest()[:16]
+
+
 def build_value_id(modality_id: str, value: str | None) -> str:
     """Build value ID from modality and value."""
-    safe_value = sanitize_id(value) if value is not None else "_null_"
-    return make_id(modality_id, safe_value)
+    return make_id(modality_id, _hash_value(value))
 
 
 def build_freq_id(variable_id: str, value: str | None) -> str:
     """Build freq ID from variable and value."""
-    safe_value = sanitize_id(value) if value is not None else "_null_"
-    return make_id(variable_id, safe_value)
+    return make_id(variable_id, _hash_value(value))
 
 
 def compute_runtime_ids(df: pl.DataFrame, cols: list[str]) -> pl.DataFrame:
