@@ -62,11 +62,14 @@ def run_config(path: str | Path) -> Catalog:
         raise ConfigError(f"{config_path.name} must be a YAML mapping")
 
     # Load .env: explicit env_file path takes priority, fallback to .env next to YAML
+    # interpolate=False so that $ in passwords is kept literal
     env_file = config.pop("env_file", None)
     if env_file:
-        load_dotenv(_resolve_path(env_file, base_dir), override=False)
+        load_dotenv(
+            _resolve_path(env_file, base_dir), override=False, interpolate=False
+        )
     else:
-        load_dotenv(base_dir / ".env", override=False)
+        load_dotenv(base_dir / ".env", override=False, interpolate=False)
 
     # Inject env: vars (lowest priority — never overrides system or .env vars)
     env_vars = config.pop("env", None)

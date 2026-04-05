@@ -16,6 +16,7 @@ from datannurpy.scanner._oracle import (
 )
 from datannurpy.scanner.database import (
     _connect_external_backend,
+    _encode_uri_credentials,
     _get_table,
     _tunnel_uri,
     connect,
@@ -125,6 +126,41 @@ class TestParseConnectionString:
         with pytest.raises(ConfigError, match="Unsupported database scheme"):
             parse_connection_string("mongodb://user:pass@host/db")
 
+    def test_special_chars_in_password(self) -> None:
+        backend, kwargs = parse_connection_string("mysql://user:p@ss:w0rd@host/db")
+        assert backend == "mysql"
+        assert kwargs["user"] == "user"
+        assert kwargs["password"] == "p@ss:w0rd"
+        assert kwargs["host"] == "host"
+        assert kwargs["database"] == "db"
+
+    def test_at_sign_in_password(self) -> None:
+        backend, kwargs = parse_connection_string(
+            "postgresql://admin:s3cr3t@@localhost:5432/mydb"
+        )
+        assert backend == "postgres"
+        assert kwargs["user"] == "admin"
+        assert kwargs["password"] == "s3cr3t@"
+        assert kwargs["host"] == "localhost"
+        assert kwargs["port"] == "5432"
+
+
+class TestEncodeUriCredentials:
+    """Tests for _encode_uri_credentials."""
+
+    def test_no_credentials(self) -> None:
+        assert _encode_uri_credentials("mysql://host/db") == "mysql://host/db"
+
+    def test_no_scheme(self) -> None:
+        assert _encode_uri_credentials("host/db") == "host/db"
+
+    def test_user_only(self) -> None:
+        assert _encode_uri_credentials("mysql://user@host/db") == "mysql://user@host/db"
+
+    def test_encodes_special_chars(self) -> None:
+        result = _encode_uri_credentials("mysql://u:p@ss@host/db")
+        assert result == "mysql://u:p%40ss@host/db"
+
 
 class TestRaiseDriverError:
     """Tests for driver error messages."""
@@ -202,6 +238,7 @@ class TestConnectExternalBackendErrors:
 
     def test_mysql_connection_error(self) -> None:
         """MySQL connection error is wrapped in ConfigError."""
+        pytest.importorskip("MySQLdb", reason="mysqlclient not installed")
         with patch(
             "ibis.mysql.connect",
             side_effect=Exception("SSL connection error: unsupported protocol"),
@@ -213,6 +250,7 @@ class TestConnectExternalBackendErrors:
 
     def test_postgres_connection_error(self) -> None:
         """Postgres connection error is wrapped in ConfigError."""
+        pytest.importorskip("psycopg2", reason="psycopg2 not installed")
         with patch(
             "ibis.postgres.connect",
             side_effect=Exception("could not connect to server: Connection refused"),
@@ -224,6 +262,7 @@ class TestConnectExternalBackendErrors:
 
     def test_driver_not_found_not_wrapped(self) -> None:
         """ModuleNotFoundError still raises ConfigError via raise_driver_error."""
+        pytest.importorskip("MySQLdb", reason="mysqlclient not installed")
         with patch(
             "ibis.mysql.connect",
             side_effect=ModuleNotFoundError("No module named 'MySQLdb'"),

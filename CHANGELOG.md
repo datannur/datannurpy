@@ -9,6 +9,7 @@
 - fix: credentials and query parameters stripped from `data_path` in exported database folders
 - fix: MySQL PK introspection no longer leaks across tables (constraint_name is always `PRIMARY`)
 - fix: clearer error message when database connection fails
+- fix: database credentials with special characters (`@`, `#`, `$`, etc.) now handled correctly across connection, tunnel, and folder naming
 
 ## 0.14.0 (2026-04-04)
 

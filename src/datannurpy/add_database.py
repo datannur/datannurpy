@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 
 import ibis
 
+from .scanner.database import _encode_uri_credentials
 from .utils import (
     build_variable_ids,
     get_prefix_folders,
@@ -197,7 +198,9 @@ def _add_database_impl(
     # Determine database name for folder
     if remote_path:
         # Strip query string before extracting stem (e.g. ?ssl_mode=DISABLED)
-        db_name = PurePosixPath(urlparse(remote_path).path).stem
+        db_name = PurePosixPath(
+            urlparse(_encode_uri_credentials(remote_path)).path
+        ).stem
     else:
         db_name = get_database_name(connection, con, backend_name)
 
