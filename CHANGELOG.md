@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.14.1 (2026-04-05)
+
+- perf: batch database introspection — one set of system catalog queries per schema instead of per table
+- fix: clearer error message when database connection fails
+
 ## 0.14.0 (2026-04-04)
 
 - add: `add_database` automatically extracts structural metadata (primary keys, foreign keys, table/column comments, constraint tags) from system catalogs when `depth="schema"` or `"full"`
