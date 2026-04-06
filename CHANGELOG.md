@@ -2,6 +2,8 @@
 
 ## 0.14.2 (2026-04-06)
 
+- add: `freq` entity support in `add_metadata` — frequency tables can be loaded from CSV/Excel/database metadata files
+- security: SSH tunnel now rejects unknown host keys (`RejectPolicy`) with actionable `ConfigError` guiding users to add the key via `ssh <host>`
 - security: SSH tunnels now use `WarningPolicy` instead of `AutoAddPolicy` — prevents silent MITM key acceptance
 - security: Oracle SQL queries use bind variables (`:name`) instead of string interpolation
 - security: non-Oracle SQL introspection queries use `_quote()` escaping for safe interpolation

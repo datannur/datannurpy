@@ -51,6 +51,8 @@ pip install datannurpy[cloud]     # All cloud providers
 pip install datannurpy[postgres,stat,delta]
 ```
 
+> **Note:** The `iceberg`, `s3`, `azure`, `gcs`, and `cloud` extras require Python 3.10+.
+
 **SQL Server note:** Requires an ODBC driver on the system:
 
 - macOS: `brew install unixodbc freetds`
@@ -133,6 +135,8 @@ Run with:
 
 ```bash
 python -m datannurpy catalog.yml
+python -m datannurpy --help     # show usage
+python -m datannurpy --version  # show version
 ```
 
 ## Incremental scan
@@ -389,7 +393,7 @@ metadata/
 
 **Supported formats:** CSV, Excel (.xlsx), JSON, SAS (.sas7bdat), or database tables.
 
-**File format:** Standard tabular structure following [datannur schemas](https://github.com/datannur/datannur/tree/main/public/schemas). The `id` column is required for most entities (except `value` and `freq`).
+**File format:** Standard tabular structure following [datannur schemas](https://github.com/datannur/datannur/tree/main/public/schemas).
 
 ```csv
 # variable.csv
@@ -447,10 +451,23 @@ Catalog(app_path=None, depth="full", refresh=False, freq_threshold=100, csv_enco
 | quiet          | bool                              | Suppress progress logging (default: False)         |
 | verbose        | bool                              | Show full tracebacks on errors (default: False)    |
 | log_file       | str \| Path \| None               | Write error tracebacks to file (truncated each run)|
-| folders        | list[Folder]                      | All folders in catalog                             |
-| datasets       | list[Dataset]                     | All datasets in catalog                            |
-| variables      | list[Variable]                    | All variables in catalog                           |
-| modalities     | list[Modality]                    | All modalities in catalog                          |
+| folder         | Table[Folder]                     | Folder table (`.all()`, `.count`, `.get_by(...)`)  |
+| dataset        | Table[Dataset]                    | Dataset table                                      |
+| variable       | Table[Variable]                   | Variable table                                     |
+| modality       | Table[Modality]                   | Modality table                                     |
+| value          | Table[Value]                      | Modality value table                               |
+| freq           | Table[Freq]                       | Frequency table (computed)                         |
+| institution    | Table[Institution]                | Institution table                                  |
+| tag            | Table[Tag]                        | Tag table                                          |
+| doc            | Table[Doc]                        | Document table                                     |
+
+**Depth levels** (applies to `add_folder`, `add_dataset`, `add_database`, `add_metadata`):
+
+| depth     | Output                                       |
+| --------- | -------------------------------------------- |
+| structure | Folders, datasets (format, mtime, path only) |
+| schema    | + Variables (names, types)                   |
+| full      | + Row count, stats, modalities               |
 
 ### `Catalog.add_folder()`
 
@@ -513,14 +530,6 @@ The resulting dataset includes:
 
 Set `time_series=False` to treat each file as a separate dataset.
 
-**Depth levels:**
-
-| depth     | Output                                       |
-| --------- | -------------------------------------------- |
-| structure | Folders, datasets (format, mtime, path only) |
-| schema    | + Variables (names, types)                   |
-| full      | + Row count, stats, modalities               |
-
 ### `Catalog.add_dataset()`
 
 ```python
@@ -537,7 +546,6 @@ catalog.add_dataset(
     storage_options=None,
     refresh=None,
     quiet=None,
-    id=None,
     name=None,
     description=None,
     ...,
@@ -557,7 +565,6 @@ catalog.add_dataset(
 | storage_options | dict \| None                              | None     | Options for remote storage (passed to fsspec) |
 | refresh         | bool \| None                              | None     | Force rescan (overrides catalog setting)      |
 | quiet           | bool \| None                              | None     | Override catalog quiet setting                |
-| id              | str \| None                               | None     | Override dataset ID                           |
 | name            | str \| None                               | None     | Override dataset name                         |
 | description     | str \| None                               | None     | Override dataset description                  |
 
@@ -578,27 +585,33 @@ catalog.add_database(
     sample_size=None,
     group_by_prefix=True,
     prefix_min_tables=2,
+    time_series=True,
     storage_options=None,
     refresh=None,
     quiet=None,
+    oracle_client_path=None,
+    ssh_tunnel=None,
 )
 ```
 
-| Parameter         | Type                                            | Default  | Description                              |
-| ----------------- | ----------------------------------------------- | -------- | ---------------------------------------- |
-| connection        | str                                             | required | Connection string (see formats below)    |
-| folder            | Folder \| None                                  | None     | Custom root folder                       |
-| depth             | \"structure\" \| \"schema\" \| \"full\" \| None | None     | Scan depth (uses catalog.depth if None)  |
-| schema            | str \| list[str] \| None                         | None     | Schema(s) to scan                        |
-| include           | list[str] \| None                               | None     | Table name patterns to include           |
-| exclude           | list[str] \| None                               | None     | Table name patterns to exclude           |
-| infer_stats       | bool                                            | True     | Compute column statistics                |
-| sample_size       | int \| None                                     | None     | Sample rows for stats (overrides catalog)|
-| group_by_prefix   | bool \| str                                     | True     | Group tables by prefix into subfolders   |
-| prefix_min_tables | int                                             | 2        | Min tables to form a prefix group        |
-| storage_options   | dict \| None                                    | None     | Options for remote SQLite/GeoPackage     |
-| refresh           | bool \| None                                    | None     | Force rescan (overrides catalog setting) |
-| quiet             | bool \| None                                    | None     | Override catalog quiet setting           |
+| Parameter          | Type                                            | Default  | Description                                |
+| ------------------ | ----------------------------------------------- | -------- | ------------------------------------------ |
+| connection         | str \| ibis.BaseBackend                          | required | Connection string or ibis backend object   |
+| folder             | Folder \| None                                  | None     | Custom root folder                         |
+| depth              | \"structure\" \| \"schema\" \| \"full\" \| None | None     | Scan depth (uses catalog.depth if None)    |
+| schema             | str \| list[str] \| None                         | None     | Schema(s) to scan                          |
+| include            | list[str] \| None                               | None     | Table name patterns to include             |
+| exclude            | list[str] \| None                               | None     | Table name patterns to exclude             |
+| infer_stats        | bool                                            | True     | Compute column statistics                  |
+| sample_size        | int \| None                                     | None     | Sample rows for stats (overrides catalog)  |
+| group_by_prefix    | bool \| str                                     | True     | Group tables by prefix into subfolders     |
+| prefix_min_tables  | int                                             | 2        | Min tables to form a prefix group          |
+| time_series        | bool                                            | True     | Detect temporal table patterns             |
+| storage_options    | dict \| None                                    | None     | Options for remote SQLite/GeoPackage       |
+| refresh            | bool \| None                                    | None     | Force rescan (overrides catalog setting)   |
+| quiet              | bool \| None                                    | None     | Override catalog quiet setting             |
+| oracle_client_path | str \| None                                     | None     | Path to Oracle Instant Client libraries    |
+| ssh_tunnel         | dict \| None                                    | None     | SSH tunnel config (host, user, port, etc.) |
 
 **Connection string formats:**
 
@@ -620,15 +633,21 @@ catalog.add_metadata(path, depth=None, quiet=None)
 | depth     | "structure" \| "schema" \| "full" \| None | None     | Filter which entities to load                |
 | quiet     | bool \| None                              | None     | Override catalog quiet setting               |
 
-**Supported entity files/tables:** `folder`, `dataset`, `variable`, `modality`, `value`, `freq`, `institution`, `tag`, `doc`
+**Supported entity files/tables:** all catalog entities. The `id` column is not required for `value` and `freq` (composite key computed automatically).
 
 ### `Catalog.export_db()`
 
 ```python
-catalog.export_db(output_dir=None, quiet=None)
+catalog.export_db(output_dir=None, track_evolution=True, quiet=None)
 ```
 
-Exports JSON metadata files. Uses `app_path` by default if set at init.
+| Parameter       | Type             | Default | Description                                |
+| --------------- | ---------------- | ------- | ------------------------------------------ |
+| output_dir      | str \| Path \| None | None    | Output directory (uses app_path if None)   |
+| track_evolution | bool             | True    | Track changes between exports              |
+| quiet           | bool \| None     | None    | Override catalog quiet setting             |
+
+Exports JSON metadata files. Calls `finalize()` automatically when data has been scanned.
 
 ### `Catalog.finalize()`
 

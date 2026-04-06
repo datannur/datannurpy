@@ -14,6 +14,7 @@ src/datannurpy/
 ├── finalize.py          # Cleanup of entities not seen during scan
 ├── exporter.py          # export_db, export_app
 ├── schema.py            # Dataclasses: Folder, Dataset, Variable, Modality, Value
+├── config/              # YAML config loader (run_config)
 ├── utils/               # Internal utilities (ids, log, modality, prefix, folder, time)
 ├── scanner/             # File/DB scanning → Variables + stats
 └── app/                 # Web app template files (copied during export)
@@ -22,6 +23,10 @@ src/datannurpy/
 ## Public API
 
 Main classes: `Catalog`, `Folder`
+
+Functions: `run_config`, `sanitize_id`, `build_dataset_id`, `build_variable_id`
+
+Exception: `ConfigError`
 
 Methods: `add_folder`, `add_dataset`, `add_database`, `add_metadata`, `finalize`, `export_db`, `export_app`
 
@@ -51,9 +56,12 @@ Uses **uv** for dependency management and **Makefile** for common tasks.
 
 ```bash
 uv sync                  # Install/update dependencies
-uv run make check        # Run all checks (ruff + pyright + pytest with 100% coverage)
-uv run make test         # Run pytest only
+make check               # Run all checks (ruff + pyright + pytest with 100% coverage)
+make test                # Run pytest only
 uv run pytest -k "test_name" -x  # Run specific test
+make test-db-up          # Start database containers (PostgreSQL, MySQL, etc.)
+make test-db             # Run database integration tests
+make test-db-all         # Run all tests including Oracle 18
 ```
 
 ## Constraints
