@@ -81,7 +81,7 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-n auto"
+addopts = "-n auto --maxprocesses 4"
 filterwarnings = [
   "ignore::DeprecationWarning:pyiceberg.*",
   "ignore::DeprecationWarning:pydantic.*",

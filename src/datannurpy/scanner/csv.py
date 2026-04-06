@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import ibis
-import pandas as pd
 import pyarrow as pa
 
 from ..utils import log_error
@@ -19,6 +18,8 @@ from .utils import build_variables
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+
+    import pandas as pd
 
     from ..schema import Variable
 

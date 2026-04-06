@@ -5,15 +5,17 @@ from __future__ import annotations
 from collections.abc import Sequence
 from datetime import time as dt_time
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import ibis
-import pandas as pd
 import pyarrow as pa
 
 from ..schema import Variable
 from ..utils import log_error, log_warn
 from .utils import build_variables
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 _MIDNIGHT = dt_time(0, 0)
 
@@ -80,6 +82,8 @@ def read_excel(
     engine = "xlrd" if suffix == ".xls" else "openpyxl"
 
     try:
+        import pandas as pd
+
         df = pd.read_excel(file_path, sheet_name=sheet_name, engine=engine)
         if df.empty:
             return None
@@ -145,6 +149,8 @@ def scan_excel(
 
     # Pandas reads Excel dates as datetime64 even for date-only cells.
     # Detect columns where all values are at midnight and convert to date.
+    import pandas as pd
+
     for col in df.columns:
         if pd.api.types.is_datetime64_any_dtype(df[col]):
             non_null = df[col].dropna()

@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any, Literal
 from urllib.parse import urlparse
 
 import ibis
-import pandas as pd
 
 from .schema import (
     Dataset,
@@ -31,6 +30,8 @@ from .utils.params import validate_params
 from .errors import ConfigError
 
 if TYPE_CHECKING:
+    import pandas as pd
+
     from .catalog import Catalog
 
 # Entity type to class mapping
@@ -199,6 +200,8 @@ def _read_json(file_path: Path, *, quiet: bool = False) -> pd.DataFrame | None:
 
         if not isinstance(data, list) or not data:
             return None
+
+        import pandas as pd
 
         return pd.DataFrame(data)
     except Exception as e:
