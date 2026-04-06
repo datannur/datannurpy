@@ -228,7 +228,7 @@ class TestDiscoverDatasets:
         types = {v.name: v.type for v in variables}
         assert types["int_col"] == "integer"
         assert types["str_col"] == "string"
-        assert types["float_col"] == "number"
+        assert types["float_col"] == "float"
         assert types["bool_col"] == "boolean"
         assert types["date_col"] == "date"
         assert types["time_col"] == "time"

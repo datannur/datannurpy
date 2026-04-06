@@ -29,13 +29,13 @@ download-app:
 
 test-db-up:
 	@command -v orbctl >/dev/null && orbctl start || true
-	docker compose -f docker-compose.test.yml up -d --wait
+	docker compose -f docker-compose.test.yml --env-file /dev/null up -d --wait
 	@docker exec datannurpy-mssql /opt/mssql-tools18/bin/sqlcmd \
 		-S localhost -U sa -P 'Test@123!' -C \
 		-Q "IF DB_ID('testdb') IS NULL CREATE DATABASE testdb"
 
 test-db-down:
-	docker compose -f docker-compose.test.yml down -v
+	docker compose -f docker-compose.test.yml --env-file /dev/null down -v
 
 test-db: test-db-up
 	@echo "=== PostgreSQL ==="

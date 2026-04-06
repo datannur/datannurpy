@@ -13,8 +13,8 @@ import pytest
 
 from datannurpy import Catalog, Folder
 from datannurpy.errors import ConfigError
-from datannurpy.schema import Value, Variable
-from datannurpy.utils.ids import build_value_id
+from datannurpy.schema import Freq, Value, Variable
+from datannurpy.utils.ids import build_freq_id, build_value_id
 from datannurpy.add_metadata import (
     DEPTH_ENTITIES,
     _convert_row_to_dict,
@@ -285,6 +285,7 @@ class TestGetCatalogTable:
         assert _get_catalog_table(catalog, "variable") is catalog.variable
         assert _get_catalog_table(catalog, "modality") is catalog.modality
         assert _get_catalog_table(catalog, "value") is catalog.value
+        assert _get_catalog_table(catalog, "freq") is catalog.freq
         assert _get_catalog_table(catalog, "institution") is catalog.institution
         assert _get_catalog_table(catalog, "tag") is catalog.tag
         assert _get_catalog_table(catalog, "doc") is catalog.doc
@@ -559,6 +560,14 @@ class TestValidateEntityTable:
         errors = _validate_entity_table(catalog, "value", df, "value.csv")
         assert errors == []
 
+    def test_skip_validation_for_freq_entity(self):
+        """Freq entity uses composite key, no id validation."""
+        catalog = Catalog()
+        df = pd.DataFrame({"variable_id": ["v1"], "value": ["a"], "freq": [5]})
+
+        errors = _validate_entity_table(catalog, "freq", df, "freq.csv")
+        assert errors == []
+
 
 class TestValidateAllTables:
     """Test _validate_all_tables function."""
@@ -697,6 +706,60 @@ class TestProcessEntityTable:
 
         created, _ = _process_entity_table(catalog, "folder", df)
         assert created == 1  # Only f1 created
+
+    def test_create_freq_entity(self):
+        """Should create Freq entities with composite key."""
+        catalog = Catalog()
+        df = pd.DataFrame(
+            {
+                "variable_id": ["v1"],
+                "value": ["a"],
+                "freq": [5],
+            }
+        )
+
+        created, updated = _process_entity_table(catalog, "freq", df)
+
+        assert created == 1
+        assert updated == 0
+        assert len(catalog.freq.all()) == 1
+        assert catalog.freq.all()[0].variable_id == "v1"
+        assert catalog.freq.all()[0].value == "a"
+        assert catalog.freq.all()[0].freq == 5
+
+    def test_update_freq_entity(self):
+        """Should update existing Freq entities."""
+        catalog = Catalog()
+        freq_id = build_freq_id("v1", "a")
+        catalog.freq.add(Freq(id=freq_id, variable_id="v1", value="a", freq=3))
+
+        df = pd.DataFrame(
+            {
+                "variable_id": ["v1"],
+                "value": ["a"],
+                "freq": [10],
+            }
+        )
+
+        created, updated = _process_entity_table(catalog, "freq", df)
+
+        assert created == 0
+        assert updated == 1
+        assert catalog.freq.all()[0].freq == 10
+
+    def test_skip_freq_without_required_fields(self):
+        """Should skip Freq without variable_id or value."""
+        catalog = Catalog()
+        df = pd.DataFrame(
+            {
+                "variable_id": ["v1", None],
+                "value": [None, "a"],
+                "freq": [5, 5],
+            }
+        )
+
+        created, updated = _process_entity_table(catalog, "freq", df)
+        assert created == 0  # Both skipped
 
 
 class TestUnknownEntityType:
@@ -991,3 +1054,29 @@ class TestEdgeCases:
         mod = catalog.modality.get("m1")
         assert mod is not None
         assert mod._seen is True
+
+    def test_freq_create_from_csv(self, tmp_path: Path):
+        """Should create freq entries from CSV."""
+        (tmp_path / "freq.csv").write_text(
+            "variable_id,value,freq\nv1,red,10\nv1,blue,5\n"
+        )
+
+        catalog = Catalog()
+        catalog.add_metadata(tmp_path, quiet=True)
+
+        assert len(catalog.freq.all()) == 2
+        freqs = {f.value: f.freq for f in catalog.freq.all()}
+        assert freqs["red"] == 10
+        assert freqs["blue"] == 5
+
+    def test_freq_update_from_csv(self, tmp_path: Path):
+        """Should update existing freq from CSV."""
+        freq_id = build_freq_id("v1", "red")
+        catalog = Catalog()
+        catalog.freq.add(Freq(id=freq_id, variable_id="v1", value="red", freq=3))
+
+        (tmp_path / "freq.csv").write_text("variable_id,value,freq\nv1,red,20\n")
+        catalog.add_metadata(tmp_path, quiet=True)
+
+        assert len(catalog.freq.all()) == 1
+        assert catalog.freq.all()[0].freq == 20

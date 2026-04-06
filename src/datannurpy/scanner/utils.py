@@ -9,11 +9,12 @@ from typing import TYPE_CHECKING, Any
 
 import ibis
 import ibis.expr.datatypes as dt
-import pyarrow as pa
 
 from ..schema import Variable
 
 if TYPE_CHECKING:
+    import pyarrow as pa
+
     from .filesystem import FileSystem
 
 
@@ -437,7 +438,7 @@ def build_variables(
                     agg_table = table.aggregate(all_aggs)
                     try:
                         streaming_row = agg_table.to_pyarrow().to_pylist()[0]
-                    except pa.ArrowInvalid:
+                    except Exception:
                         # Oracle: Decimal values can't convert via PyArrow
                         streaming_row = dict(agg_table.execute().iloc[0])
                 else:
@@ -445,7 +446,7 @@ def build_variables(
                     agg_table = streaming_source.aggregate(streaming_aggs)
                     try:
                         streaming_row = agg_table.to_pyarrow().to_pylist()[0]
-                    except pa.ArrowInvalid:  # pragma: no cover
+                    except Exception:  # pragma: no cover
                         streaming_row = dict(agg_table.execute().iloc[0])
 
                 for col in cols_for_stats:
@@ -504,6 +505,8 @@ def build_variables(
             try:
                 freq_table = ibis.union(*freq_tables).to_pyarrow()
             except Exception:
+                import pyarrow as pa
+
                 freq_table = pa.concat_tables([ft.to_pyarrow() for ft in freq_tables])
 
     def get_stat(col: str, idx: int) -> int | None:
@@ -544,36 +547,14 @@ def build_variables_from_schema(
     dataset_id: str,
 ) -> list[Variable]:
     """Build Variable entities from PyArrow schema (no stats, no data read)."""
+    ibis_schema = ibis.Schema.from_pyarrow(schema)
     return [
         Variable(
-            id=field.name,
-            name=field.name,
+            id=name,
+            name=name,
             dataset_id=dataset_id,
-            type=pyarrow_type_to_str(field.type),
+            type=ibis_type_to_str(dtype),
         )
-        for field in schema
-        if field.name.strip() != ""
+        for name, dtype in ibis_schema.items()
+        if name.strip() != ""
     ]
-
-
-def pyarrow_type_to_str(dtype: pa.DataType) -> str:
-    """Convert PyArrow dtype to string."""
-    if pa.types.is_integer(dtype):
-        return "integer"
-    if pa.types.is_floating(dtype):
-        return "number"
-    if pa.types.is_boolean(dtype):
-        return "boolean"
-    if pa.types.is_date(dtype):
-        return "date"
-    if pa.types.is_timestamp(dtype):
-        return "datetime"
-    if pa.types.is_time(dtype):
-        return "time"
-    if pa.types.is_string(dtype) or pa.types.is_large_string(dtype):
-        return "string"
-    if pa.types.is_binary(dtype) or pa.types.is_large_binary(dtype):
-        return "binary"
-    if pa.types.is_null(dtype):
-        return "null"
-    return "unknown"

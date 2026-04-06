@@ -84,8 +84,8 @@ def sort_by_id(data: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(data, key=sort_key)
 
 
-def build_demo_catalog(app_dir: Path) -> Path:
-    """Build the catalog exactly like demo.py does. Returns db_dir."""
+def build_demo_catalog(app_dir: Path) -> tuple[Catalog, Path]:
+    """Build the catalog exactly like demo.py does. Returns (catalog, db_dir)."""
     catalog = Catalog(app_path=app_dir, refresh=True, _now=FIXED_TIMESTAMP)
     catalog.add_folder(DATA_DIR)
     catalog.add_database(f"sqlite:///{DATA_DIR}/company.db")
@@ -100,17 +100,23 @@ def build_demo_catalog(app_dir: Path) -> Path:
     )
     catalog.add_metadata(DATA_DIR / "metadata")
     catalog.export_db(quiet=True)
-    return app_dir / "data" / "db"
+    return catalog, app_dir / "data" / "db"
+
+
+@pytest.fixture(scope="module")
+def _e2e_build(tmp_path_factory: pytest.TempPathFactory) -> tuple[Catalog, Path]:
+    """Build the demo catalog once for all E2E tests in this module."""
+    app_dir = tmp_path_factory.mktemp("e2e_output")
+    return build_demo_catalog(app_dir)
 
 
 class TestE2ESnapshot:
     """End-to-end snapshot tests."""
 
     @pytest.fixture(scope="class")
-    def generated_db(self, tmp_path_factory: pytest.TempPathFactory) -> Path:
-        """Generate the catalog output once for all tests in this class."""
-        app_dir = tmp_path_factory.mktemp("e2e_output")
-        return build_demo_catalog(app_dir)
+    def generated_db(self, _e2e_build: tuple[Catalog, Path]) -> Path:
+        """Return the generated db directory."""
+        return _e2e_build[1]
 
     @pytest.mark.parametrize("filename", SNAPSHOT_FILES)
     def test_snapshot_matches(self, generated_db: Path, filename: str) -> None:
@@ -164,21 +170,9 @@ class TestE2EStructure:
     """Structural tests that don't rely on exact snapshots."""
 
     @pytest.fixture(scope="class")
-    def catalog(self, tmp_path_factory: pytest.TempPathFactory) -> Catalog:
-        """Build and return the catalog for structural tests."""
-        app_dir = tmp_path_factory.mktemp("e2e_structure")
-        catalog = Catalog(app_path=app_dir, refresh=True, _now=FIXED_TIMESTAMP)
-        catalog.add_folder(DATA_DIR)
-        catalog.add_database(f"sqlite:///{DATA_DIR}/company.db")
-        catalog.add_database(
-            f"sqlite:///{DATA_DIR}/photovoltaik.gpkg",
-            folder=Folder(
-                id="photovoltaik",
-                name="Grandes installations photovoltaïques",
-            ),
-        )
-        catalog.add_metadata(DATA_DIR / "metadata")
-        return catalog
+    def catalog(self, _e2e_build: tuple[Catalog, Path]) -> Catalog:
+        """Return the catalog built by the shared module fixture."""
+        return _e2e_build[0]
 
     def test_folders_count(self, catalog: Catalog) -> None:
         """Should have expected number of folders."""

@@ -14,14 +14,6 @@ DATA_DIR = Path(__file__).parent.parent / "data"
 CSV_DIR = DATA_DIR / "csv"
 
 
-@pytest.fixture(scope="module")
-def full_catalog():
-    """Scan DATA_DIR once, reuse across read-only tests."""
-    catalog = Catalog()
-    catalog.add_folder(DATA_DIR, Folder(id="test", name="Test"))
-    return catalog
-
-
 class TestAddFolderFormats:
     """Test scanning different file formats."""
 

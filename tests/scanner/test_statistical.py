@@ -250,7 +250,7 @@ class TestScanStatisticalEdgeCases:
             spss_file, dataset_id="ds", infer_stats=False
         )
         var_by_name = {v.name: v for v in variables}
-        assert var_by_name["num"].type == "number"
+        assert var_by_name["num"].type == "float"
         assert var_by_name["txt"].type == "string"
 
     def test_apply_types_unknown_type_passes_through(self):

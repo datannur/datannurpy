@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import io
+import re
 import sys
 import time
 import traceback
@@ -80,19 +82,28 @@ def log_folder(name: str, quiet: bool) -> None:
     _write_log(f"  📁 {name}")
 
 
+_CRED_RE = re.compile(r"://[^@/]+@")
+
+
+def _redact(text: str) -> str:
+    """Replace credentials in connection URLs with ***."""
+    return _CRED_RE.sub("://***@", text)
+
+
 def log_error(name: str, error: BaseException, quiet: bool) -> None:
     """Log a scan error (replaces the 'start' line)."""
-    msg = str(error).split("\n")[0]
+    msg = _redact(str(error).split("\n")[0])
     header = f"\r  ✗ {name} — {type(error).__name__}: {msg}"
     if not quiet or _verbose:
         print(header, file=sys.stderr)
     if _verbose:
         traceback.print_exc(file=sys.stderr)
-    _write_log(f"  ✗ {name} — {type(error).__name__}: {error}")
+    _write_log(f"  ✗ {name} — {type(error).__name__}: {_redact(str(error))}")
     if _log_file_path is not None:
+        buf = io.StringIO()
+        traceback.print_exc(file=buf)
         with open(_log_file_path, "a") as f:
-            traceback.print_exc(file=f)
-            f.write("")
+            f.write(_redact(buf.getvalue()))
 
 
 def log_summary(

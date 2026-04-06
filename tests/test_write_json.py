@@ -1,5 +1,7 @@
 """Tests for Catalog.export_db method."""
 
+from __future__ import annotations
+
 import json
 from pathlib import Path
 
@@ -7,6 +9,15 @@ from datannurpy import Catalog, Folder
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 CSV_DIR = DATA_DIR / "csv"
+
+
+def _make_employees_catalog() -> Catalog:
+    """Scan employees.csv once."""
+    catalog = Catalog()
+    catalog.add_folder(
+        CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+    )
+    return catalog
 
 
 class TestFreq:
@@ -81,6 +92,15 @@ class TestFreq:
 class TestCatalogWrite:
     """Test Catalog.write method."""
 
+    _shared_catalog: Catalog | None = None
+
+    @staticmethod
+    def _get_catalog() -> Catalog:
+        """Return a shared catalog scanning employees.csv (created once)."""
+        if TestCatalogWrite._shared_catalog is None:
+            TestCatalogWrite._shared_catalog = _make_employees_catalog()
+        return TestCatalogWrite._shared_catalog
+
     def test_write_empty_catalog(self, tmp_path):
         """export_db on empty catalog should only create __table__.json."""
         catalog = Catalog()
@@ -95,11 +115,7 @@ class TestCatalogWrite:
 
     def test_write_creates_json_files(self, tmp_path):
         """write should create .json files for each entity type."""
-        catalog = Catalog()
-        catalog.add_folder(
-            CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
-        )
-        catalog.export_db(tmp_path)
+        self._get_catalog().export_db(tmp_path)
 
         assert (tmp_path / "variable.json").exists()
         assert (tmp_path / "dataset.json").exists()
@@ -107,11 +123,7 @@ class TestCatalogWrite:
 
     def test_write_creates_jsonjs_files(self, tmp_path):
         """write should create .json.js files by default."""
-        catalog = Catalog()
-        catalog.add_folder(
-            CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
-        )
-        catalog.export_db(tmp_path)
+        self._get_catalog().export_db(tmp_path)
 
         assert (tmp_path / "variable.json.js").exists()
         assert (tmp_path / "dataset.json.js").exists()
@@ -119,11 +131,7 @@ class TestCatalogWrite:
 
     def test_write_variable_json_content(self, tmp_path):
         """write should produce valid variable JSON."""
-        catalog = Catalog()
-        catalog.add_folder(
-            CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
-        )
-        catalog.export_db(tmp_path)
+        self._get_catalog().export_db(tmp_path)
 
         with open(tmp_path / "variable.json") as f:
             data = json.load(f)
@@ -134,11 +142,7 @@ class TestCatalogWrite:
 
     def test_write_dataset_json_content(self, tmp_path):
         """write should produce valid dataset JSON."""
-        catalog = Catalog()
-        catalog.add_folder(
-            CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
-        )
-        catalog.export_db(tmp_path)
+        self._get_catalog().export_db(tmp_path)
 
         with open(tmp_path / "dataset.json") as f:
             data = json.load(f)
@@ -150,11 +154,7 @@ class TestCatalogWrite:
 
     def test_write_folder_json_content(self, tmp_path):
         """write should produce valid folder JSON."""
-        catalog = Catalog()
-        catalog.add_folder(
-            CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
-        )
-        catalog.export_db(tmp_path)
+        self._get_catalog().export_db(tmp_path)
 
         with open(tmp_path / "folder.json") as f:
             data = json.load(f)
@@ -168,11 +168,7 @@ class TestCatalogWrite:
 
     def test_write_jsonjs_format(self, tmp_path):
         """write should produce correct jsonjs format."""
-        catalog = Catalog()
-        catalog.add_folder(
-            CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
-        )
-        catalog.export_db(tmp_path)
+        self._get_catalog().export_db(tmp_path)
 
         content = (tmp_path / "variable.json.js").read_text()
 
@@ -193,23 +189,13 @@ class TestCatalogWrite:
 
     def test_write_creates_output_dir(self, tmp_path):
         """write should create output directory if needed."""
-        catalog = Catalog()
-        catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
-        )
-        nested_dir = tmp_path / "nested" / "path"
+        self._get_catalog().export_db(tmp_path / "nested" / "path")
 
-        catalog.export_db(nested_dir)
-
-        assert (nested_dir / "variable.json").exists()
+        assert (tmp_path / "nested" / "path" / "variable.json").exists()
 
     def test_write_float_to_int(self, tmp_path):
         """write should convert whole floats to ints."""
-        catalog = Catalog()
-        catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
-        )
-        catalog.export_db(tmp_path)
+        self._get_catalog().export_db(tmp_path)
 
         with open(tmp_path / "variable.json") as f:
             data = json.load(f)
@@ -221,11 +207,7 @@ class TestCatalogWrite:
 
     def test_write_creates_table_registry(self, tmp_path):
         """write should create __table__.json registry."""
-        catalog = Catalog()
-        catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
-        )
-        catalog.export_db(tmp_path)
+        self._get_catalog().export_db(tmp_path)
 
         assert (tmp_path / "__table__.json").exists()
 

@@ -9,6 +9,7 @@ import ibis
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+
 # Oracle system table prefixes to exclude (these exist in user schemas like SYSTEM)
 ORACLE_SYSTEM_TABLE_PREFIXES: tuple[str, ...] = (
     "mview$_",
@@ -89,19 +90,22 @@ def _oracle_get_schema(
     if schema:
         uc_schema = schema.upper()
         query = (
-            f"SELECT column_name, data_type, data_precision, data_scale "
-            f"FROM all_tab_columns "
-            f"WHERE owner = '{uc_schema}' AND table_name = '{uc_table}' "
-            f"ORDER BY column_id"
+            "SELECT column_name, data_type, data_precision, data_scale "
+            "FROM all_tab_columns "
+            "WHERE owner = :owner AND table_name = :table_name "
+            "ORDER BY column_id"
         )
+        result = raw_sql(
+            query, parameters={"owner": uc_schema, "table_name": uc_table}
+        ).fetchall()
     else:
         query = (
-            f"SELECT column_name, data_type, data_precision, data_scale "
-            f"FROM user_tab_columns "
-            f"WHERE table_name = '{uc_table}' "
-            f"ORDER BY column_id"
+            "SELECT column_name, data_type, data_precision, data_scale "
+            "FROM user_tab_columns "
+            "WHERE table_name = :table_name "
+            "ORDER BY column_id"
         )
-    result = raw_sql(query).fetchall()
+        result = raw_sql(query, parameters={"table_name": uc_table}).fetchall()
     pairs: dict[str, str] = {}
     lob_columns: set[str] = set()
     date_columns: set[str] = set()

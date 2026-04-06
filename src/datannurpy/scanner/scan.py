@@ -310,7 +310,7 @@ def _scan_stat_schema_stream(
                     if col.label
                 }
                 type_map = {
-                    str(col.name): "number" if col.ctype == b"d" else "string"
+                    str(col.name): "float" if col.ctype == b"d" else "string"
                     for col in sas_reader.columns
                 }
         else:  # stata
@@ -324,7 +324,7 @@ def _scan_stat_schema_stream(
                 if dt is not None and dt.names:
                     for i, name in enumerate(names):
                         kind = dt.fields[dt.names[i]][0].kind
-                        type_map[name] = "number" if kind == "f" else "string"
+                        type_map[name] = "float" if kind == "f" else "string"
 
     variables = [
         Variable(

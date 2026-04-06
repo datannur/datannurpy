@@ -12,27 +12,29 @@ from datannurpy import exporter
 DATA_DIR = Path(__file__).parent.parent / "data"
 
 
+@pytest.fixture(scope="module")
+def _employees_catalog() -> Catalog:
+    """Scan employees.csv once, reuse across export_app tests."""
+    catalog = Catalog()
+    catalog.add_folder(
+        DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+    )
+    return catalog
+
+
 class TestExportApp:
     """Test Catalog.export_app method."""
 
-    def test_export_app_copies_index_html(self, tmp_path):
+    def test_export_app_copies_index_html(self, _employees_catalog, tmp_path):
         """export_app should copy app files including index.html."""
-        catalog = Catalog()
-        catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
-        )
-        catalog.export_app(tmp_path)
+        _employees_catalog.export_app(tmp_path)
 
         assert (tmp_path / "index.html").exists()
         assert (tmp_path / "assets").is_dir()
 
-    def test_export_app_writes_to_data_db(self, tmp_path):
+    def test_export_app_writes_to_data_db(self, _employees_catalog, tmp_path):
         """export_app should write data to data/db/ subdirectory."""
-        catalog = Catalog()
-        catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
-        )
-        catalog.export_app(tmp_path)
+        _employees_catalog.export_app(tmp_path)
 
         db_dir = tmp_path / "data" / "db"
         assert (db_dir / "folder.json").exists()
@@ -40,63 +42,45 @@ class TestExportApp:
         assert (db_dir / "variable.json").exists()
         assert (db_dir / "__table__.json").exists()
 
-    def test_export_app_clears_existing_db(self, tmp_path):
+    def test_export_app_clears_existing_db(self, _employees_catalog, tmp_path):
         """export_app should clear existing data/db/ content."""
-        catalog = Catalog()
-        catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
-        )
-
         # First export
-        catalog.export_app(tmp_path)
+        _employees_catalog.export_app(tmp_path)
 
         # Create extra file
         extra_file = tmp_path / "data" / "db" / "old_data.json"
         extra_file.write_text("[]")
 
         # Second export should remove it
-        catalog.export_app(tmp_path)
+        _employees_catalog.export_app(tmp_path)
 
         assert not extra_file.exists()
 
-    def test_export_app_quiet(self, tmp_path):
+    def test_export_app_quiet(self, _employees_catalog, tmp_path):
         """export_app with quiet=True should not print."""
-        catalog = Catalog()
-        catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
-        )
-
-        catalog.export_app(tmp_path, quiet=True)
+        _employees_catalog.export_app(tmp_path, quiet=True)
 
         assert (tmp_path / "index.html").exists()
 
-    def test_export_app_open_browser(self, tmp_path, monkeypatch):
+    def test_export_app_open_browser(self, _employees_catalog, tmp_path, monkeypatch):
         """export_app with open_browser=True should open browser."""
         opened_urls = []
         monkeypatch.setattr("webbrowser.open", lambda url: opened_urls.append(url))
 
-        catalog = Catalog()
-        catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
-        )
-
-        catalog.export_app(tmp_path, open_browser=True, quiet=True)
+        _employees_catalog.export_app(tmp_path, open_browser=True, quiet=True)
 
         assert len(opened_urls) == 1
         assert "index.html" in opened_urls[0]
 
-    def test_export_app_without_app_raises(self, tmp_path, monkeypatch):
+    def test_export_app_without_app_raises(
+        self, _employees_catalog, tmp_path, monkeypatch
+    ):
         """export_app should raise FileNotFoundError if app not bundled."""
         # Mock _get_app_path to return nonexistent path
         monkeypatch.setattr(exporter, "_get_app_path", lambda: Path("/nonexistent"))
 
-        catalog = Catalog()
-        catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
-        )
-
         with pytest.raises(ConfigError, match="datannur app not found"):
-            catalog.export_app(tmp_path)
+            _employees_catalog.export_app(tmp_path)
 
     def test_export_app_uses_app_path_by_default(self, tmp_path):
         """export_app() without args should use app_path."""

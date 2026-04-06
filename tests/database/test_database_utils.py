@@ -18,6 +18,7 @@ from datannurpy.scanner.database import (
     _connect_external_backend,
     _encode_uri_credentials,
     _get_table,
+    _is_missing_backend_dependency_error,
     _tunnel_uri,
     connect,
     get_database_name,
@@ -166,7 +167,10 @@ class TestRaiseDriverError:
     """Tests for driver error messages."""
 
     def test_known_backend(self) -> None:
-        with pytest.raises(ConfigError, match="PostgreSQL requires psycopg2"):
+        with pytest.raises(
+            ConfigError,
+            match=r"PostgreSQL support requires optional dependencies.*datannurpy\[postgres\]",
+        ):
             raise_driver_error("postgres", ModuleNotFoundError("psycopg2"))
 
     def test_unknown_backend(self) -> None:
@@ -267,10 +271,68 @@ class TestConnectExternalBackendErrors:
             "ibis.mysql.connect",
             side_effect=ModuleNotFoundError("No module named 'MySQLdb'"),
         ):
-            with pytest.raises(ConfigError, match="MySQL requires"):
+            with pytest.raises(
+                ConfigError,
+                match=r"MySQL support requires optional dependencies.*datannurpy\[mysql\]",
+            ):
                 _connect_external_backend(
                     "mysql", {"host": "localhost", "port": "3306"}
                 )
+
+    def test_import_error_not_module_not_found(self) -> None:
+        """ImportError (not ModuleNotFoundError) is caught via except Exception."""
+        pytest.importorskip("MySQLdb", reason="mysqlclient not installed")
+        with patch(
+            "ibis.mysql.connect",
+            side_effect=ImportError("cannot import name 'foo'"),
+        ):
+            with pytest.raises(
+                ConfigError,
+                match=r"MySQL support requires optional dependencies.*datannurpy\[mysql\]",
+            ):
+                _connect_external_backend(
+                    "mysql", {"host": "localhost", "port": "3306"}
+                )
+
+    def test_ibis_missing_backend_error_is_rewritten(self) -> None:
+        """Generic Ibis missing-backend errors get a datannurpy-specific message."""
+        pytest.importorskip("MySQLdb", reason="mysqlclient not installed")
+        with patch(
+            "ibis.mysql.connect",
+            side_effect=Exception(
+                "Failed to import the mysql backend due to missing dependencies."
+            ),
+        ):
+            with pytest.raises(
+                ConfigError,
+                match=r"MySQL support requires optional dependencies.*datannurpy\[mysql\]",
+            ):
+                _connect_external_backend(
+                    "mysql", {"host": "localhost", "port": "3306"}
+                )
+
+
+class TestIsMissingBackendDependencyError:
+    """Direct tests for _is_missing_backend_dependency_error."""
+
+    def test_import_error(self) -> None:
+        assert _is_missing_backend_dependency_error("mysql", ImportError("x"))
+
+    def test_module_not_found_error(self) -> None:
+        assert _is_missing_backend_dependency_error("pg", ModuleNotFoundError("y"))
+
+    def test_ibis_missing_deps_message(self) -> None:
+        err = Exception(
+            "Failed to import the mysql backend due to missing dependencies."
+        )
+        assert _is_missing_backend_dependency_error("mysql", err)
+
+    def test_generic_missing_deps_message(self) -> None:
+        err = Exception("due to missing dependencies for mysql")
+        assert _is_missing_backend_dependency_error("mysql", err)
+
+    def test_unrelated_error(self) -> None:
+        assert not _is_missing_backend_dependency_error("mysql", Exception("timeout"))
 
 
 class TestTunnelUri:
@@ -401,6 +463,31 @@ class TestOpenSshTunnel:
         )
         assert tunneled == "mysql://a:b@localhost:33333/mydb"
         mock_client.connect.assert_called_once_with(hostname="ssh.host", port=22)
+
+    def test_rejects_unknown_host_key(self) -> None:
+        """Unknown host key raises ConfigError with actionable message."""
+        import paramiko as real_paramiko
+
+        mock_client = MagicMock()
+        mock_client.connect.side_effect = real_paramiko.SSHException(
+            "Server 'ssh.host' not found in known_hosts"
+        )
+
+        with (
+            patch("datannurpy.scanner.database.paramiko") as mock_paramiko,
+            patch("datannurpy.scanner.database.socket"),
+            pytest.raises(ConfigError, match="SSH host key verification failed"),
+        ):
+            mock_paramiko.SSHClient.return_value = mock_client
+            mock_paramiko.RejectPolicy.return_value = "reject_policy"
+            mock_paramiko.SSHException = real_paramiko.SSHException
+
+            from datannurpy.scanner.database import open_ssh_tunnel
+
+            with open_ssh_tunnel({"host": "ssh.host"}, "mysql://a:b@db/mydb"):
+                pass  # pragma: no cover
+
+        mock_client.close.assert_called_once()
 
 
 class TestAddDatabaseSshTunnel:
@@ -638,11 +725,13 @@ class TestListTables:
 
         result = list_tables(mock_con, schema="hr", backend_name="oracle")
 
-        # Verify query uses all_tables with owner
+        # Verify query uses all_tables with bind parameter
         mock_con.raw_sql.assert_called_once()
         query = mock_con.raw_sql.call_args[0][0]
         assert "all_tables" in query
-        assert "HR" in query  # schema uppercased
+        assert ":owner" in query
+        params = mock_con.raw_sql.call_args[1]["parameters"]
+        assert params == {"owner": "HR"}
         assert result == ["sales"]
 
     def test_fallback_to_ibis_list_tables(self) -> None:
@@ -707,8 +796,10 @@ class TestOracleGetSchema:
 
         query = mock_con.raw_sql.call_args[0][0]
         assert "all_tab_columns" in query
-        assert "HR" in query
-        assert "EMPLOYEES" in query
+        assert ":owner" in query
+        assert ":table_name" in query
+        params = mock_con.raw_sql.call_args[1]["parameters"]
+        assert params == {"owner": "HR", "table_name": "EMPLOYEES"}
         assert schema == ibis.schema({"ID": "int64", "NAME": "string"})
         assert lob_columns == set()
         assert date_columns == set()
@@ -1067,7 +1158,10 @@ class TestInitOracleClient:
 
         oracle_mod._oracle_client_initialized = False
         with patch.dict("sys.modules", {"oracledb": None}):
-            with pytest.raises(ConfigError, match="oracledb"):
+            with pytest.raises(
+                ConfigError,
+                match=r"Oracle support requires optional dependencies.*datannurpy\[oracle\]",
+            ):
                 _init_oracle_client("/opt/oracle/client", raise_driver_error)
         oracle_mod._oracle_client_initialized = False
 
@@ -1144,7 +1238,8 @@ class TestGetTableDataSize:
             assert get_table_data_size(con, "employees", None) == 131072
         query = con.raw_sql.call_args[0][0]
         assert "user_segments" in query
-        assert "'EMPLOYEES'" in query
+        params = con.raw_sql.call_args[1]["parameters"]
+        assert params == {"seg": "EMPLOYEES"}
 
     def test_oracle_with_schema(self) -> None:
         con = self._mock_con([(131072,)])
@@ -1154,7 +1249,8 @@ class TestGetTableDataSize:
             assert get_table_data_size(con, "employees", "hr") == 131072
         query = con.raw_sql.call_args_list[0][0][0]
         assert "all_segments" in query
-        assert "'HR'" in query
+        params = con.raw_sql.call_args_list[0][1]["parameters"]
+        assert params == {"seg": "EMPLOYEES", "owner": "HR"}
 
     def test_oracle_with_schema_fallback_to_user_segments(self) -> None:
         """Oracle falls back to user_segments when all_segments returns NULL."""

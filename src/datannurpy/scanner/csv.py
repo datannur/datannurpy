@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import ibis
-import pandas as pd
 import pyarrow as pa
 
 from ..utils import log_error
@@ -19,6 +18,8 @@ from .utils import build_variables
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+
+    import pandas as pd
 
     from ..schema import Variable
 
@@ -145,8 +146,9 @@ def scan_csv(
 
                 actual_sample_size: int | None = None
                 if sample_size is not None and row_count > sample_size and infer_stats:
+                    safe_path = str(csv_path).replace("'", "''")
                     cursor: Any = con.raw_sql(
-                        f"SELECT * FROM read_csv('{csv_path}') "
+                        f"SELECT * FROM read_csv('{safe_path}') "
                         f"USING SAMPLE reservoir({sample_size} ROWS)"
                     )
                     sample_arrow = cursor.fetch_arrow_table()
