@@ -166,7 +166,10 @@ class TestRaiseDriverError:
     """Tests for driver error messages."""
 
     def test_known_backend(self) -> None:
-        with pytest.raises(ConfigError, match="PostgreSQL requires psycopg2"):
+        with pytest.raises(
+            ConfigError,
+            match=r"PostgreSQL support requires optional dependencies.*datannurpy\[postgres\]",
+        ):
             raise_driver_error("postgres", ModuleNotFoundError("psycopg2"))
 
     def test_unknown_backend(self) -> None:
@@ -267,7 +270,42 @@ class TestConnectExternalBackendErrors:
             "ibis.mysql.connect",
             side_effect=ModuleNotFoundError("No module named 'MySQLdb'"),
         ):
-            with pytest.raises(ConfigError, match="MySQL requires"):
+            with pytest.raises(
+                ConfigError,
+                match=r"MySQL support requires optional dependencies.*datannurpy\[mysql\]",
+            ):
+                _connect_external_backend(
+                    "mysql", {"host": "localhost", "port": "3306"}
+                )
+
+    def test_import_error_not_module_not_found(self) -> None:
+        """ImportError (not ModuleNotFoundError) is caught via except Exception."""
+        pytest.importorskip("MySQLdb", reason="mysqlclient not installed")
+        with patch(
+            "ibis.mysql.connect",
+            side_effect=ImportError("cannot import name 'foo'"),
+        ):
+            with pytest.raises(
+                ConfigError,
+                match=r"MySQL support requires optional dependencies.*datannurpy\[mysql\]",
+            ):
+                _connect_external_backend(
+                    "mysql", {"host": "localhost", "port": "3306"}
+                )
+
+    def test_ibis_missing_backend_error_is_rewritten(self) -> None:
+        """Generic Ibis missing-backend errors get a datannurpy-specific message."""
+        pytest.importorskip("MySQLdb", reason="mysqlclient not installed")
+        with patch(
+            "ibis.mysql.connect",
+            side_effect=Exception(
+                "Failed to import the mysql backend due to missing dependencies."
+            ),
+        ):
+            with pytest.raises(
+                ConfigError,
+                match=r"MySQL support requires optional dependencies.*datannurpy\[mysql\]",
+            ):
                 _connect_external_backend(
                     "mysql", {"host": "localhost", "port": "3306"}
                 )
@@ -1096,7 +1134,10 @@ class TestInitOracleClient:
 
         oracle_mod._oracle_client_initialized = False
         with patch.dict("sys.modules", {"oracledb": None}):
-            with pytest.raises(ConfigError, match="oracledb"):
+            with pytest.raises(
+                ConfigError,
+                match=r"Oracle support requires optional dependencies.*datannurpy\[oracle\]",
+            ):
                 _init_oracle_client("/opt/oracle/client", raise_driver_error)
         oracle_mod._oracle_client_initialized = False
 

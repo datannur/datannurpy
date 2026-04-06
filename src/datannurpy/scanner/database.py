@@ -280,17 +280,19 @@ def raise_driver_error(backend: str, original_error: Exception) -> NoReturn:
     """Raise clear error message for missing database drivers."""
     messages = {
         "postgres": (
-            "PostgreSQL requires psycopg2. "
+            "PostgreSQL support requires optional dependencies. "
             "Install with: pip install datannurpy[postgres]"
         ),
         "mysql": (
-            "MySQL requires PyMySQL. Install with: pip install datannurpy[mysql]"
+            "MySQL support requires optional dependencies. "
+            "Install with: pip install datannurpy[mysql]"
         ),
         "oracle": (
-            "Oracle requires oracledb. Install with: pip install datannurpy[oracle]"
+            "Oracle support requires optional dependencies. "
+            "Install with: pip install datannurpy[oracle]"
         ),
         "mssql": (
-            "SQL Server requires pyodbc and an ODBC driver. "
+            "SQL Server support requires optional dependencies. "
             "Install with: pip install datannurpy[mssql]\n"
             "ODBC driver: macOS: brew install freetds | "
             "Linux: apt install tdsodbc | "
@@ -299,6 +301,19 @@ def raise_driver_error(backend: str, original_error: Exception) -> NoReturn:
     }
     msg = messages.get(backend, f"Missing driver for {backend}")
     raise ConfigError(msg) from original_error
+
+
+def _is_missing_backend_dependency_error(backend: str, error: Exception) -> bool:
+    """Return True when an exception indicates a missing optional backend dep."""
+    if isinstance(error, (ModuleNotFoundError, ImportError)):
+        return True
+
+    msg = str(error).lower()
+    return (
+        f"failed to import the {backend} backend due to missing dependencies" in msg
+        or "due to missing dependencies" in msg
+        and backend in msg
+    )
 
 
 def parse_connection_string(connection: str) -> tuple[str, dict[str, str]]:
@@ -425,6 +440,8 @@ def _connect_external_backend(
     except ModuleNotFoundError as e:
         raise_driver_error(backend, e)
     except Exception as e:
+        if _is_missing_backend_dependency_error(backend, e):
+            raise_driver_error(backend, e)
         host = kwargs.get("host", "localhost")
         port = kwargs.get("port")
         target = f"{host}:{port}" if port else host
