@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Any
 
 import ibis
 import numpy as np
-import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -20,6 +19,8 @@ from .utils import build_variables
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+
+    import pandas as pd
 
 
 @dataclass
@@ -50,7 +51,7 @@ def _apply_labels(
             var.description = label
 
 
-_READSTAT_TYPE_MAP: dict[str, str] = {"double": "number", "string": "string"}
+_READSTAT_TYPE_MAP: dict[str, str] = {"double": "float", "string": "string"}
 
 
 def _apply_types(variables: list[Variable], meta_types: dict[str, str]) -> None:

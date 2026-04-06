@@ -574,7 +574,7 @@ class TestSchemaOnlyRemoteOptimizations:
         assert len(result.variables) > 0
         assert result.nb_row is None
         # SAS streaming should extract types from header
-        assert all(v.type == "number" for v in result.variables)
+        assert all(v.type == "float" for v in result.variables)
 
     def test_schema_only_stata_remote(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
@@ -604,7 +604,7 @@ class TestSchemaOnlyRemoteOptimizations:
         assert result.nb_row is None
         # Stata streaming should extract types from header
         var_types = {v.name: v.type for v in result.variables}
-        assert all(t in ("number", "string") for t in var_types.values())
+        assert all(t in ("float", "string") for t in var_types.values())
 
     def test_schema_only_stata_remote_no_dtype(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
