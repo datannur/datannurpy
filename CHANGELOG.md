@@ -1,5 +1,11 @@
 # datannurpy
 
+## 0.14.2 (2026-04-06)
+
+- fix: unified type strings — floating-point types now consistently return `"float"` instead of `"number"` (aligns with frontend `varTypes`)
+- refactor: replaced `pyarrow_type_to_str` with `ibis.Schema.from_pyarrow` + `ibis_type_to_str` — single type conversion path
+- perf: shared test fixtures, lazy pandas imports, xdist tuned to 4 workers
+
 ## 0.14.1 (2026-04-05)
 
 - perf: batch database introspection — one set of system catalog queries per schema instead of per table
