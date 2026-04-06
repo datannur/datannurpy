@@ -322,7 +322,9 @@ class TestIsMissingBackendDependencyError:
         assert _is_missing_backend_dependency_error("pg", ModuleNotFoundError("y"))
 
     def test_ibis_missing_deps_message(self) -> None:
-        err = Exception("Failed to import the mysql backend due to missing dependencies.")
+        err = Exception(
+            "Failed to import the mysql backend due to missing dependencies."
+        )
         assert _is_missing_backend_dependency_error("mysql", err)
 
     def test_generic_missing_deps_message(self) -> None:
