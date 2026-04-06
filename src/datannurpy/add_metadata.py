@@ -17,6 +17,7 @@ from .schema import (
     Dataset,
     Doc,
     Folder,
+    Freq,
     Institution,
     Modality,
     Tag,
@@ -25,7 +26,7 @@ from .schema import (
 )
 from .scanner import read_csv, read_excel, read_statistical
 from .utils import log_done, log_error, log_section, log_warn
-from .utils.ids import build_value_id
+from .utils.ids import build_freq_id, build_value_id
 from .utils.params import validate_params
 from .errors import ConfigError
 
@@ -41,13 +42,14 @@ ENTITY_CLASSES: dict[str, type] = {
     "variable": Variable,
     "modality": Modality,
     "value": Value,
+    "freq": Freq,
     "institution": Institution,
     "tag": Tag,
     "doc": Doc,
 }
 
 # Entities without required id (use composite key)
-ENTITIES_WITHOUT_ID = {"value"}
+ENTITIES_WITHOUT_ID = {"value", "freq"}
 
 # List fields that should be merged (union)
 LIST_FIELDS = {"tag_ids", "doc_ids", "modality_ids", "source_var_ids"}
@@ -431,6 +433,29 @@ def _process_entity_table(
                 if modality and hasattr(modality, "_seen"):
                     catalog.modality.update(str(modality_id), _seen=True)
 
+        elif entity_name == "freq":
+            # Freq uses composite key (variable_id, value)
+            variable_id = row_data.get("variable_id")
+            value_str = row_data.get("value")
+            if variable_id is None or value_str is None:
+                continue
+
+            freq_id = build_freq_id(str(variable_id), str(value_str))
+            freq_count = int(row_data.get("freq", 0))
+            existing = catalog.freq.get(freq_id)
+            if existing:
+                catalog.freq.update(freq_id, freq=freq_count)
+                updated += 1
+            else:
+                new_freq = Freq(
+                    id=freq_id,
+                    variable_id=str(variable_id),
+                    value=str(value_str),
+                    freq=freq_count,
+                )
+                catalog.freq.add(new_freq)
+                created += 1
+
         else:
             # Standard entity with id
             entity_id = row_data.get("id")
@@ -472,6 +497,7 @@ def _get_catalog_table(catalog: Catalog, entity_name: str) -> Any | None:
         "variable": catalog.variable,
         "modality": catalog.modality,
         "value": catalog.value,
+        "freq": catalog.freq,
         "institution": catalog.institution,
         "tag": catalog.tag,
         "doc": catalog.doc,
