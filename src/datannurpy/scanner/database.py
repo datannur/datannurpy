@@ -202,7 +202,7 @@ def open_ssh_tunnel(
 
     client = paramiko.SSHClient()
     client.load_system_host_keys()
-    client.set_missing_host_key_policy(paramiko.WarningPolicy())
+    client.set_missing_host_key_policy(paramiko.RejectPolicy())
 
     connect_kwargs: dict[str, Any] = {
         "hostname": ssh_host,
@@ -215,7 +215,16 @@ def open_ssh_tunnel(
     if "key_file" in ssh_config:
         connect_kwargs["key_filename"] = ssh_config["key_file"]
 
-    client.connect(**connect_kwargs)
+    try:
+        client.connect(**connect_kwargs)
+    except paramiko.SSHException as exc:
+        client.close()
+        msg = (
+            f"SSH host key verification failed for '{ssh_host}': {exc}. "
+            f"Connect once manually (ssh {ssh_host}) to add the key "
+            f"to your known_hosts file, then retry."
+        )
+        raise ConfigError(msg) from exc
     transport = client.get_transport()
     assert transport is not None
 

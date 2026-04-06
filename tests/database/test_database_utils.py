@@ -402,6 +402,31 @@ class TestOpenSshTunnel:
         assert tunneled == "mysql://a:b@localhost:33333/mydb"
         mock_client.connect.assert_called_once_with(hostname="ssh.host", port=22)
 
+    def test_rejects_unknown_host_key(self) -> None:
+        """Unknown host key raises ConfigError with actionable message."""
+        import paramiko as real_paramiko
+
+        mock_client = MagicMock()
+        mock_client.connect.side_effect = real_paramiko.SSHException(
+            "Server 'ssh.host' not found in known_hosts"
+        )
+
+        with (
+            patch("datannurpy.scanner.database.paramiko") as mock_paramiko,
+            patch("datannurpy.scanner.database.socket"),
+            pytest.raises(ConfigError, match="SSH host key verification failed"),
+        ):
+            mock_paramiko.SSHClient.return_value = mock_client
+            mock_paramiko.RejectPolicy.return_value = "reject_policy"
+            mock_paramiko.SSHException = real_paramiko.SSHException
+
+            from datannurpy.scanner.database import open_ssh_tunnel
+
+            with open_ssh_tunnel({"host": "ssh.host"}, "mysql://a:b@db/mydb"):
+                pass  # pragma: no cover
+
+        mock_client.close.assert_called_once()
+
 
 class TestAddDatabaseSshTunnel:
     """Tests for add_database with ssh_tunnel parameter."""
