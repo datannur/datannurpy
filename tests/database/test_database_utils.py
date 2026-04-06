@@ -18,6 +18,7 @@ from datannurpy.scanner.database import (
     _connect_external_backend,
     _encode_uri_credentials,
     _get_table,
+    _is_missing_backend_dependency_error,
     _tunnel_uri,
     connect,
     get_database_name,
@@ -309,6 +310,27 @@ class TestConnectExternalBackendErrors:
                 _connect_external_backend(
                     "mysql", {"host": "localhost", "port": "3306"}
                 )
+
+
+class TestIsMissingBackendDependencyError:
+    """Direct tests for _is_missing_backend_dependency_error."""
+
+    def test_import_error(self) -> None:
+        assert _is_missing_backend_dependency_error("mysql", ImportError("x"))
+
+    def test_module_not_found_error(self) -> None:
+        assert _is_missing_backend_dependency_error("pg", ModuleNotFoundError("y"))
+
+    def test_ibis_missing_deps_message(self) -> None:
+        err = Exception("Failed to import the mysql backend due to missing dependencies.")
+        assert _is_missing_backend_dependency_error("mysql", err)
+
+    def test_generic_missing_deps_message(self) -> None:
+        err = Exception("due to missing dependencies for mysql")
+        assert _is_missing_backend_dependency_error("mysql", err)
+
+    def test_unrelated_error(self) -> None:
+        assert not _is_missing_backend_dependency_error("mysql", Exception("timeout"))
 
 
 class TestTunnelUri:
