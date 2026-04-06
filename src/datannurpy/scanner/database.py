@@ -48,6 +48,12 @@ DEFAULT_PORTS: dict[str, int] = {
     "mssql": 1433,
 }
 
+
+def _quote(value: str) -> str:
+    """Escape single quotes for safe SQL interpolation."""
+    return value.replace("'", "''")
+
+
 # System schemas to exclude when scanning (per backend)
 SYSTEM_SCHEMAS: dict[str, set[str]] = {
     "postgres": {
@@ -195,7 +201,8 @@ def open_ssh_tunnel(
     ssh_port = int(ssh_config.get("port", 22))
 
     client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.load_system_host_keys()
+    client.set_missing_host_key_policy(paramiko.WarningPolicy())
 
     connect_kwargs: dict[str, Any] = {
         "hostname": ssh_host,
@@ -543,10 +550,12 @@ def list_tables(
         # Use USER_TABLES/ALL_TABLES to get only tables (excludes views)
         # Normalize to lowercase since Oracle stores identifiers in UPPERCASE
         if db_schema:
-            query = f"SELECT table_name FROM all_tables WHERE owner = '{db_schema}'"
+            result = raw_sql(
+                "SELECT table_name FROM all_tables WHERE owner = :owner",
+                parameters={"owner": db_schema},
+            ).fetchall()
         else:
-            query = "SELECT table_name FROM user_tables"
-        result = raw_sql(query).fetchall()
+            result = raw_sql("SELECT table_name FROM user_tables").fetchall()
         tables = [row[0].lower() for row in result]
         # Filter out Oracle system tables (MVIEW$_*, OL$*, SCHEDULER_*, etc.)
         tables = [
@@ -573,7 +582,7 @@ def list_tables(
             "WHERE table_type = 'BASE TABLE'"
         )
         if schema:
-            query += f" AND table_schema = '{schema}'"
+            query += f" AND table_schema = '{_quote(schema)}'"
         result = raw_sql(query).fetchall()
         tables = [row[0] for row in result]
     else:
@@ -606,7 +615,9 @@ def list_schemas(con: ibis.BaseBackend) -> list[str]:
         # List all users that have at least one table (user schemas)
         result = raw_sql(
             "SELECT DISTINCT owner FROM all_tables "
-            "WHERE owner NOT IN (" + ",".join(f"'{s}'" for s in system_schemas) + ")"
+            "WHERE owner NOT IN ("
+            + ",".join(f"'{_quote(s)}'" for s in system_schemas)
+            + ")"
         ).fetchall()
         return sorted([row[0].lower() for row in result])
 
@@ -719,25 +730,33 @@ def get_table_data_size(
     try:
         if backend == "sqlite":
             row = raw_sql(
-                f"SELECT SUM(pgsize) FROM dbstat WHERE name = '{table_name}'"
+                f"SELECT SUM(pgsize) FROM dbstat WHERE name = '{_quote(table_name)}'"
             ).fetchone()
             return int(row[0]) if row and row[0] is not None else None
         if backend == "postgres":
-            qualified = f"'{schema}.{table_name}'" if schema else f"'{table_name}'"
+            qualified = (
+                f"'{_quote(schema)}.{_quote(table_name)}'"
+                if schema
+                else f"'{_quote(table_name)}'"
+            )
             row = raw_sql(f"SELECT pg_total_relation_size({qualified})").fetchone()
             return int(row[0]) if row and row[0] is not None else None
         if backend == "mysql":
             query = (
                 "SELECT data_length + index_length "
                 "FROM information_schema.tables "
-                f"WHERE table_name = '{table_name}'"
+                f"WHERE table_name = '{_quote(table_name)}'"
             )
             if schema:
-                query += f" AND table_schema = '{schema}'"
+                query += f" AND table_schema = '{_quote(schema)}'"
             row = raw_sql(query).fetchone()
             return int(row[0]) if row and row[0] is not None else None
         if backend == "mssql":
-            qualified = f"'{schema}.{table_name}'" if schema else f"'{table_name}'"
+            qualified = (
+                f"'{_quote(schema)}.{_quote(table_name)}'"
+                if schema
+                else f"'{_quote(table_name)}'"
+            )
             row = raw_sql(
                 "SELECT SUM(a.total_pages) * 8 * 1024 "
                 "FROM sys.partitions p "
@@ -752,16 +771,16 @@ def get_table_data_size(
                 uc_schema = schema.upper()
                 row = raw_sql(
                     "SELECT SUM(bytes) FROM all_segments "
-                    f"WHERE segment_name = '{uc_table}' "
-                    f"AND owner = '{uc_schema}'"
+                    "WHERE segment_name = :seg AND owner = :owner",
+                    parameters={"seg": uc_table, "owner": uc_schema},
                 ).fetchone()
                 if row and row[0] is not None:
                     return int(row[0])
                 # Fallback: user_segments works for the connected user's tables
                 # when all_segments returns NULL (insufficient privileges).
             row = raw_sql(
-                "SELECT SUM(bytes) FROM user_segments "
-                f"WHERE segment_name = '{uc_table}'"
+                "SELECT SUM(bytes) FROM user_segments WHERE segment_name = :seg",
+                parameters={"seg": uc_table},
             ).fetchone()
             return int(row[0]) if row and row[0] is not None else None
     except Exception:

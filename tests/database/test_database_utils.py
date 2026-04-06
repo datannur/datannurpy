@@ -638,11 +638,13 @@ class TestListTables:
 
         result = list_tables(mock_con, schema="hr", backend_name="oracle")
 
-        # Verify query uses all_tables with owner
+        # Verify query uses all_tables with bind parameter
         mock_con.raw_sql.assert_called_once()
         query = mock_con.raw_sql.call_args[0][0]
         assert "all_tables" in query
-        assert "HR" in query  # schema uppercased
+        assert ":owner" in query
+        params = mock_con.raw_sql.call_args[1]["parameters"]
+        assert params == {"owner": "HR"}
         assert result == ["sales"]
 
     def test_fallback_to_ibis_list_tables(self) -> None:
@@ -707,8 +709,10 @@ class TestOracleGetSchema:
 
         query = mock_con.raw_sql.call_args[0][0]
         assert "all_tab_columns" in query
-        assert "HR" in query
-        assert "EMPLOYEES" in query
+        assert ":owner" in query
+        assert ":table_name" in query
+        params = mock_con.raw_sql.call_args[1]["parameters"]
+        assert params == {"owner": "HR", "table_name": "EMPLOYEES"}
         assert schema == ibis.schema({"ID": "int64", "NAME": "string"})
         assert lob_columns == set()
         assert date_columns == set()
@@ -1144,7 +1148,8 @@ class TestGetTableDataSize:
             assert get_table_data_size(con, "employees", None) == 131072
         query = con.raw_sql.call_args[0][0]
         assert "user_segments" in query
-        assert "'EMPLOYEES'" in query
+        params = con.raw_sql.call_args[1]["parameters"]
+        assert params == {"seg": "EMPLOYEES"}
 
     def test_oracle_with_schema(self) -> None:
         con = self._mock_con([(131072,)])
@@ -1154,7 +1159,8 @@ class TestGetTableDataSize:
             assert get_table_data_size(con, "employees", "hr") == 131072
         query = con.raw_sql.call_args_list[0][0][0]
         assert "all_segments" in query
-        assert "'HR'" in query
+        params = con.raw_sql.call_args_list[0][1]["parameters"]
+        assert params == {"seg": "EMPLOYEES", "owner": "HR"}
 
     def test_oracle_with_schema_fallback_to_user_segments(self) -> None:
         """Oracle falls back to user_segments when all_segments returns NULL."""

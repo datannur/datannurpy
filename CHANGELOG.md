@@ -2,6 +2,10 @@
 
 ## 0.14.2 (2026-04-06)
 
+- security: SSH tunnels now use `WarningPolicy` instead of `AutoAddPolicy` — prevents silent MITM key acceptance
+- security: Oracle SQL queries use bind variables (`:name`) instead of string interpolation
+- security: non-Oracle SQL introspection queries use `_quote()` escaping for safe interpolation
+- security: GitHub Actions pinned by commit SHA across all workflows
 - fix: unified type strings — floating-point types now consistently return `"float"` instead of `"number"` (aligns with frontend `varTypes`)
 - refactor: replaced `pyarrow_type_to_str` with `ibis.Schema.from_pyarrow` + `ibis_type_to_str` — single type conversion path
 - perf: shared test fixtures, lazy pandas imports, xdist tuned to 4 workers
