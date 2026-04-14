@@ -91,7 +91,7 @@ class TestAddFolderFormats:
         df.to_excel(tmp_path / "mixed_nan.xlsx", index=False)
 
         catalog = Catalog()
-        catalog.add_folder(tmp_path, quiet=True, infer_stats=True)
+        catalog.add_folder(tmp_path, quiet=True)
 
         var_a = catalog.variable.get_by("name", "COL_A")
         assert var_a is not None
@@ -192,13 +192,13 @@ class TestAddFolderStats:
         assert all(v.nb_missing is not None for v in catalog.variable.all())
 
     def test_add_folder_without_stats(self):
-        """add_folder with infer_stats=False should skip stats."""
+        """add_folder with depth=schema should skip stats."""
         catalog = Catalog()
         catalog.add_folder(
             CSV_DIR,
             Folder(id="test", name="Test"),
             include=["employees.csv"],
-            infer_stats=False,
+            depth="schema",
         )
         assert all(v.nb_distinct is None for v in catalog.variable.all())
         assert all(v.nb_missing is None for v in catalog.variable.all())

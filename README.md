@@ -186,7 +186,6 @@ catalog.add_folder(
     include=["*.csv", "*.xlsx"],
     exclude=["**/tmp/**"],
     recursive=True,
-    infer_stats=True,
     csv_encoding="utf-8",  # or "cp1252", "iso-8859-1" (auto-detected by default)
 )
 
@@ -301,7 +300,6 @@ catalog.add_database(
 catalog.add_database(
     "postgresql://localhost/mydb",
     schema=["public", "sales", "hr"],
-    infer_stats=True,
 )
 
 # SSH tunnel (for databases behind a firewall)
@@ -480,7 +478,6 @@ catalog.add_folder(
     include=None,
     exclude=None,
     recursive=True,
-    infer_stats=True,
     csv_encoding=None,
     sample_size=None,
     csv_skip_copy=None,
@@ -499,7 +496,6 @@ catalog.add_folder(
 | include         | list[str] \| None                         | None     | Glob patterns to include                      |
 | exclude         | list[str] \| None                         | None     | Glob patterns to exclude                      |
 | recursive       | bool                                      | True     | Scan subdirectories                           |
-| infer_stats     | bool                                      | True     | Compute distinct/missing/duplicate counts     |
 | csv_encoding    | str \| None                               | None     | Override CSV encoding                         |
 | sample_size     | int \| None                               | None     | Sample rows for stats (overrides catalog)     |
 | csv_skip_copy       | bool \| None                              | None     | Skip UTF-8 temp copy (overrides catalog)      |
@@ -539,7 +535,6 @@ catalog.add_dataset(
     *,
     folder_id=None,
     depth=None,
-    infer_stats=True,
     csv_encoding=None,
     sample_size=None,
     csv_skip_copy=None,
@@ -558,7 +553,6 @@ catalog.add_dataset(
 | folder          | Folder \| None                            | None     | Parent folder                                 |
 | folder_id       | str \| None                               | None     | Parent folder ID (alternative to folder)      |
 | depth           | "structure" \| "schema" \| "full" \| None | None     | Scan depth (uses catalog.depth if None)       |
-| infer_stats     | bool                                      | True     | Compute statistics                            |
 | csv_encoding    | str \| None                               | None     | Override CSV encoding                         |
 | sample_size     | int \| None                               | None     | Sample rows for stats (overrides catalog)     |
 | csv_skip_copy       | bool \| None                              | None     | Skip UTF-8 temp copy (overrides catalog)      |
@@ -581,7 +575,6 @@ catalog.add_database(
     schema=None,
     include=None,
     exclude=None,
-    infer_stats=True,
     sample_size=None,
     group_by_prefix=True,
     prefix_min_tables=2,
@@ -602,7 +595,6 @@ catalog.add_database(
 | schema             | str \| list[str] \| None                         | None     | Schema(s) to scan                          |
 | include            | list[str] \| None                               | None     | Table name patterns to include             |
 | exclude            | list[str] \| None                               | None     | Table name patterns to exclude             |
-| infer_stats        | bool                                            | True     | Compute column statistics                  |
 | sample_size        | int \| None                                     | None     | Sample rows for stats (overrides catalog)  |
 | group_by_prefix    | bool \| str                                     | True     | Group tables by prefix into subfolders     |
 | prefix_min_tables  | int                                             | 2        | Min tables to form a prefix group          |

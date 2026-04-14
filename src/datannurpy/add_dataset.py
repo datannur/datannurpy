@@ -114,7 +114,6 @@ def add_dataset(
     *,
     depth: Literal["structure", "schema", "full"] | None = None,
     folder_id: str | None = None,
-    infer_stats: bool = True,
     csv_encoding: str | None = None,
     sample_size: int | None = _UNSET,
     csv_skip_copy: bool | None = None,
@@ -211,7 +210,6 @@ def add_dataset(
             resolved_folder_id,
             meta,
             depth=resolved_depth,
-            infer_stats=infer_stats,
             quiet=q,
             refresh=do_refresh,
             start_time=start_time,
@@ -288,7 +286,6 @@ def add_dataset(
         delivery_format,
         dataset_id=dataset_id,
         schema_only=schema_only,
-        infer_stats=infer_stats and not schema_only,
         freq_threshold=catalog.freq_threshold or None,
         csv_encoding=resolved_encoding,
         sample_size=resolved_sample_size,
@@ -339,7 +336,6 @@ def _add_parquet_directory(
     meta: DatasetMeta,
     *,
     depth: Literal["structure", "schema", "full"],
-    infer_stats: bool,
     quiet: bool,
     refresh: bool,
     start_time: float,
@@ -401,7 +397,7 @@ def _add_parquet_directory(
     variables, nb_row, freq_table, pq_meta = scan_parquet_dataset(
         parquet_info,
         dataset_id=dataset_id,
-        infer_stats=infer_stats and not schema_only,
+        infer_stats=not schema_only,
         freq_threshold=catalog.freq_threshold or None,
     )
 
