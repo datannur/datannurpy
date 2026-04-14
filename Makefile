@@ -1,4 +1,4 @@
-.PHONY: test lint typecheck check download-app coverage test-cov update-snapshots test-db test-db-all test-db-oracle18 test-db-up test-db-down
+.PHONY: test lint typecheck check download-app coverage test-cov update-snapshots test-db test-db-all test-db-oracle18 test-db-setup test-db-up test-db-down
 
 test:
 	uv run pytest
@@ -27,6 +27,9 @@ check:
 download-app:
 	uv run python scripts/download_app.py
 
+test-db-setup:
+	uv sync --extra databases
+
 test-db-up:
 	@command -v orbctl >/dev/null && orbctl start || true
 	docker compose -f docker-compose.test.yml --env-file /dev/null up -d --wait
@@ -37,7 +40,7 @@ test-db-up:
 test-db-down:
 	docker compose -f docker-compose.test.yml --env-file /dev/null down -v
 
-test-db: test-db-up
+test-db: test-db-setup test-db-up
 	@echo "=== PostgreSQL ==="
 	TEST_POSTGRES_URL=postgresql://test:test@localhost:15432/testdb \
 	uv run pytest tests/database/test_postgres.py -v -n 0
