@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.15.0 (2026-04-14)
+
+- breaking: removed `infer_stats` parameter from `add_folder`, `add_dataset`, `add_database` — use `depth="schema"` to skip statistics inference
+- fix: `make test-db` now installs database drivers automatically (`uv sync --extra databases`)
+
 ## 0.14.2 (2026-04-06)
 
 - add: `freq` entity support in `add_metadata` — frequency tables can be loaded from CSV/Excel/database metadata files
