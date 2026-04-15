@@ -2,7 +2,9 @@
 
 ## 0.15.0 (2026-04-14)
 
-- breaking: removed `infer_stats` parameter from `add_folder`, `add_dataset`, `add_database` — use `depth="schema"` to skip statistics inference
+- breaking: renamed depth levels — `"structure"` → `"dataset"`, `"schema"` → `"variable"`, `"full"` → `"value"`
+- add: new `depth="stat"` level — computes statistics (row count, min, max, mean, etc.) without modality detection or frequency tables
+- removed `infer_stats` parameter from `add_folder`, `add_dataset`, `add_database` — use `depth` to control scan level
 - fix: `make test-db` now installs database drivers automatically (`uv sync --extra databases`)
 
 ## 0.14.2 (2026-04-06)

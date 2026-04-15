@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path, PurePosixPath
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 import ibis
@@ -65,7 +65,7 @@ from .utils.db_enrich import (
 )
 
 if TYPE_CHECKING:
-    from .catalog import Catalog
+    from .catalog import Catalog, Depth
 
 
 @validate_params
@@ -74,7 +74,7 @@ def add_database(
     connection: str | ibis.BaseBackend,
     folder: Folder | None = None,
     *,
-    depth: Literal["structure", "schema", "full"] | None = None,
+    depth: Depth | None = None,
     schema: str | Sequence[str] | None = None,
     include: Sequence[str] | None = None,
     exclude: Sequence[str] | None = None,
@@ -169,7 +169,7 @@ def _add_database_impl(
     connection: str | ibis.BaseBackend,
     folder: Folder | None,
     *,
-    depth: Literal["structure", "schema", "full"] | None,
+    depth: Depth | None,
     schema: str | None,
     include: Sequence[str] | None,
     exclude: Sequence[str] | None,
@@ -186,7 +186,7 @@ def _add_database_impl(
     catalog._has_scanned = True
     q = quiet if quiet is not None else catalog.quiet
     do_refresh = refresh if refresh is not None else catalog.refresh
-    resolved_depth = depth if depth is not None else catalog.depth
+    resolved_depth: Depth = depth if depth is not None else catalog.depth
     # Connect to database
     con, backend_name = connect(connection, oracle_client_path=oracle_client_path)
 
@@ -236,10 +236,10 @@ def _add_database_impl(
     # Add or update root folder
     upsert_folder(catalog, folder)
 
-    freq_threshold = catalog.freq_threshold if catalog.freq_threshold else None
+    freq_threshold = catalog.freq_threshold if resolved_depth == "value" else None
 
-    # DB introspection setup (active for depth >= "schema")
-    do_introspect = resolved_depth != "structure"
+    # DB introspection setup (active for depth >= "variable")
+    do_introspect = resolved_depth != "dataset"
     if do_introspect:
         ensure_db_tags(catalog)
     raw_fk_refs: list[tuple[str, str | None, str, str]] = []
@@ -336,8 +336,8 @@ def _add_database_impl(
             # Check if table exists in cache
             existing_dataset = catalog.dataset.get_by("data_path", table_data_path)
 
-            # Structure/Schema mode: no signature, no row count, no incremental check
-            if resolved_depth != "full":
+            # Structure/Variable mode: no signature, no row count, no incremental check
+            if resolved_depth not in ("stat", "value"):
                 if existing_dataset is not None and not do_refresh:
                     catalog.dataset.update(existing_dataset.id, _seen=True)
                     if do_introspect:
@@ -367,9 +367,9 @@ def _add_database_impl(
 
                 dataset_id = make_id(table_folder_id, sanitize_id(table_name))
 
-                # Schema mode: scan columns
+                # Variable mode: scan columns
                 table_vars = []
-                if resolved_depth == "schema":
+                if resolved_depth == "variable":
                     try:
                         table_vars, _, _, _ = scan_table(
                             con,
@@ -477,7 +477,7 @@ def _add_database_impl(
                 effective_timestamp = catalog._now
                 effective_date = now_iso
 
-            # Full mode: scan table with row count, stats, modalities
+            # Stat/Value mode: scan table with row count, stats, modalities
             try:
                 table_vars, nb_row, actual_sample_size, freq_table = scan_table(
                     con,
@@ -486,7 +486,7 @@ def _add_database_impl(
                     dataset_id=dataset_id,
                     infer_stats=True,
                     freq_threshold=freq_threshold,
-                    sample_size=sample_size,
+                    sample_size=sample_size if resolved_depth == "value" else None,
                     row_count=current_nb_row,
                 )
             except Exception as exc:
@@ -520,9 +520,10 @@ def _add_database_impl(
             catalog.dataset.add(dataset)
 
             var_id_mapping = build_variable_ids(table_vars, dataset.id)
-            catalog.modality_manager.assign_from_freq(
-                table_vars, freq_table, var_id_mapping
-            )
+            if freq_table is not None:
+                catalog.modality_manager.assign_from_freq(
+                    table_vars, freq_table, var_id_mapping
+                )
             catalog.variable.add_all(table_vars)
 
             log_done(f"{table_name} ({nb_row:,} rows, {len(table_vars)} vars)", q)
@@ -546,11 +547,11 @@ def _add_database_impl(
                 db_name=db_name,
                 depth=resolved_depth,
                 freq_threshold=freq_threshold,
-                sample_size=sample_size,
+                sample_size=sample_size if resolved_depth == "value" else None,
                 quiet=q,
             )
 
-        # Resolvtrospect and raw_fk_refs:
+        # Resolve FK refs
         resolve_foreign_keys(catalog, raw_fk_refs, table_to_dataset_id)
 
     # Close connection if we created it (string connection)
@@ -571,7 +572,7 @@ def _scan_table_series(
     schema_name: str | None,
     backend_name: str,
     db_name: str,
-    depth: str,
+    depth: Depth,
     freq_threshold: int | None,
     sample_size: int | None,
     quiet: bool,
@@ -599,7 +600,7 @@ def _scan_table_series(
     actual_sample_size: int | None = None
     freq_table = None
 
-    if depth == "structure":
+    if depth == "dataset":
         pass  # No scanning needed
     else:
         # Schema scan all tables for columns_by_period
@@ -622,8 +623,8 @@ def _scan_table_series(
 
         var_periods = compute_variable_periods(columns_by_period)
 
-        if depth == "full":
-            # Full scan of latest table
+        if depth in ("stat", "value"):
+            # Stat/Value: scan latest table for stats
             try:
                 row_count = get_table_row_count(con, last_table, schema_name)
                 table_vars, nb_row, actual_sample_size, freq_table = scan_table(
@@ -640,7 +641,7 @@ def _scan_table_series(
                 log_error(dataset_name, exc, quiet)
                 return 1
         else:
-            # Schema mode: reuse schema scan from columns_by_period loop
+            # Variable mode: reuse schema scan from columns_by_period loop
             if last_schema_vars is not None:
                 table_vars = last_schema_vars
             else:

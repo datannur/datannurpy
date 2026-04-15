@@ -238,7 +238,7 @@ class TestScanExcelValidation:
             ],
         )
 
-        catalog = Catalog(depth="schema")
+        catalog = Catalog(depth="variable")
         catalog.add_folder(tmp_path, quiet=True)
 
         assert len(catalog.variable.all()) == 0
@@ -248,7 +248,7 @@ class TestScanExcelValidation:
         df = pd.DataFrame({"id": [1, 2], "name": ["Alice", "Bob"]})
         df.to_excel(tmp_path / "valid.xlsx", index=False)
 
-        catalog = Catalog(depth="schema")
+        catalog = Catalog(depth="variable")
         catalog.add_folder(tmp_path, quiet=True)
 
         assert len(catalog.variable.all()) == 2
@@ -310,7 +310,7 @@ class TestScanExcelValidation:
         numeric_df = pd.DataFrame({2023: [100], 2024: [200]})
         monkeypatch.setattr(pd, "read_excel", lambda *_a, **_kw: numeric_df)
 
-        catalog = Catalog(depth="schema")
+        catalog = Catalog(depth="variable")
         catalog.add_folder(tmp_path, quiet=True)
 
         assert len(catalog.variable.all()) == 0

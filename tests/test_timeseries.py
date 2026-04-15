@@ -535,13 +535,13 @@ class TestAddFolderTimeSeries:
         # Should have union of all columns
         assert var_names == {"id", "nom", "revenu", "email"}
 
-    def test_structure_mode_with_timeseries(self):
+    def test_dataset_mode_with_timeseries(self):
         """Structure mode works with time series."""
         catalog = Catalog()
         catalog.add_folder(
             TIMESERIES_DIR / "yearly",
             Folder(id="yearly", name="Yearly"),
-            depth="structure",
+            depth="dataset",
             quiet=True,
         )
 
@@ -550,16 +550,16 @@ class TestAddFolderTimeSeries:
         assert datasets[0].nb_resources == 3
         assert datasets[0].start_date == "2020"
         assert datasets[0].end_date == "2023"
-        # No variables in structure mode
+        # No variables in dataset mode
         assert len(catalog.variable.all()) == 0
 
-    def test_schema_mode_with_timeseries(self):
+    def test_variable_mode_with_timeseries(self):
         """Schema mode scans columns from all files."""
         catalog = Catalog()
         catalog.add_folder(
             TIMESERIES_DIR / "schema_evolution",
             Folder(id="evolution", name="Evolution"),
-            depth="schema",
+            depth="variable",
             quiet=True,
         )
 

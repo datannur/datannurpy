@@ -14,7 +14,7 @@ DATA = HERE.parent / "data"
 REMOTE = os.environ["SFTP_URL"]
 AUTH = {"key_filename": os.environ["SFTP_KEY"]}
 
-catalog = Catalog(app_path=HERE / "output_remote", refresh=True, depth="full")
+catalog = Catalog(app_path=HERE / "output_remote", refresh=True, depth="value")
 catalog.add_folder(REMOTE, storage_options=AUTH)
 catalog.add_database(f"{REMOTE}/company.db", storage_options=AUTH)
 catalog.add_database(

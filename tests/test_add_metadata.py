@@ -34,7 +34,7 @@ from datannurpy.add_metadata import (
     _validate_entity_table,
 )
 
-ALL_ENTITIES = DEPTH_ENTITIES["full"]
+ALL_ENTITIES = DEPTH_ENTITIES["value"]
 
 
 class TestGetRequiredFields:

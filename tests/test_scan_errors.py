@@ -100,7 +100,7 @@ class TestAddDatabaseScanError:
             "datannurpy.add_database.scan_table",
             side_effect=_fail_nth("datannurpy.scanner.database.scan_table"),
         ):
-            catalog.add_database(duckdb_con, depth="schema")
+            catalog.add_database(duckdb_con, depth="variable")
         assert catalog.dataset.count == 1
 
     def test_continues_after_signature_error(self, duckdb_con) -> None:  # type: ignore[no-untyped-def]
@@ -114,8 +114,8 @@ class TestAddDatabaseScanError:
             catalog.add_database(duckdb_con)
         assert catalog.dataset.count == 1
 
-    def test_structure_mode_rescan(self, duckdb_con) -> None:  # type: ignore[no-untyped-def]
+    def test_dataset_mode_rescan(self, duckdb_con) -> None:  # type: ignore[no-untyped-def]
         catalog = Catalog(quiet=True)
-        catalog.add_database(duckdb_con, depth="structure")
-        catalog.add_database(duckdb_con, depth="structure", refresh=True)
+        catalog.add_database(duckdb_con, depth="dataset")
+        catalog.add_database(duckdb_con, depth="dataset", refresh=True)
         assert catalog.dataset.count == 2

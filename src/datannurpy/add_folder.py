@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path, PurePath, PurePosixPath
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 from .utils import (
     build_dataset_id_name,
@@ -42,7 +42,7 @@ from .scanner.parquet.discovery import (
 from .scanner.scan import scan_file
 
 if TYPE_CHECKING:
-    from .catalog import Catalog
+    from .catalog import Catalog, Depth
 
 _DIR_FORMATS = {"delta", "hive", "iceberg"}
 
@@ -61,7 +61,7 @@ def add_folder(
     path: str | Path | Sequence[str | Path],
     folder: Folder | None = None,
     *,
-    depth: Literal["structure", "schema", "full"] | None = None,
+    depth: Depth | None = None,
     include: Sequence[str] | None = None,
     exclude: Sequence[str] | None = None,
     recursive: bool = True,
@@ -188,7 +188,7 @@ def add_folder(
     plan = compute_scan_plan(discovery.datasets, catalog, do_refresh)
 
     # Structure-only mode: create/update datasets without scanning
-    if resolved_depth == "structure":
+    if resolved_depth == "dataset":
         # Skip unchanged datasets
         for info in plan.to_skip:
             existing = catalog.dataset.get_by("data_path", str(info.path))
@@ -268,17 +268,21 @@ def add_folder(
         log_skip(info.path.name, q)
 
     # Process datasets to scan
-    freq_threshold = catalog.freq_threshold if catalog.freq_threshold else None
+    schema_only = resolved_depth == "variable"
+    freq_threshold = catalog.freq_threshold if resolved_depth == "value" else None
     resolved_encoding = (
         csv_encoding if csv_encoding is not None else catalog.csv_encoding
     )
     resolved_csv_skip_copy = (
         csv_skip_copy if csv_skip_copy is not None else catalog.csv_skip_copy
     )
-    resolved_sample_size = (
-        sample_size if sample_size is not _UNSET else catalog.sample_size
-    )
-    schema_only = resolved_depth == "schema"
+    resolved_sample_size: int | None
+    if resolved_depth == "value":
+        resolved_sample_size = (
+            sample_size if sample_size is not _UNSET else catalog.sample_size
+        )
+    else:
+        resolved_sample_size = None
 
     scan_errors = 0
 
@@ -356,7 +360,7 @@ def add_folder(
         catalog.dataset.add(dataset)
 
         var_id_mapping = build_variable_ids(result.variables, dataset.id)
-        if not schema_only:
+        if result.freq_table is not None:
             catalog.modality_manager.assign_from_freq(
                 result.variables, result.freq_table, var_id_mapping
             )
@@ -495,7 +499,7 @@ def _scan_time_series(
 
     # Build variable IDs and assign modalities
     var_id_mapping = build_variable_ids(result.variables, dataset.id)
-    if not schema_only:
+    if result.freq_table is not None:
         catalog.modality_manager.assign_from_freq(
             result.variables, result.freq_table, var_id_mapping
         )

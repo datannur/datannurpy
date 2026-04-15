@@ -788,8 +788,8 @@ class TestCatalogDatabaseIntrospection:
         assert dv["name"].description == "Department name"
         assert dv["budget"].description == "Annual budget"
 
-    def test_structure_depth_skips(self, sqlite_with_constraints: Path) -> None:
-        catalog = Catalog(depth="structure")
+    def test_dataset_depth_skips(self, sqlite_with_constraints: Path) -> None:
+        catalog = Catalog(depth="dataset")
         catalog.add_database(
             f"sqlite:////{sqlite_with_constraints}",
             Folder(id="db", name="Test DB"),
@@ -798,7 +798,7 @@ class TestCatalogDatabaseIntrospection:
         assert catalog.variable.count == 0
 
     def test_schema_depth_introspects(self, sqlite_with_constraints: Path) -> None:
-        catalog = Catalog(depth="schema")
+        catalog = Catalog(depth="variable")
         catalog.add_database(
             f"sqlite:////{sqlite_with_constraints}",
             Folder(id="db", name="Test DB"),
@@ -838,11 +838,11 @@ class TestCatalogIncrementalIntrospection:
         conn_str = f"sqlite:////{sqlite_with_constraints}"
         folder = Folder(id="db", name="Test DB")
 
-        cat1 = Catalog(app_path=tmp_path, depth="schema", quiet=True)
+        cat1 = Catalog(app_path=tmp_path, depth="variable", quiet=True)
         cat1.add_database(conn_str, folder)
         cat1.export_db()
 
-        cat2 = Catalog(app_path=tmp_path, depth="schema", quiet=True)
+        cat2 = Catalog(app_path=tmp_path, depth="variable", quiet=True)
         cat2.add_database(conn_str, folder)
         v = _emp_vars(cat2)
         assert v["id"].key == 1

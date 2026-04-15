@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePath, PurePosixPath
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from .utils import (
     build_variable_ids,
@@ -41,7 +41,7 @@ from .scanner.parquet.discovery import (
 from .scanner.scan import scan_file
 
 if TYPE_CHECKING:
-    from .catalog import Catalog
+    from .catalog import Catalog, Depth
 
 
 @dataclass
@@ -112,7 +112,7 @@ def add_dataset(
     path: str | Path | Sequence[str | Path],
     folder: Folder | None = None,
     *,
-    depth: Literal["structure", "schema", "full"] | None = None,
+    depth: Depth | None = None,
     folder_id: str | None = None,
     csv_encoding: str | None = None,
     sample_size: int | None = _UNSET,
@@ -146,11 +146,7 @@ def add_dataset(
     catalog._has_scanned = True
     q = quiet if quiet is not None else catalog.quiet
     do_refresh = refresh if refresh is not None else catalog.refresh
-    resolved_depth: Literal["structure", "schema", "full"] = (
-        depth
-        if depth is not None
-        else cast(Literal["structure", "schema", "full"], catalog.depth)
-    )
+    resolved_depth: Depth = depth if depth is not None else cast("Depth", catalog.depth)
 
     # Handle remote URLs vs local paths
     is_remote = is_remote_url(path)
@@ -262,7 +258,7 @@ def add_dataset(
     )
 
     # Structure mode: create dataset without scanning
-    if resolved_depth == "structure":
+    if resolved_depth == "dataset":
         dataset = _create_dataset(
             dataset_id,
             path_stem,
@@ -279,16 +275,20 @@ def add_dataset(
         log_done(path_name, q, start_time)
         return
 
-    # Schema/Full mode: scan file
-    schema_only = resolved_depth == "schema"
+    # Schema/Stat/Value mode: scan file
+    schema_only = resolved_depth == "variable"
+    freq_threshold = catalog.freq_threshold if resolved_depth == "value" else None
+    sample_size_for_scan: int | None = (
+        resolved_sample_size if resolved_depth == "value" else None
+    )
     result = scan_file(
         dataset_path,
         delivery_format,
         dataset_id=dataset_id,
         schema_only=schema_only,
-        freq_threshold=catalog.freq_threshold or None,
+        freq_threshold=freq_threshold,
         csv_encoding=resolved_encoding,
-        sample_size=resolved_sample_size,
+        sample_size=sample_size_for_scan,
         csv_skip_copy=resolved_csv_skip_copy,
         fs=fs,
         quiet=q,
@@ -311,7 +311,7 @@ def add_dataset(
     catalog.dataset.add(dataset)
 
     var_id_mapping = build_variable_ids(result.variables, dataset.id)
-    if not schema_only:
+    if result.freq_table is not None:
         catalog.modality_manager.assign_from_freq(
             result.variables, result.freq_table, var_id_mapping
         )
@@ -335,7 +335,7 @@ def _add_parquet_directory(
     folder_id: str | None,
     meta: DatasetMeta,
     *,
-    depth: Literal["structure", "schema", "full"],
+    depth: Depth,
     quiet: bool,
     refresh: bool,
     start_time: float,
@@ -374,7 +374,7 @@ def _add_parquet_directory(
     dataset_id = make_id(folder_id, base_name) if folder_id else base_name
 
     # Structure mode: create dataset without scanning
-    if depth == "structure":
+    if depth == "dataset":
         dataset = _create_dataset(
             dataset_id,
             dir_name,
@@ -391,14 +391,14 @@ def _add_parquet_directory(
         log_done(dir_name, quiet, start_time)
         return
 
-    # Schema/Full mode: scan the dataset
-    schema_only = depth == "schema"
+    # Variable/Stat/Value mode: scan the dataset
+    schema_only = depth == "variable"
     parquet_info = ParquetDatasetInfo(path=dir_path, type=dataset_type)
     variables, nb_row, freq_table, pq_meta = scan_parquet_dataset(
         parquet_info,
         dataset_id=dataset_id,
         infer_stats=not schema_only,
-        freq_threshold=catalog.freq_threshold or None,
+        freq_threshold=(catalog.freq_threshold if depth == "value" else None),
     )
 
     # Override meta.name with parquet metadata if not user-provided
@@ -424,7 +424,7 @@ def _add_parquet_directory(
     catalog.dataset.add(dataset)
 
     var_id_mapping = build_variable_ids(variables, dataset.id)
-    if not schema_only:
+    if freq_table is not None:
         catalog.modality_manager.assign_from_freq(variables, freq_table, var_id_mapping)
     catalog.variable.add_all(variables)
 

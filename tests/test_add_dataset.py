@@ -208,10 +208,10 @@ class TestAddDatasetUnknown:
 class TestAddDatasetDepth:
     """Test add_dataset with depth parameter."""
 
-    def test_add_dataset_structure_file(self):
-        """depth=structure should create dataset without scanning."""
+    def test_add_dataset_dataset_depth_file(self):
+        """depth=dataset should create dataset without scanning."""
         catalog = Catalog()
-        catalog.add_dataset(CSV_DIR / "employees.csv", depth="structure")
+        catalog.add_dataset(CSV_DIR / "employees.csv", depth="dataset")
 
         assert len(catalog.dataset.all()) == 1
         ds = catalog.dataset.all()[0]
@@ -219,9 +219,9 @@ class TestAddDatasetDepth:
         assert len(catalog.variable.all()) == 0
 
     def test_add_dataset_schema_file(self):
-        """depth=schema should scan schema but skip stats."""
+        """depth=variable should scan schema but skip stats."""
         catalog = Catalog()
-        catalog.add_dataset(CSV_DIR / "employees.csv", depth="schema")
+        catalog.add_dataset(CSV_DIR / "employees.csv", depth="variable")
 
         assert len(catalog.dataset.all()) == 1
         ds = catalog.dataset.all()[0]
@@ -231,10 +231,10 @@ class TestAddDatasetDepth:
         # Schema mode skips modalities
         assert len(catalog.modality.all()) == 0
 
-    def test_add_dataset_structure_delta(self):
-        """depth=structure should create dataset without scanning Delta."""
+    def test_add_dataset_dataset_depth_delta(self):
+        """depth=dataset should create dataset without scanning Delta."""
         catalog = Catalog()
-        catalog.add_dataset(DATA_DIR / "test_delta", depth="structure")
+        catalog.add_dataset(DATA_DIR / "test_delta", depth="dataset")
 
         assert len(catalog.dataset.all()) == 1
         ds = catalog.dataset.all()[0]
@@ -243,9 +243,35 @@ class TestAddDatasetDepth:
         assert len(catalog.variable.all()) == 0
 
     def test_add_dataset_schema_delta(self):
-        """depth=schema should scan Delta schema but skip stats."""
+        """depth=variable should scan Delta schema but skip stats."""
         catalog = Catalog()
-        catalog.add_dataset(DATA_DIR / "test_delta", depth="schema")
+        catalog.add_dataset(DATA_DIR / "test_delta", depth="variable")
+
+        assert len(catalog.dataset.all()) == 1
+        ds = catalog.dataset.all()[0]
+        assert ds.nb_row is not None
+        assert len(catalog.variable.all()) > 0
+        assert len(catalog.modality.all()) == 0
+
+    def test_add_dataset_stat_file(self):
+        """depth=stat should compute stats but skip modalities."""
+        catalog = Catalog(freq_threshold=10)
+        catalog.add_dataset(CSV_DIR / "employees.csv", depth="stat")
+
+        assert len(catalog.dataset.all()) == 1
+        ds = catalog.dataset.all()[0]
+        assert ds.nb_row is not None
+        assert len(catalog.variable.all()) > 0
+        # Stats computed
+        assert any(v.nb_distinct is not None for v in catalog.variable.all())
+        # No modalities
+        assert len(catalog.modality.all()) == 0
+        assert catalog.freq.is_empty
+
+    def test_add_dataset_stat_delta(self):
+        """depth=stat should compute Delta stats but skip modalities."""
+        catalog = Catalog(freq_threshold=10)
+        catalog.add_dataset(DATA_DIR / "test_delta", depth="stat")
 
         assert len(catalog.dataset.all()) == 1
         ds = catalog.dataset.all()[0]
@@ -255,18 +281,18 @@ class TestAddDatasetDepth:
 
     def test_add_dataset_inherits_catalog_depth(self):
         """add_dataset should use Catalog.depth when not overridden."""
-        catalog = Catalog(depth="structure")
+        catalog = Catalog(depth="dataset")
         catalog.add_dataset(CSV_DIR / "employees.csv")
 
         assert len(catalog.variable.all()) == 0
 
     def test_add_dataset_schema_empty_csv(self, tmp_path: Path):
-        """depth=schema should handle empty CSV gracefully."""
+        """depth=variable should handle empty CSV gracefully."""
         # Create CSV with only header
         (tmp_path / "empty.csv").write_text("a,b,c\n")
 
         catalog = Catalog()
-        catalog.add_dataset(tmp_path / "empty.csv", depth="schema")
+        catalog.add_dataset(tmp_path / "empty.csv", depth="variable")
 
         # Should create dataset with variables (schema only, no type inference)
         assert len(catalog.dataset.all()) == 1
