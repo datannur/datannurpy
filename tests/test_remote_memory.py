@@ -340,7 +340,9 @@ class TestSchemaOnlyRemoteOptimizations:
         memory_fs.pipe(f"{memory_root}/data.parquet", buffer.getvalue())
 
         catalog = Catalog(quiet=True)
-        catalog.add_folder(f"memory://{memory_root}", Folder(id="test"), depth="variable")
+        catalog.add_folder(
+            f"memory://{memory_root}", Folder(id="test"), depth="variable"
+        )
 
         assert len(catalog.dataset.all()) == 1
         ds = catalog.dataset.all()[0]
@@ -363,7 +365,9 @@ class TestSchemaOnlyRemoteOptimizations:
         memory_fs.pipe(f"{memory_root}/data/year=2024/part.parquet", buffer.getvalue())
 
         catalog = Catalog(quiet=True)
-        catalog.add_folder(f"memory://{memory_root}", Folder(id="hive"), depth="variable")
+        catalog.add_folder(
+            f"memory://{memory_root}", Folder(id="hive"), depth="variable"
+        )
 
         assert len(catalog.dataset.all()) == 1
         ds = catalog.dataset.all()[0]

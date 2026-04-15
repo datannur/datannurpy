@@ -277,7 +277,7 @@ def _refine_normalized_path(
 
 def _refine_group(
     normalized_path: str,
-    file_list: list[tuple[PurePath, int, list[PeriodInfo]]],
+    file_list: Sequence[tuple[PurePath, int, list[PeriodInfo]]],
 ) -> list[tuple[str, list[tuple[str, PurePath, int]]]]:
     """Classify period positions as variable/constant and build refined periods.
 

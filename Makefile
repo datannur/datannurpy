@@ -19,9 +19,10 @@ typecheck:
 	uv run pyright src/datannurpy tests
 
 check:
-	@uv run ruff check . && uv run ruff format --check . &
-	@uv run pyright src/datannurpy tests &
-	@wait
+	@uv run ruff check . && uv run ruff format --check . & LINT_PID=$$!; \
+	uv run pyright src/datannurpy tests & TYPE_PID=$$!; \
+	wait $$LINT_PID || exit 1; \
+	wait $$TYPE_PID || exit 1
 	uv run pytest --cov=src/datannurpy --cov-report=term-missing --cov-report=xml --cov-report=html --cov-fail-under=100
 
 download-app:
