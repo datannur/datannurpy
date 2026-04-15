@@ -860,3 +860,44 @@ class TestGroupTableTimeSeries:
         series, singles = group_table_time_series(tables)
         assert len(series) == 0
         assert sorted(singles) == sorted(tables)
+
+    def test_constant_prefix_digit_not_treated_as_period(self):
+        """Constant digits in prefix (e.g. '03' in 'PREFIX03') must not be period components."""
+        tables = [
+            "PREFIX03_DATA2010",
+            "PREFIX03_DATA2014",
+            "PREFIX03_DATA201607",
+            "PREFIX03_DATA2017",
+        ]
+        series, singles = group_table_time_series(tables)
+        assert len(series) == 1
+        assert len(singles) == 0
+        # '03' is constant across all tables → must NOT be a period placeholder
+        assert "PREFIX03_DATA" in series[0].normalized_name
+        # Only the varying year/month part should be the period
+        assert series[0].normalized_name.count(PERIOD_PLACEHOLDER) == 1
+
+    def test_position_order_matches_placeholders(self):
+        """Period positions list must align with placeholder order in normalized name."""
+        tables = [
+            "X03A_TABLE2010",
+            "X03A_TABLE2014",
+            "X03A_TABLE2017",
+        ]
+        series, singles = group_table_time_series(tables)
+        assert len(series) == 1
+        # The varying part is the year, not '03'
+        periods = [p for p, _ in series[0].tables]
+        assert periods == ["2010", "2014", "2017"]
+
+    def test_refine_subgroup_with_single_table_becomes_single(self):
+        """When _refine_group sub-groups and one group has <2 tables, it becomes a single."""
+        # Both year positions vary → order violation → sub-group by first year
+        # data2020 has 2 tables (stats2022, stats2023) → series
+        # data2021 has 1 table (stats2022) → single
+        tables = ["data2020_stats2022", "data2020_stats2023", "data2021_stats2022"]
+        series, singles = group_table_time_series(tables)
+        assert len(series) == 1
+        assert series[0].tables[0][0] == "2022"
+        assert series[0].tables[1][0] == "2023"
+        assert "data2021_stats2022" in singles
