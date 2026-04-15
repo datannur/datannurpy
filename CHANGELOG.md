@@ -5,6 +5,8 @@
 - breaking: renamed depth levels — `"structure"` → `"dataset"`, `"schema"` → `"variable"`, `"full"` → `"value"`
 - add: new `depth="stat"` level — computes statistics (row count, min, max, mean, etc.) without modality detection or frequency tables
 - removed `infer_stats` parameter from `add_folder`, `add_dataset`, `add_database` — use `depth` to control scan level
+- fix: variable types preserved during sampling — `build_variables` now reads schema from original source table instead of degraded memtable
+- fix: `_READSTAT_TYPE_MAP` expanded to cover `int8`, `int16`, `int32`, `float` (Stata/SPSS types now map to standard `"integer"`/`"float"`)
 - fix: `make test-db` now installs database drivers automatically (`uv sync --extra databases`)
 
 ## 0.14.2 (2026-04-06)
@@ -205,7 +207,7 @@
 ## 0.4.1 (2026-02-01)
 
 - add: e2e test with demo data and db export
-- add: incrmental scan with db import
+- add: incremental scan with db import
 
 ## 0.4.0 (2026-01-29)
 
@@ -229,7 +231,7 @@
 
 ## 0.3.0 (2026-01-22)
 
-- add: modality supportou
+- add: modality support
 - add: folder based on db table prefix
 - add: support for parquet files and Delta/Hive/Iceberg directories
 - add: support for SAS, SPSS and Stata files

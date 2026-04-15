@@ -253,6 +253,25 @@ class TestScanStatisticalEdgeCases:
         assert var_by_name["num"].type == "float"
         assert var_by_name["txt"].type == "string"
 
+    def test_apply_types_known_readstat_types(self):
+        """_apply_types maps known readstat types to standard type strings."""
+        from datannurpy.scanner.statistical import _apply_types
+
+        from datannurpy.schema import Variable
+
+        cases = {
+            "double": "float",
+            "float": "float",
+            "int8": "integer",
+            "int16": "integer",
+            "int32": "integer",
+            "string": "string",
+        }
+        for raw, expected in cases.items():
+            var = Variable(id="ds---col", name="col", dataset_id="ds")
+            _apply_types([var], {"col": raw})
+            assert var.type == expected, f"{raw} should map to {expected}"
+
     def test_apply_types_unknown_type_passes_through(self):
         """_apply_types should pass through unknown readstat types as-is."""
         from datannurpy.scanner.statistical import _apply_types
@@ -260,8 +279,8 @@ class TestScanStatisticalEdgeCases:
         from datannurpy.schema import Variable
 
         var = Variable(id="ds---col", name="col", dataset_id="ds")
-        _apply_types([var], {"col": "int32"})
-        assert var.type == "int32"
+        _apply_types([var], {"col": "custom_type"})
+        assert var.type == "custom_type"
 
     def test_apply_types_skips_missing_name(self):
         """_apply_types should skip variables not present in meta_types."""

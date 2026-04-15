@@ -325,6 +325,25 @@ class TestBuildVariables:
         # boolean column has no extra stats
         assert var_by_name["flag"].min is None
 
+    def test_full_table_schema_used_for_types(self):
+        """build_variables uses full_table schema for Variable.type, not sample memtable."""
+        # full_table has int column → type="integer"
+        full = ibis.memtable({"val": [1, 2, 3, 4, 5]})
+        assert str(full.schema()["val"]) == "int64"
+        # sample memtable has float64 (simulates degradation through Arrow round-trip)
+        sample = ibis.memtable({"val": [1.0, 3.0]})
+        assert str(sample.schema()["val"]) == "float64"
+        variables, _ = build_variables(
+            sample,
+            nb_rows=2,
+            dataset_id="test",
+            infer_stats=True,
+            full_table=full,
+            full_nb_rows=5,
+        )
+        # Type must come from full_table (int64 → "integer"), not sample (float64 → "float")
+        assert variables[0].type == "integer"
+
     def test_freq_union_fallback_on_error(self):
         """build_variables falls back to pa.concat_tables when ibis.union fails."""
         from unittest.mock import patch
