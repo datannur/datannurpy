@@ -573,13 +573,20 @@ def list_tables(
     tables: list[str] = []
 
     if raw_sql and backend == "oracle":
-        # Use USER_TABLES/ALL_TABLES to get only tables (excludes views)
+        # Use USER_TABLES/ALL_TABLES/DBA_TABLES to get only tables (excludes views)
         # Normalize to lowercase since Oracle stores identifiers in UPPERCASE
         if db_schema:
-            result = raw_sql(
-                "SELECT table_name FROM all_tables WHERE owner = :owner",
-                parameters={"owner": db_schema},
-            ).fetchall()
+            for view in ("dba_tables", "all_tables"):
+                try:
+                    result = raw_sql(
+                        f"SELECT table_name FROM {view} WHERE owner = :owner",
+                        parameters={"owner": db_schema},
+                    ).fetchall()
+                    break
+                except Exception:
+                    continue
+            else:
+                result = []
         else:
             result = raw_sql("SELECT table_name FROM user_tables").fetchall()
         tables = [row[0].lower() for row in result]
@@ -639,13 +646,17 @@ def list_schemas(con: ibis.BaseBackend) -> list[str]:
         if not raw_sql:
             return []
         # List all users that have at least one table (user schemas)
-        result = raw_sql(
-            "SELECT DISTINCT owner FROM all_tables "
-            "WHERE owner NOT IN ("
-            + ",".join(f"'{_quote(s)}'" for s in system_schemas)
-            + ")"
-        ).fetchall()
-        return sorted([row[0].lower() for row in result])
+        exclusion = ",".join(f"'{_quote(s)}'" for s in system_schemas)
+        for view in ("dba_tables", "all_tables"):
+            try:
+                result = raw_sql(
+                    f"SELECT DISTINCT owner FROM {view} "
+                    f"WHERE owner NOT IN ({exclusion})"
+                ).fetchall()
+                return sorted([row[0].lower() for row in result])
+            except Exception:
+                continue
+        return []
 
     # Try to get schemas - not all backends support this
     try:
@@ -795,15 +806,18 @@ def get_table_data_size(
             uc_table = table_name.upper()
             if schema:
                 uc_schema = schema.upper()
-                row = raw_sql(
-                    "SELECT SUM(bytes) FROM all_segments "
-                    "WHERE segment_name = :seg AND owner = :owner",
-                    parameters={"seg": uc_table, "owner": uc_schema},
-                ).fetchone()
-                if row and row[0] is not None:
-                    return int(row[0])
-                # Fallback: user_segments works for the connected user's tables
-                # when all_segments returns NULL (insufficient privileges).
+                for view in ("dba_segments", "all_segments"):
+                    try:
+                        row = raw_sql(
+                            f"SELECT SUM(bytes) FROM {view} "
+                            "WHERE segment_name = :seg AND owner = :owner",
+                            parameters={"seg": uc_table, "owner": uc_schema},
+                        ).fetchone()
+                        if row and row[0] is not None:
+                            return int(row[0])
+                    except Exception:
+                        continue
+                # Fallback: user_segments (connected user's own tables)
             row = raw_sql(
                 "SELECT SUM(bytes) FROM user_segments WHERE segment_name = :seg",
                 parameters={"seg": uc_table},

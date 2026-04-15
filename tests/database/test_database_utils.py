@@ -659,6 +659,37 @@ class TestListSchemas:
         result = list_schemas(mock_con)
 
         assert result == ["hr", "sales"]  # sorted, lowercase
+        query = mock_con.raw_sql.call_args_list[0][0][0]
+        assert "dba_tables" in query
+
+    def test_oracle_fallback_on_ora_00942(self) -> None:
+        """Oracle falls back to dba_tables/all_tables when views are inaccessible."""
+        mock_con = MagicMock()
+        type(mock_con).__module__ = "ibis.backends.oracle"
+        mock_cursor_ok = MagicMock()
+        mock_cursor_ok.fetchall.return_value = [("HR",)]
+        # dba_tables raises ORA-00942, all_tables succeeds
+        mock_con.raw_sql.side_effect = [
+            Exception("ORA-00942: table or view does not exist"),
+            mock_cursor_ok,
+        ]
+
+        result = list_schemas(mock_con)
+
+        assert result == ["hr"]
+        assert mock_con.raw_sql.call_count == 2
+        assert "dba_tables" in mock_con.raw_sql.call_args_list[0][0][0]
+        assert "all_tables" in mock_con.raw_sql.call_args_list[1][0][0]
+
+    def test_oracle_all_views_inaccessible_returns_empty(self) -> None:
+        """Oracle returns empty list when all schema views fail."""
+        mock_con = MagicMock()
+        type(mock_con).__module__ = "ibis.backends.oracle"
+        mock_con.raw_sql.side_effect = Exception("ORA-00942")
+
+        result = list_schemas(mock_con)
+
+        assert result == []
 
     def test_oracle_without_raw_sql(self) -> None:
         """Oracle backend without raw_sql returns empty list."""
@@ -717,7 +748,7 @@ class TestListTables:
         assert result == ["departments", "employees"]  # sorted, lowercase
 
     def test_oracle_with_schema(self) -> None:
-        """Oracle backend with schema uses all_tables with owner filter."""
+        """Oracle backend with schema tries dba_tables first."""
         mock_con = MagicMock()
         mock_cursor = MagicMock()
         mock_cursor.fetchall.return_value = [("SALES",)]
@@ -725,14 +756,37 @@ class TestListTables:
 
         result = list_tables(mock_con, schema="hr", backend_name="oracle")
 
-        # Verify query uses all_tables with bind parameter
-        mock_con.raw_sql.assert_called_once()
-        query = mock_con.raw_sql.call_args[0][0]
-        assert "all_tables" in query
+        query = mock_con.raw_sql.call_args_list[0][0][0]
+        assert "dba_tables" in query
         assert ":owner" in query
-        params = mock_con.raw_sql.call_args[1]["parameters"]
+        params = mock_con.raw_sql.call_args_list[0][1]["parameters"]
         assert params == {"owner": "HR"}
         assert result == ["sales"]
+
+    def test_oracle_with_schema_fallback_on_ora_00942(self) -> None:
+        """Oracle with schema falls back through dba_tables/all_tables."""
+        mock_con = MagicMock()
+        mock_cursor_ok = MagicMock()
+        mock_cursor_ok.fetchall.return_value = [("SALES",)]
+        # dba_tables raises, all_tables succeeds
+        mock_con.raw_sql.side_effect = [
+            Exception("ORA-00942"),
+            mock_cursor_ok,
+        ]
+
+        result = list_tables(mock_con, schema="hr", backend_name="oracle")
+
+        assert result == ["sales"]
+        assert mock_con.raw_sql.call_count == 2
+
+    def test_oracle_with_schema_all_views_fail_returns_empty(self) -> None:
+        """Oracle with schema returns empty when all table views fail."""
+        mock_con = MagicMock()
+        mock_con.raw_sql.side_effect = Exception("ORA-00942")
+
+        result = list_tables(mock_con, schema="hr", backend_name="oracle")
+
+        assert result == []
 
     def test_fallback_to_ibis_list_tables(self) -> None:
         """When raw_sql not available, fallback to Ibis list_tables."""
@@ -1248,25 +1302,46 @@ class TestGetTableDataSize:
         ):
             assert get_table_data_size(con, "employees", "hr") == 131072
         query = con.raw_sql.call_args_list[0][0][0]
-        assert "all_segments" in query
+        assert "dba_segments" in query
         params = con.raw_sql.call_args_list[0][1]["parameters"]
         assert params == {"seg": "EMPLOYEES", "owner": "HR"}
 
     def test_oracle_with_schema_fallback_to_user_segments(self) -> None:
-        """Oracle falls back to user_segments when all_segments returns NULL."""
+        """Oracle falls back to user_segments when dba/all_segments return NULL."""
         mock_cursor_null = MagicMock()
         mock_cursor_null.fetchone.return_value = (None,)
         mock_cursor_ok = MagicMock()
         mock_cursor_ok.fetchone.return_value = (131072,)
         con = MagicMock()
-        con.raw_sql.side_effect = [mock_cursor_null, mock_cursor_ok]
+        con.raw_sql.side_effect = [mock_cursor_null, mock_cursor_null, mock_cursor_ok]
         with patch(
             "datannurpy.scanner.database.get_backend_name", return_value="oracle"
         ):
             assert get_table_data_size(con, "employees", "hr") == 131072
-        assert con.raw_sql.call_count == 2
-        assert "all_segments" in con.raw_sql.call_args_list[0][0][0]
-        assert "user_segments" in con.raw_sql.call_args_list[1][0][0]
+        assert con.raw_sql.call_count == 3
+        assert "dba_segments" in con.raw_sql.call_args_list[0][0][0]
+        assert "all_segments" in con.raw_sql.call_args_list[1][0][0]
+        assert "user_segments" in con.raw_sql.call_args_list[2][0][0]
+
+    def test_oracle_with_schema_fallback_on_ora_00942(self) -> None:
+        """Oracle falls back through dba_segments/all_segments/user_segments on ORA-00942."""
+        mock_cursor_ok = MagicMock()
+        mock_cursor_ok.fetchone.return_value = (131072,)
+        con = MagicMock()
+        # dba_segments and all_segments both raise, user_segments succeeds
+        con.raw_sql.side_effect = [
+            Exception("ORA-00942"),
+            Exception("ORA-00942"),
+            mock_cursor_ok,
+        ]
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="oracle"
+        ):
+            assert get_table_data_size(con, "employees", "hr") == 131072
+        assert con.raw_sql.call_count == 3
+        assert "dba_segments" in con.raw_sql.call_args_list[0][0][0]
+        assert "all_segments" in con.raw_sql.call_args_list[1][0][0]
+        assert "user_segments" in con.raw_sql.call_args_list[2][0][0]
 
     def test_no_raw_sql_returns_none(self) -> None:
         con = MagicMock()
