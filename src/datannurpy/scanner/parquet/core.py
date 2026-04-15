@@ -102,8 +102,8 @@ def _build_with_sampling(
 def scan_simple(
     path: Path,
     dataset_id: str,
-    infer_stats: bool,
-    freq_threshold: int | None,
+    infer_stats: bool = True,
+    freq_threshold: int | None = None,
     *,
     sample_size: int | None = None,
     quiet: bool = False,
@@ -141,8 +141,8 @@ def scan_simple(
 def scan_delta(
     path: Path,
     dataset_id: str,
-    infer_stats: bool,
-    freq_threshold: int | None,
+    infer_stats: bool = True,
+    freq_threshold: int | None = None,
     *,
     sample_size: int | None = None,
     quiet: bool = False,
@@ -198,8 +198,8 @@ def scan_delta(
 def scan_hive(
     path: Path,
     dataset_id: str,
-    infer_stats: bool,
-    freq_threshold: int | None,
+    infer_stats: bool = True,
+    freq_threshold: int | None = None,
     *,
     sample_size: int | None = None,
     quiet: bool = False,
@@ -239,8 +239,8 @@ def scan_hive(
 def scan_iceberg(
     path: Path,
     dataset_id: str,
-    infer_stats: bool,
-    freq_threshold: int | None,
+    infer_stats: bool = True,
+    freq_threshold: int | None = None,
     *,
     sample_size: int | None = None,
     quiet: bool = False,

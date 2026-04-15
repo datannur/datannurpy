@@ -499,12 +499,12 @@ class TestOracleBranches:
 class TestDepthParameterDatabase:
     """Test depth parameter for database scanning."""
 
-    def test_depth_structure_creates_datasets_without_variables(self, sample_db: Path):
-        """depth='structure' should create datasets but no variables."""
+    def test_depth_dataset_creates_datasets_without_variables(self, sample_db: Path):
+        """depth='dataset' should create datasets but no variables."""
         conn_str = f"sqlite:////{sample_db}"
 
         catalog = Catalog(quiet=True)
-        catalog.add_database(conn_str, depth="structure")
+        catalog.add_database(conn_str, depth="dataset")
 
         # Should have datasets (users, orders)
         assert len(catalog.dataset.all()) == 2
@@ -516,11 +516,11 @@ class TestDepthParameterDatabase:
             assert ds.nb_row is None
 
     def test_depth_schema_creates_variables_without_stats(self, sample_db: Path):
-        """depth='schema' should create variables without stats and no nb_row."""
+        """depth='variable' should create variables without stats and no nb_row."""
         conn_str = f"sqlite:////{sample_db}"
 
         catalog = Catalog(quiet=True)
-        catalog.add_database(conn_str, depth="schema")
+        catalog.add_database(conn_str, depth="variable")
 
         # Should have datasets and variables
         assert len(catalog.dataset.all()) == 2
@@ -540,24 +540,24 @@ class TestDepthParameterDatabase:
         conn_str = f"sqlite:////{sample_db}"
 
         # Set depth at catalog level
-        catalog = Catalog(depth="structure", quiet=True)
+        catalog = Catalog(depth="dataset", quiet=True)
         catalog.add_database(conn_str)
 
         assert len(catalog.dataset.all()) == 2
-        assert len(catalog.variable.all()) == 0  # structure mode
+        assert len(catalog.variable.all()) == 0  # dataset mode
 
     def test_depth_override_at_add_database(self, sample_db: Path):
         """depth at add_database should override catalog.depth."""
         conn_str = f"sqlite:////{sample_db}"
 
-        catalog = Catalog(depth="structure", quiet=True)
-        catalog.add_database(conn_str, depth="schema")
+        catalog = Catalog(depth="dataset", quiet=True)
+        catalog.add_database(conn_str, depth="variable")
 
         assert len(catalog.dataset.all()) == 2
         assert len(catalog.variable.all()) > 0  # schema mode overrides
 
-    def test_depth_structure_skips_queries(self, sample_db: Path):
-        """depth='structure' should not compute schema_signature or nb_row."""
+    def test_depth_dataset_skips_queries(self, sample_db: Path):
+        """depth='dataset' should not compute schema_signature or nb_row."""
         from unittest.mock import patch
 
         conn_str = f"sqlite:////{sample_db}"
@@ -567,14 +567,14 @@ class TestDepthParameterDatabase:
             patch("datannurpy.add_database.compute_schema_signature") as mock_sig,
             patch("datannurpy.add_database.get_table_row_count") as mock_count,
         ):
-            catalog.add_database(conn_str, depth="structure")
+            catalog.add_database(conn_str, depth="dataset")
 
         mock_sig.assert_not_called()
         mock_count.assert_not_called()
         assert len(catalog.dataset.all()) == 2
 
     def test_depth_schema_skips_signature_and_row_count(self, sample_db: Path):
-        """depth='schema' should not compute schema_signature or nb_row."""
+        """depth='variable' should not compute schema_signature or nb_row."""
         from unittest.mock import patch
 
         conn_str = f"sqlite:////{sample_db}"
@@ -584,26 +584,46 @@ class TestDepthParameterDatabase:
             patch("datannurpy.add_database.compute_schema_signature") as mock_sig,
             patch("datannurpy.add_database.get_table_row_count") as mock_count,
         ):
-            catalog.add_database(conn_str, depth="schema")
+            catalog.add_database(conn_str, depth="variable")
 
         mock_sig.assert_not_called()
         mock_count.assert_not_called()
         assert len(catalog.dataset.all()) == 2
         assert len(catalog.variable.all()) > 0
 
-    def test_depth_structure_incremental_skips_unchanged(self, sample_db: Path):
-        """depth='structure' second run marks existing datasets as seen."""
+    def test_depth_stat_computes_stats_without_modalities(self, sample_db: Path):
+        """depth='stat' should compute stats but skip modalities."""
+        conn_str = f"sqlite:////{sample_db}"
+
+        catalog = Catalog(freq_threshold=10, quiet=True)
+        catalog.add_database(conn_str, depth="stat")
+
+        assert len(catalog.dataset.all()) == 2
+        assert len(catalog.variable.all()) > 0
+
+        # Row count and stats computed
+        for ds in catalog.dataset.all():
+            assert ds.nb_row is not None
+
+        assert any(v.nb_distinct is not None for v in catalog.variable.all())
+
+        # No modalities
+        assert len(catalog.modality.all()) == 0
+        assert catalog.freq.is_empty
+
+    def test_depth_dataset_incremental_skips_unchanged(self, sample_db: Path):
+        """depth='dataset' second run marks existing datasets as seen."""
         conn_str = f"sqlite:////{sample_db}"
         catalog = Catalog(quiet=True)
-        catalog.add_database(conn_str, depth="structure")
+        catalog.add_database(conn_str, depth="dataset")
         assert len(catalog.dataset.all()) == 2
 
         # Second run without refresh: should skip (mark seen)
-        catalog.add_database(conn_str, depth="structure")
+        catalog.add_database(conn_str, depth="dataset")
         assert len(catalog.dataset.all()) == 2
 
-    def test_depth_structure_with_prefix_grouping(self, tmp_path: Path):
-        """depth='structure' respects prefix-based folder grouping."""
+    def test_depth_dataset_with_prefix_grouping(self, tmp_path: Path):
+        """depth='dataset' respects prefix-based folder grouping."""
         db_path = tmp_path / "prefixed.db"
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
@@ -616,7 +636,7 @@ class TestDepthParameterDatabase:
 
         conn_str = f"sqlite:////{db_path}"
         catalog = Catalog(quiet=True)
-        catalog.add_database(conn_str, depth="structure")
+        catalog.add_database(conn_str, depth="dataset")
 
         assert len(catalog.dataset.all()) == 4
         prefix_folders = [f for f in catalog.folder.all() if f.type == "table_prefix"]

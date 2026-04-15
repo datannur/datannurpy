@@ -8,7 +8,7 @@ import time
 from collections.abc import Hashable
 from dataclasses import MISSING, fields
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 import ibis
@@ -33,7 +33,7 @@ from .errors import ConfigError
 if TYPE_CHECKING:
     import pandas as pd
 
-    from .catalog import Catalog
+    from .catalog import Catalog, Depth
 
 # Entity type to class mapping
 ENTITY_CLASSES: dict[str, type] = {
@@ -58,27 +58,19 @@ LIST_FIELDS = {"tag_ids", "doc_ids", "modality_ids", "source_var_ids"}
 SUPPORTED_EXTENSIONS = {".csv", ".xlsx", ".xls", ".json", ".sas7bdat"}
 
 # Entities allowed per depth level
+_VARIABLE_ENTITIES = {
+    "folder",
+    "dataset",
+    "institution",
+    "tag",
+    "doc",
+    "variable",
+}
 DEPTH_ENTITIES: dict[str, set[str]] = {
-    "structure": {"folder", "dataset", "institution", "tag", "doc"},
-    "schema": {
-        "folder",
-        "dataset",
-        "institution",
-        "tag",
-        "doc",
-        "variable",
-    },
-    "full": {
-        "folder",
-        "dataset",
-        "institution",
-        "tag",
-        "doc",
-        "variable",
-        "modality",
-        "value",
-        "freq",
-    },
+    "dataset": {"folder", "dataset", "institution", "tag", "doc"},
+    "variable": _VARIABLE_ENTITIES,
+    "stat": _VARIABLE_ENTITIES,
+    "value": _VARIABLE_ENTITIES | {"modality", "value", "freq"},
 }
 
 
@@ -510,16 +502,10 @@ def add_metadata(
     self: Catalog,
     path: str | Path,
     *,
-    depth: Literal["structure", "schema", "full"] | None = None,
+    depth: Depth | None = None,
     quiet: bool | None = None,
 ) -> None:
-    """Load manually curated metadata from files or database.
-
-    Args:
-        path: Folder containing metadata files or database connection string.
-        depth: Control which entities to load (structure/schema/full).
-        quiet: Suppress progress logging.
-    """
+    """Load manually curated metadata from files or database."""
     if quiet is None:
         quiet = self.quiet
     resolved_depth = depth if depth is not None else self.depth

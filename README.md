@@ -70,6 +70,35 @@ catalog.add_database("sqlite:///mydb.sqlite")
 catalog.export_app("./my-catalog", open_browser=True)
 ```
 
+## Scan depth
+
+The `depth` parameter controls how much metadata is extracted. Set it globally on `Catalog` or per-method call:
+
+```python
+catalog = Catalog(depth="variable")         # global default
+catalog.add_folder("./data")                # inherits "variable"
+catalog.add_folder("./big", depth="stat")   # override for this call
+catalog.add_database("sqlite:///db.sqlite", depth="dataset")
+```
+
+| Feature                              | `dataset` | `variable` | `stat`         | `value` (default)  |
+| ------------------------------------ | :-------: | :--------: | :------------: | :----------------: |
+| Folders                              | ✓         | ✓          | ✓              | ✓                  |
+| Datasets (format, path, mtime)       | ✓         | ✓          | ✓              | ✓                  |
+| Variables (names, types)             |           | ✓          | ✓              | ✓                  |
+| DB introspection (PK, FK, comments)  |           | ✓          | ✓              | ✓                  |
+| Row count, statistics                |           |            | ✓              | ✓                  |
+| Modalities, frequency tables         |           |            |                | ✓                  |
+
+> **Note:** At `depth="variable"`, CSV and Excel files only extract column **names** (types require reading data, available from `depth="stat"`). All other formats provide types at this level.
+
+**Typical use cases:**
+
+- **`dataset`** — quick inventory of available files/tables without reading data
+- **`variable`** — lightweight schema discovery (column names and types)
+- **`stat`** — data profiling without modality detection (faster than `value`)
+- **`value`** — full catalog with frequency tables and modality assignment (default)
+
 ## Configuration file
 
 Alternative to Python scripts - define the catalog in YAML:
@@ -186,7 +215,6 @@ catalog.add_folder(
     include=["*.csv", "*.xlsx"],
     exclude=["**/tmp/**"],
     recursive=True,
-    infer_stats=True,
     csv_encoding="utf-8",  # or "cp1252", "iso-8859-1" (auto-detected by default)
 )
 
@@ -301,7 +329,6 @@ catalog.add_database(
 catalog.add_database(
     "postgresql://localhost/mydb",
     schema=["public", "sales", "hr"],
-    infer_stats=True,
 )
 
 # SSH tunnel (for databases behind a firewall)
@@ -321,9 +348,7 @@ catalog.add_database(
 )
 ```
 
-**Database metadata enrichment:**
-
-When `depth="schema"` or `"full"` (default), `add_database` automatically extracts structural metadata from system catalogs:
+**Database metadata enrichment** (requires `depth="variable"` or higher):
 
 | Metadata                | Target field          | Backends           |
 | ----------------------- | --------------------- | ------------------ |
@@ -435,15 +460,15 @@ catalog.export_app("./my-catalog", open_browser=True)
 ### `Catalog`
 
 ```python
-Catalog(app_path=None, depth="full", refresh=False, freq_threshold=100, csv_encoding=None, sample_size=100_000, csv_skip_copy=False, app_config=None, quiet=False, verbose=False, log_file=None)
+Catalog(app_path=None, depth="value", refresh=False, freq_threshold=100, csv_encoding=None, sample_size=100_000, csv_skip_copy=False, app_config=None, quiet=False, verbose=False, log_file=None)
 ```
 
 | Attribute      | Type                              | Description                                        |
 | -------------- | --------------------------------- | -------------------------------------------------- |
 | app_path       | str \| None                       | Load existing catalog for incremental scan         |
-| depth          | "structure" \| "schema" \| "full" | Default scan depth for add_folder                  |
+| depth          | "dataset" \| "variable" \| "stat" \| "value" | Default scan depth for add_folder                  |
 | refresh        | bool                              | Force full rescan ignoring cache (default: False)  |
-| freq_threshold | int                               | Max distinct values for modality detection (0=off) |
+| freq_threshold | int                               | Max distinct values for modality detection         |
 | csv_encoding   | str \| None                       | Default CSV encoding (utf-8, cp1252, etc.)         |
 | sample_size    | int \| None                       | Default sample size for stats (default: 100_000)   |
 | csv_skip_copy      | bool                              | Skip UTF-8 temp copy for local CSV (default: False)|
@@ -461,14 +486,6 @@ Catalog(app_path=None, depth="full", refresh=False, freq_threshold=100, csv_enco
 | tag            | Table[Tag]                        | Tag table                                          |
 | doc            | Table[Doc]                        | Document table                                     |
 
-**Depth levels** (applies to `add_folder`, `add_dataset`, `add_database`, `add_metadata`):
-
-| depth     | Output                                       |
-| --------- | -------------------------------------------- |
-| structure | Folders, datasets (format, mtime, path only) |
-| schema    | + Variables (names, types)                   |
-| full      | + Row count, stats, modalities               |
-
 ### `Catalog.add_folder()`
 
 ```python
@@ -480,7 +497,6 @@ catalog.add_folder(
     include=None,
     exclude=None,
     recursive=True,
-    infer_stats=True,
     csv_encoding=None,
     sample_size=None,
     csv_skip_copy=None,
@@ -495,11 +511,10 @@ catalog.add_folder(
 | --------------- | ----------------------------------------- | -------- | --------------------------------------------- |
 | path            | str \| Path \| list[str \| Path]           | required | Directory or list of directories to scan      |
 | folder          | Folder \| None                            | None     | Custom folder metadata                        |
-| depth           | "structure" \| "schema" \| "full" \| None | None     | Scan depth (uses catalog.depth if None)       |
+| depth           | "dataset" \| "variable" \| "stat" \| "value" \| None | None     | Scan depth (uses catalog.depth if None)       |
 | include         | list[str] \| None                         | None     | Glob patterns to include                      |
 | exclude         | list[str] \| None                         | None     | Glob patterns to exclude                      |
 | recursive       | bool                                      | True     | Scan subdirectories                           |
-| infer_stats     | bool                                      | True     | Compute distinct/missing/duplicate counts     |
 | csv_encoding    | str \| None                               | None     | Override CSV encoding                         |
 | sample_size     | int \| None                               | None     | Sample rows for stats (overrides catalog)     |
 | csv_skip_copy       | bool \| None                              | None     | Skip UTF-8 temp copy (overrides catalog)      |
@@ -539,7 +554,6 @@ catalog.add_dataset(
     *,
     folder_id=None,
     depth=None,
-    infer_stats=True,
     csv_encoding=None,
     sample_size=None,
     csv_skip_copy=None,
@@ -557,8 +571,7 @@ catalog.add_dataset(
 | path            | str \| Path \| list[str \| Path]           | required | File(s) or partitioned directory (local/remote) |
 | folder          | Folder \| None                            | None     | Parent folder                                 |
 | folder_id       | str \| None                               | None     | Parent folder ID (alternative to folder)      |
-| depth           | "structure" \| "schema" \| "full" \| None | None     | Scan depth (uses catalog.depth if None)       |
-| infer_stats     | bool                                      | True     | Compute statistics                            |
+| depth           | "dataset" \| "variable" \| "stat" \| "value" \| None | None     | Scan depth (uses catalog.depth if None)       |
 | csv_encoding    | str \| None                               | None     | Override CSV encoding                         |
 | sample_size     | int \| None                               | None     | Sample rows for stats (overrides catalog)     |
 | csv_skip_copy       | bool \| None                              | None     | Skip UTF-8 temp copy (overrides catalog)      |
@@ -581,7 +594,6 @@ catalog.add_database(
     schema=None,
     include=None,
     exclude=None,
-    infer_stats=True,
     sample_size=None,
     group_by_prefix=True,
     prefix_min_tables=2,
@@ -598,11 +610,10 @@ catalog.add_database(
 | ------------------ | ----------------------------------------------- | -------- | ------------------------------------------ |
 | connection         | str \| ibis.BaseBackend                          | required | Connection string or ibis backend object   |
 | folder             | Folder \| None                                  | None     | Custom root folder                         |
-| depth              | \"structure\" \| \"schema\" \| \"full\" \| None | None     | Scan depth (uses catalog.depth if None)    |
+| depth              | \"dataset\" \| \"variable\" \| \"stat\" \| \"value\" \| None | None     | Scan depth (uses catalog.depth if None)    |
 | schema             | str \| list[str] \| None                         | None     | Schema(s) to scan                          |
 | include            | list[str] \| None                               | None     | Table name patterns to include             |
 | exclude            | list[str] \| None                               | None     | Table name patterns to exclude             |
-| infer_stats        | bool                                            | True     | Compute column statistics                  |
 | sample_size        | int \| None                                     | None     | Sample rows for stats (overrides catalog)  |
 | group_by_prefix    | bool \| str                                     | True     | Group tables by prefix into subfolders     |
 | prefix_min_tables  | int                                             | 2        | Min tables to form a prefix group          |
@@ -630,7 +641,7 @@ catalog.add_metadata(path, depth=None, quiet=None)
 | Parameter | Type                                      | Default  | Description                                  |
 | --------- | ----------------------------------------- | -------- | -------------------------------------------- |
 | path      | str \| Path                               | required | Folder or database containing metadata files |
-| depth     | "structure" \| "schema" \| "full" \| None | None     | Filter which entities to load                |
+| depth     | "dataset" \| "variable" \| "stat" \| "value" \| None | None     | Filter which entities to load                |
 | quiet     | bool \| None                              | None     | Override catalog quiet setting               |
 
 **Supported entity files/tables:** all catalog entities. The `id` column is not required for `value` and `freq` (composite key computed automatically).

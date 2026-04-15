@@ -1,4 +1,4 @@
-.PHONY: test lint typecheck check download-app coverage test-cov update-snapshots test-db test-db-all test-db-oracle18 test-db-up test-db-down
+.PHONY: test lint typecheck check download-app coverage test-cov update-snapshots test-db test-db-all test-db-oracle18 test-db-setup test-db-up test-db-down audit
 
 test:
 	uv run pytest
@@ -19,13 +19,20 @@ typecheck:
 	uv run pyright src/datannurpy tests
 
 check:
-	@uv run ruff check . && uv run ruff format --check . &
-	@uv run pyright src/datannurpy tests &
-	@wait
+	@uv run ruff check . && uv run ruff format --check . & LINT_PID=$$!; \
+	uv run pyright src/datannurpy tests & TYPE_PID=$$!; \
+	wait $$LINT_PID || exit 1; \
+	wait $$TYPE_PID || exit 1
 	uv run pytest --cov=src/datannurpy --cov-report=term-missing --cov-report=xml --cov-report=html --cov-fail-under=100
 
 download-app:
 	uv run python scripts/download_app.py
+
+audit:
+	uv export --no-dev --no-hashes | uv run --with pip-audit pip-audit -r /dev/stdin
+
+test-db-setup:
+	uv sync --extra databases
 
 test-db-up:
 	@command -v orbctl >/dev/null && orbctl start || true
@@ -37,7 +44,7 @@ test-db-up:
 test-db-down:
 	docker compose -f docker-compose.test.yml --env-file /dev/null down -v
 
-test-db: test-db-up
+test-db: test-db-setup test-db-up
 	@echo "=== PostgreSQL ==="
 	TEST_POSTGRES_URL=postgresql://test:test@localhost:15432/testdb \
 	uv run pytest tests/database/test_postgres.py -v -n 0

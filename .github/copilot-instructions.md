@@ -30,7 +30,7 @@ Exception: `ConfigError`
 
 Methods: `add_folder`, `add_dataset`, `add_database`, `add_metadata`, `finalize`, `export_db`, `export_app`
 
-Common options: `include`, `exclude`, `infer_stats`, `refresh`
+Common options: `include`, `exclude`, `depth`, `refresh`
 
 See README for full API reference.
 

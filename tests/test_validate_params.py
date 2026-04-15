@@ -79,7 +79,7 @@ class TestCatalogParamValidation:
             ("add_folder", (".",), {"exclude_patterns": ["*.tmp"]}),
             ("add_dataset", ("x.csv",), {"refreshh": True}),
             ("add_database", ("sqlite:///x.db",), {"schemas": "main"}),
-            ("add_metadata", (".",), {"depht": "full"}),
+            ("add_metadata", (".",), {"depht": "value"}),
             ("export_app", (), {"open_broser": True}),
             ("export_db", (), {"track_evol": True}),
         ],

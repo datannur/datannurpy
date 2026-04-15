@@ -166,7 +166,7 @@ class TestE2ESnapshot:
             f.write("\n")  # Trailing newline
 
 
-class TestE2EStructure:
+class TestE2EStructural:
     """Structural tests that don't rely on exact snapshots."""
 
     @pytest.fixture(scope="class")

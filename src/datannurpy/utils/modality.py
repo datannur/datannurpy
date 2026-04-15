@@ -108,13 +108,10 @@ class ModalityManager:
     def assign_from_freq(
         self,
         variables: list[Variable],
-        freq_table: pa.Table | None,
+        freq_table: pa.Table,
         var_id_mapping: dict[str, str],
     ) -> None:
         """Assign modalities to variables from freq table and store it."""
-        if freq_table is None:
-            return
-
         # Parse freq table to extract values by variable
         freq_by_var: dict[str, set[str]] = {}
         for row in freq_table.to_pylist():

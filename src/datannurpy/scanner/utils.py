@@ -323,7 +323,7 @@ def build_variables(
     full_nb_rows: int | None = None,
 ) -> tuple[list[Variable], pa.Table | None]:
     """Build Variable entities from Ibis Table, return (variables, freq_table as PyArrow)."""
-    schema = table.schema()
+    schema = full_table.schema() if full_table is not None else table.schema()
     columns = [c for c in schema if c.strip() != ""]
     skip_cols = set(skip_stats_columns) if skip_stats_columns else set()
 

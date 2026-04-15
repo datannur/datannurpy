@@ -178,7 +178,7 @@ class TestDatabaseTimeSeries:
         catalog.add_database(
             f"sqlite:////{ts_sqlite_db}",
             Folder(id="db", name="DB"),
-            depth="structure",
+            depth="dataset",
             group_by_prefix=False,
         )
         series = [d for d in catalog.dataset.all() if d.nb_resources is not None]
@@ -193,7 +193,7 @@ class TestDatabaseTimeSeries:
         catalog.add_database(
             f"sqlite:////{ts_sqlite_db}",
             Folder(id="db", name="DB"),
-            depth="schema",
+            depth="variable",
             group_by_prefix=False,
         )
         series = [d for d in catalog.dataset.all() if d.nb_resources is not None]
@@ -324,7 +324,7 @@ class TestDatabaseTimeSeries:
             catalog.add_database(
                 f"sqlite:////{db_path}",
                 Folder(id="db", name="DB"),
-                depth="schema",
+                depth="variable",
                 group_by_prefix=False,
             )
         series = [d for d in catalog.dataset.all() if d.nb_resources is not None]

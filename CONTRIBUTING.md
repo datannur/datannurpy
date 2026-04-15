@@ -21,6 +21,7 @@ make typecheck    # pyright
 ## Database Integration Tests (optional, macOS only)
 
 Tests PostgreSQL, MySQL, SQL Server and Oracle via Docker containers.
+The Makefile handles Python dependency installation automatically (`uv sync --extra databases`).
 
 **Prerequisites (one-time):**
 
@@ -33,18 +34,16 @@ brew install mysql-client          # required to build mysqlclient Python packag
 brew tap microsoft/mssql-release https://github.com/Microsoft/homebrew-mssql-release
 HOMEBREW_ACCEPT_EULA=Y brew install msodbcsql18  # ODBC driver for SQL Server
 
-# Add to ~/.zshrc
+# Add mysql-client pkg-config path to ~/.zshrc
 export PKG_CONFIG_PATH="/opt/homebrew/opt/mysql-client/lib/pkgconfig"
-
-# Python database drivers
-uv sync --extra databases
 ```
 
 **Usage:**
 
 ```bash
-make test-db       # starts containers, runs tests, keeps containers up
-make test-db-down  # stop and remove containers
+make test-db          # installs DB drivers, starts containers, runs tests
+make test-db-all      # same, plus Oracle 18
+make test-db-down     # stop and remove containers
 ```
 
 ## Pull Requests

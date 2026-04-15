@@ -112,6 +112,8 @@ def _extract_period_from_segment(segment: str) -> list[tuple[str, PeriodInfo]]:
             matches.append((original, info))
             matched_ranges.append((start, end))
 
+    # Sort by string position so matches[i] corresponds to the i-th placeholder
+    matches.sort(key=lambda m: segment.find(m[0]))
     return matches
 
 
@@ -275,7 +277,7 @@ def _refine_normalized_path(
 
 def _refine_group(
     normalized_path: str,
-    file_list: list[tuple[PurePath, int, list[PeriodInfo]]],
+    file_list: Sequence[tuple[PurePath, int, list[PeriodInfo]]],
 ) -> list[tuple[str, list[tuple[str, PurePath, int]]]]:
     """Classify period positions as variable/constant and build refined periods.
 
@@ -490,21 +492,22 @@ def group_table_time_series(
             singles.append(table_list[0][0])
             continue
 
-        # Pre-compute combined periods for sort + display
-        enriched: list[tuple[str, str, tuple[int, int, int]]] = []
-        for table_name, periods in table_list:
-            combined = _combine_periods(periods)
-            sort_key = combined.to_sort_key() if combined else (0, 0, 0)
-            period_str = combined.to_string() if combined else table_name
-            enriched.append((period_str, table_name, sort_key))
-        enriched.sort(key=lambda x: x[2])
-
-        series.append(
-            TableSeriesGroup(
-                normalized_name=normalized,
-                tables=[(p, t) for p, t, _ in enriched],
+        # Adapt to _refine_group's expected input: (PurePath, mtime, positions)
+        file_list = [
+            (PurePosixPath(name), 0, positions) for name, positions in table_list
+        ]
+        for refined_name, result_files in _refine_group(normalized, file_list):
+            if len(result_files) < 2:
+                for _, path, _ in result_files:
+                    singles.append(path.name)
+                continue
+            sorted_files = sorted(result_files, key=lambda x: period_sort_key(x[0]))
+            series.append(
+                TableSeriesGroup(
+                    normalized_name=refined_name,
+                    tables=[(p, path.name) for p, path, _ in sorted_files],
+                )
             )
-        )
 
     return series, singles
 

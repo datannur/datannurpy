@@ -1,5 +1,18 @@
 # datannurpy
 
+## 0.15.0 (2026-04-14)
+
+- breaking: renamed depth levels — `"structure"` → `"dataset"`, `"schema"` → `"variable"`, `"full"` → `"value"`
+- add: new `depth="stat"` level — computes statistics (row count, min, max, mean, etc.) without modality detection or frequency tables
+- removed `infer_stats` parameter from `add_folder`, `add_dataset`, `add_database` — use `depth` to control scan level
+- fix: variable types preserved during sampling — `build_variables` now reads schema from original source table instead of degraded memtable
+- fix: `_READSTAT_TYPE_MAP` expanded to cover `int8`, `int16`, `int32`, `float` (Stata/SPSS types now map to standard `"integer"`/`"float"`)
+- fix: `group_table_time_series` now applies `_refine_group` — constant digits in table prefixes (e.g. `03` in `PREFIX03`) are no longer falsely detected as period components
+- fix: `_extract_period_from_segment` returns matches in string position order — placeholder↔position alignment is now correct
+- fix: Oracle `get_table_data_size` always null — ORA-00942 on `ALL_SEGMENTS` killed fallback to `USER_SEGMENTS`; now tries `DBA_SEGMENTS` → `ALL_SEGMENTS` → `USER_SEGMENTS` with per-view error handling
+- fix: Oracle `list_schemas` / `list_tables` now try `DBA_TABLES` → `ALL_TABLES` before `USER_TABLES` — works for users with `SELECT ANY DICTIONARY` privilege
+- fix: `make test-db` now installs database drivers automatically (`uv sync --extra databases`)
+
 ## 0.14.2 (2026-04-06)
 
 - add: `freq` entity support in `add_metadata` — frequency tables can be loaded from CSV/Excel/database metadata files
@@ -198,7 +211,7 @@
 ## 0.4.1 (2026-02-01)
 
 - add: e2e test with demo data and db export
-- add: incrmental scan with db import
+- add: incremental scan with db import
 
 ## 0.4.0 (2026-01-29)
 
@@ -222,7 +235,7 @@
 
 ## 0.3.0 (2026-01-22)
 
-- add: modality supportou
+- add: modality support
 - add: folder based on db table prefix
 - add: support for parquet files and Delta/Hive/Iceberg directories
 - add: support for SAS, SPSS and Stata files

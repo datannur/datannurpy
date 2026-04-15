@@ -46,7 +46,6 @@ def scan_file(
     *,
     dataset_id: str,
     schema_only: bool = False,
-    infer_stats: bool = True,
     freq_threshold: int | None = None,
     csv_encoding: str | None = None,
     sample_size: int | None = None,
@@ -71,7 +70,6 @@ def scan_file(
             path,
             delivery_format,
             dataset_id=dataset_id,
-            infer_stats=infer_stats,
             freq_threshold=freq_threshold,
             csv_encoding=csv_encoding,
             sample_size=sample_size,
@@ -94,7 +92,6 @@ def scan_file(
         variables, nb_row, freq_table, metadata = parquet_scanners[delivery_format](
             path,
             dataset_id=dataset_id,
-            infer_stats=infer_stats,
             freq_threshold=freq_threshold,
             sample_size=sample_size,
             quiet=quiet,
@@ -112,7 +109,6 @@ def scan_file(
         variables, nb_row, _actual_sample_size, freq_table, metadata = scan_statistical(
             path,
             dataset_id=dataset_id,
-            infer_stats=infer_stats,
             freq_threshold=freq_threshold,
             sample_size=sample_size,
             quiet=quiet,
@@ -128,7 +124,6 @@ def scan_file(
         variables, nb_row, _actual_sample_size, freq_table = scan_csv(
             path,
             dataset_id=dataset_id,
-            infer_stats=infer_stats,
             freq_threshold=freq_threshold,
             csv_encoding=csv_encoding,
             sample_size=sample_size,
@@ -141,7 +136,6 @@ def scan_file(
     variables, nb_row, freq_table = scan_excel(
         path,
         dataset_id=dataset_id,
-        infer_stats=infer_stats,
         freq_threshold=freq_threshold,
         quiet=quiet,
     )
@@ -153,7 +147,6 @@ def _scan_with_ensure_local(
     delivery_format: str,
     *,
     dataset_id: str,
-    infer_stats: bool,
     freq_threshold: int | None,
     csv_encoding: str | None,
     sample_size: int | None,
@@ -173,7 +166,6 @@ def _scan_with_ensure_local(
             variables, nb_row, freq_table, metadata = dir_scanners[delivery_format](
                 local_path,
                 dataset_id=dataset_id,
-                infer_stats=infer_stats,
                 freq_threshold=freq_threshold,
                 sample_size=sample_size,
                 quiet=quiet,
@@ -193,7 +185,6 @@ def _scan_with_ensure_local(
             variables, nb_row, freq_table, metadata = scan_parquet(
                 local_path,
                 dataset_id=dataset_id,
-                infer_stats=infer_stats,
                 freq_threshold=freq_threshold,
                 sample_size=sample_size,
                 quiet=quiet,
@@ -211,7 +202,6 @@ def _scan_with_ensure_local(
                 scan_statistical(
                     local_path,
                     dataset_id=dataset_id,
-                    infer_stats=infer_stats,
                     freq_threshold=freq_threshold,
                     sample_size=sample_size,
                     quiet=quiet,
@@ -228,7 +218,6 @@ def _scan_with_ensure_local(
             variables, nb_row, _actual_sample_size, freq_table = scan_csv(
                 local_path,
                 dataset_id=dataset_id,
-                infer_stats=infer_stats,
                 freq_threshold=freq_threshold,
                 csv_encoding=csv_encoding,
                 sample_size=sample_size,
@@ -241,7 +230,6 @@ def _scan_with_ensure_local(
         variables, nb_row, freq_table = scan_excel(
             local_path,
             dataset_id=dataset_id,
-            infer_stats=infer_stats,
             freq_threshold=freq_threshold,
             quiet=quiet,
         )

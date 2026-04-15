@@ -207,10 +207,10 @@ class TestCatalogWithMemoryFS:
     def test_add_folder_memory_depth_structure(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
     ) -> None:
-        """add_folder with depth='structure' should skip variable scanning."""
+        """add_folder with depth='dataset' should skip variable scanning."""
         memory_fs.pipe(f"{memory_root}/file.csv", b"a,b,c\n1,2,3")
 
-        catalog = Catalog(quiet=True, depth="structure")
+        catalog = Catalog(quiet=True, depth="dataset")
         catalog.add_folder(f"memory://{memory_root}", Folder(id="struct"))
 
         assert len(catalog.dataset.all()) == 1
@@ -219,10 +219,10 @@ class TestCatalogWithMemoryFS:
     def test_add_folder_memory_depth_schema(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
     ) -> None:
-        """add_folder with depth='schema' should get variables but no stats."""
+        """add_folder with depth='variable' should get variables but no stats."""
         memory_fs.pipe(f"{memory_root}/file.csv", b"a,b\n1,2\n3,4")
 
-        catalog = Catalog(quiet=True, depth="schema")
+        catalog = Catalog(quiet=True, depth="variable")
         catalog.add_folder(f"memory://{memory_root}", Folder(id="schema"))
 
         assert len(catalog.dataset.all()) == 1
@@ -322,12 +322,12 @@ class TestCatalogWithMemoryFS:
 
 
 class TestSchemaOnlyRemoteOptimizations:
-    """Test depth='schema' optimizations for remote storage."""
+    """Test depth='variable' optimizations for remote storage."""
 
     def test_schema_only_parquet_remote(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
     ) -> None:
-        """depth='schema' should use PyArrow fs for parquet (no full download)."""
+        """depth='variable' should use PyArrow fs for parquet (no full download)."""
         from io import BytesIO
 
         import pyarrow as pa
@@ -340,7 +340,9 @@ class TestSchemaOnlyRemoteOptimizations:
         memory_fs.pipe(f"{memory_root}/data.parquet", buffer.getvalue())
 
         catalog = Catalog(quiet=True)
-        catalog.add_folder(f"memory://{memory_root}", Folder(id="test"), depth="schema")
+        catalog.add_folder(
+            f"memory://{memory_root}", Folder(id="test"), depth="variable"
+        )
 
         assert len(catalog.dataset.all()) == 1
         ds = catalog.dataset.all()[0]
@@ -350,7 +352,7 @@ class TestSchemaOnlyRemoteOptimizations:
     def test_schema_only_hive_remote(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
     ) -> None:
-        """depth='schema' should use PyArrow fs for hive partition schema."""
+        """depth='variable' should use PyArrow fs for hive partition schema."""
         from io import BytesIO
 
         import pyarrow as pa
@@ -363,7 +365,9 @@ class TestSchemaOnlyRemoteOptimizations:
         memory_fs.pipe(f"{memory_root}/data/year=2024/part.parquet", buffer.getvalue())
 
         catalog = Catalog(quiet=True)
-        catalog.add_folder(f"memory://{memory_root}", Folder(id="hive"), depth="schema")
+        catalog.add_folder(
+            f"memory://{memory_root}", Folder(id="hive"), depth="variable"
+        )
 
         assert len(catalog.dataset.all()) == 1
         ds = catalog.dataset.all()[0]
@@ -373,7 +377,7 @@ class TestSchemaOnlyRemoteOptimizations:
     def test_schema_only_excel_remote_full_download(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
     ) -> None:
-        """depth='schema' for Excel xlsx should stream headers (no full download)."""
+        """depth='variable' for Excel xlsx should stream headers (no full download)."""
         from io import BytesIO
 
         # Create synthetic Excel by using openpyxl
@@ -392,7 +396,7 @@ class TestSchemaOnlyRemoteOptimizations:
 
             catalog = Catalog(quiet=True)
             catalog.add_folder(
-                f"memory://{memory_root}", Folder(id="excel"), depth="schema"
+                f"memory://{memory_root}", Folder(id="excel"), depth="variable"
             )
 
             assert len(catalog.dataset.all()) == 1
@@ -409,7 +413,7 @@ class TestSchemaOnlyRemoteOptimizations:
     def test_schema_only_xls_remote_full_download(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
     ) -> None:
-        """depth='schema' for xls must download full file (xlrd, no streaming)."""
+        """depth='variable' for xls must download full file (xlrd, no streaming)."""
         from pathlib import Path
 
         from datannurpy.scanner.filesystem import FileSystem
@@ -438,7 +442,7 @@ class TestSchemaOnlyRemoteOptimizations:
     def test_schema_only_hive_empty(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
     ) -> None:
-        """depth='schema' with empty hive should return empty schema."""
+        """depth='variable' with empty hive should return empty schema."""
         from pathlib import Path
 
         from datannurpy.scanner.filesystem import FileSystem
@@ -462,7 +466,7 @@ class TestSchemaOnlyRemoteOptimizations:
     def test_schema_only_delta_remote(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str, tmp_path
     ) -> None:
-        """depth='schema' for Delta should only download _delta_log directory."""
+        """depth='variable' for Delta should only download _delta_log directory."""
         deltalake = pytest.importorskip("deltalake")
         from io import BytesIO
         from pathlib import Path
@@ -503,7 +507,7 @@ class TestSchemaOnlyRemoteOptimizations:
     def test_schema_only_iceberg_remote(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
     ) -> None:
-        """depth='schema' for Iceberg should only download metadata directory."""
+        """depth='variable' for Iceberg should only download metadata directory."""
         import json
         from pathlib import Path
 
@@ -548,7 +552,7 @@ class TestSchemaOnlyRemoteOptimizations:
     def test_schema_only_sas_remote(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
     ) -> None:
-        """depth='schema' for SAS should use pandas streaming (no full download)."""
+        """depth='variable' for SAS should use pandas streaming (no full download)."""
         from pathlib import Path
 
         from datannurpy.scanner.filesystem import FileSystem
@@ -579,7 +583,7 @@ class TestSchemaOnlyRemoteOptimizations:
     def test_schema_only_stata_remote(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
     ) -> None:
-        """depth='schema' for Stata should use pandas streaming (no full download)."""
+        """depth='variable' for Stata should use pandas streaming (no full download)."""
         from pathlib import Path
 
         from datannurpy.scanner.filesystem import FileSystem
@@ -641,7 +645,7 @@ class TestSchemaOnlyRemoteOptimizations:
     def test_schema_only_spss_remote(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
     ) -> None:
-        """depth='schema' for SPSS should download full file (no streaming support)."""
+        """depth='variable' for SPSS should download full file (no streaming support)."""
         pytest.importorskip("pyreadstat")
         from pathlib import Path
 
@@ -694,7 +698,7 @@ class TestSchemaOnlyRemoteOptimizations:
     def test_schema_only_iceberg_empty_metadata(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
     ) -> None:
-        """depth='schema' for Iceberg with empty metadata returns empty schema."""
+        """depth='variable' for Iceberg with empty metadata returns empty schema."""
         from pathlib import Path
 
         from datannurpy.scanner.filesystem import FileSystem

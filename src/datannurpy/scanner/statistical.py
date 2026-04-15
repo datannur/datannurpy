@@ -51,7 +51,14 @@ def _apply_labels(
             var.description = label
 
 
-_READSTAT_TYPE_MAP: dict[str, str] = {"double": "float", "string": "string"}
+_READSTAT_TYPE_MAP: dict[str, str] = {
+    "double": "float",
+    "float": "float",
+    "int8": "integer",
+    "int16": "integer",
+    "int32": "integer",
+    "string": "string",
+}
 
 
 def _apply_types(variables: list[Variable], meta_types: dict[str, str]) -> None:

@@ -229,8 +229,8 @@ class TestCatalogExportDbDefault:
 class TestCatalogDepth:
     """Test Catalog depth parameter."""
 
-    def test_depth_structure_clears_variable_tables_on_load(self, tmp_path: Path):
-        """Loading with depth='structure' should clear variable/modality/value/freq."""
+    def test_depth_dataset_clears_variable_tables_on_load(self, tmp_path: Path):
+        """Loading with depth='dataset' should clear variable/modality/value/freq."""
         app_dir = tmp_path / "app"
         data_dir = tmp_path / "data"
         data_dir.mkdir()
@@ -238,7 +238,7 @@ class TestCatalogDepth:
         (data_dir / "test.csv").write_text("a,b\n1,x\n2,x\n3,x\n")
 
         # First run: full scan with low freq_threshold to create freq entries
-        catalog1 = Catalog(app_path=app_dir, depth="full", freq_threshold=2)
+        catalog1 = Catalog(app_path=app_dir, depth="value", freq_threshold=2)
         catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
         catalog1.export_db()
 
@@ -248,8 +248,8 @@ class TestCatalogDepth:
         assert len(catalog1.value.all()) > 0
         assert len(catalog1.freq.all()) > 0
 
-        # Second run: load with structure mode
-        catalog2 = Catalog(app_path=app_dir, depth="structure")
+        # Second run: load with dataset mode
+        catalog2 = Catalog(app_path=app_dir, depth="dataset")
 
         # Structure mode should have cleared these tables
         assert len(catalog2.variable.all()) == 0
@@ -261,9 +261,9 @@ class TestCatalogDepth:
         assert len(catalog2.folder.all()) > 0
         assert len(catalog2.dataset.all()) == 1
 
-    def test_depth_structure_on_new_catalog(self):
-        """depth='structure' on new catalog (no db) should work without error."""
-        catalog = Catalog(depth="structure")
+    def test_depth_dataset_on_new_catalog(self):
+        """depth='dataset' on new catalog (no db) should work without error."""
+        catalog = Catalog(depth="dataset")
 
         # Should have empty tables
         assert len(catalog.variable.all()) == 0

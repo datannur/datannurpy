@@ -19,6 +19,8 @@ from .utils import ModalityManager, configure_logging
 from .utils.ids import compute_runtime_ids
 from .utils.params import validate_params
 
+Depth = Literal["dataset", "variable", "stat", "value"]
+
 
 class Catalog(DatannurDB):
     """A catalog containing folders, datasets and variables."""
@@ -36,7 +38,7 @@ class Catalog(DatannurDB):
         self,
         *,
         app_path: str | Path | None = None,
-        depth: Literal["structure", "schema", "full"] = "full",
+        depth: Depth = "value",
         refresh: bool = False,
         freq_threshold: int = 100,
         csv_encoding: str | None = None,
@@ -76,7 +78,7 @@ class Catalog(DatannurDB):
                 raise
 
         # Config
-        self.depth = depth
+        self.depth: Depth = depth
         self.refresh = refresh
         self.freq_threshold = freq_threshold
         self.csv_encoding = csv_encoding
@@ -104,8 +106,8 @@ class Catalog(DatannurDB):
         if not self._loaded_from_db:
             return
 
-        # Structure mode: clear schema-related tables
-        if depth == "structure":
+        # Dataset-only mode: clear variable-level tables
+        if depth == "dataset":
             for t in [self.variable, self.modality, self.value, self.freq]:
                 t._df = t._df.clear()
 
