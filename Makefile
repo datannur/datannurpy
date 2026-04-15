@@ -1,4 +1,4 @@
-.PHONY: test lint typecheck check download-app coverage test-cov update-snapshots test-db test-db-all test-db-oracle18 test-db-setup test-db-up test-db-down
+.PHONY: test lint typecheck check download-app coverage test-cov update-snapshots test-db test-db-all test-db-oracle18 test-db-setup test-db-up test-db-down audit
 
 test:
 	uv run pytest
@@ -27,6 +27,9 @@ check:
 
 download-app:
 	uv run python scripts/download_app.py
+
+audit:
+	uv export --no-dev --no-hashes | uv run --with pip-audit pip-audit -r /dev/stdin
 
 test-db-setup:
 	uv sync --extra databases
