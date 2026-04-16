@@ -120,8 +120,8 @@ add:
 | Variables (names, types)             |           | ✓          | ✓              | ✓                  |
 | DB introspection (PK, FK, comments)  |           | ✓          | ✓              | ✓                  |
 | Row count, statistics                |           |            | ✓              | ✓                  |
-| Modalities, frequency tables         |           |            |                | ✓                  |
-| String pattern frequencies           |           |            |                | ✓                  |
+| Modalities, frequencies, patterns    |           |            |                | ✓                  |
+| Auto-tagging (format, security, text)|           |            |                | ✓                  |
 
 > **Note:** At `depth="variable"`, CSV and Excel files only extract column **names** (types require reading data, available from `depth="stat"`). All other formats provide types at this level.
 
@@ -131,6 +131,20 @@ add:
 - **`variable`** — lightweight schema discovery (column names and types)
 - **`stat`** — data profiling without modality detection (faster than `value`)
 - **`value`** — full catalog with frequency tables and modality assignment (default)
+
+### Auto-tagging
+
+At `depth="value"` (default), string columns are automatically tagged by content type. Tags use a two-level hierarchy under the `auto` parent:
+
+| Category   | Tags                                                       |
+| ---------- | ---------------------------------------------------------- |
+| **Format** | `auto---email`, `auto---phone`, `auto---uuid`, `auto---iban` |
+| **Security** | `auto---bcrypt`, `auto---argon2`, `auto---jwt`, `auto---secret` |
+| **Text**   | `auto---structured`, `auto---semi-structured`, `auto---free-text` → `auto---natural-text` |
+
+Each variable receives at most **one leaf tag**. The frontend can use `parent_id` to filter by category (e.g. selecting `auto---security` shows all bcrypt/argon2/jwt/secret variables).
+
+**Security-tagged columns** (bcrypt, argon2, jwt, secret) have their raw frequency values suppressed — only pattern frequencies are emitted, so no actual secrets appear in the exported catalog.
 
 ## Scanning files
 

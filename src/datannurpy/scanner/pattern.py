@@ -26,12 +26,12 @@ def _build_pattern_expr(col: Any, *, letter_re: str = _LETTER_UNICODE) -> Any:
 def _classify_string(top_freqs: list[int], total: int) -> str:
     """Classify a string column based on pattern frequency distribution."""
     if total == 0 or not top_freqs:
-        return "free_text"
+        return "auto---free-text"
     if top_freqs[0] / total >= 0.50:
-        return "structured"
+        return "auto---structured"
     if sum(top_freqs[:3]) / total >= 0.50:
-        return "semi_structured"
-    return "free_text"
+        return "auto---semi-structured"
+    return "auto---free-text"
 
 
 def _prepare_table(table: ibis.Table, cols: list[str]) -> tuple[ibis.Table, str]:
@@ -89,7 +89,7 @@ def compute_pattern_freqs(
     for col in pattern_cols:
         total: int = int(counts_row[f"{col}__count"])
         if total == 0:
-            string_classes[col] = "free_text"
+            string_classes[col] = "auto---free-text"
             continue
 
         non_null = table.filter(table[col].notnull())

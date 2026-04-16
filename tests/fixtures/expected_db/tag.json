@@ -1,5 +1,117 @@
 [
   {
+    "id": "auto",
+    "parent_id": null,
+    "doc_ids": "",
+    "name": "Auto-detected",
+    "description": "Tags detected automatically by content analysis"
+  },
+  {
+    "id": "auto---argon2",
+    "parent_id": "auto---security",
+    "doc_ids": "",
+    "name": "Argon2",
+    "description": "Argon2 password hashes"
+  },
+  {
+    "id": "auto---bcrypt",
+    "parent_id": "auto---security",
+    "doc_ids": "",
+    "name": "Bcrypt",
+    "description": "Bcrypt password hashes ($2a$, $2b$, $2y$)"
+  },
+  {
+    "id": "auto---email",
+    "parent_id": "auto---format",
+    "doc_ids": "",
+    "name": "Email",
+    "description": "Values matching email address format"
+  },
+  {
+    "id": "auto---format",
+    "parent_id": "auto",
+    "doc_ids": "",
+    "name": "Format",
+    "description": "Recognized data formats"
+  },
+  {
+    "id": "auto---free-text",
+    "parent_id": "auto---text",
+    "doc_ids": "",
+    "name": "Free text",
+    "description": "No dominant pattern detected"
+  },
+  {
+    "id": "auto---iban",
+    "parent_id": "auto---format",
+    "doc_ids": "",
+    "name": "IBAN",
+    "description": "Values matching IBAN format"
+  },
+  {
+    "id": "auto---jwt",
+    "parent_id": "auto---security",
+    "doc_ids": "",
+    "name": "JWT",
+    "description": "JSON Web Tokens"
+  },
+  {
+    "id": "auto---natural-text",
+    "parent_id": "auto---free-text",
+    "doc_ids": "",
+    "name": "Natural text",
+    "description": "Multi-word natural language text"
+  },
+  {
+    "id": "auto---phone",
+    "parent_id": "auto---format",
+    "doc_ids": "",
+    "name": "Phone",
+    "description": "Values matching phone number format"
+  },
+  {
+    "id": "auto---secret",
+    "parent_id": "auto---security",
+    "doc_ids": "",
+    "name": "Secret",
+    "description": "Likely secrets, tokens, or technical hashes"
+  },
+  {
+    "id": "auto---security",
+    "parent_id": "auto",
+    "doc_ids": "",
+    "name": "Security",
+    "description": "Sensitive or security-related content"
+  },
+  {
+    "id": "auto---semi-structured",
+    "parent_id": "auto---text",
+    "doc_ids": "",
+    "name": "Semi-structured",
+    "description": "Top 3 patterns cover ≥50% of values"
+  },
+  {
+    "id": "auto---structured",
+    "parent_id": "auto---text",
+    "doc_ids": "",
+    "name": "Structured",
+    "description": "Repeating pattern covers ≥50% of values"
+  },
+  {
+    "id": "auto---text",
+    "parent_id": "auto",
+    "doc_ids": "",
+    "name": "Text",
+    "description": "Text content classification"
+  },
+  {
+    "id": "auto---uuid",
+    "parent_id": "auto---format",
+    "doc_ids": "",
+    "name": "UUID",
+    "description": "Values matching UUID format"
+  },
+  {
     "id": "db",
     "parent_id": null,
     "doc_ids": "",

@@ -144,6 +144,10 @@ def add_dataset(
     assert not isinstance(path, Sequence) or isinstance(path, (str, Path))
 
     catalog._has_scanned = True
+    if (depth if depth is not None else catalog.depth) == "value":
+        from .scanner.autotag import ensure_auto_tags
+
+        ensure_auto_tags(catalog)
     q = quiet if quiet is not None else catalog.quiet
     do_refresh = refresh if refresh is not None else catalog.refresh
     resolved_depth: Depth = depth if depth is not None else cast("Depth", catalog.depth)

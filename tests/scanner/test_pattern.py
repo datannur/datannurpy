@@ -68,25 +68,25 @@ class TestClassifyString:
     """Test _classify_string classification logic."""
 
     def test_structured_single_dominant(self):
-        assert _classify_string([600, 100, 50], 1000) == "structured"
+        assert _classify_string([600, 100, 50], 1000) == "auto---structured"
 
     def test_structured_at_boundary(self):
-        assert _classify_string([500], 1000) == "structured"
+        assert _classify_string([500], 1000) == "auto---structured"
 
     def test_semi_structured(self):
-        assert _classify_string([200, 200, 200, 50], 1000) == "semi_structured"
+        assert _classify_string([200, 200, 200, 50], 1000) == "auto---semi-structured"
 
     def test_semi_structured_top3_at_boundary(self):
-        assert _classify_string([200, 150, 150], 1000) == "semi_structured"
+        assert _classify_string([200, 150, 150], 1000) == "auto---semi-structured"
 
     def test_free_text(self):
-        assert _classify_string([50, 40, 30, 20], 1000) == "free_text"
+        assert _classify_string([50, 40, 30, 20], 1000) == "auto---free-text"
 
     def test_empty_freqs(self):
-        assert _classify_string([], 100) == "free_text"
+        assert _classify_string([], 100) == "auto---free-text"
 
     def test_zero_total(self):
-        assert _classify_string([10], 0) == "free_text"
+        assert _classify_string([10], 0) == "auto---free-text"
 
 
 class TestPrepareTable:
@@ -152,7 +152,7 @@ class TestComputePatternFreqs:
         t = ibis.memtable({"phone": values})
         freq_table, classes = compute_pattern_freqs(t, ["phone"])
 
-        assert classes["phone"] == "structured"
+        assert classes["phone"] == "auto---structured"
         assert freq_table is not None
         rows = freq_table.to_pylist()
         assert all(r["variable_id"] == "phone" for r in rows)
@@ -168,18 +168,18 @@ class TestComputePatternFreqs:
         )
         t = ibis.memtable({"code": values})
         freq_table, classes = compute_pattern_freqs(t, ["code"])
-        assert classes["code"] == "semi_structured"
+        assert classes["code"] == "auto---semi-structured"
 
     def test_free_text_column(self):
         values = ["x" * i for i in range(1, 201)]
         t = ibis.memtable({"desc": values})
         freq_table, classes = compute_pattern_freqs(t, ["desc"])
-        assert classes["desc"] == "free_text"
+        assert classes["desc"] == "auto---free-text"
 
     def test_all_null_column(self):
         t = ibis.memtable({"val": [None, None, None]}).cast({"val": "string"})
         freq_table, classes = compute_pattern_freqs(t, ["val"])
-        assert classes["val"] == "free_text"
+        assert classes["val"] == "auto---free-text"
         assert freq_table is None
 
     def test_top_n_limit(self):

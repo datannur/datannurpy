@@ -421,10 +421,10 @@ class TestPatternFreqIntegration:
         )
         var_by_name = {v.name: v for v in variables}
         assert var_by_name["code"].is_pattern is True
-        assert var_by_name["code"].string_class == "structured"
+        assert "auto---structured" in var_by_name["code"].tag_ids
         # Integer column should not be a pattern
         assert var_by_name["num"].is_pattern is False
-        assert var_by_name["num"].string_class is None
+        assert var_by_name["num"].tag_ids == []
         # freq_table should contain pattern entries
         assert freq_table is not None
         code_freqs = [r for r in freq_table.to_pylist() if r["variable_id"] == "code"]
@@ -439,7 +439,7 @@ class TestPatternFreqIntegration:
         )
         v = variables[0]
         assert v.is_pattern is False
-        assert v.string_class is None
+        assert v.tag_ids == []
         assert freq_table is not None
 
     def test_no_freq_threshold_no_pattern(self):
@@ -450,7 +450,7 @@ class TestPatternFreqIntegration:
             table, nb_rows=50, dataset_id="test", infer_stats=True
         )
         assert variables[0].is_pattern is False
-        assert variables[0].string_class is None
+        assert variables[0].tag_ids == []
 
     def test_mixed_columns_freq_and_pattern(self):
         """Low-card and high-card string columns produce combined freq_table."""
@@ -470,14 +470,18 @@ class TestPatternFreqIntegration:
         assert "high" in var_ids
 
     def test_free_text_classification(self):
-        """Diverse strings should get string_class='free_text'."""
-        values = ["x" * i for i in range(1, 201)]
+        """Diverse strings with many patterns should get free_text classification."""
+        import random
+
+        rng = random.Random(42)
+        chars = "abcdefghijklmnopqrstuvwxyz0123456789 -_."
+        values = ["".join(rng.choices(chars, k=rng.randint(5, 30))) for _ in range(200)]
         table = ibis.memtable({"desc": values})
         variables, _ = build_variables(
             table, nb_rows=200, dataset_id="test", infer_stats=True, freq_threshold=10
         )
         assert variables[0].is_pattern is True
-        assert variables[0].string_class == "free_text"
+        assert "auto---free-text" in variables[0].tag_ids
 
     def test_pattern_works_with_non_regex_backend(self):
         """Pattern computation should materialize to memtable if backend lacks regex."""
@@ -507,5 +511,22 @@ class TestPatternFreqIntegration:
         # Even with a "non-regex" backend, patterns should still be computed
         var = variables[0]
         assert var.is_pattern is True
-        assert var.string_class is not None
+        assert var.tag_ids != []
         assert freq_table is not None
+
+    def test_security_column_uses_pattern_not_raw_freq(self):
+        """Security-tagged columns should never expose raw values in freq."""
+        hashes = [f"$2a$10$salt{i:040d}hashvalue" for i in range(10)]
+        table = ibis.memtable({"password": hashes, "name": ["alice", "bob"] * 5})
+        variables, freq_table = build_variables(
+            table, nb_rows=10, dataset_id="test", infer_stats=True, freq_threshold=20
+        )
+        var_by_name = {v.name: v for v in variables}
+        # password should be detected as bcrypt → pattern mode, no raw hashes
+        assert "auto---bcrypt" in var_by_name["password"].tag_ids
+        assert var_by_name["password"].is_pattern is True
+        # freq_table should not contain any raw hash values
+        assert freq_table is not None
+        pw_freqs = [r for r in freq_table.to_pylist() if r["variable_id"] == "password"]
+        for row in pw_freqs:
+            assert not row["value"].startswith("$2a$")
