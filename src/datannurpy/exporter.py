@@ -87,8 +87,9 @@ def export_app(
     quiet: bool | None = None,
 ) -> None:
     """Export a standalone datannur visualization app with catalog data."""
-    # Finalize catalog (remove unseen entities) before export
-    catalog.finalize()
+    # Only finalize (cleanup unseen entities) if a scan was performed
+    if catalog._has_scanned:
+        catalog.finalize()
 
     if output_dir is None:
         if catalog.app_path is None:

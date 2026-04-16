@@ -122,3 +122,26 @@ class TestExportApp:
 
         js_path = tmp_path / "data" / "db" / "config.json.js"
         assert js_path.exists()
+
+    def test_export_app_without_scan_preserves_catalog(self, tmp_path):
+        """Reload a catalog from disk then export_app without scanning should not empty it."""
+        app_dir = tmp_path / "app"
+
+        # First pass: scan + export
+        cat1 = Catalog(app_path=app_dir, quiet=True)
+        cat1.add_folder(
+            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+        )
+        cat1.export_app()
+
+        folder_count = cat1.folder.count
+        dataset_count = cat1.dataset.count
+        assert folder_count > 0
+        assert dataset_count > 0
+
+        # Second pass: reload from disk, no scan, re-export
+        cat2 = Catalog(app_path=app_dir, quiet=True)
+        cat2.export_app()
+
+        assert cat2.folder.count == folder_count
+        assert cat2.dataset.count == dataset_count

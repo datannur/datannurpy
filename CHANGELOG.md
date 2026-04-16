@@ -4,6 +4,7 @@
 
 - breaking: YAML config — `export_app:` and `export_db:` blocks replaced by flat top-level keys (`app_path` implies app export, `output_dir` for JSON-only export, `open_browser` and `track_evolution` as top-level options)
 - add: `export_app()` now accepts `track_evolution` parameter
+- fix: `export_app()` no longer calls `finalize()` when no scan was performed — reloading a catalog from disk then re-exporting the app no longer empties it
 - add: YAML shorthand format for `add` entries (`- folder: ./data` instead of `- type: folder\n  path: ./data`)
 - add: `id`, `name`, `description` kwargs on `add_folder` and `add_database`
 
