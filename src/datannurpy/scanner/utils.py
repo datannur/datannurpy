@@ -480,13 +480,29 @@ def build_variables(
                 else:
                     raise
 
+    # Auto-tag string columns BEFORE freq (security tags suppress raw freq values)
+    auto_tag_map: dict[str, str] = {}
+    security_cols: set[str] = set()
+    if freq_threshold is not None:
+        string_cols = [
+            col for col in columns if ibis_type_to_str(schema[col]) == "string"
+        ]
+        if string_cols:
+            from .autotag import _SECURITY_TAGS, compute_auto_tags
+
+            auto_tag_map = compute_auto_tags(table, string_cols)
+            security_cols = {
+                col for col, tag in auto_tag_map.items() if tag in _SECURITY_TAGS
+            }
+
     # Compute freq if threshold is set
     freq_table: pa.Table | None = None
+    pattern_info: dict[str, str] = {}
     if freq_threshold is not None and stats:
         eligible_cols = [
             col
             for col, (nb_distinct, _, _) in stats.items()
-            if 0 <= nb_distinct <= freq_threshold
+            if 0 <= nb_distinct <= freq_threshold and col not in security_cols
         ]
         if eligible_cols:
             freq_tables: list[ibis.Table] = []
@@ -508,6 +524,39 @@ def build_variables(
                 import pyarrow as pa
 
                 freq_table = pa.concat_tables([ft.to_pyarrow() for ft in freq_tables])
+
+        # Pattern freq for high-cardinality string columns + security-tagged columns
+        pattern_cols = [
+            col
+            for col, (nb_distinct, _, _) in stats.items()
+            if ibis_type_to_str(schema[col]) == "string"
+            and nb_distinct > 0
+            and (
+                (freq_threshold > 0 and nb_distinct > freq_threshold)
+                or col in security_cols
+            )
+        ]
+        if pattern_cols:
+            from .pattern import compute_pattern_freqs
+
+            pattern_freq_table, pattern_info = compute_pattern_freqs(
+                table, pattern_cols
+            )
+            # pattern_cols only contains cols with nb_distinct > 0, so always non-None
+            assert pattern_freq_table is not None
+            import pyarrow as pa
+
+            freq_table = (
+                pa.concat_tables([freq_table, pattern_freq_table])
+                if freq_table is not None
+                else pattern_freq_table
+            )
+
+    # Merge pattern classification into auto_tag_map (for cols without a specific tag)
+    if pattern_info:
+        for col, tag_id in pattern_info.items():
+            if col not in auto_tag_map:
+                auto_tag_map[col] = tag_id
 
     def get_stat(col: str, idx: int) -> int | None:
         """Get stat value, returning None if not computed or -1 (unknown)."""
@@ -535,6 +584,8 @@ def build_variables(
             max=get_extra(col_name, 1),
             mean=get_extra(col_name, 2),
             std=get_extra(col_name, 3),
+            is_pattern=col_name in pattern_info,
+            tag_ids=[auto_tag_map[col_name]] if col_name in auto_tag_map else [],
         )
         for col_name in columns
     ]

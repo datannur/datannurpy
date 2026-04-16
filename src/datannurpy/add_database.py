@@ -255,6 +255,10 @@ def _add_database_impl(
     do_introspect = resolved_depth != "dataset"
     if do_introspect:
         ensure_db_tags(catalog)
+    if resolved_depth == "value":
+        from .scanner.autotag import ensure_auto_tags
+
+        ensure_auto_tags(catalog)
     raw_fk_refs: list[tuple[str, str | None, str, str]] = []
     table_to_dataset_id: dict[tuple[str | None, str], str] = {}
 

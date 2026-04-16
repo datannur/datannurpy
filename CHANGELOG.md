@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.16.1 (2026-04-16)
+
+- add: auto-tagging of string columns by content type (email, phone, UUID, IBAN, bcrypt, argon2, JWT, secret, natural text) with hierarchical `auto---*` tags; security-tagged columns have raw frequency values suppressed
+- add: pattern frequency analysis for high-cardinality string columns (`nb_distinct > freq_threshold`) with `is_pattern` flag
+
 ## 0.16.0 (2026-04-16)
 
 - breaking: YAML config — `export_app:` and `export_db:` blocks replaced by flat top-level keys (`app_path` implies app export, `output_dir` for JSON-only export, `open_browser` and `track_evolution` as top-level options)

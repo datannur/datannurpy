@@ -51,8 +51,14 @@ class TestFreq:
         catalog.add_folder(tmp_path)
         catalog.export_db(tmp_path / "output")
 
-        # Both columns have 3 distinct > threshold 2
-        assert not (tmp_path / "output" / "freq.json").exists()
+        # Column a (integer, 3 distinct > threshold 2): no freq
+        # Column b (string, 3 distinct > threshold 2): pattern freq
+        assert (tmp_path / "output" / "freq.json").exists()
+        with open(tmp_path / "output" / "freq.json") as f:
+            data = json.load(f)
+        # Only string column b should have pattern freq entries
+        var_ids = {d["variable_id"] for d in data}
+        assert all("b" in vid for vid in var_ids)
 
     def test_freq_content(self, tmp_path: Path):
         """freq.json should contain value counts."""
