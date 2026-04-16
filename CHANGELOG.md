@@ -2,6 +2,7 @@
 
 ## 0.16.0 (2026-04-16)
 
+- add: pattern frequency analysis for high-cardinality string columns (`nb_distinct > freq_threshold`) with `is_pattern` flag and `string_class` classification
 - breaking: YAML config — `export_app:` and `export_db:` blocks replaced by flat top-level keys (`app_path` implies app export, `output_dir` for JSON-only export, `open_browser` and `track_evolution` as top-level options)
 - add: `export_app()` now accepts `track_evolution` parameter
 - fix: `export_app()` no longer calls `finalize()` when no scan was performed — reloading a catalog from disk then re-exporting the app no longer empties it

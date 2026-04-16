@@ -121,8 +121,10 @@ class ModalityManager:
                 freq_by_var[col_name] = set()
             freq_by_var[col_name].add(val)
 
-        # Assign modalities to variables
+        # Assign modalities to variables (skip pattern variables)
         for var in variables:
+            if var.is_pattern:
+                continue
             old_col_name = next(k for k, v in var_id_mapping.items() if v == var.id)
             if old_col_name in freq_by_var and freq_by_var[old_col_name]:
                 modality_id = self.get_or_create(freq_by_var[old_col_name])

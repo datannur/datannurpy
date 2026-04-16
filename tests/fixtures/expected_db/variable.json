@@ -19,7 +19,9 @@
     "mean": 9.5,
     "std": 3.535534,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---config---value",
@@ -41,7 +43,9 @@
     "mean": 6.0,
     "std": 4.242641,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---hr---hr_departments---id",
@@ -63,7 +67,9 @@
     "mean": 2.0,
     "std": 1.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---hr---hr_departments---location",
@@ -85,7 +91,9 @@
     "mean": 4.666667,
     "std": 0.57735,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---hr---hr_departments---name",
@@ -107,7 +115,9 @@
     "mean": 6.0,
     "std": 4.582576,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---hr---hr_employees---department_id",
@@ -129,7 +139,9 @@
     "mean": 1.333333,
     "std": 0.57735,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---hr---hr_employees---email",
@@ -151,7 +163,9 @@
     "mean": 16.666667,
     "std": 1.527525,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---hr---hr_employees---hire_date",
@@ -173,7 +187,9 @@
     "mean": 10.0,
     "std": 0.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---hr---hr_employees---id",
@@ -195,7 +211,9 @@
     "mean": 2.0,
     "std": 1.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---hr---hr_employees---name",
@@ -217,7 +235,9 @@
     "mean": 11.666667,
     "std": 1.527525,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---hr---hr_salaries---amount",
@@ -239,7 +259,9 @@
     "mean": 54333.333333,
     "std": 6027.713773,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---hr---hr_salaries---effective_date",
@@ -261,7 +283,9 @@
     "mean": 10.0,
     "std": 0.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---hr---hr_salaries---employee_id",
@@ -283,7 +307,9 @@
     "mean": 1.333333,
     "std": 0.57735,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---hr---hr_salaries---id",
@@ -305,7 +331,9 @@
     "mean": 2.0,
     "std": 1.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---inventory---inventory_products---category",
@@ -327,7 +355,9 @@
     "mean": 11.0,
     "std": null,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---inventory---inventory_products---id",
@@ -349,7 +379,9 @@
     "mean": 101.5,
     "std": 0.707107,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---inventory---inventory_products---name",
@@ -371,7 +403,9 @@
     "mean": 10.5,
     "std": 0.707107,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---inventory---inventory_products---price",
@@ -393,7 +427,9 @@
     "mean": 124.99,
     "std": 35.355339,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---inventory---inventory_products---sku",
@@ -415,7 +451,9 @@
     "mean": 10.0,
     "std": 0.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---inventory---inventory_warehouses---capacity",
@@ -437,7 +475,9 @@
     "mean": 7500.0,
     "std": 3535.533906,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---inventory---inventory_warehouses---city",
@@ -459,7 +499,9 @@
     "mean": 4.5,
     "std": 0.707107,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---inventory---inventory_warehouses---id",
@@ -481,7 +523,9 @@
     "mean": 1.5,
     "std": 0.707107,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---inventory---inventory_warehouses---name",
@@ -503,7 +547,9 @@
     "mean": 11.5,
     "std": 2.12132,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---sales---sales_customers---country",
@@ -525,7 +571,9 @@
     "mean": 6.5,
     "std": 0.707107,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---sales---sales_customers---email",
@@ -547,7 +595,9 @@
     "mean": 17.0,
     "std": 1.414214,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---sales---sales_customers---id",
@@ -569,7 +619,9 @@
     "mean": 1.5,
     "std": 0.707107,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---sales---sales_customers---name",
@@ -591,7 +643,9 @@
     "mean": 9.0,
     "std": 0.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---sales---sales_order---sales_order_headers---customer_id",
@@ -613,7 +667,9 @@
     "mean": 1.333333,
     "std": 0.57735,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---sales---sales_order---sales_order_headers---id",
@@ -635,7 +691,9 @@
     "mean": 2.0,
     "std": 1.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---sales---sales_order---sales_order_headers---order_date",
@@ -657,7 +715,9 @@
     "mean": 10.0,
     "std": 0.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---sales---sales_order---sales_order_headers---status",
@@ -679,7 +739,9 @@
     "mean": 8.333333,
     "std": 1.154701,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---sales---sales_order---sales_order_items---id",
@@ -701,7 +763,9 @@
     "mean": 2.0,
     "std": 1.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---sales---sales_order---sales_order_items---order_id",
@@ -723,7 +787,9 @@
     "mean": 1.333333,
     "std": 0.57735,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---sales---sales_order---sales_order_items---product_id",
@@ -745,7 +811,9 @@
     "mean": 101.333333,
     "std": 0.57735,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---sales---sales_order---sales_order_items---quantity",
@@ -767,7 +835,9 @@
     "mean": 2.666667,
     "std": 2.081666,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---sales---sales_order---sales_order_items---unit_price",
@@ -789,7 +859,9 @@
     "mean": 116.656667,
     "std": 28.867513,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---sales---sales_order---sales_order_returns---id",
@@ -811,7 +883,9 @@
     "mean": 1.0,
     "std": null,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---sales---sales_order---sales_order_returns---order_item_id",
@@ -833,7 +907,9 @@
     "mean": 2.0,
     "std": null,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---sales---sales_order---sales_order_returns---reason",
@@ -855,7 +931,9 @@
     "mean": 9.0,
     "std": null,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "company---sales---sales_order---sales_order_returns---return_date",
@@ -877,7 +955,9 @@
     "mean": 10.0,
     "std": null,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---cars_sas7bdat---CYL",
@@ -899,7 +979,9 @@
     "mean": 5.471939,
     "std": 1.705783,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---cars_sas7bdat---ENG",
@@ -921,7 +1003,9 @@
     "mean": 194.41199,
     "std": 104.644004,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---cars_sas7bdat---MPG",
@@ -943,7 +1027,9 @@
     "mean": 23.445918,
     "std": 7.805007,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---cars_sas7bdat---WGT",
@@ -965,7 +1051,9 @@
     "mean": 2977.584184,
     "std": 849.40256,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---employees_csv---age",
@@ -987,7 +1075,9 @@
     "mean": 34.421053,
     "std": 6.194225,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---employees_csv---date_embauche",
@@ -1009,7 +1099,9 @@
     "mean": 1612630080.0,
     "std": 44522186.902281,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---employees_csv---departement",
@@ -1031,7 +1123,9 @@
     "mean": 4.631579,
     "std": 3.235404,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---employees_csv---est_manager",
@@ -1053,7 +1147,9 @@
     "mean": 0.35,
     "std": 0.48936,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---employees_csv---id",
@@ -1075,7 +1171,9 @@
     "mean": 10.5,
     "std": 5.91608,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---employees_csv---nom",
@@ -1097,7 +1195,9 @@
     "mean": 5.85,
     "std": 0.988087,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---employees_csv---prenom",
@@ -1119,7 +1219,9 @@
     "mean": 5.421053,
     "std": 1.387075,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---employees_csv---salaire",
@@ -1141,7 +1243,9 @@
     "mean": 53250.0,
     "std": 8831.015916,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---employees_csv---salaire2",
@@ -1163,7 +1267,9 @@
     "mean": null,
     "std": null,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---employees_csv---ville",
@@ -1185,7 +1291,9 @@
     "mean": 6.3,
     "std": 2.05452,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---legacy_encoding_csv---d_partement",
@@ -1207,7 +1315,9 @@
     "mean": 10.0,
     "std": 2.581989,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---legacy_encoding_csv---nom",
@@ -1229,7 +1339,9 @@
     "mean": 5.25,
     "std": 0.5,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---legacy_encoding_csv---pr_nom",
@@ -1251,7 +1363,9 @@
     "mean": 5.25,
     "std": 1.892969,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---legacy_encoding_csv---salaire",
@@ -1273,7 +1387,9 @@
     "mean": 4.5,
     "std": 1.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---regions_france_csv---densite_pop",
@@ -1295,7 +1411,9 @@
     "mean": 172.553846,
     "std": 255.228325,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---regions_france_csv---nb_entreprises",
@@ -1317,7 +1435,9 @@
     "mean": 480498.769231,
     "std": 352543.08822,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---regions_france_csv---pib_milliards_euros",
@@ -1339,7 +1459,9 @@
     "mean": 184.338462,
     "std": 188.233244,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---regions_france_csv---population",
@@ -1361,7 +1483,9 @@
     "mean": 4995098.230769,
     "std": 2923621.978019,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---regions_france_csv---region",
@@ -1383,7 +1507,9 @@
     "mean": 14.615385,
     "std": 6.423115,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---regions_france_csv---superficie_km2",
@@ -1405,7 +1531,9 @@
     "mean": 41846.076923,
     "std": 23178.492597,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---csv---regions_france_csv---taux_chomage",
@@ -1427,7 +1555,9 @@
     "mean": 7.7,
     "std": 0.897218,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---datatypes_spss_sav---dtime",
@@ -1449,7 +1579,9 @@
     "mean": -3457947295.0,
     "std": 6103234549.47557,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---datatypes_spss_sav---mychar",
@@ -1471,7 +1603,9 @@
     "mean": 1.0,
     "std": 0.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---datatypes_spss_sav---mydate",
@@ -1493,7 +1627,9 @@
     "mean": -3457965600.0,
     "std": 6103223327.828954,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---datatypes_spss_sav---mylabl",
@@ -1515,7 +1651,9 @@
     "mean": 1.4,
     "std": 0.547723,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---datatypes_spss_sav---mynum",
@@ -1537,7 +1675,9 @@
     "mean": 0.18,
     "std": 707.319699,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---datatypes_spss_sav---myord",
@@ -1559,7 +1699,9 @@
     "mean": 1.6,
     "std": 0.894427,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---datatypes_spss_sav---mytime",
@@ -1581,7 +1723,9 @@
     "mean": null,
     "std": null,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---datatypes_stata_dta---dtime",
@@ -1603,7 +1747,9 @@
     "mean": -3457947295.0,
     "std": 6103234549.47557,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---datatypes_stata_dta---mychar",
@@ -1625,7 +1771,9 @@
     "mean": 1.0,
     "std": 0.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---datatypes_stata_dta---mydate",
@@ -1647,7 +1795,9 @@
     "mean": -3457965600.0,
     "std": 6103223327.828954,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---datatypes_stata_dta---mylabl",
@@ -1669,7 +1819,9 @@
     "mean": 1.4,
     "std": 0.547723,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---datatypes_stata_dta---mynum",
@@ -1691,7 +1843,9 @@
     "mean": 0.18,
     "std": 707.319699,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---datatypes_stata_dta---myord",
@@ -1713,7 +1867,9 @@
     "mean": 1.6,
     "std": 0.894427,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---datatypes_stata_dta---mytime",
@@ -1735,7 +1891,9 @@
     "mean": null,
     "std": null,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---iceberg_warehouse---default---test_table---amount",
@@ -1757,7 +1915,9 @@
     "mean": 200.3,
     "std": 78.859725,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---iceberg_warehouse---default---test_table---city",
@@ -1779,7 +1939,9 @@
     "mean": 5.4,
     "std": 0.894427,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---iceberg_warehouse---default---test_table---id",
@@ -1801,7 +1963,9 @@
     "mean": 3.0,
     "std": 1.581139,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---iceberg_warehouse---default---test_table---name",
@@ -1823,7 +1987,9 @@
     "mean": 4.6,
     "std": 1.67332,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---metadata---institution_csv---description",
@@ -1845,7 +2011,9 @@
     "mean": 51.0,
     "std": 14.142136,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---metadata---institution_csv---email",
@@ -1867,7 +2035,9 @@
     "mean": 16.0,
     "std": null,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---metadata---institution_csv---id",
@@ -1889,7 +2059,9 @@
     "mean": 5.0,
     "std": 0.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---metadata---institution_csv---name",
@@ -1911,7 +2083,9 @@
     "mean": 5.0,
     "std": 0.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---metadata---tag_csv---description",
@@ -1933,7 +2107,9 @@
     "mean": 19.0,
     "std": 0.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---metadata---tag_csv---id",
@@ -1955,7 +2131,9 @@
     "mean": 4.5,
     "std": 3.535534,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---metadata---tag_csv---name",
@@ -1977,7 +2155,9 @@
     "mean": 4.5,
     "std": 3.535534,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---metadata---variable_csv---dataset_id",
@@ -1999,7 +2179,9 @@
     "mean": 26.0,
     "std": null,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---metadata---variable_csv---description",
@@ -2021,7 +2203,9 @@
     "mean": 28.333333,
     "std": 1.154701,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---metadata---variable_csv---id",
@@ -2043,7 +2227,9 @@
     "mean": 35.0,
     "std": 2.645751,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---metadata---variable_csv---tag_ids",
@@ -2065,7 +2251,9 @@
     "mean": 7.333333,
     "std": 4.618802,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---subfolder1---employees_old_xls---age2",
@@ -2087,7 +2275,9 @@
     "mean": 34.421053,
     "std": 6.194225,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---subfolder1---employees_old_xls---id",
@@ -2109,7 +2299,9 @@
     "mean": 10.5,
     "std": 5.91608,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---subfolder1---employees_old_xls---nom",
@@ -2131,7 +2323,9 @@
     "mean": 5.85,
     "std": 0.988087,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---subfolder1---employees_old_xls---prenom",
@@ -2153,7 +2347,9 @@
     "mean": 5.421053,
     "std": 1.387075,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---subfolder1---employees_xlsx---age",
@@ -2175,7 +2371,9 @@
     "mean": 34.421053,
     "std": 6.194225,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---subfolder1---employees_xlsx---date_embauche",
@@ -2197,7 +2395,9 @@
     "mean": 1612630080.0,
     "std": 44522186.902281,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---subfolder1---employees_xlsx---departement",
@@ -2219,7 +2419,9 @@
     "mean": 4.631579,
     "std": 3.235404,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---subfolder1---employees_xlsx---est_manager",
@@ -2241,7 +2443,9 @@
     "mean": 0.35,
     "std": 0.48936,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---subfolder1---employees_xlsx---id",
@@ -2263,7 +2467,9 @@
     "mean": 10.5,
     "std": 5.91608,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---subfolder1---employees_xlsx---nom",
@@ -2285,7 +2491,9 @@
     "mean": 5.85,
     "std": 0.988087,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---subfolder1---employees_xlsx---prenom",
@@ -2307,7 +2515,9 @@
     "mean": 5.421053,
     "std": 1.387075,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---subfolder1---employees_xlsx---salaire",
@@ -2329,7 +2539,9 @@
     "mean": 53250.0,
     "std": 8831.015916,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---subfolder1---employees_xlsx---ville",
@@ -2351,7 +2563,9 @@
     "mean": 6.3,
     "std": 2.05452,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---test_delta---age",
@@ -2373,7 +2587,9 @@
     "mean": 37.5,
     "std": 9.354143,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---test_delta---id",
@@ -2395,7 +2611,9 @@
     "mean": 3.5,
     "std": 1.870829,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---test_delta---name",
@@ -2417,7 +2635,9 @@
     "mean": 4.666667,
     "std": 1.505545,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---test_parquet---age",
@@ -2439,7 +2659,9 @@
     "mean": 30.0,
     "std": 5.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---test_parquet---id",
@@ -2461,7 +2683,9 @@
     "mean": 2.0,
     "std": 1.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---test_parquet---name",
@@ -2483,7 +2707,9 @@
     "mean": 5.0,
     "std": 2.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---test_partitioned---id",
@@ -2505,7 +2731,9 @@
     "mean": 3.5,
     "std": 1.870829,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---test_partitioned---name",
@@ -2527,7 +2755,9 @@
     "mean": 4.666667,
     "std": 1.505545,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---test_partitioned---region",
@@ -2549,7 +2779,9 @@
     "mean": 2.0,
     "std": 0.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---test_partitioned---year",
@@ -2571,7 +2803,9 @@
     "mean": 2023.5,
     "std": 0.547723,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---test_pq---age",
@@ -2593,7 +2827,9 @@
     "mean": 30.0,
     "std": 5.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---test_pq---id",
@@ -2615,7 +2851,9 @@
     "mean": 2.0,
     "std": 1.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---test_pq---name",
@@ -2637,7 +2875,9 @@
     "mean": 5.0,
     "std": 2.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---test_with_metadata_parquet---age",
@@ -2659,7 +2899,9 @@
     "mean": 30.0,
     "std": 5.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---test_with_metadata_parquet---id",
@@ -2681,7 +2923,9 @@
     "mean": 2.0,
     "std": 1.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---test_with_metadata_parquet---name",
@@ -2703,7 +2947,9 @@
     "mean": 5.0,
     "std": 2.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---mixed---budget_---PERIOD---_csv---categorie",
@@ -2725,7 +2971,9 @@
     "mean": 3.0,
     "std": 1.732051,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---mixed---budget_---PERIOD---_csv---montant",
@@ -2747,7 +2995,9 @@
     "mean": 24333.333333,
     "std": 24378.952671,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---mixed---budget_---PERIOD---_csv---poste",
@@ -2769,7 +3019,9 @@
     "mean": 8.333333,
     "std": 0.57735,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---mixed---census_---PERIOD---_csv---commune",
@@ -2791,7 +3043,9 @@
     "mean": 6.0,
     "std": 2.645751,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---mixed---census_---PERIOD---_csv---population",
@@ -2813,7 +3067,9 @@
     "mean": 1182333.333333,
     "std": 855795.731079,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---mixed---census_---PERIOD---_csv---superficie",
@@ -2835,7 +3091,9 @@
     "mean": 131.333333,
     "std": 99.158123,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---humidite",
@@ -2857,7 +3115,9 @@
     "mean": 64.333333,
     "std": 4.041452,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---jour",
@@ -2879,7 +3139,9 @@
     "mean": 14.666667,
     "std": 13.503086,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---temperature",
@@ -2901,7 +3163,9 @@
     "mean": 9.133333,
     "std": 1.955335,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---marge",
@@ -2923,7 +3187,9 @@
     "mean": 316.666667,
     "std": 25.166115,
     "start_date": "2024Q1",
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---mois",
@@ -2945,7 +3211,9 @@
     "mean": 6.0,
     "std": 1.732051,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---region",
@@ -2967,7 +3235,9 @@
     "mean": 3.333333,
     "std": 0.57735,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---ventes",
@@ -2989,7 +3259,9 @@
     "mean": 1583.333333,
     "std": 125.830574,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---email",
@@ -3011,7 +3283,9 @@
     "mean": 13.666667,
     "std": 1.527525,
     "start_date": "2021",
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---id",
@@ -3033,7 +3307,9 @@
     "mean": 2.0,
     "std": 1.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---nom",
@@ -3055,7 +3331,9 @@
     "mean": 4.666667,
     "std": 1.527525,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---revenu",
@@ -3077,7 +3355,9 @@
     "mean": null,
     "std": null,
     "start_date": null,
-    "end_date": "2021"
+    "end_date": "2021",
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---yearly---enquete_---PERIOD---_csv---age",
@@ -3099,7 +3379,9 @@
     "mean": 34.0,
     "std": 7.0,
     "start_date": "2021",
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---yearly---enquete_---PERIOD---_csv---id",
@@ -3121,7 +3403,9 @@
     "mean": 8.0,
     "std": 1.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---yearly---enquete_---PERIOD---_csv---nom",
@@ -3143,7 +3427,9 @@
     "mean": 6.0,
     "std": 2.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "data---timeseries---yearly---enquete_---PERIOD---_csv---ville",
@@ -3165,7 +3451,9 @@
     "mean": 7.666667,
     "std": 2.516611,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---EnergySourceCatalogue---DE",
@@ -3187,7 +3475,9 @@
     "mean": 4.5,
     "std": 0.707107,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---EnergySourceCatalogue---EN",
@@ -3209,7 +3499,9 @@
     "mean": 4.5,
     "std": 0.707107,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---EnergySourceCatalogue---EnergySource_ID",
@@ -3231,7 +3523,9 @@
     "mean": 3.0,
     "std": 0.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---EnergySourceCatalogue---FR",
@@ -3253,7 +3547,9 @@
     "mean": 6.5,
     "std": 0.707107,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---EnergySourceCatalogue---IT",
@@ -3275,7 +3571,9 @@
     "mean": 6.0,
     "std": 0.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---EnergySourceCatalogue---id",
@@ -3297,7 +3595,9 @@
     "mean": 1.5,
     "std": 0.707107,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---Project---Cantons",
@@ -3319,7 +3619,9 @@
     "mean": 2.172414,
     "std": 0.75918,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---Project---Elevation",
@@ -3341,7 +3643,9 @@
     "mean": 2133.689655,
     "std": 518.936695,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---Project---EnergySource",
@@ -3363,7 +3667,9 @@
     "mean": 3.0,
     "std": null,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---Project---FinalNonRecurrentRemuneration",
@@ -3385,7 +3691,9 @@
     "mean": null,
     "std": null,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---Project---GeometryMultipoint",
@@ -3407,7 +3715,9 @@
     "mean": null,
     "std": null,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---Project---GeometrySurface",
@@ -3429,7 +3739,9 @@
     "mean": null,
     "std": null,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---Project---Municipalities",
@@ -3451,7 +3763,9 @@
     "mean": 10.413793,
     "std": 4.784777,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---Project---ProjectManagement",
@@ -3473,7 +3787,9 @@
     "mean": 22.275862,
     "std": 17.418989,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---Project---ProjectName",
@@ -3495,7 +3811,9 @@
     "mean": 21.344828,
     "std": 11.814869,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---Project---ProjectWeb",
@@ -3517,7 +3835,9 @@
     "mean": 20.789474,
     "std": 27.657788,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---Project---ShareOfSubsidisedCosts",
@@ -3539,7 +3859,9 @@
     "mean": null,
     "std": null,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---Project---geom",
@@ -3561,7 +3883,9 @@
     "mean": null,
     "std": null,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---Project---id",
@@ -3583,7 +3907,9 @@
     "mean": 15.0,
     "std": 8.514693,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---Project---xtf_id",
@@ -3605,7 +3931,9 @@
     "mean": 32.413793,
     "std": 19.256756,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---ProjectStatus---AnnualProduction",
@@ -3627,7 +3955,9 @@
     "mean": 19.588491,
     "std": 19.991479,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---ProjectStatus---Date",
@@ -3649,7 +3979,9 @@
     "mean": 1734122988.679245,
     "std": 21263199.183943,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---ProjectStatus---NumberOfPlants",
@@ -3671,7 +4003,9 @@
     "mean": 0.0,
     "std": null,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---ProjectStatus---PlantType",
@@ -3693,7 +4027,9 @@
     "mean": 0.0,
     "std": null,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---ProjectStatus---Power",
@@ -3715,7 +4051,9 @@
     "mean": 13.08717,
     "std": 12.542521,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
@@ -3737,7 +4075,9 @@
     "mean": 1489.09434,
     "std": 160.546694,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
@@ -3759,7 +4099,9 @@
     "mean": 628.132075,
     "std": 87.033821,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---ProjectStatus---Status",
@@ -3781,7 +4123,9 @@
     "mean": 4.0,
     "std": 0.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---ProjectStatus---WinterProduction",
@@ -3803,7 +4147,9 @@
     "mean": 8.422143,
     "std": 8.856359,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---ProjectStatus---id",
@@ -3825,7 +4171,9 @@
     "mean": 27.0,
     "std": 15.443445,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---ProjectStatus---xtf_id",
@@ -3847,7 +4195,9 @@
     "mean": 154.566038,
     "std": 38.982989,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---StatusCatalogue---DE",
@@ -3869,7 +4219,9 @@
     "mean": 19.25,
     "std": 5.119989,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---StatusCatalogue---EN",
@@ -3891,7 +4243,9 @@
     "mean": 19.875,
     "std": 11.102606,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---StatusCatalogue---FR",
@@ -3913,7 +4267,9 @@
     "mean": 23.5,
     "std": 12.928374,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---StatusCatalogue---IT",
@@ -3935,7 +4291,9 @@
     "mean": 26.875,
     "std": 14.055375,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---StatusCatalogue---Status_ID",
@@ -3957,7 +4315,9 @@
     "mean": 4.0,
     "std": 0.0,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   },
   {
     "id": "photovoltaik---StatusCatalogue---id",
@@ -3979,6 +4339,8 @@
     "mean": 4.5,
     "std": 2.44949,
     "start_date": null,
-    "end_date": null
+    "end_date": null,
+    "is_pattern": false,
+    "string_class": null
   }
 ]

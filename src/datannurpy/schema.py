@@ -80,6 +80,8 @@ class Variable:
     std: float | None = None
     start_date: str | None = None
     end_date: str | None = None
+    is_pattern: bool = False
+    string_class: str | None = None
 
 
 @dataclass

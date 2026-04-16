@@ -1,0 +1,117 @@
+"""Pattern frequency analysis for high-cardinality string columns."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
+import ibis
+
+if TYPE_CHECKING:
+    import pyarrow as pa
+
+_LETTER_UNICODE = r"[\p{L}]"
+_LETTER_ASCII = r"[A-Za-z]"
+
+
+def _build_pattern_expr(col: Any, *, letter_re: str = _LETTER_UNICODE) -> Any:
+    """Transform a string expression into its abstract pattern form."""
+    return (
+        col.cast("string")
+        .re_replace(letter_re, "a")
+        .re_replace(r"[0-9]", "9")
+        .re_replace(r"[^a9@.\-_/ ]", "?")
+    )
+
+
+def _classify_string(top_freqs: list[int], total: int) -> str:
+    """Classify a string column based on pattern frequency distribution."""
+    if total == 0 or not top_freqs:
+        return "free_text"
+    if top_freqs[0] / total >= 0.50:
+        return "structured"
+    if sum(top_freqs[:3]) / total >= 0.50:
+        return "semi_structured"
+    return "free_text"
+
+
+def _prepare_table(table: ibis.Table, cols: list[str]) -> tuple[ibis.Table, str]:
+    """Ensure regex support and detect letter regex in a single pass.
+
+    Returns (table, letter_re).  Materializes to a DuckDB memtable only when
+    the original backend lacks ``re_replace``.
+    """
+    # Best case: backend supports \p{L} → 1 query
+    try:
+        test_expr: Any = ibis.literal("é")
+        table.select(test_expr.re_replace(_LETTER_UNICODE, "a").name("_t")).limit(
+            1
+        ).to_pyarrow()
+        return table, _LETTER_UNICODE
+    except Exception:
+        pass
+    # Backend supports re_replace but not Unicode class → 1 extra query
+    try:
+        test_expr = ibis.literal("x")
+        table.select(test_expr.re_replace(r"[a-z]", "a").name("_t")).limit(
+            1
+        ).to_pyarrow()
+        return table, _LETTER_ASCII
+    except Exception:
+        pass
+    # No regex support → materialize to DuckDB memtable (always has \p{L})
+    arrow = table.select(*cols).to_pyarrow()
+    return ibis.memtable(arrow), _LETTER_UNICODE
+
+
+def compute_pattern_freqs(
+    table: ibis.Table,
+    pattern_cols: list[str],
+    top_n: int = 10,
+) -> tuple[pa.Table | None, dict[str, str]]:
+    """Compute pattern frequencies for high-cardinality string columns."""
+    if not pattern_cols:
+        return None, {}
+
+    import pyarrow as pa
+
+    # Single probe: ensures regex support + detects letter regex (1 query on DuckDB)
+    table, letter_re = _prepare_table(table, pattern_cols)
+
+    # Batch non-null counts: 1 query instead of N
+    count_aggs: list[Any] = [
+        table[col].count().name(f"{col}__count") for col in pattern_cols
+    ]
+    counts_row: dict[str, Any] = table.aggregate(count_aggs).to_pyarrow().to_pylist()[0]
+
+    freq_tables: list[pa.Table] = []
+    string_classes: dict[str, str] = {}
+
+    for col in pattern_cols:
+        total: int = int(counts_row[f"{col}__count"])
+        if total == 0:
+            string_classes[col] = "free_text"
+            continue
+
+        non_null = table.filter(table[col].notnull())
+        pattern_expr = _build_pattern_expr(non_null[col], letter_re=letter_re)
+        patterned = non_null.select(pattern_expr.name("pattern"))
+        grouped = patterned.group_by("pattern").agg(freq=patterned.count())
+        order_key: Any = ibis.desc("freq")
+        top = grouped.order_by(order_key).limit(top_n).to_pyarrow()
+
+        top_rows = top.to_pylist()
+        top_freqs = [r["freq"] for r in top_rows]
+        string_classes[col] = _classify_string(top_freqs, total)
+
+        freq_tables.append(
+            pa.table(
+                {
+                    "variable_id": pa.array([col] * len(top_rows), type=pa.string()),
+                    "value": top.column("pattern"),
+                    "freq": top.column("freq"),
+                }
+            )
+        )
+
+    freq_table = pa.concat_tables(freq_tables) if freq_tables else None
+    return freq_table, string_classes

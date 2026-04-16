@@ -121,6 +121,7 @@ add:
 | DB introspection (PK, FK, comments)  |           | ✓          | ✓              | ✓                  |
 | Row count, statistics                |           |            | ✓              | ✓                  |
 | Modalities, frequency tables         |           |            |                | ✓                  |
+| String pattern frequencies           |           |            |                | ✓                  |
 
 > **Note:** At `depth="variable"`, CSV and Excel files only extract column **names** (types require reading data, available from `depth="stat"`). All other formats provide types at this level.
 
@@ -493,7 +494,7 @@ Catalog(app_path=None, depth="value", refresh=False, freq_threshold=100, csv_enc
 | app_path       | str \| Path \| None               | Load existing catalog for incremental scan         |
 | depth          | "dataset" \| "variable" \| "stat" \| "value" | Default scan depth (default: "value")              |
 | refresh        | bool                              | Force full rescan ignoring cache (default: False)  |
-| freq_threshold | int                               | Max distinct values for modality detection         |
+| freq_threshold | int                               | Max distinct values for frequency/modality detection. Strings above this threshold get pattern frequencies instead |
 | csv_encoding   | str \| None                       | Default CSV encoding (utf-8, cp1252, etc.)         |
 | sample_size    | int \| None                       | Default sample size for stats (default: 100_000)   |
 | csv_skip_copy      | bool                              | Skip UTF-8 temp copy for local CSV (default: False)|

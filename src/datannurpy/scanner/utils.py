@@ -482,6 +482,7 @@ def build_variables(
 
     # Compute freq if threshold is set
     freq_table: pa.Table | None = None
+    pattern_info: dict[str, str] = {}
     if freq_threshold is not None and stats:
         eligible_cols = [
             col
@@ -509,6 +510,30 @@ def build_variables(
 
                 freq_table = pa.concat_tables([ft.to_pyarrow() for ft in freq_tables])
 
+        # Pattern freq for high-cardinality string columns
+        pattern_cols = [
+            col
+            for col, (nb_distinct, _, _) in stats.items()
+            if freq_threshold > 0
+            and nb_distinct > freq_threshold
+            and ibis_type_to_str(schema[col]) == "string"
+        ]
+        if pattern_cols:
+            from .pattern import compute_pattern_freqs
+
+            pattern_freq_table, pattern_info = compute_pattern_freqs(
+                table, pattern_cols
+            )
+            # pattern_cols only contains cols with nb_distinct > 0, so always non-None
+            assert pattern_freq_table is not None
+            import pyarrow as pa
+
+            freq_table = (
+                pa.concat_tables([freq_table, pattern_freq_table])
+                if freq_table is not None
+                else pattern_freq_table
+            )
+
     def get_stat(col: str, idx: int) -> int | None:
         """Get stat value, returning None if not computed or -1 (unknown)."""
         if not stats or col not in stats:
@@ -535,6 +560,8 @@ def build_variables(
             max=get_extra(col_name, 1),
             mean=get_extra(col_name, 2),
             std=get_extra(col_name, 3),
+            is_pattern=col_name in pattern_info,
+            string_class=pattern_info.get(col_name),
         )
         for col_name in columns
     ]

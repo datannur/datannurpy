@@ -407,3 +407,105 @@ class TestGetDirDataSize:
         assert result == 3000
         fs.glob.assert_any_call("bucket/dir/**/*.parquet")
         fs.glob.assert_any_call("bucket/dir/**/*.pq")
+
+
+class TestPatternFreqIntegration:
+    """Test pattern frequency integration in build_variables."""
+
+    def test_high_cardinality_string_gets_pattern(self):
+        """String column with nb_distinct > freq_threshold should get pattern freq."""
+        values = [f"AB-{i:04d}" for i in range(50)]
+        table = ibis.memtable({"code": values, "num": list(range(50))})
+        variables, freq_table = build_variables(
+            table, nb_rows=50, dataset_id="test", infer_stats=True, freq_threshold=10
+        )
+        var_by_name = {v.name: v for v in variables}
+        assert var_by_name["code"].is_pattern is True
+        assert var_by_name["code"].string_class == "structured"
+        # Integer column should not be a pattern
+        assert var_by_name["num"].is_pattern is False
+        assert var_by_name["num"].string_class is None
+        # freq_table should contain pattern entries
+        assert freq_table is not None
+        code_freqs = [r for r in freq_table.to_pylist() if r["variable_id"] == "code"]
+        assert len(code_freqs) > 0
+        assert code_freqs[0]["value"] == "aa-9999"
+
+    def test_low_cardinality_string_no_pattern(self):
+        """String column with nb_distinct <= freq_threshold should not get pattern."""
+        table = ibis.memtable({"cat": ["a", "b", "c", "a", "b"]})
+        variables, freq_table = build_variables(
+            table, nb_rows=5, dataset_id="test", infer_stats=True, freq_threshold=10
+        )
+        v = variables[0]
+        assert v.is_pattern is False
+        assert v.string_class is None
+        assert freq_table is not None
+
+    def test_no_freq_threshold_no_pattern(self):
+        """Without freq_threshold, no pattern should be computed."""
+        values = [f"AB-{i:04d}" for i in range(50)]
+        table = ibis.memtable({"code": values})
+        variables, freq_table = build_variables(
+            table, nb_rows=50, dataset_id="test", infer_stats=True
+        )
+        assert variables[0].is_pattern is False
+        assert variables[0].string_class is None
+
+    def test_mixed_columns_freq_and_pattern(self):
+        """Low-card and high-card string columns produce combined freq_table."""
+        low = ["a", "b"] * 25
+        high = [f"X-{i:04d}" for i in range(50)]
+        table = ibis.memtable({"low": low, "high": high})
+        variables, freq_table = build_variables(
+            table, nb_rows=50, dataset_id="test", infer_stats=True, freq_threshold=5
+        )
+        var_by_name = {v.name: v for v in variables}
+        assert var_by_name["low"].is_pattern is False
+        assert var_by_name["high"].is_pattern is True
+        # Both should have entries in freq_table
+        assert freq_table is not None
+        var_ids = set(r["variable_id"] for r in freq_table.to_pylist())
+        assert "low" in var_ids
+        assert "high" in var_ids
+
+    def test_free_text_classification(self):
+        """Diverse strings should get string_class='free_text'."""
+        values = ["x" * i for i in range(1, 201)]
+        table = ibis.memtable({"desc": values})
+        variables, _ = build_variables(
+            table, nb_rows=200, dataset_id="test", infer_stats=True, freq_threshold=10
+        )
+        assert variables[0].is_pattern is True
+        assert variables[0].string_class == "free_text"
+
+    def test_pattern_works_with_non_regex_backend(self):
+        """Pattern computation should materialize to memtable if backend lacks regex."""
+        from unittest.mock import patch
+
+        from datannurpy.scanner.pattern import _LETTER_UNICODE
+
+        values = [f"AB-{i:04d}" for i in range(50)]
+        table = ibis.memtable({"code": values})
+
+        # Simulate a backend where _prepare_table materializes
+        def fake_prepare(t, cols):
+            arrow = t.select(*cols).to_pyarrow()
+            return ibis.memtable(arrow), _LETTER_UNICODE
+
+        with patch(
+            "datannurpy.scanner.pattern._prepare_table",
+            side_effect=fake_prepare,
+        ):
+            variables, freq_table = build_variables(
+                table,
+                nb_rows=50,
+                dataset_id="test",
+                infer_stats=True,
+                freq_threshold=10,
+            )
+        # Even with a "non-regex" backend, patterns should still be computed
+        var = variables[0]
+        assert var.is_pattern is True
+        assert var.string_class is not None
+        assert freq_table is not None
