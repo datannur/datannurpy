@@ -80,7 +80,30 @@ def scan_file(
 
     # Local path: concrete Path required for direct scanning
     assert isinstance(path, Path)
+    return _scan_local(
+        path,
+        delivery_format,
+        dataset_id=dataset_id,
+        freq_threshold=freq_threshold,
+        csv_encoding=csv_encoding,
+        sample_size=sample_size,
+        csv_skip_copy=csv_skip_copy,
+        quiet=quiet,
+    )
 
+
+def _scan_local(
+    path: Path,
+    delivery_format: str,
+    *,
+    dataset_id: str,
+    freq_threshold: int | None,
+    csv_encoding: str | None,
+    sample_size: int | None,
+    csv_skip_copy: bool,
+    quiet: bool = False,
+) -> ScanResult:
+    """Dispatch to format-specific scanner and build ScanResult."""
     # Parquet-based formats (parquet, delta, hive, iceberg)
     parquet_scanners = {
         "parquet": scan_parquet,
@@ -155,85 +178,19 @@ def _scan_with_ensure_local(
     quiet: bool = False,
 ) -> ScanResult:
     """Download remote file/directory and scan locally."""
-    # Directory formats (delta, hive, iceberg) need ensure_local_dir
-    if delivery_format in ("delta", "hive", "iceberg"):
-        dir_scanners = {
-            "delta": scan_delta,
-            "hive": scan_hive,
-            "iceberg": scan_iceberg,
-        }
-        with fs.ensure_local_dir(str(path)) as local_path:
-            variables, nb_row, freq_table, metadata = dir_scanners[delivery_format](
-                local_path,
-                dataset_id=dataset_id,
-                freq_threshold=freq_threshold,
-                sample_size=sample_size,
-                quiet=quiet,
-            )
-            return ScanResult(
-                variables=variables,
-                nb_row=nb_row,
-                freq_table=freq_table,
-                description=metadata.description if metadata else None,
-                name=metadata.name if metadata else None,
-                data_size=metadata.data_size if metadata else None,
-            )
-
-    # File formats use ensure_local
-    with fs.ensure_local(str(path)) as local_path:
-        if delivery_format == "parquet":
-            variables, nb_row, freq_table, metadata = scan_parquet(
-                local_path,
-                dataset_id=dataset_id,
-                freq_threshold=freq_threshold,
-                sample_size=sample_size,
-                quiet=quiet,
-            )
-            return ScanResult(
-                variables=variables,
-                nb_row=nb_row,
-                freq_table=freq_table,
-                description=metadata.description if metadata else None,
-                name=metadata.name if metadata else None,
-            )
-
-        if delivery_format in ("sas", "spss", "stata"):
-            variables, nb_row, _actual_sample_size, freq_table, metadata = (
-                scan_statistical(
-                    local_path,
-                    dataset_id=dataset_id,
-                    freq_threshold=freq_threshold,
-                    sample_size=sample_size,
-                    quiet=quiet,
-                )
-            )
-            return ScanResult(
-                variables=variables,
-                nb_row=nb_row,
-                freq_table=freq_table,
-                description=metadata.description if metadata else None,
-            )
-
-        if delivery_format == "csv":
-            variables, nb_row, _actual_sample_size, freq_table = scan_csv(
-                local_path,
-                dataset_id=dataset_id,
-                freq_threshold=freq_threshold,
-                csv_encoding=csv_encoding,
-                sample_size=sample_size,
-                csv_skip_copy=csv_skip_copy,
-                quiet=quiet,
-            )
-            return ScanResult(variables=variables, nb_row=nb_row, freq_table=freq_table)
-
-        # Excel (xls, xlsx)
-        variables, nb_row, freq_table = scan_excel(
+    _DIR_FORMATS = ("delta", "hive", "iceberg")
+    ctx = fs.ensure_local_dir if delivery_format in _DIR_FORMATS else fs.ensure_local
+    with ctx(str(path)) as local_path:
+        return _scan_local(
             local_path,
+            delivery_format,
             dataset_id=dataset_id,
             freq_threshold=freq_threshold,
+            csv_encoding=csv_encoding,
+            sample_size=sample_size,
+            csv_skip_copy=csv_skip_copy,
             quiet=quiet,
         )
-        return ScanResult(variables=variables, nb_row=nb_row, freq_table=freq_table)
 
 
 def _scan_schema_only(
