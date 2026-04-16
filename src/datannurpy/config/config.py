@@ -14,7 +14,56 @@ from ..errors import ConfigError
 from ..schema import Folder
 
 VALID_TYPES = {"folder", "dataset", "database", "metadata"}
-RESERVED_KEYS = {"add", "export_app", "export_db", "env_file", "env"}
+RESERVED_KEYS = {
+    "add",
+    "env",
+    "env_file",
+    "open_browser",
+    "output_dir",
+    "track_evolution",
+}
+
+
+def _normalize_entry(
+    item: dict[str, Any],
+) -> tuple[str, dict[str, Any], Any]:
+    """Normalize an add entry to (type, params, primary_value).
+
+    Old format: {type: folder, path: ./data, ...}
+    New format: {folder: ./data, ...} or {database: uri, ...}
+    """
+    item = dict(item)
+
+    # New format: type key carries the primary value (path or URI)
+    type_keys = VALID_TYPES & item.keys()
+    # Exclude 'folder' when its value is a dict (it's a Folder metadata, not a type)
+    if "folder" in type_keys and isinstance(item.get("folder"), dict):
+        type_keys.discard("folder")
+    if type_keys:
+        if "type" in item:
+            raise ConfigError(
+                "Cannot mix 'type' key with shorthand keys "
+                f"({', '.join(sorted(type_keys))})"
+            )
+        if len(type_keys) > 1:
+            raise ConfigError(
+                f"Entry has multiple type keys: {', '.join(sorted(type_keys))}"
+            )
+        item_type = type_keys.pop()
+        primary_value = item.pop(item_type)
+        return item_type, item, primary_value
+
+    # Old format: type + path/uri
+    if "type" not in item:
+        raise ConfigError(
+            "Each 'add' entry must have a type key "
+            "(folder, dataset, database, or metadata)"
+        )
+    item_type = item.pop("type")
+    if item_type not in VALID_TYPES:
+        valid = ", ".join(sorted(VALID_TYPES))
+        raise ConfigError(f"Unknown type '{item_type}' in config. Valid types: {valid}")
+    return item_type, item, None
 
 
 def _expand_vars(obj: Any) -> Any:
@@ -82,6 +131,13 @@ def run_config(path: str | Path) -> Catalog:
     # Expand environment variables in all string values
     config = _expand_vars(config)
 
+    # Pop export options before building catalog params
+    open_browser = config.pop("open_browser", False)
+    track_evolution = config.pop("track_evolution", True)
+    output_dir = config.pop("output_dir", None)
+    if output_dir:
+        output_dir = _resolve_path(output_dir, base_dir)
+
     # Extract catalog init params and resolve paths
     catalog_params = {k: v for k, v in config.items() if k not in RESERVED_KEYS}
     if "app_path" in catalog_params:
@@ -93,39 +149,49 @@ def run_config(path: str | Path) -> Catalog:
 
     # Process add entries (metadata always last to override auto-scanned values)
     entries = config.get("add", [])
-    entries.sort(key=lambda e: e.get("type") == "metadata")
-    for item in entries:
-        item = dict(item)
-        item_type = item.pop("type")
-        if "folder" in item:
+    entries.sort(key=lambda e: "metadata" in e or e.get("type") == "metadata")
+    for raw_item in entries:
+        item_type, item, primary_value = _normalize_entry(raw_item)
+        if "folder" in item and isinstance(item["folder"], dict):
             item["folder"] = Folder(**item["folder"])
 
         if item_type == "folder":
-            folder_path = _resolve_paths(item.pop("path"), base_dir)
+            if primary_value is not None:
+                folder_path = _resolve_paths(primary_value, base_dir)
+            else:
+                folder_path = _resolve_paths(item.pop("path"), base_dir)
             catalog.add_folder(folder_path, **item)
         elif item_type == "dataset":
-            dataset_path = _resolve_paths(item.pop("path"), base_dir)
+            if primary_value is not None:
+                dataset_path = _resolve_paths(primary_value, base_dir)
+            else:
+                dataset_path = _resolve_paths(item.pop("path"), base_dir)
             catalog.add_dataset(dataset_path, **item)
         elif item_type == "database":
-            uri = item.pop("uri")
+            if primary_value is not None:
+                uri = primary_value
+            else:
+                uri = item.pop("uri")
             # Resolve sqlite:/// paths
-            if uri.startswith("sqlite:///") and not uri.startswith("sqlite:////"):
+            if (
+                isinstance(uri, str)
+                and uri.startswith("sqlite:///")
+                and not uri.startswith("sqlite:////")
+            ):
                 db_path = uri[len("sqlite:///") :]
                 uri = f"sqlite:///{_resolve_path(db_path, base_dir)}"
             catalog.add_database(uri, **item)
-        elif item_type == "metadata":
-            meta_path = _resolve_path(item.pop("path"), base_dir)
-            catalog.add_metadata(meta_path, **item)
         else:
-            valid = ", ".join(sorted(VALID_TYPES))
-            raise ConfigError(
-                f"Unknown type '{item_type}' in config. Valid types: {valid}"
-            )
+            if primary_value is not None:
+                meta_path = _resolve_path(primary_value, base_dir)
+            else:
+                meta_path = _resolve_path(item.pop("path"), base_dir)
+            catalog.add_metadata(meta_path, **item)
 
-    # Export
-    if "export_app" in config:
-        catalog.export_app(**config["export_app"])
-    elif "export_db" in config:
-        catalog.export_db(**config["export_db"])
+    # Export: app_path implies app export, output_dir implies db-only export
+    if output_dir:
+        catalog.export_db(output_dir, track_evolution=track_evolution)
+    elif catalog.app_path is not None:
+        catalog.export_app(open_browser=open_browser, track_evolution=track_evolution)
 
     return catalog

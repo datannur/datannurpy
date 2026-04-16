@@ -881,3 +881,54 @@ class TestListPath:
         catalog.add_folder([d1, d2], include=["*.csv"])
 
         assert len(catalog.dataset.all()) == 2
+
+
+class TestAddFolderKwargs:
+    """Test id/name/description kwargs on add_folder."""
+
+    def test_name_only_auto_generates_id(self, tmp_path: Path):
+        """Passing name without id auto-generates id from path."""
+        d = tmp_path / "sales"
+        d.mkdir()
+        (d / "f.csv").write_text("x\n1")
+
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(d, name="Sales Data")
+
+        folders = catalog.folder.all()
+        assert any(f.id == "sales" and f.name == "Sales Data" for f in folders)
+
+    def test_description_only_auto_generates_id(self, tmp_path: Path):
+        """Passing description without id auto-generates id from path."""
+        d = tmp_path / "hr"
+        d.mkdir()
+        (d / "f.csv").write_text("x\n1")
+
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(d, description="HR data")
+
+        folders = catalog.folder.all()
+        f = next(f for f in folders if f.id == "hr")
+        assert f.description == "HR data"
+
+    def test_id_name_description(self, tmp_path: Path):
+        """Passing all three kwargs works."""
+        d = tmp_path / "data"
+        d.mkdir()
+        (d / "f.csv").write_text("x\n1")
+
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(d, id="my_id", name="My Name", description="My Desc")
+
+        folders = catalog.folder.all()
+        f = next(f for f in folders if f.id == "my_id")
+        assert f.name == "My Name"
+        assert f.description == "My Desc"
+
+    def test_folder_and_kwargs_raises(self, tmp_path: Path):
+        """Cannot specify both folder and id/name/description."""
+        d = tmp_path / "data"
+        d.mkdir()
+
+        with pytest.raises(ConfigError, match="Cannot specify both"):
+            Catalog(quiet=True).add_folder(d, folder=Folder(id="x"), name="conflict")

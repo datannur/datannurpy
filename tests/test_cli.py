@@ -49,7 +49,6 @@ app_path: "{output}"
 add:
   - type: folder
     path: "{data_path}"
-export_db: {{}}
 """)
     with patch.object(sys, "argv", ["datannurpy", str(config)]):
         main()

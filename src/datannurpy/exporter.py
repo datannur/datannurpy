@@ -83,11 +83,13 @@ def export_app(
     output_dir: str | Path | None = None,
     *,
     open_browser: bool = False,
+    track_evolution: bool = True,
     quiet: bool | None = None,
 ) -> None:
     """Export a standalone datannur visualization app with catalog data."""
-    # Finalize catalog (remove unseen entities) before export
-    catalog.finalize()
+    # Only finalize (cleanup unseen entities) if a scan was performed
+    if catalog._has_scanned:
+        catalog.finalize()
 
     if output_dir is None:
         if catalog.app_path is None:
@@ -107,7 +109,7 @@ def export_app(
 
     # Write to data/db/
     db_dir = output_dir / "data" / "db"
-    catalog.export_db(db_dir, quiet=True)  # Don't duplicate write logs
+    catalog.export_db(db_dir, quiet=True, track_evolution=track_evolution)
 
     if not q:
         elapsed = time.perf_counter() - start_time

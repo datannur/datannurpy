@@ -27,6 +27,7 @@ from .utils import (
     upsert_folder,
 )
 from .utils.params import _UNSET, validate_params
+from .errors import ConfigError
 from .scanner.filesystem import FileSystem
 from .scanner.utils import get_mtime_iso
 from .finalize import remove_dataset_cascade
@@ -87,8 +88,15 @@ def add_database(
     storage_options: dict[str, str] | None = None,
     oracle_client_path: str | None = None,
     ssh_tunnel: dict[str, str | int] | None = None,
+    id: str | None = None,
+    name: str | None = None,
+    description: str | None = None,
 ) -> None:
     """Scan a database and add its tables to the catalog."""
+    if id is not None or name is not None or description is not None:
+        if folder is not None:
+            raise ConfigError("Cannot specify both folder and id/name/description")
+        folder = Folder(id=id or "", name=name, description=description)
     if isinstance(schema, list):
         kwargs = {k: v for k, v in locals().items() if k not in ("catalog", "schema")}
         for s in schema:
@@ -213,6 +221,11 @@ def _add_database_impl(
     if folder is None:
         root_folder_id = sanitize_id(db_name)
         folder = Folder(id=root_folder_id, name=db_name)
+    elif not folder.id:
+        root_folder_id = sanitize_id(db_name)
+        folder.id = root_folder_id
+        if folder.name is None:
+            folder.name = db_name
     else:
         root_folder_id = folder.id
 
