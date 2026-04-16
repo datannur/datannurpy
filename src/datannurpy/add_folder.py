@@ -72,8 +72,15 @@ def add_folder(
     quiet: bool | None = None,
     refresh: bool | None = None,
     storage_options: dict[str, Any] | None = None,
+    id: str | None = None,
+    name: str | None = None,
+    description: str | None = None,
 ) -> None:
     """Scan a folder and add its contents to the catalog."""
+    if id is not None or name is not None or description is not None:
+        if folder is not None:
+            raise ConfigError("Cannot specify both folder and id/name/description")
+        folder = Folder(id=id or "", name=name, description=description)
     if isinstance(path, list):
         kwargs = {k: v for k, v in locals().items() if k not in ("catalog", "path")}
         for p in path:
@@ -124,6 +131,10 @@ def add_folder(
     # Create default folder from directory name if not provided
     if folder is None:
         folder = Folder(id=sanitize_id(root_name), name=root_name)
+    elif not folder.id:
+        folder.id = sanitize_id(root_name)
+        if folder.name is None:
+            folder.name = root_name
 
     # Set data_path for root folder
     folder.data_path = str(root)

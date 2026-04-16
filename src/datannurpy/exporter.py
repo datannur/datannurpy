@@ -83,6 +83,7 @@ def export_app(
     output_dir: str | Path | None = None,
     *,
     open_browser: bool = False,
+    track_evolution: bool = True,
     quiet: bool | None = None,
 ) -> None:
     """Export a standalone datannur visualization app with catalog data."""
@@ -107,7 +108,7 @@ def export_app(
 
     # Write to data/db/
     db_dir = output_dir / "data" / "db"
-    catalog.export_db(db_dir, quiet=True)  # Don't duplicate write logs
+    catalog.export_db(db_dir, quiet=True, track_evolution=track_evolution)
 
     if not q:
         elapsed = time.perf_counter() - start_time

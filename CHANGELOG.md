@@ -1,5 +1,12 @@
 # datannurpy
 
+## 0.16.0 (2026-04-16)
+
+- breaking: YAML config — `export_app:` and `export_db:` blocks replaced by flat top-level keys (`app_path` implies app export, `output_dir` for JSON-only export, `open_browser` and `track_evolution` as top-level options)
+- add: `export_app()` now accepts `track_evolution` parameter
+- add: YAML shorthand format for `add` entries (`- folder: ./data` instead of `- type: folder\n  path: ./data`)
+- add: `id`, `name`, `description` kwargs on `add_folder` and `add_database`
+
 ## 0.15.0 (2026-04-14)
 
 - breaking: renamed depth levels — `"structure"` → `"dataset"`, `"schema"` → `"variable"`, `"full"` → `"value"`

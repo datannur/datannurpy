@@ -236,7 +236,7 @@ def open_ssh_tunnel(
 
     stop_event = threading.Event()
 
-    def _forward() -> None:  # pragma: no cover  # pragma: no cover
+    def _forward() -> None:  # pragma: no cover
         while not stop_event.is_set():
             readable, _, _ = select.select([local_sock], [], [], 0.5)
             if local_sock in readable:

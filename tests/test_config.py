@@ -88,7 +88,7 @@ add:
         assert any(d.name == "users" for d in catalog.dataset.all())
 
     def test_run_config_with_export_db(self, tmp_path: Path):
-        """Config with export_db should create db files."""
+        """Config with output_dir should create db files."""
         data_dir = tmp_path / "data"
         data_dir.mkdir()
         (data_dir / "test.csv").write_text("a,b\n1,2\n")
@@ -96,24 +96,21 @@ add:
         output_dir = tmp_path / "output"
         config_file = tmp_path / "catalog.yml"
         config_file.write_text(f"""
-app_path: {output_dir}
+output_dir: {output_dir}
 refresh: true
 quiet: true
 
 add:
   - type: folder
     path: {data_dir}
-
-export_db: {{}}
 """)
         run_config(config_file)
 
-        db_dir = output_dir / "data" / "db"
-        assert db_dir.exists()
-        assert (db_dir / "__table__.json").exists()
+        assert output_dir.exists()
+        assert (output_dir / "__table__.json").exists()
 
     def test_run_config_with_export_app(self, tmp_path: Path):
-        """Config with export_app should create app files."""
+        """Config with app_path should create app files."""
         data_dir = tmp_path / "data"
         data_dir.mkdir()
         (data_dir / "test.csv").write_text("a,b\n1,2\n")
@@ -128,9 +125,6 @@ quiet: true
 add:
   - type: folder
     path: {data_dir}
-
-export_app:
-  open_browser: false
 """)
         run_config(config_file)
 
@@ -219,15 +213,13 @@ add:
         assert len(catalog.dataset.all()) == 1
 
     def test_run_config_no_export(self, tmp_path: Path):
-        """Config without export should not create output files."""
+        """Config without app_path or output_dir should not export."""
         data_dir = tmp_path / "data"
         data_dir.mkdir()
         (data_dir / "test.csv").write_text("a,b\n1,2\n")
 
-        output_dir = tmp_path / "output"
         config_file = tmp_path / "catalog.yml"
         config_file.write_text(f"""
-app_path: {output_dir}
 refresh: true
 quiet: true
 
@@ -238,7 +230,6 @@ add:
         catalog = run_config(config_file)
 
         assert len(catalog.dataset.all()) == 1
-        assert not (output_dir / "data" / "db").exists()
 
     def test_run_config_unknown_type_raises(self, tmp_path: Path):
         """Unknown add type should raise ValueError."""
@@ -301,8 +292,8 @@ add:
         catalog = run_config(config_file)
 
         assert len(catalog.dataset.all()) == 1
-        # Output should be created relative to config file
-        assert (config_dir / "output" / "data" / "db").exists() is False  # no export
+        # app_path implies export → output should be created relative to config file
+        assert (config_dir / "output" / "data" / "db").exists()
 
     def test_run_config_log_file_relative_to_yaml(self, tmp_path: Path):
         """log_file should be resolved relative to the config file location."""
@@ -691,3 +682,253 @@ add:
                 "host": "ssh.example.com",
                 "user": "sshuser",
             }
+
+
+class TestShorthandFormat:
+    """Test shorthand YAML format (e.g. ``- folder: ./data``)."""
+
+    def test_folder_shorthand(self, tmp_path: Path, data_dir: Path):
+        """Shorthand folder entry scans correctly."""
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+app_path: {tmp_path / "output"}
+refresh: true
+quiet: true
+
+add:
+  - folder: {data_dir / "csv"}
+""")
+        catalog = run_config(config_file)
+        assert len(catalog.dataset.all()) > 0
+
+    def test_folder_shorthand_with_kwargs(self, tmp_path: Path, data_dir: Path):
+        """Shorthand folder entry with id/name/description."""
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+app_path: {tmp_path / "output"}
+refresh: true
+quiet: true
+
+add:
+  - folder: {data_dir / "csv"}
+    id: my_csv
+    name: My CSV Data
+    description: Test description
+""")
+        catalog = run_config(config_file)
+        folders = catalog.folder.all()
+        assert any(f.id == "my_csv" for f in folders)
+        f = next(f for f in folders if f.id == "my_csv")
+        assert f.name == "My CSV Data"
+        assert f.description == "Test description"
+
+    def test_database_shorthand(self, tmp_path: Path):
+        """Shorthand database entry scans correctly."""
+        import sqlite3
+
+        db_path = tmp_path / "test.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE items (id INTEGER, name TEXT)")
+        conn.execute("INSERT INTO items VALUES (1, 'Widget')")
+        conn.commit()
+        conn.close()
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+app_path: {tmp_path / "output"}
+refresh: true
+quiet: true
+
+add:
+  - database: sqlite:///{db_path}
+""")
+        catalog = run_config(config_file)
+        assert any(d.name == "items" for d in catalog.dataset.all())
+
+    def test_database_shorthand_with_kwargs(self, tmp_path: Path):
+        """Shorthand database entry with id/name/description."""
+        import sqlite3
+
+        db_path = tmp_path / "test.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE items (id INTEGER)")
+        conn.commit()
+        conn.close()
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+app_path: {tmp_path / "output"}
+refresh: true
+quiet: true
+
+add:
+  - database: sqlite:///{db_path}
+    id: my_db
+    name: My Database
+    description: Test DB
+""")
+        catalog = run_config(config_file)
+        folders = catalog.folder.all()
+        assert any(f.id == "my_db" for f in folders)
+        f = next(f for f in folders if f.id == "my_db")
+        assert f.name == "My Database"
+        assert f.description == "Test DB"
+
+    def test_dataset_shorthand(self, tmp_path: Path, data_dir: Path):
+        """Shorthand dataset entry scans correctly."""
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+app_path: {tmp_path / "output"}
+refresh: true
+quiet: true
+
+add:
+  - dataset: {data_dir / "csv" / "employees.csv"}
+    name: Employees
+""")
+        catalog = run_config(config_file)
+        assert len(catalog.dataset.all()) == 1
+        assert catalog.dataset.all()[0].name == "Employees"
+
+    def test_metadata_shorthand(self, tmp_path: Path, data_dir: Path):
+        """Shorthand metadata entry loads correctly."""
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+app_path: {tmp_path / "output"}
+refresh: true
+quiet: true
+
+add:
+  - folder: {data_dir / "csv"}
+  - metadata: {data_dir / "metadata"}
+""")
+        catalog = run_config(config_file)
+        assert len(catalog.dataset.all()) > 0
+
+    def test_mixed_shorthand_and_old_format(self, tmp_path: Path, data_dir: Path):
+        """Both shorthand and old format entries can coexist."""
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+app_path: {tmp_path / "output"}
+refresh: true
+quiet: true
+
+add:
+  - folder: {data_dir / "csv"}
+  - type: folder
+    path: {data_dir / "csv"}
+    id: old_format
+""")
+        catalog = run_config(config_file)
+        assert len(catalog.folder.all()) >= 2
+
+    def test_shorthand_mixed_with_type_raises(self, tmp_path: Path):
+        """Cannot mix shorthand key with type key."""
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text("""
+quiet: true
+add:
+  - folder: ./data
+    type: folder
+""")
+        with pytest.raises(ConfigError, match="Cannot mix 'type'"):
+            run_config(config_file)
+
+    def test_multiple_type_keys_raises(self, tmp_path: Path):
+        """Cannot have multiple shorthand type keys."""
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text("""
+quiet: true
+add:
+  - folder: ./data
+    database: sqlite:///db.sqlite
+""")
+        with pytest.raises(ConfigError, match="multiple type keys"):
+            run_config(config_file)
+
+    def test_no_type_key_raises(self, tmp_path: Path):
+        """Entry without any type key raises."""
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text("""
+quiet: true
+add:
+  - path: ./data
+""")
+        with pytest.raises(ConfigError, match="must have a type key"):
+            run_config(config_file)
+
+    def test_database_shorthand_name_only(self, tmp_path: Path):
+        """Shorthand database with name only auto-generates id."""
+        import sqlite3
+
+        db_path = tmp_path / "mydata.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE t (id INTEGER)")
+        conn.commit()
+        conn.close()
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+app_path: {tmp_path / "output"}
+refresh: true
+quiet: true
+
+add:
+  - database: sqlite:///{db_path}
+    name: Custom Name
+""")
+        catalog = run_config(config_file)
+        folders = catalog.folder.all()
+        f = next(f for f in folders if f.id == "mydata")
+        assert f.name == "Custom Name"
+
+    def test_database_shorthand_description_only(self, tmp_path: Path):
+        """Shorthand database with description only auto-generates id and name."""
+        import sqlite3
+
+        db_path = tmp_path / "mydata.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE t (id INTEGER)")
+        conn.commit()
+        conn.close()
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+app_path: {tmp_path / "output"}
+refresh: true
+quiet: true
+
+add:
+  - database: sqlite:///{db_path}
+    description: Some description
+""")
+        catalog = run_config(config_file)
+        folders = catalog.folder.all()
+        f = next(f for f in folders if f.id == "mydata")
+        assert f.name == "mydata"
+        assert f.description == "Some description"
+
+    def test_database_folder_and_kwargs_raises(self, tmp_path: Path):
+        """Cannot specify both folder and id/name/description for database."""
+        import sqlite3
+
+        db_path = tmp_path / "test.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE t (id INTEGER)")
+        conn.commit()
+        conn.close()
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+quiet: true
+refresh: true
+
+add:
+  - type: database
+    uri: sqlite:///{db_path}
+    id: conflict
+    folder:
+      id: also_conflict
+""")
+        with pytest.raises(ConfigError, match="Cannot specify both"):
+            run_config(config_file)

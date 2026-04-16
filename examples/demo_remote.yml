@@ -1,0 +1,26 @@
+app_path: ./output_remote
+env_file: ../.env
+refresh: true
+open_browser: true
+depth: value
+
+add:
+  - folder: ${SFTP_URL}
+    storage_options:
+      key_filename: ${SFTP_KEY}
+
+  - database: ${SFTP_URL}/company.db
+    storage_options:
+      key_filename: ${SFTP_KEY}
+
+  - database: ${SFTP_URL}/photovoltaik.gpkg
+    folder:
+      id: photovoltaik
+      name: Grandes installations photovoltaïques
+      description: >
+        Installations photovoltaïques de haute altitude en Suisse.
+        Source: Office fédéral de l'énergie (OFEN) - opendata.swiss
+    storage_options:
+      key_filename: ${SFTP_KEY}
+
+  - metadata: ../data/metadata
