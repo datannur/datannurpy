@@ -12,12 +12,12 @@ Python library for [datannur](https://github.com/datannur/datannur) catalog meta
 
 A lightweight catalog compatible with most data sources:
 
-| Category        | Formats                                               |
-| --------------- | ----------------------------------------------------- |
-| **Flat files**  | CSV, Excel (.xlsx, .xls)                              |
-| **Columnar**    | Parquet, Delta Lake, Apache Iceberg, Hive partitioned |
-| **Statistical** | SAS (.sas7bdat), SPSS (.sav), Stata (.dta)            |
-| **Databases**   | PostgreSQL, MySQL, Oracle, SQL Server, SQLite, DuckDB |
+| Category          | Formats                                               |
+| ----------------- | ----------------------------------------------------- |
+| **Spreadsheets**  | CSV, Excel (.xlsx, .xls)                              |
+| **Columnar**      | Parquet, Delta Lake, Apache Iceberg, Hive partitioned |
+| **Statistical**   | SAS (.sas7bdat), SPSS (.sav), Stata (.dta)            |
+| **Databases**     | PostgreSQL, MySQL, Oracle, SQL Server, SQLite, DuckDB |
 
 All formats support automatic schema inference and statistics computation.
 
@@ -313,6 +313,7 @@ add:
 - MySQL: `mysql://user:pass@host:3306/database`
 - Oracle: `oracle://user:pass@host:1521/service_name`
 - SQL Server: `mssql://user:pass@host:1433/database`
+- DuckDB: pass an `ibis.duckdb.connect(...)` backend directly (no connection string)
 
 **Database metadata enrichment** (requires `depth: variable` or higher):
 
@@ -481,15 +482,6 @@ If `app_config` is not provided, no `config.json` is generated.
 
 All YAML features are also available programmatically via the Python API.
 
-```python
-from datannurpy import Catalog, Folder
-
-catalog = Catalog()
-catalog.add_folder("./data", include=["*.csv", "*.xlsx", "*.parquet"])
-catalog.add_database("sqlite:///mydb.sqlite")
-catalog.export_app("./my-catalog", open_browser=True)
-```
-
 ### `Catalog`
 
 ```python
@@ -498,8 +490,8 @@ Catalog(app_path=None, depth="value", refresh=False, freq_threshold=100, csv_enc
 
 | Attribute      | Type                              | Description                                        |
 | -------------- | --------------------------------- | -------------------------------------------------- |
-| app_path       | str \| None                       | Load existing catalog for incremental scan         |
-| depth          | "dataset" \| "variable" \| "stat" \| "value" | Default scan depth for add_folder                  |
+| app_path       | str \| Path \| None               | Load existing catalog for incremental scan         |
+| depth          | "dataset" \| "variable" \| "stat" \| "value" | Default scan depth (default: "value")              |
 | refresh        | bool                              | Force full rescan ignoring cache (default: False)  |
 | freq_threshold | int                               | Max distinct values for modality detection         |
 | csv_encoding   | str \| None                       | Default CSV encoding (utf-8, cp1252, etc.)         |
@@ -508,7 +500,7 @@ Catalog(app_path=None, depth="value", refresh=False, freq_threshold=100, csv_enc
 | app_config     | dict[str, str] \| None            | Key-value config for the web app                   |
 | quiet          | bool                              | Suppress progress logging (default: False)         |
 | verbose        | bool                              | Show full tracebacks on errors (default: False)    |
-| log_file       | str \| Path \| None               | Write error tracebacks to file (truncated each run)|
+| log_file       | str \| Path \| None               | Write full scan log to file (truncated each run)   |
 | folder         | Table[Folder]                     | Folder table (`.all()`, `.count`, `.get_by(...)`)  |
 | dataset        | Table[Dataset]                    | Dataset table                                      |
 | variable       | Table[Variable]                   | Variable table                                     |
@@ -701,15 +693,17 @@ Exports complete standalone datannur app with data. Uses `app_path` by default i
 ### `Folder`
 
 ```python
-Folder(id, name=None, description=None, parent_id=None, type=None, data_path=None)
+Folder(id, parent_id=None, tag_ids=[], doc_ids=[], name=None, description=None, type=None, data_path=None)
 ```
 
 | Parameter   | Type        | Description                  |
 | ----------- | ----------- | ---------------------------- |
 | id          | str         | Unique identifier            |
+| parent_id   | str \| None | Parent folder ID             |
+| tag_ids     | list[str]   | Associated tag IDs           |
+| doc_ids     | list[str]   | Associated document IDs      |
 | name        | str \| None | Display name                 |
 | description | str \| None | Description                  |
-| parent_id   | str \| None | Parent folder ID             |
 | type        | str \| None | Folder type                  |
 | data_path   | str \| None | Path to the data source      |
 
@@ -721,7 +715,7 @@ from datannurpy import sanitize_id, build_dataset_id, build_variable_id
 
 | Function                                        | Description                | Example                                                     |
 | ----------------------------------------------- | -------------------------- | ----------------------------------------------------------- |
-| sanitize_id(s)                                  | Clean string for use as ID | \"My File (v2)\" → \"My_File_v2\"                           |
+| sanitize_id(s)                                  | Clean string for use as ID | "My File (v2)" → "My File _v2_"                          |
 | build_dataset_id(folder_id, dataset_name)       | Build dataset ID           | (\"src\", \"sales\") → \"src---sales\"                      |
 | build_variable_id(folder_id, dataset_name, var) | Build variable ID          | (\"src\", \"sales\", \"amount\") → \"src---sales---amount\" |
 
