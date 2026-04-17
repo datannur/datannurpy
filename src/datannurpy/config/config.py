@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +22,7 @@ RESERVED_KEYS = {
     "env_file",
     "open_browser",
     "output_dir",
+    "post_export",
     "track_evolution",
 }
 
@@ -94,6 +97,34 @@ def _resolve_paths(p: str | list[str], base_dir: Path) -> str | list[str]:
     return _resolve_path(p, base_dir)
 
 
+def _resolve_script(name: str, output_dir: Path) -> Path:
+    """Resolve a post_export script name to an absolute path."""
+    if os.path.isabs(name):
+        return Path(name)
+    if "/" in name or name.endswith(".py"):
+        return output_dir / name
+    return output_dir / "python-scripts" / f"{name}.py"
+
+
+def _run_post_export(scripts: str | list[str], output_dir: Path, quiet: bool) -> None:
+    """Run post_export scripts after export."""
+    names = scripts if isinstance(scripts, list) else [scripts]
+    for name in names:
+        script = _resolve_script(name, output_dir)
+        if not script.exists():
+            raise ConfigError(f"post_export script not found: {script}")
+        if not quiet:
+            print(f"  → post_export: {script.name}", file=sys.stderr)
+        try:
+            subprocess.run(
+                [sys.executable, str(script)],
+                cwd=str(output_dir),
+                check=True,
+            )
+        except KeyboardInterrupt:
+            return
+
+
 def run_config(path: str | Path) -> Catalog:
     """Load and execute a YAML catalog configuration."""
     config_path = Path(path).resolve()
@@ -137,6 +168,7 @@ def run_config(path: str | Path) -> Catalog:
     # Pop export options before building catalog params
     open_browser = config.pop("open_browser", False)
     track_evolution = config.pop("track_evolution", True)
+    post_export = config.pop("post_export", None)
     output_dir = config.pop("output_dir", None)
     if output_dir:
         output_dir = _resolve_path(output_dir, base_dir)
@@ -192,9 +224,16 @@ def run_config(path: str | Path) -> Catalog:
             catalog.add_metadata(meta_path, **item)
 
     # Export: app_path implies app export, output_dir implies db-only export
+    export_dir: Path | None = None
     if output_dir:
         catalog.export_db(output_dir, track_evolution=track_evolution)
+        export_dir = Path(output_dir)
     elif catalog.app_path is not None:
         catalog.export_app(open_browser=open_browser, track_evolution=track_evolution)
+        export_dir = Path(catalog.app_path)
+
+    if post_export and export_dir is not None:
+        quiet = catalog_params.get("quiet", False)
+        _run_post_export(post_export, export_dir, bool(quiet))
 
     return catalog

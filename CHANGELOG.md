@@ -4,6 +4,7 @@
 
 - add: `scan` root tag grouping all system-generated tags (`auto` and `db` are now children of `scan`)
 - add: orphan scan tag cleanup in `finalize` — unreferenced `auto---*` and `db---*` tags are removed, keeping only those actually used by entities
+- add: `post_export` config option — run Python scripts automatically after export (`post_export: generate_links` or a list)
 - fix: `_extract_period_from_segment` position sort used `str.find()` which returns the first occurrence — duplicate year values in a segment caused incorrect sort order, breaking time series detection
 - fix: empty strings in string columns now treated as missing values — `nullif("")` applied before aggregation, fixing `nb_missing`, `nb_distinct`, freq tables, and string length stats
 - fix: `env_file` and `.env` are no longer mutually exclusive — both are loaded; `env_file` now supports a list of paths

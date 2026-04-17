@@ -501,6 +501,31 @@ app_config:
 
 If `app_config` is not provided, no `config.json` is generated.
 
+## post_export
+
+Run Python scripts automatically after export:
+
+```yaml
+# Single script (bare name → python-scripts/generate_links.py)
+post_export: generate_links
+
+# Multiple scripts
+post_export:
+  - generate_links
+  - start_app
+```
+
+Script resolution:
+
+| Format | Resolved path |
+|---|---|
+| `generate_links` | `{output}/python-scripts/generate_links.py` |
+| `hook.py` | `{output}/hook.py` |
+| `scripts/hook.py` | `{output}/scripts/hook.py` |
+| `/absolute/path.py` | `/absolute/path.py` |
+
+Works with both `app_path` and `output_dir` exports.
+
 ## Python API
 
 All YAML features are also available programmatically via the Python API.
