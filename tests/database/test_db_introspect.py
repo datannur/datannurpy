@@ -764,12 +764,15 @@ class TestCatalogDatabaseIntrospection:
     def test_db_tags_created(self, sqlite_catalog: Catalog) -> None:
         tag_ids = {t.id for t in sqlite_catalog.tag.all()}
         assert {
+            "scan",
             "db",
             "db---not-null",
             "db---unique",
             "db---indexed",
             "db---auto-increment",
         } <= tag_ids
+        db_tag = sqlite_catalog.tag.get("db")
+        assert db_tag is not None and db_tag.parent_id == "scan"
 
     def test_constraint_tags_assigned(self, sqlite_catalog: Catalog) -> None:
         v = _emp_vars(sqlite_catalog)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ..scanner.autotag import SCAN_TAG_ID, SCAN_TAG_DESCRIPTION
 from ..scanner.db_introspect import ForeignKey, TableMetadata
 from ..schema import Dataset, Tag, Variable
 from .ids import make_id, sanitize_id
@@ -21,18 +22,31 @@ _DB_CONSTRAINT_TAGS: dict[str, str] = {
 
 
 def _upsert_tag(
-    catalog: Catalog, tag_id: str, name: str, parent_id: str | None = None
+    catalog: Catalog,
+    tag_id: str,
+    name: str,
+    parent_id: str | None = None,
+    description: str | None = None,
 ) -> None:
     """Create tag if missing, or mark existing as seen (never overwriting name/description)."""
     if catalog.tag.get(tag_id) is None:
-        catalog.tag.add(Tag(id=tag_id, name=name, parent_id=parent_id, _seen=True))
+        catalog.tag.add(
+            Tag(
+                id=tag_id,
+                name=name,
+                description=description,
+                parent_id=parent_id,
+                _seen=True,
+            )
+        )
     else:
         catalog.tag.update(tag_id, _seen=True)
 
 
 def ensure_db_tags(catalog: Catalog) -> None:
     """Create or mark DB constraint tags as seen."""
-    _upsert_tag(catalog, _DB_TAG_PARENT_ID, "Database")
+    _upsert_tag(catalog, SCAN_TAG_ID, "Scan", description=SCAN_TAG_DESCRIPTION)
+    _upsert_tag(catalog, _DB_TAG_PARENT_ID, "Database", parent_id=SCAN_TAG_ID)
     for tag_id, name in _DB_CONSTRAINT_TAGS.items():
         _upsert_tag(catalog, tag_id, name, parent_id=_DB_TAG_PARENT_ID)
 

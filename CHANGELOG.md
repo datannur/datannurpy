@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.16.2 (2026-04-17)
+
+- add: `scan` root tag grouping all system-generated tags (`auto` and `db` are now children of `scan`)
+- add: orphan scan tag cleanup in `finalize` — unreferenced `auto---*` and `db---*` tags are removed, keeping only those actually used by entities
+
 ## 0.16.1 (2026-04-16)
 
 - add: auto-tagging of string columns by content type (email, phone, UUID, IBAN, bcrypt, argon2, JWT, secret, natural text) with hierarchical `auto---*` tags; security-tagged columns have raw frequency values suppressed

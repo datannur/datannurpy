@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from datannurpy import Catalog, Folder
-from datannurpy.schema import Doc, Institution, Modality, Tag, Value
+from datannurpy.schema import Doc, Institution, Modality, Tag, Value, Variable
 from datannurpy.utils.ids import build_value_id
 
 
@@ -339,6 +339,106 @@ class TestFinalizeUnseenTags:
 
         catalog.finalize()
         assert len(catalog.tag.all()) == 1
+
+
+def _add_scan_tags(catalog: Catalog) -> None:
+    """Add the full scan tag hierarchy (scan > auto > ..., scan > db > ...)."""
+    from datannurpy.scanner.autotag import ensure_auto_tags
+    from datannurpy.utils.db_enrich import ensure_db_tags
+
+    ensure_auto_tags(catalog)
+    ensure_db_tags(catalog)
+
+
+class TestFinalizeOrphanScanTags:
+    """Tests for removing unreferenced scan tags."""
+
+    def test_all_scan_tags_removed_when_no_references(self, tmp_path: Path):
+        """All scan tags should be removed when no entity references them."""
+        catalog = Catalog(app_path=tmp_path, quiet=True)
+        _add_scan_tags(catalog)
+        assert catalog.tag.get("scan") is not None
+
+        catalog.finalize()
+        assert catalog.tag.get("scan") is None
+        assert catalog.tag.get("auto") is None
+        assert catalog.tag.get("db") is None
+        assert catalog.tag.get("auto---email") is None
+        assert catalog.tag.get("db---not-null") is None
+
+    def test_referenced_leaf_tag_and_ancestors_kept(self, tmp_path: Path):
+        """Referenced leaf tag + its ancestors should be kept."""
+        catalog = Catalog(app_path=tmp_path, quiet=True)
+        _add_scan_tags(catalog)
+        catalog.variable.add(
+            Variable(id="v1", name="v1", dataset_id="ds1", tag_ids=["auto---email"])
+        )
+
+        catalog.finalize()
+        # email and its ancestors kept
+        assert catalog.tag.get("scan") is not None
+        assert catalog.tag.get("auto") is not None
+        assert catalog.tag.get("auto---format") is not None
+        assert catalog.tag.get("auto---email") is not None
+        # unreferenced branches removed
+        assert catalog.tag.get("auto---security") is None
+        assert catalog.tag.get("auto---bcrypt") is None
+        assert catalog.tag.get("auto---text") is None
+        assert catalog.tag.get("db") is None
+        assert catalog.tag.get("db---not-null") is None
+
+    def test_db_tag_referenced_keeps_db_branch(self, tmp_path: Path):
+        """Referenced db leaf tag should keep db branch + scan root."""
+        catalog = Catalog(app_path=tmp_path, quiet=True)
+        _add_scan_tags(catalog)
+        catalog.variable.add(
+            Variable(id="v1", name="v1", dataset_id="ds1", tag_ids=["db---not-null"])
+        )
+
+        catalog.finalize()
+        assert catalog.tag.get("scan") is not None
+        assert catalog.tag.get("db") is not None
+        assert catalog.tag.get("db---not-null") is not None
+        # unreferenced db siblings removed
+        assert catalog.tag.get("db---unique") is None
+        # auto branch removed entirely
+        assert catalog.tag.get("auto") is None
+
+    def test_user_tags_not_affected(self, tmp_path: Path):
+        """User tags (not under scan) should not be removed by orphan cleanup."""
+        catalog = Catalog(app_path=tmp_path, quiet=True)
+        _add_scan_tags(catalog)
+        user_tag = Tag(id="my-tag", name="My Tag", _seen=True)
+        catalog.tag.add(user_tag)
+
+        catalog.finalize()
+        # User tag kept (not a scan descendant)
+        assert catalog.tag.get("my-tag") is not None
+        # Scan tags removed (no references)
+        assert catalog.tag.get("scan") is None
+
+    def test_multiple_references_across_entities(self, tmp_path: Path):
+        """Tags referenced by different entity types should be kept."""
+        catalog = Catalog(app_path=tmp_path, quiet=True)
+        _add_scan_tags(catalog)
+        catalog.variable.add(
+            Variable(id="v1", name="v1", dataset_id="ds1", tag_ids=["auto---email"])
+        )
+        catalog.folder.add(Folder(id="f1", tag_ids=["db---indexed"], _seen=True))
+
+        catalog.finalize()
+        assert catalog.tag.get("auto---email") is not None
+        assert catalog.tag.get("db---indexed") is not None
+        assert catalog.tag.get("scan") is not None
+
+    def test_no_scan_tag_is_noop(self, tmp_path: Path):
+        """Cleanup should be a no-op when no scan tag exists."""
+        catalog = Catalog(app_path=tmp_path, quiet=True)
+        user_tag = Tag(id="user", name="User", _seen=True)
+        catalog.tag.add(user_tag)
+
+        catalog.finalize()
+        assert catalog.tag.get("user") is not None
 
 
 class TestFinalizeUnseenDocs:

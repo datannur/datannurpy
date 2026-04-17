@@ -41,10 +41,13 @@ def finalize(catalog: Catalog) -> None:
     # 5. Remove unseen tags
     catalog.tag.remove_where("_seen", "==", False)
 
-    # 6. Remove unseen docs
+    # 6. Remove unreferenced scan tags (auto---, db---)
+    _remove_orphan_scan_tags(catalog)
+
+    # 7. Remove unseen docs
     catalog.doc.remove_where("_seen", "==", False)
 
-    # 7. Remove values of removed modalities
+    # 8. Remove values of removed modalities
     if removed_modality_ids:
         catalog.value.remove_where("modality_id", "in", removed_modality_ids)
 
@@ -63,3 +66,58 @@ def remove_dataset_cascade(self: Catalog, dataset: Dataset) -> None:
 
     # Remove dataset
     self.dataset.remove(dataset.id)
+
+
+def _collect_referenced_tag_ids(catalog: Catalog) -> set[str]:
+    """Collect all tag IDs referenced by any entity."""
+    referenced: set[str] = set()
+    for entity in catalog.variable.all():
+        referenced.update(entity.tag_ids)
+    for entity in catalog.dataset.all():
+        referenced.update(entity.tag_ids)
+    for entity in catalog.folder.all():
+        referenced.update(entity.tag_ids)
+    for entity in catalog.institution.all():
+        referenced.update(entity.tag_ids)
+    return referenced
+
+
+def _remove_orphan_scan_tags(catalog: Catalog) -> None:
+    """Remove scan tags (auto---, db---) not referenced by any entity."""
+    from .scanner.autotag import SCAN_TAG_ID
+
+    scan_tag = catalog.tag.get(SCAN_TAG_ID)
+    if scan_tag is None:
+        return
+
+    referenced = _collect_referenced_tag_ids(catalog)
+
+    # Collect all descendants of scan (DFS)
+    all_tags = catalog.tag.all()
+    children: dict[str | None, list[str]] = {}
+    parent_of: dict[str, str | None] = {}
+    for tag in all_tags:
+        children.setdefault(tag.parent_id, []).append(tag.id)
+        parent_of[tag.id] = tag.parent_id
+    scan_tag_ids: set[str] = set()
+    stack = [SCAN_TAG_ID]
+    while stack:
+        tid = stack.pop()
+        scan_tag_ids.add(tid)
+        stack.extend(children.get(tid, []))
+
+    # Start by marking all unreferenced scan tags for removal
+    to_remove = {t for t in scan_tag_ids if t not in referenced}
+
+    # Keep parent tags that still have at least one child remaining
+    keep: set[str] = set()
+    for tag_id in scan_tag_ids - to_remove:
+        pid = parent_of.get(tag_id)
+        while pid is not None:
+            keep.add(pid)
+            pid = parent_of.get(pid)
+
+    to_remove -= keep
+
+    if to_remove:
+        catalog.tag.remove_all(list(to_remove))

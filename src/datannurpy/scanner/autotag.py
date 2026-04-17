@@ -15,15 +15,18 @@ from ..schema import Tag
 
 # --- Tag tree (id, name, parent_id) ---
 
+SCAN_TAG_ID = "scan"
+SCAN_TAG_DESCRIPTION = "Tags generated automatically during scanning"
 _AUTO_TAG_PARENT = "auto"
 
 # (id, name, description, parent_id)
 _AUTO_TREE: list[tuple[str, str, str, str | None]] = [
+    (SCAN_TAG_ID, "Scan", SCAN_TAG_DESCRIPTION, None),
     (
         _AUTO_TAG_PARENT,
         "Auto-detected",
         "Tags detected automatically by content analysis",
-        None,
+        SCAN_TAG_ID,
     ),
     ("auto---format", "Format", "Recognized data formats", _AUTO_TAG_PARENT),
     ("auto---email", "Email", "Values matching email address format", "auto---format"),
