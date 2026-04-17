@@ -1,9 +1,8 @@
 app_path: ./output
 refresh: true
-# open_browser: true
+open_browser: true
 post_export:
   - generate_links
-  - start_app
 
 add:
   - folder: ../data
