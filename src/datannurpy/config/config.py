@@ -110,23 +110,26 @@ def run_config(path: str | Path) -> Catalog:
     if not isinstance(config, dict):
         raise ConfigError(f"{config_path.name} must be a YAML mapping")
 
-    # Load .env: explicit env_file path takes priority, fallback to .env next to YAML
+    # Load environment variables in priority order (first set wins via setdefault/override=False):
+    # 1. System env vars (already in os.environ)
+    # 2. env: YAML (explicit, specific to this scan)
+    # 3. env_file: (secrets — supports str or list, last in list = highest priority)
+    # 4. .env local next to YAML (shared defaults)
     # interpolate=False so that $ in passwords is kept literal
-    env_file = config.pop("env_file", None)
-    if env_file:
-        load_dotenv(
-            _resolve_path(env_file, base_dir), override=False, interpolate=False
-        )
-    else:
-        load_dotenv(base_dir / ".env", override=False, interpolate=False)
-
-    # Inject env: vars (lowest priority — never overrides system or .env vars)
     env_vars = config.pop("env", None)
     if env_vars:
         if not isinstance(env_vars, dict):
             raise ConfigError("'env' must be a mapping of key: value pairs")
         for key, val in env_vars.items():
             os.environ.setdefault(str(key), str(val))
+
+    env_file = config.pop("env_file", None)
+    if env_file:
+        paths = env_file if isinstance(env_file, list) else [env_file]
+        for ef in reversed(paths):
+            load_dotenv(_resolve_path(ef, base_dir), override=False, interpolate=False)
+
+    load_dotenv(base_dir / ".env", override=False, interpolate=False)
 
     # Expand environment variables in all string values
     config = _expand_vars(config)

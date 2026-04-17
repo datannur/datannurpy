@@ -519,8 +519,8 @@ add:
         finally:
             os.environ.pop("MY_DATA_DIR", None)
 
-    def test_env_section_does_not_override_env_file(self, tmp_path: Path) -> None:
-        """env_file values take priority over env: section."""
+    def test_env_section_overrides_dotenv(self, tmp_path: Path) -> None:
+        """env: YAML values take priority over .env file."""
         import sqlite3
 
         db_path = tmp_path / "test.db"
@@ -530,18 +530,18 @@ add:
         conn.close()
 
         env_file = tmp_path / ".env"
-        env_file.write_text(f"TEST_PRIORITY_VAR={db_path}\n")
+        env_file.write_text("TEST_PRIORITY_VAR=/wrong/path\n")
 
         config_file = tmp_path / "catalog.yml"
-        config_file.write_text("""
+        config_file.write_text(f"""
 quiet: true
 refresh: true
 env:
-  TEST_PRIORITY_VAR: /wrong/path
+  TEST_PRIORITY_VAR: {db_path}
 
 add:
   - type: database
-    uri: sqlite:///${TEST_PRIORITY_VAR}
+    uri: sqlite:///${{TEST_PRIORITY_VAR}}
 """)
         try:
             catalog = run_config(config_file)
@@ -585,6 +585,79 @@ env:
 """)
         with pytest.raises(ConfigError, match="'env' must be a mapping"):
             run_config(config_file)
+
+    def test_dotenv_and_env_file_both_loaded(self, tmp_path: Path) -> None:
+        """Both .env and env_file are loaded — not mutually exclusive."""
+        import sqlite3
+
+        secrets_dir = tmp_path / "secrets"
+        secrets_dir.mkdir()
+
+        db_path = tmp_path / "test.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE both_test (id INTEGER)")
+        conn.commit()
+        conn.close()
+
+        # .env provides the db path, env_file provides a schema name
+        (tmp_path / ".env").write_text(f"TEST_BOTH_DB={db_path}\n")
+        (secrets_dir / "secrets.env").write_text("TEST_BOTH_SCHEMA=main\n")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+quiet: true
+refresh: true
+env_file: {secrets_dir / "secrets.env"}
+
+add:
+  - type: database
+    uri: sqlite:///${{TEST_BOTH_DB}}
+    schema:
+      - ${{TEST_BOTH_SCHEMA}}
+""")
+        try:
+            catalog = run_config(config_file)
+            assert any(d.name == "both_test" for d in catalog.dataset.all())
+        finally:
+            os.environ.pop("TEST_BOTH_DB", None)
+            os.environ.pop("TEST_BOTH_SCHEMA", None)
+
+    def test_env_file_list(self, tmp_path: Path) -> None:
+        """env_file supports a list of paths — last in list has highest priority."""
+        import sqlite3
+
+        db_path = tmp_path / "test.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE list_test (id INTEGER)")
+        conn.commit()
+        conn.close()
+
+        common_dir = tmp_path / "common"
+        common_dir.mkdir()
+        secrets_dir = tmp_path / "secrets"
+        secrets_dir.mkdir()
+
+        # common.env has wrong path, secrets.env has correct path (last wins)
+        (common_dir / "common.env").write_text("TEST_LIST_DB=/wrong/path\n")
+        (secrets_dir / "secrets.env").write_text(f"TEST_LIST_DB={db_path}\n")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+quiet: true
+refresh: true
+env_file:
+  - {common_dir / "common.env"}
+  - {secrets_dir / "secrets.env"}
+
+add:
+  - type: database
+    uri: sqlite:///${{TEST_LIST_DB}}
+""")
+        try:
+            catalog = run_config(config_file)
+            assert any(d.name == "list_test" for d in catalog.dataset.all())
+        finally:
+            os.environ.pop("TEST_LIST_DB", None)
 
 
 class TestListParameters:

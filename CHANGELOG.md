@@ -6,6 +6,8 @@
 - add: orphan scan tag cleanup in `finalize` — unreferenced `auto---*` and `db---*` tags are removed, keeping only those actually used by entities
 - fix: `_extract_period_from_segment` position sort used `str.find()` which returns the first occurrence — duplicate year values in a segment caused incorrect sort order, breaking time series detection
 - fix: empty strings in string columns now treated as missing values — `nullif("")` applied before aggregation, fixing `nb_missing`, `nb_distinct`, freq tables, and string length stats
+- fix: `env_file` and `.env` are no longer mutually exclusive — both are loaded; `env_file` now supports a list of paths
+- breaking: `env:` YAML now takes priority over `.env` file (previously `.env` won); system env vars still win over everything
 
 ## 0.16.1 (2026-04-16)
 

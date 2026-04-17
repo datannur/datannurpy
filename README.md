@@ -424,7 +424,7 @@ source---employees_csv---department,"Department code","hr"
 
 ## Environment variables
 
-Environment variables (`$VAR` or `${VAR}`) are expanded in all YAML values. Define reusable values with `env:`, load secrets from `env_file`, or place a `.env` next to the YAML file:
+Environment variables (`$VAR` or `${VAR}`) are expanded in all YAML values. All sources are loaded — `env:`, `env_file`, and `.env` next to the YAML file:
 
 ```yaml
 env:
@@ -438,7 +438,15 @@ add:
   - database: oracle://${DB_USER}:${DB_PASSWORD}@${db_host}:1521/ORCL
 ```
 
-Priority: system env vars > `env_file` / `.env` > `env:` section.
+`env_file` supports a list of paths (last overrides first):
+
+```yaml
+env_file:
+  - /shared/common.env         # defaults
+  - /secure/credentials.env    # overrides common.env
+```
+
+Priority (first set wins): system env vars > `env:` YAML > `env_file` > `.env` local.
 
 ## Output
 
