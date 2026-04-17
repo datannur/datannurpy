@@ -975,11 +975,6 @@
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_399fc66708",
-    "value": "",
-    "description": null
-  },
-  {
     "modality_id": "_modalities---mod_3eee4f2a23",
     "value": "company_name",
     "description": null
@@ -3792,61 +3787,6 @@
   {
     "modality_id": "_modalities---mod_9da81bde5f",
     "value": "US",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_9f9f6910c1",
-    "value": "",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_9f9f6910c1",
-    "value": "https://grandsplanssolar.ch",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_9f9f6910c1",
-    "value": "https://www.ekz.ch/de/ueber-ekz/unternehmen/engagement/felsenstrom.html",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_9f9f6910c1",
-    "value": "https://www.energia-alpina.ch/",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_9f9f6910c1",
-    "value": "https://www.engadin.solar",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_9f9f6910c1",
-    "value": "https://www.gondosolar.ch/",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_9f9f6910c1",
-    "value": "https://www.grengiols-solar.ch/de",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_9f9f6910c1",
-    "value": "https://www.jungfrau.ch/de-ch/unternehmen/jungfraubahnen/jungfraubahn-holding-ag/kraftwerk-jungfraubahn/",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_9f9f6910c1",
-    "value": "https://www.morgeten.ch",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_9f9f6910c1",
-    "value": "https://www.pv-mont-soleil.ch/",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_9f9f6910c1",
-    "value": "https://www.scuolsolar.ch/",
     "description": null
   },
   {
