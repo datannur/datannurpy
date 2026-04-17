@@ -113,7 +113,7 @@ def _extract_period_from_segment(segment: str) -> list[tuple[str, PeriodInfo]]:
             matched_ranges.append((start, end))
 
     # Sort by string position so matches[i] corresponds to the i-th placeholder
-    matches.sort(key=lambda m: segment.find(m[0]))
+    matches = [m for _, m in sorted(zip(matched_ranges, matches))]
     return matches
 
 

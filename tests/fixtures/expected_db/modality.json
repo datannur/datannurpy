@@ -175,13 +175,6 @@
     "type": null
   },
   {
-    "id": "_modalities---mod_399fc66708",
-    "folder_id": "_modalities",
-    "name": "",
-    "description": null,
-    "type": null
-  },
-  {
     "id": "_modalities---mod_3eee4f2a23",
     "folder_id": "_modalities",
     "name": "company_name, version",
@@ -549,13 +542,6 @@
     "id": "_modalities---mod_9da81bde5f",
     "folder_id": "_modalities",
     "name": "EU, US",
-    "description": null,
-    "type": null
-  },
-  {
-    "id": "_modalities---mod_9f9f6910c1",
-    "folder_id": "_modalities",
-    "name": ", https://gran..., https://www....... (+8)",
     "description": null,
     "type": null
   },

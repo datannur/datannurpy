@@ -9,7 +9,7 @@ from unittest.mock import patch
 import pytest
 
 from datannurpy import run_config
-from datannurpy.config.config import _expand_vars, _resolve_path
+from datannurpy.config.config import _expand_vars, _resolve_path, _resolve_script
 from datannurpy.errors import ConfigError
 
 
@@ -519,8 +519,8 @@ add:
         finally:
             os.environ.pop("MY_DATA_DIR", None)
 
-    def test_env_section_does_not_override_env_file(self, tmp_path: Path) -> None:
-        """env_file values take priority over env: section."""
+    def test_env_section_overrides_dotenv(self, tmp_path: Path) -> None:
+        """env: YAML values take priority over .env file."""
         import sqlite3
 
         db_path = tmp_path / "test.db"
@@ -530,18 +530,18 @@ add:
         conn.close()
 
         env_file = tmp_path / ".env"
-        env_file.write_text(f"TEST_PRIORITY_VAR={db_path}\n")
+        env_file.write_text("TEST_PRIORITY_VAR=/wrong/path\n")
 
         config_file = tmp_path / "catalog.yml"
-        config_file.write_text("""
+        config_file.write_text(f"""
 quiet: true
 refresh: true
 env:
-  TEST_PRIORITY_VAR: /wrong/path
+  TEST_PRIORITY_VAR: {db_path}
 
 add:
   - type: database
-    uri: sqlite:///${TEST_PRIORITY_VAR}
+    uri: sqlite:///${{TEST_PRIORITY_VAR}}
 """)
         try:
             catalog = run_config(config_file)
@@ -585,6 +585,79 @@ env:
 """)
         with pytest.raises(ConfigError, match="'env' must be a mapping"):
             run_config(config_file)
+
+    def test_dotenv_and_env_file_both_loaded(self, tmp_path: Path) -> None:
+        """Both .env and env_file are loaded — not mutually exclusive."""
+        import sqlite3
+
+        secrets_dir = tmp_path / "secrets"
+        secrets_dir.mkdir()
+
+        db_path = tmp_path / "test.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE both_test (id INTEGER)")
+        conn.commit()
+        conn.close()
+
+        # .env provides the db path, env_file provides a schema name
+        (tmp_path / ".env").write_text(f"TEST_BOTH_DB={db_path}\n")
+        (secrets_dir / "secrets.env").write_text("TEST_BOTH_SCHEMA=main\n")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+quiet: true
+refresh: true
+env_file: {secrets_dir / "secrets.env"}
+
+add:
+  - type: database
+    uri: sqlite:///${{TEST_BOTH_DB}}
+    schema:
+      - ${{TEST_BOTH_SCHEMA}}
+""")
+        try:
+            catalog = run_config(config_file)
+            assert any(d.name == "both_test" for d in catalog.dataset.all())
+        finally:
+            os.environ.pop("TEST_BOTH_DB", None)
+            os.environ.pop("TEST_BOTH_SCHEMA", None)
+
+    def test_env_file_list(self, tmp_path: Path) -> None:
+        """env_file supports a list of paths — last in list has highest priority."""
+        import sqlite3
+
+        db_path = tmp_path / "test.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE list_test (id INTEGER)")
+        conn.commit()
+        conn.close()
+
+        common_dir = tmp_path / "common"
+        common_dir.mkdir()
+        secrets_dir = tmp_path / "secrets"
+        secrets_dir.mkdir()
+
+        # common.env has wrong path, secrets.env has correct path (last wins)
+        (common_dir / "common.env").write_text("TEST_LIST_DB=/wrong/path\n")
+        (secrets_dir / "secrets.env").write_text(f"TEST_LIST_DB={db_path}\n")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+quiet: true
+refresh: true
+env_file:
+  - {common_dir / "common.env"}
+  - {secrets_dir / "secrets.env"}
+
+add:
+  - type: database
+    uri: sqlite:///${{TEST_LIST_DB}}
+""")
+        try:
+            catalog = run_config(config_file)
+            assert any(d.name == "list_test" for d in catalog.dataset.all())
+        finally:
+            os.environ.pop("TEST_LIST_DB", None)
 
 
 class TestListParameters:
@@ -932,3 +1005,252 @@ add:
 """)
         with pytest.raises(ConfigError, match="Cannot specify both"):
             run_config(config_file)
+
+
+class TestPostExport:
+    """Test post_export script execution."""
+
+    def test_resolve_script_bare_name(self, tmp_path: Path):
+        """Bare name resolves to python-scripts/{name}.py."""
+        result = _resolve_script("generate_links", tmp_path)
+        assert result == tmp_path / "python-scripts" / "generate_links.py"
+
+    def test_resolve_script_with_extension(self, tmp_path: Path):
+        """Name with .py resolves relative to output_dir."""
+        result = _resolve_script("my_hook.py", tmp_path)
+        assert result == tmp_path / "my_hook.py"
+
+    def test_resolve_script_with_slash(self, tmp_path: Path):
+        """Path with / resolves relative to output_dir."""
+        result = _resolve_script("scripts/hook.py", tmp_path)
+        assert result == tmp_path / "scripts" / "hook.py"
+
+    def test_resolve_script_absolute(self, tmp_path: Path):
+        """Absolute path is returned as-is."""
+        result = _resolve_script("/usr/local/bin/hook.py", tmp_path)
+        assert result == Path("/usr/local/bin/hook.py")
+
+    def test_post_export_runs_script(self, tmp_path: Path, data_dir: Path):
+        """post_export runs a script after export_app."""
+        output = tmp_path / "output"
+        output.mkdir(parents=True)
+        marker = tmp_path / "marker.txt"
+        # Place script at output root (python-scripts/ gets overwritten by _copy_app)
+        script = output / "my_hook.py"
+        script.write_text(
+            f"from pathlib import Path\nPath({str(marker)!r}).write_text('ok')\n"
+        )
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+app_path: {output}
+refresh: true
+quiet: true
+post_export: my_hook.py
+
+add:
+  - type: folder
+    path: {data_dir / "csv"}
+    folder:
+      id: test
+""")
+        run_config(config_file)
+        assert marker.read_text() == "ok"
+
+    def test_post_export_prints_when_not_quiet(
+        self, tmp_path: Path, data_dir: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        """post_export prints script name when quiet=false."""
+        output = tmp_path / "output"
+        output.mkdir(parents=True)
+        marker = tmp_path / "marker.txt"
+        (output / "hook.py").write_text(
+            f"from pathlib import Path\nPath({str(marker)!r}).write_text('v')\n"
+        )
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+output_dir: {output}
+refresh: true
+quiet: false
+post_export: hook.py
+
+add:
+  - type: folder
+    path: {data_dir / "csv"}
+    folder:
+      id: test
+""")
+        run_config(config_file)
+        assert "post_export: hook.py" in capsys.readouterr().err
+
+    def test_post_export_list(self, tmp_path: Path, data_dir: Path):
+        """post_export accepts a list of scripts."""
+        output = tmp_path / "output"
+        output.mkdir(parents=True)
+        marker1 = tmp_path / "m1.txt"
+        marker2 = tmp_path / "m2.txt"
+        (output / "hook1.py").write_text(
+            f"from pathlib import Path\nPath({str(marker1)!r}).write_text('1')\n"
+        )
+        (output / "hook2.py").write_text(
+            f"from pathlib import Path\nPath({str(marker2)!r}).write_text('2')\n"
+        )
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+app_path: {output}
+refresh: true
+quiet: true
+post_export:
+  - hook1.py
+  - hook2.py
+
+add:
+  - type: folder
+    path: {data_dir / "csv"}
+    folder:
+      id: test
+""")
+        run_config(config_file)
+        assert marker1.read_text() == "1"
+        assert marker2.read_text() == "2"
+
+    def test_post_export_script_not_found(self, tmp_path: Path, data_dir: Path):
+        """post_export raises ConfigError when script does not exist."""
+        output = tmp_path / "output"
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+app_path: {output}
+refresh: true
+quiet: true
+post_export: nonexistent
+
+add:
+  - type: folder
+    path: {data_dir / "csv"}
+    folder:
+      id: test
+""")
+        with pytest.raises(ConfigError, match="post_export script not found"):
+            run_config(config_file)
+
+    def test_post_export_script_failure(self, tmp_path: Path, data_dir: Path):
+        """post_export raises on script failure."""
+        output = tmp_path / "output"
+        output.mkdir(parents=True)
+        (output / "bad.py").write_text("raise SystemExit(1)\n")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+app_path: {output}
+refresh: true
+quiet: true
+post_export: bad.py
+
+add:
+  - type: folder
+    path: {data_dir / "csv"}
+    folder:
+      id: test
+""")
+        import subprocess
+
+        with pytest.raises(subprocess.CalledProcessError):
+            run_config(config_file)
+
+    def test_post_export_keyboard_interrupt(self, tmp_path: Path, data_dir: Path):
+        """post_export exits cleanly on KeyboardInterrupt."""
+        from unittest.mock import patch
+
+        output = tmp_path / "output"
+        output.mkdir(parents=True)
+        (output / "hook.py").write_text("pass\n")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+output_dir: {output}
+refresh: true
+quiet: true
+post_export: hook.py
+
+add:
+  - type: folder
+    path: {data_dir / "csv"}
+    folder:
+      id: test
+""")
+        with patch("subprocess.run", side_effect=KeyboardInterrupt):
+            catalog = run_config(config_file)
+        assert len(catalog.dataset.all()) > 0
+
+    def test_post_export_with_output_dir(self, tmp_path: Path, data_dir: Path):
+        """post_export works with output_dir (db-only export)."""
+        output = tmp_path / "output"
+        output.mkdir(parents=True)
+        marker = tmp_path / "marker.txt"
+        script = output / "hook.py"
+        script.write_text(
+            f"from pathlib import Path\nPath({str(marker)!r}).write_text('db')\n"
+        )
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+output_dir: {output}
+refresh: true
+quiet: true
+post_export: hook.py
+
+add:
+  - type: folder
+    path: {data_dir / "csv"}
+    folder:
+      id: test
+""")
+        run_config(config_file)
+        assert marker.read_text() == "db"
+
+    def test_post_export_bare_name_resolves_to_python_scripts(
+        self, tmp_path: Path, data_dir: Path
+    ):
+        """Bare name resolves to python-scripts/{name}.py in output_dir."""
+        output = tmp_path / "output"
+        scripts_dir = output / "python-scripts"
+        scripts_dir.mkdir(parents=True)
+        marker = tmp_path / "marker.txt"
+        (scripts_dir / "my_hook.py").write_text(
+            f"from pathlib import Path\nPath({str(marker)!r}).write_text('bare')\n"
+        )
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+output_dir: {output}
+refresh: true
+quiet: true
+post_export: my_hook
+
+add:
+  - type: folder
+    path: {data_dir / "csv"}
+    folder:
+      id: test
+""")
+        run_config(config_file)
+        assert marker.read_text() == "bare"
+
+    def test_no_post_export_without_export(self, tmp_path: Path, data_dir: Path):
+        """post_export is silently skipped when no export happens."""
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+refresh: true
+quiet: true
+post_export: anything
+
+add:
+  - type: folder
+    path: {data_dir / "csv"}
+    folder:
+      id: test
+""")
+        catalog = run_config(config_file)
+        assert len(catalog.dataset.all()) > 0

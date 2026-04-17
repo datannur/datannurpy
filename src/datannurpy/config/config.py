@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +22,7 @@ RESERVED_KEYS = {
     "env_file",
     "open_browser",
     "output_dir",
+    "post_export",
     "track_evolution",
 }
 
@@ -94,6 +97,34 @@ def _resolve_paths(p: str | list[str], base_dir: Path) -> str | list[str]:
     return _resolve_path(p, base_dir)
 
 
+def _resolve_script(name: str, output_dir: Path) -> Path:
+    """Resolve a post_export script name to an absolute path."""
+    if os.path.isabs(name):
+        return Path(name)
+    if "/" in name or name.endswith(".py"):
+        return output_dir / name
+    return output_dir / "python-scripts" / f"{name}.py"
+
+
+def _run_post_export(scripts: str | list[str], output_dir: Path, quiet: bool) -> None:
+    """Run post_export scripts after export."""
+    names = scripts if isinstance(scripts, list) else [scripts]
+    for name in names:
+        script = _resolve_script(name, output_dir)
+        if not script.exists():
+            raise ConfigError(f"post_export script not found: {script}")
+        if not quiet:
+            print(f"  → post_export: {script.name}", file=sys.stderr)
+        try:
+            subprocess.run(
+                [sys.executable, str(script)],
+                cwd=str(output_dir),
+                check=True,
+            )
+        except KeyboardInterrupt:
+            return
+
+
 def run_config(path: str | Path) -> Catalog:
     """Load and execute a YAML catalog configuration."""
     config_path = Path(path).resolve()
@@ -110,17 +141,12 @@ def run_config(path: str | Path) -> Catalog:
     if not isinstance(config, dict):
         raise ConfigError(f"{config_path.name} must be a YAML mapping")
 
-    # Load .env: explicit env_file path takes priority, fallback to .env next to YAML
+    # Load environment variables in priority order (first set wins via setdefault/override=False):
+    # 1. System env vars (already in os.environ)
+    # 2. env: YAML (explicit, specific to this scan)
+    # 3. env_file: (secrets — supports str or list, last in list = highest priority)
+    # 4. .env local next to YAML (shared defaults)
     # interpolate=False so that $ in passwords is kept literal
-    env_file = config.pop("env_file", None)
-    if env_file:
-        load_dotenv(
-            _resolve_path(env_file, base_dir), override=False, interpolate=False
-        )
-    else:
-        load_dotenv(base_dir / ".env", override=False, interpolate=False)
-
-    # Inject env: vars (lowest priority — never overrides system or .env vars)
     env_vars = config.pop("env", None)
     if env_vars:
         if not isinstance(env_vars, dict):
@@ -128,12 +154,21 @@ def run_config(path: str | Path) -> Catalog:
         for key, val in env_vars.items():
             os.environ.setdefault(str(key), str(val))
 
+    env_file = config.pop("env_file", None)
+    if env_file:
+        paths = env_file if isinstance(env_file, list) else [env_file]
+        for ef in reversed(paths):
+            load_dotenv(_resolve_path(ef, base_dir), override=False, interpolate=False)
+
+    load_dotenv(base_dir / ".env", override=False, interpolate=False)
+
     # Expand environment variables in all string values
     config = _expand_vars(config)
 
     # Pop export options before building catalog params
     open_browser = config.pop("open_browser", False)
     track_evolution = config.pop("track_evolution", True)
+    post_export = config.pop("post_export", None)
     output_dir = config.pop("output_dir", None)
     if output_dir:
         output_dir = _resolve_path(output_dir, base_dir)
@@ -189,9 +224,16 @@ def run_config(path: str | Path) -> Catalog:
             catalog.add_metadata(meta_path, **item)
 
     # Export: app_path implies app export, output_dir implies db-only export
+    export_dir: Path | None = None
     if output_dir:
         catalog.export_db(output_dir, track_evolution=track_evolution)
+        export_dir = Path(output_dir)
     elif catalog.app_path is not None:
         catalog.export_app(open_browser=open_browser, track_evolution=track_evolution)
+        export_dir = Path(catalog.app_path)
+
+    if post_export and export_dir is not None:
+        quiet = catalog_params.get("quiet", False)
+        _run_post_export(post_export, export_dir, bool(quiet))
 
     return catalog

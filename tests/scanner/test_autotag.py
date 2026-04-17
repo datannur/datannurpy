@@ -180,6 +180,7 @@ class TestEnsureAutoTags:
 
         catalog = Catalog()
         ensure_auto_tags(catalog)
+        assert catalog.tag.get("scan") is not None
         assert catalog.tag.get("auto") is not None
         assert catalog.tag.get("auto---format") is not None
         assert catalog.tag.get("auto---security") is not None
@@ -198,7 +199,9 @@ class TestEnsureAutoTags:
         tag_email = catalog.tag.get("auto---email")
         tag_bcrypt = catalog.tag.get("auto---bcrypt")
         tag_structured = catalog.tag.get("auto---structured")
-        assert tag_auto is not None and tag_auto.parent_id is None
+        tag_scan = catalog.tag.get("scan")
+        assert tag_scan is not None and tag_scan.parent_id is None
+        assert tag_auto is not None and tag_auto.parent_id == "scan"
         assert tag_format is not None and tag_format.parent_id == "auto"
         assert tag_email is not None and tag_email.parent_id == "auto---format"
         assert tag_bcrypt is not None and tag_bcrypt.parent_id == "auto---security"

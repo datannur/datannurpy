@@ -4816,57 +4816,47 @@
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "",
-    "freq": 9
-  },
-  {
-    "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "https://grandsplanssolar.ch",
+    "value": "aaaaa?//aaa.aa-aaaa-aaaaaa.aa/",
     "freq": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "https://www.ekz.ch/de/ueber-ekz/unternehmen/engagement/felsenstrom.html",
+    "value": "aaaaa?//aaa.aaa.aa/aa/aaaaa-aaa/aaaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaaa.aaaa",
     "freq": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "https://www.energia-alpina.ch/",
+    "value": "aaaaa?//aaa.aaaaaaa-aaaaaa.aa/",
     "freq": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "https://www.engadin.solar",
+    "value": "aaaaa?//aaa.aaaaaaa.aaaaa",
     "freq": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "https://www.gondosolar.ch/",
+    "value": "aaaaa?//aaa.aaaaaaaa.aa",
     "freq": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "https://www.grengiols-solar.ch/de",
+    "value": "aaaaa?//aaa.aaaaaaaa.aa/aa-aa/aaaaaaaaaaa/aaaaaaaaaaaaaa/aaaaaaaaaaaa-aaaaaaa-aa/aaaaaaaaa-aaaaaaaaaaaa/",
     "freq": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "https://www.jungfrau.ch/de-ch/unternehmen/jungfraubahnen/jungfraubahn-holding-ag/kraftwerk-jungfraubahn/",
+    "value": "aaaaa?//aaa.aaaaaaaaa-aaaaa.aa/aa",
     "freq": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "https://www.morgeten.ch",
-    "freq": 1
+    "value": "aaaaa?//aaa.aaaaaaaaaa.aa/",
+    "freq": 2
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "https://www.pv-mont-soleil.ch/",
-    "freq": 1
-  },
-  {
-    "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "https://www.scuolsolar.ch/",
+    "value": "aaaaa?//aaaaaaaaaaaaaaaa.aa",
     "freq": 1
   },
   {
@@ -5547,11 +5537,6 @@
   {
     "variable_id": "photovoltaik---ProjectStatus---NumberOfPlants",
     "value": "0",
-    "freq": 42
-  },
-  {
-    "variable_id": "photovoltaik---ProjectStatus---PlantType",
-    "value": "",
     "freq": 42
   },
   {

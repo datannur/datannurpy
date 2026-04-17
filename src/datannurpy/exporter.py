@@ -113,7 +113,8 @@ def export_app(
 
     if not q:
         elapsed = time.perf_counter() - start_time
-        print(f"  → app exported in {elapsed:.1f}s", file=sys.stderr)
+        index_uri = (output_dir / "index.html").resolve().as_uri()
+        print(f"  → app exported in {elapsed:.1f}s: {index_uri}", file=sys.stderr)
 
     if open_browser:
         index_path = output_dir / "index.html"

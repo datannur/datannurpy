@@ -1,5 +1,16 @@
 # datannurpy
 
+## 0.16.2 (2026-04-17)
+
+- add: `scan` root tag grouping all system-generated tags (`auto` and `db` are now children of `scan`)
+- add: orphan scan tag cleanup in `finalize` — unreferenced `auto---*` and `db---*` tags are removed, keeping only those actually used by entities
+- add: `post_export` config option — run Python scripts automatically after export (`post_export: generate_links` or a list)
+- fix: `_extract_period_from_segment` position sort used `str.find()` which returns the first occurrence — duplicate year values in a segment caused incorrect sort order, breaking time series detection
+- fix: empty strings in string columns now treated as missing values — `nullif("")` applied before aggregation, fixing `nb_missing`, `nb_distinct`, freq tables, and string length stats
+- fix: `env_file` and `.env` are no longer mutually exclusive — both are loaded; `env_file` now supports a list of paths
+- breaking: `env:` YAML now takes priority over `.env` file (previously `.env` won); system env vars still win over everything
+- fix: Oracle pattern frequencies full of `?` — `\-` in regex charset replaced with portable `-` at end, and NULL bytes (`\x00`) stripped before pattern analysis
+
 ## 0.16.1 (2026-04-16)
 
 - add: auto-tagging of string columns by content type (email, phone, UUID, IBAN, bcrypt, argon2, JWT, secret, natural text) with hierarchical `auto---*` tags; security-tagged columns have raw frequency values suppressed

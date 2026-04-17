@@ -424,7 +424,7 @@ source---employees_csv---department,"Department code","hr"
 
 ## Environment variables
 
-Environment variables (`$VAR` or `${VAR}`) are expanded in all YAML values. Define reusable values with `env:`, load secrets from `env_file`, or place a `.env` next to the YAML file:
+Environment variables (`$VAR` or `${VAR}`) are expanded in all YAML values. All sources are loaded — `env:`, `env_file`, and `.env` next to the YAML file:
 
 ```yaml
 env:
@@ -438,7 +438,15 @@ add:
   - database: oracle://${DB_USER}:${DB_PASSWORD}@${db_host}:1521/ORCL
 ```
 
-Priority: system env vars > `env_file` / `.env` > `env:` section.
+`env_file` supports a list of paths (last overrides first):
+
+```yaml
+env_file:
+  - /shared/common.env         # defaults
+  - /secure/credentials.env    # overrides common.env
+```
+
+Priority (first set wins): system env vars > `env:` YAML > `env_file` > `.env` local.
 
 ## Output
 
@@ -492,6 +500,31 @@ app_config:
 ```
 
 If `app_config` is not provided, no `config.json` is generated.
+
+## post_export
+
+Run Python scripts automatically after export:
+
+```yaml
+# Single script (bare name → python-scripts/generate_links.py)
+post_export: generate_links
+
+# Multiple scripts
+post_export:
+  - generate_links
+  - start_app
+```
+
+Script resolution:
+
+| Format | Resolved path |
+|---|---|
+| `generate_links` | `{output}/python-scripts/generate_links.py` |
+| `hook.py` | `{output}/hook.py` |
+| `scripts/hook.py` | `{output}/scripts/hook.py` |
+| `/absolute/path.py` | `/absolute/path.py` |
+
+Works with both `app_path` and `output_dir` exports.
 
 ## Python API
 

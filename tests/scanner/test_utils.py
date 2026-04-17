@@ -192,6 +192,18 @@ class TestBuildVariables:
         assert v.max == pytest.approx(6.0)
         assert v.mean == pytest.approx(4.0)
 
+    def test_empty_string_treated_as_missing(self):
+        """Empty strings should be treated as missing values."""
+        table = ibis.memtable({"val": ["a", "", None, "b", ""]})
+        variables, freq = build_variables(
+            table, nb_rows=5, dataset_id="test", freq_threshold=100
+        )
+        v = variables[0]
+        assert v.nb_missing == 3  # 1 NULL + 2 ""
+        assert v.nb_distinct == 2  # "a", "b"
+        assert freq is not None
+        assert "" not in freq.column("value").to_pylist()
+
     def test_extra_stats_with_nulls(self):
         """build_variables should exclude nulls from min/max/mean/std."""
         table = ibis.memtable({"val": [10, None, 30, None, 50]})
@@ -487,15 +499,13 @@ class TestPatternFreqIntegration:
         """Pattern computation should materialize to memtable if backend lacks regex."""
         from unittest.mock import patch
 
-        from datannurpy.scanner.pattern import _LETTER_UNICODE
-
         values = [f"AB-{i:04d}" for i in range(50)]
         table = ibis.memtable({"code": values})
 
         # Simulate a backend where _prepare_table materializes
         def fake_prepare(t, cols):
             arrow = t.select(*cols).to_pyarrow()
-            return ibis.memtable(arrow), _LETTER_UNICODE
+            return ibis.memtable(arrow)
 
         with patch(
             "datannurpy.scanner.pattern._prepare_table",

@@ -385,6 +385,23 @@ def build_variables(
         streaming_source = full_table if full_table is not None else table
         streaming_nb_rows = full_nb_rows if full_nb_rows is not None else nb_rows
 
+        # Treat empty strings as NULL for consistent missing-value semantics
+        empty_as_null_cols = [c for c, k in col_extra_exprs.items() if k == "string"]
+        if empty_as_null_cols:
+            _empty = ibis.literal("")
+            table = table.mutate(
+                **{c: table[c].nullif(_empty) for c in empty_as_null_cols}
+            )
+            if full_table is not None:
+                streaming_source = streaming_source.mutate(
+                    **{
+                        c: streaming_source[c].nullif(_empty)
+                        for c in empty_as_null_cols
+                    }
+                )
+            else:
+                streaming_source = table
+
         # MySQL < 8.0.17 doesn't support CAST(... AS DOUBLE)
         try:
             backend_name = streaming_source._find_backend().name
