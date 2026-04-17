@@ -4,6 +4,7 @@
 
 - add: `scan` root tag grouping all system-generated tags (`auto` and `db` are now children of `scan`)
 - add: orphan scan tag cleanup in `finalize` — unreferenced `auto---*` and `db---*` tags are removed, keeping only those actually used by entities
+- fix: `_extract_period_from_segment` position sort used `str.find()` which returns the first occurrence — duplicate year values in a segment caused incorrect sort order, breaking time series detection
 
 ## 0.16.1 (2026-04-16)
 

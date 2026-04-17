@@ -256,6 +256,23 @@ class TestGroupLevelPeriodDetection:
         assert "xyz1970" in group.normalized_path
         assert "2000" in group.normalized_path
 
+    def test_constant_dates_with_duplicate_year_values(self, tmp_path: Path):
+        """Variable year matching a constant year must not break position order."""
+        files = [
+            (tmp_path / "_1970x_abc1970_2000.sas7bdat", 100),
+            (tmp_path / "_1980x_abc1970_2000.sas7bdat", 200),
+            (tmp_path / "_1990x_abc1970_2000.sas7bdat", 300),
+            (tmp_path / "_2000x_abc1970_2000.sas7bdat", 400),
+        ]
+        series, singles = group_time_series(files, tmp_path)
+        assert len(series) == 1
+        assert len(singles) == 0
+        group = series[0]
+        periods = [p for p, _ in group.files]
+        assert periods == ["1970", "1980", "1990", "2000"]
+        assert "abc1970" in group.normalized_path
+        assert "2000" in group.normalized_path
+
     def test_order_violation_creates_subgroups(self, tmp_path: Path):
         """YYYY_MM folder + YYYY file with both varying → sub-group by folder."""
         files = [
