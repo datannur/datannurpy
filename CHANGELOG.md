@@ -8,6 +8,7 @@
 - fix: empty strings in string columns now treated as missing values — `nullif("")` applied before aggregation, fixing `nb_missing`, `nb_distinct`, freq tables, and string length stats
 - fix: `env_file` and `.env` are no longer mutually exclusive — both are loaded; `env_file` now supports a list of paths
 - breaking: `env:` YAML now takes priority over `.env` file (previously `.env` won); system env vars still win over everything
+- fix: Oracle pattern frequencies full of `?` — `\-` in regex charset replaced with portable `-` at end, and NULL bytes (`\x00`) stripped before pattern analysis
 
 ## 0.16.1 (2026-04-16)
 

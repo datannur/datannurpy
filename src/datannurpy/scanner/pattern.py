@@ -10,16 +10,16 @@ if TYPE_CHECKING:
     import pyarrow as pa
 
 _LETTER_UNICODE = r"[\p{L}]"
-_LETTER_ASCII = r"[A-Za-z]"
 
 
-def _build_pattern_expr(col: Any, *, letter_re: str = _LETTER_UNICODE) -> Any:
+def _build_pattern_expr(col: Any) -> Any:
     """Transform a string expression into its abstract pattern form."""
     return (
         col.cast("string")
-        .re_replace(letter_re, "a")
+        .re_replace(r"\x00", "")
+        .re_replace(_LETTER_UNICODE, "a")
         .re_replace(r"[0-9]", "9")
-        .re_replace(r"[^a9@.\-_/ ]", "?")
+        .re_replace(r"[^a9@._/ -]", "?")
     )
 
 
@@ -34,33 +34,18 @@ def _classify_string(top_freqs: list[int], total: int) -> str:
     return "auto---free-text"
 
 
-def _prepare_table(table: ibis.Table, cols: list[str]) -> tuple[ibis.Table, str]:
-    """Ensure regex support and detect letter regex in a single pass.
-
-    Returns (table, letter_re).  Materializes to a DuckDB memtable only when
-    the original backend lacks ``re_replace``.
-    """
-    # Best case: backend supports \p{L} → 1 query
+def _prepare_table(table: ibis.Table, cols: list[str]) -> ibis.Table:
+    """Ensure DuckDB-compatible regex support, materializing if needed."""
     try:
         test_expr: Any = ibis.literal("é")
         table.select(test_expr.re_replace(_LETTER_UNICODE, "a").name("_t")).limit(
             1
         ).to_pyarrow()
-        return table, _LETTER_UNICODE
+        return table
     except Exception:
         pass
-    # Backend supports re_replace but not Unicode class → 1 extra query
-    try:
-        test_expr = ibis.literal("x")
-        table.select(test_expr.re_replace(r"[a-z]", "a").name("_t")).limit(
-            1
-        ).to_pyarrow()
-        return table, _LETTER_ASCII
-    except Exception:
-        pass
-    # No regex support → materialize to DuckDB memtable (always has \p{L})
     arrow = table.select(*cols).to_pyarrow()
-    return ibis.memtable(arrow), _LETTER_UNICODE
+    return ibis.memtable(arrow)
 
 
 def compute_pattern_freqs(
@@ -74,8 +59,8 @@ def compute_pattern_freqs(
 
     import pyarrow as pa
 
-    # Single probe: ensures regex support + detects letter regex (1 query on DuckDB)
-    table, letter_re = _prepare_table(table, pattern_cols)
+    # Ensure DuckDB-compatible regex; materializes only if backend lacks \p{L}
+    table = _prepare_table(table, pattern_cols)
 
     # Batch non-null counts: 1 query instead of N
     count_aggs: list[Any] = [
@@ -93,7 +78,7 @@ def compute_pattern_freqs(
             continue
 
         non_null = table.filter(table[col].notnull())
-        pattern_expr = _build_pattern_expr(non_null[col], letter_re=letter_re)
+        pattern_expr = _build_pattern_expr(non_null[col])
         patterned = non_null.select(pattern_expr.name("pattern"))
         grouped = patterned.group_by("pattern").agg(freq=patterned.count())
         order_key: Any = ibis.desc("freq")

@@ -53,15 +53,22 @@ class TestBuildPatternExpr:
         assert r[0]["p"] == "????"
 
     def test_ascii_fallback(self):
+        """Without ASCII fallback, accented chars are handled by DuckDB \\p{L}."""
         t = ibis.memtable({"v": ["café"]})
-        from datannurpy.scanner.pattern import _LETTER_ASCII
+        r = t.select(_build_pattern_expr(t.v).name("p")).to_pyarrow().to_pylist()
+        assert r[0]["p"] == "aaaa"
 
-        r = (
-            t.select(_build_pattern_expr(t.v, letter_re=_LETTER_ASCII).name("p"))
-            .to_pyarrow()
-            .to_pylist()
-        )
-        assert r[0]["p"] == "aaa?"
+    def test_hyphen_preserved(self):
+        t = ibis.memtable({"v": ["a-b", "1-2", "-"]})
+        r = t.select(_build_pattern_expr(t.v).name("p")).to_pyarrow().to_pylist()
+        assert r[0]["p"] == "a-a"
+        assert r[1]["p"] == "9-9"
+        assert r[2]["p"] == "-"
+
+    def test_null_bytes_stripped(self):
+        t = ibis.memtable({"v": ["MARLY\x00\x00\x00\x00\x00"]})
+        r = t.select(_build_pattern_expr(t.v).name("p")).to_pyarrow().to_pylist()
+        assert r[0]["p"] == "aaaaa"
 
 
 class TestClassifyString:
@@ -92,47 +99,23 @@ class TestClassifyString:
 class TestPrepareTable:
     """Test _prepare_table probe + materialization."""
 
-    def test_duckdb_returns_same_table_with_unicode(self):
+    def test_duckdb_returns_same_table(self):
         t = ibis.memtable({"a": ["hello"], "b": [1]})
-        from datannurpy.scanner.pattern import _LETTER_UNICODE
-
-        result, letter_re = _prepare_table(t, ["a"])
+        result = _prepare_table(t, ["a"])
         assert result is t
-        assert letter_re == _LETTER_UNICODE
 
-    def test_ascii_fallback_when_unicode_unsupported(self, monkeypatch):
-        from datannurpy.scanner.pattern import _LETTER_ASCII
-
-        t = ibis.memtable({"a": ["hello"]})
-        orig_select = ibis.expr.types.relations.Table.select
-        call_num = {"n": 0}
-
-        def selective_select(self, *args, **kwargs):
-            result = orig_select(self, *args, **kwargs)
-            call_num["n"] += 1
-            if call_num["n"] == 1:
-                # First call (Unicode probe) fails
-                raise Exception("unsupported Unicode regex")
-            return result
-
-        monkeypatch.setattr("ibis.expr.types.relations.Table.select", selective_select)
-        result, letter_re = _prepare_table(t, ["a"])
-        assert result is t
-        assert letter_re == _LETTER_ASCII
-
-    def test_materializes_when_no_regex(self, monkeypatch):
+    def test_materializes_when_no_unicode_regex(self, monkeypatch):
         t = ibis.memtable({"a": ["hello", "world"], "b": [1, 2]})
         orig_select = ibis.expr.types.relations.Table.select
 
         def failing_select(self, *args, **kwargs):
-            # Check if this is a probe call (has _t in the args)
             str_args = str(args)
             if "_t" in str_args:
                 raise Exception("no regex support")
             return orig_select(self, *args, **kwargs)
 
         monkeypatch.setattr("ibis.expr.types.relations.Table.select", failing_select)
-        result, letter_re = _prepare_table(t, ["a"])
+        result = _prepare_table(t, ["a"])
         assert result is not t
         assert list(result.columns) == ["a"]
         assert result.count().execute() == 2

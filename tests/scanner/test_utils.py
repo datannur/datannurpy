@@ -499,15 +499,13 @@ class TestPatternFreqIntegration:
         """Pattern computation should materialize to memtable if backend lacks regex."""
         from unittest.mock import patch
 
-        from datannurpy.scanner.pattern import _LETTER_UNICODE
-
         values = [f"AB-{i:04d}" for i in range(50)]
         table = ibis.memtable({"code": values})
 
         # Simulate a backend where _prepare_table materializes
         def fake_prepare(t, cols):
             arrow = t.select(*cols).to_pyarrow()
-            return ibis.memtable(arrow), _LETTER_UNICODE
+            return ibis.memtable(arrow)
 
         with patch(
             "datannurpy.scanner.pattern._prepare_table",
