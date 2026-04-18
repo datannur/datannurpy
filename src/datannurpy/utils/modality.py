@@ -121,14 +121,56 @@ class ModalityManager:
                 freq_by_var[col_name] = set()
             freq_by_var[col_name].add(val)
 
-        # Assign modalities to variables (skip pattern variables)
+        # Resolve modalities: batch new ones, collect existing to mark seen
+        new_modalities: list[Modality] = []
+        new_values: list[Value] = []
+        existing_seen_ids: set[str] = set()
+
         for var in variables:
             if var.is_pattern:
                 continue
             old_col_name = next(k for k, v in var_id_mapping.items() if v == var.id)
-            if old_col_name in freq_by_var and freq_by_var[old_col_name]:
-                modality_id = self.get_or_create(freq_by_var[old_col_name])
-                var.modality_ids = [modality_id]
+            if old_col_name not in freq_by_var or not freq_by_var[old_col_name]:
+                continue
+
+            values = freq_by_var[old_col_name]
+            signature = frozenset(values)
+
+            if signature in self._modality_index:
+                modality_id = self._modality_index[signature]
+                existing_seen_ids.add(modality_id)
+            else:
+                hash_10 = compute_modality_hash(values)
+                modality_id = make_id(MODALITIES_FOLDER_ID, f"mod_{hash_10}")
+                new_modalities.append(
+                    Modality(
+                        id=modality_id,
+                        folder_id=MODALITIES_FOLDER_ID,
+                        name=build_modality_name(values),
+                        _seen=True,
+                    )
+                )
+                for val in sorted(values):
+                    new_values.append(
+                        Value(
+                            id=build_value_id(modality_id, val),
+                            modality_id=modality_id,
+                            value=val,
+                        )
+                    )
+                self._modality_index[signature] = modality_id
+
+            var.modality_ids = [modality_id]
+
+        # Batch apply: one concat each instead of thousands
+        if new_modalities or existing_seen_ids:
+            self.ensure_modalities_folder()
+        if existing_seen_ids:
+            self._catalog.modality.update_many(list(existing_seen_ids), _seen=True)
+        if new_modalities:
+            self._catalog.modality.add_all(new_modalities)
+        if new_values:
+            self._catalog.value.add_all(new_values)
 
         # Store freq table with updated IDs
         self.store_freq_table(freq_table, var_id_mapping)

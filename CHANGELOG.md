@@ -5,6 +5,8 @@
 - improve: cleaner scan logging — per-dataset timing, progress indicator (`⏳`), better visual spacing between schemas/summaries, and log file no longer contains intermediate `...` lines
 - add: auto-detect AVS13 (Swiss social security number), MD5, SHA1, SHA256, SHA512 content types
 - fix: JWT false positives on URLs, secret detection for short tokens, phone format coverage
+- perf: batch database introspection — `batch_table_data_size` and `batch_table_row_count` fetch size/count for all tables in a single query per schema instead of per table
+- perf: batched modality assignment — `assign_from_freq` processes all variables at once via `add_all()` instead of one at a time
 
 ## 0.16.2 (2026-04-17)
 

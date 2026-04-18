@@ -20,6 +20,8 @@ from datannurpy.scanner.database import (
     _get_table,
     _is_missing_backend_dependency_error,
     _tunnel_uri,
+    batch_table_data_size,
+    batch_table_row_count,
     connect,
     get_database_name,
     get_database_path,
@@ -1372,3 +1374,252 @@ class TestGetTableDataSize:
             "datannurpy.scanner.database.get_backend_name", return_value="sqlite"
         ):
             assert get_table_data_size(con, "empty_table", None) is None
+
+
+class TestBatchTableRowCount:
+    """Tests for batch_table_row_count."""
+
+    @staticmethod
+    def _mock_con(
+        rows: list[tuple[str, int | None]], backend: str = "mysql"
+    ) -> MagicMock:
+        cursor = MagicMock()
+        cursor.fetchall.return_value = rows
+        con = MagicMock()
+        con.raw_sql.return_value = cursor
+        return con
+
+    def test_mysql(self) -> None:
+        con = self._mock_con([("users", 100), ("orders", 50)])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="mysql"
+        ):
+            result = batch_table_row_count(con, ["users", "orders"], "mydb")
+        assert result == {"users": 100, "orders": 50}
+        sql = con.raw_sql.call_args[0][0]
+        assert "UNION ALL" in sql
+        assert "`mydb`.`users`" in sql
+
+    def test_postgres(self) -> None:
+        con = self._mock_con([("t1", 10)])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="postgres"
+        ):
+            result = batch_table_row_count(con, ["t1"], "public")
+        assert result == {"t1": 10}
+        sql = con.raw_sql.call_args[0][0]
+        assert '"public"."t1"' in sql
+
+    def test_mssql(self) -> None:
+        con = self._mock_con([("t1", 10)])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="mssql"
+        ):
+            result = batch_table_row_count(con, ["t1"], "dbo")
+        assert result == {"t1": 10}
+        sql = con.raw_sql.call_args[0][0]
+        assert "[dbo].[t1]" in sql
+
+    def test_oracle(self) -> None:
+        con = self._mock_con([("USERS", 100)])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="oracle"
+        ):
+            result = batch_table_row_count(con, ["users"], "hr")
+        assert result == {"users": 100}
+        sql = con.raw_sql.call_args[0][0]
+        assert '"HR"."USERS"' in sql
+
+    def test_empty_tables_returns_empty(self) -> None:
+        con = MagicMock()
+        result = batch_table_row_count(con, [], None)
+        assert result == {}
+        con.raw_sql.assert_not_called()
+
+    def test_no_raw_sql_returns_empty(self) -> None:
+        con = MagicMock(spec=[])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="mysql"
+        ):
+            assert batch_table_row_count(con, ["t"], None) == {}
+
+    def test_exception_returns_empty(self) -> None:
+        con = MagicMock()
+        con.raw_sql.side_effect = Exception("db error")
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="mysql"
+        ):
+            assert batch_table_row_count(con, ["t"], "mydb") == {}
+
+    def test_no_schema(self) -> None:
+        con = self._mock_con([("t1", 5)])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="mysql"
+        ):
+            result = batch_table_row_count(con, ["t1"], None)
+        assert result == {"t1": 5}
+        sql = con.raw_sql.call_args[0][0]
+        assert "`t1`" in sql
+
+
+class TestBatchTableDataSize:
+    """Tests for batch_table_data_size."""
+
+    @staticmethod
+    def _mock_con(
+        rows: list[tuple[str, int | None]], backend: str = "mysql"
+    ) -> MagicMock:
+        cursor = MagicMock()
+        cursor.fetchall.return_value = rows
+        con = MagicMock()
+        con.raw_sql.return_value = cursor
+        con.name = backend
+        return con
+
+    def test_mysql_returns_sizes(self) -> None:
+        con = self._mock_con([("users", 8192), ("orders", 4096)])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="mysql"
+        ):
+            result = batch_table_data_size(con, ["users", "orders"], "mydb")
+        assert result["users"] == 8192
+        assert result["orders"] == 4096
+
+    def test_postgres_returns_sizes(self) -> None:
+        con = self._mock_con([("users", 8192)], backend="postgres")
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="postgres"
+        ):
+            result = batch_table_data_size(con, ["users"], "public")
+        assert result["users"] == 8192
+
+    def test_mssql_returns_sizes(self) -> None:
+        con = self._mock_con([("users", 8192)], backend="mssql")
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="mssql"
+        ):
+            result = batch_table_data_size(con, ["users"], "dbo")
+        assert result["users"] == 8192
+
+    def test_unsupported_backend_returns_empty(self) -> None:
+        con = MagicMock()
+        con.raw_sql = MagicMock()
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="sqlite"
+        ):
+            assert batch_table_data_size(con, ["t"], None) == {}
+
+    def test_no_raw_sql_returns_empty(self) -> None:
+        con = MagicMock(spec=[])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="mysql"
+        ):
+            assert batch_table_data_size(con, ["t"], None) == {}
+
+    def test_exception_returns_empty(self) -> None:
+        con = MagicMock()
+        con.raw_sql.side_effect = Exception("db error")
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="mysql"
+        ):
+            assert batch_table_data_size(con, ["t"], "mydb") == {}
+
+    def test_filters_to_requested_tables(self) -> None:
+        con = self._mock_con([("users", 8192), ("other", 4096)])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="mysql"
+        ):
+            result = batch_table_data_size(con, ["users"], "mydb")
+        assert "users" in result
+        assert "other" not in result
+
+    def test_null_size_excluded(self) -> None:
+        con = self._mock_con([("users", None)])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="mysql"
+        ):
+            result = batch_table_data_size(con, ["users"], "mydb")
+        assert "users" not in result
+
+    def test_default_schema_mysql(self) -> None:
+        con = self._mock_con([])
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="mysql"
+        ):
+            batch_table_data_size(con, ["t"], None)
+        sql = con.raw_sql.call_args[0][0]
+        assert "table_schema = ''" in sql
+
+    def test_default_schema_postgres(self) -> None:
+        con = self._mock_con([], backend="postgres")
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="postgres"
+        ):
+            batch_table_data_size(con, ["t"], None)
+        sql = con.raw_sql.call_args[0][0]
+        assert "schemaname = 'public'" in sql
+
+    def test_default_schema_mssql(self) -> None:
+        con = self._mock_con([], backend="mssql")
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="mssql"
+        ):
+            batch_table_data_size(con, ["t"], None)
+        sql = con.raw_sql.call_args[0][0]
+        assert "SCHEMA_NAME(t.schema_id) = 'dbo'" in sql
+
+    def test_oracle_with_schema(self) -> None:
+        con = self._mock_con([("USERS", 8192), ("OTHER", 4096)], backend="oracle")
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="oracle"
+        ):
+            result = batch_table_data_size(con, ["users"], "hr")
+        assert result["users"] == 8192
+        assert "other" not in result
+        call_kwargs = con.raw_sql.call_args
+        assert call_kwargs[1]["parameters"]["owner"] == "HR"
+
+    def test_oracle_without_schema(self) -> None:
+        con = self._mock_con([("ORDERS", 4096)], backend="oracle")
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="oracle"
+        ):
+            result = batch_table_data_size(con, ["orders"], None)
+        assert result["orders"] == 4096
+        sql = con.raw_sql.call_args[0][0]
+        assert "user_segments" in sql
+
+    def test_oracle_dba_fallback_to_all(self) -> None:
+        cursor = MagicMock()
+        cursor.fetchall.return_value = [("T1", 1024)]
+        con = MagicMock()
+        con.raw_sql.side_effect = [Exception("no dba access"), cursor]
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="oracle"
+        ):
+            result = batch_table_data_size(con, ["t1"], "hr")
+        assert result["t1"] == 1024
+
+    def test_oracle_all_views_fail_returns_empty(self) -> None:
+        con = MagicMock()
+        con.raw_sql.side_effect = Exception("no access")
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="oracle"
+        ):
+            assert batch_table_data_size(con, ["t"], "hr") == {}
+
+    def test_oracle_null_size(self) -> None:
+        con = self._mock_con([("T1", None)], backend="oracle")
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="oracle"
+        ):
+            result = batch_table_data_size(con, ["t1"], None)
+        assert "t1" not in result
+
+    def test_oracle_exception_returns_empty(self) -> None:
+        con = MagicMock()
+        con.raw_sql.side_effect = Exception("db error")
+        with patch(
+            "datannurpy.scanner.database.get_backend_name", return_value="oracle"
+        ):
+            assert batch_table_data_size(con, ["t"], None) == {}
