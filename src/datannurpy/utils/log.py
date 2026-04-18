@@ -34,11 +34,17 @@ def _write_log(message: str) -> None:
             f.write(message + "\n")
 
 
-def log_start(msg: str, quiet: bool) -> None:
-    """Log start of an operation (with ... suffix, no newline)."""
+def log_start(msg: str, quiet: bool) -> float:
+    """Log start of an operation (with ... suffix, no newline). Returns start time."""
     if not quiet:
-        print(f"  {msg}...", end="", flush=True, file=sys.stderr)
-    _write_log(f"  {msg}...")
+        print(f"  ⏳{msg}...", end="", flush=True, file=sys.stderr)
+    return time.perf_counter()
+
+
+def log_progress(msg: str, quiet: bool) -> None:
+    """Update the in-progress line with extra info (overwrites log_start line)."""
+    if not quiet:
+        print(f"\r  ⏳{msg}...", end="", flush=True, file=sys.stderr)
 
 
 def log_done(msg: str, quiet: bool, start_time: float | None = None) -> None:
@@ -78,8 +84,8 @@ def log_section(method: str, target: str, quiet: bool) -> float:
 def log_folder(name: str, quiet: bool) -> None:
     """Log a folder/schema."""
     if not quiet:
-        print(f"  📁 {name}", file=sys.stderr)
-    _write_log(f"  📁 {name}")
+        print(f"\n  📁 {name}", file=sys.stderr)
+    _write_log(f"\n  📁 {name}")
 
 
 _CRED_RE = re.compile(r"://[^@/]+@")
@@ -114,7 +120,7 @@ def log_summary(
     parts = [f"{datasets} datasets", f"{variables} variables"]
     if errors:
         parts.append(f"{errors} errors")
-    text = f"  → {', '.join(parts)} in {elapsed:.1f}s"
+    text = f"\n  → {', '.join(parts)} in {elapsed:.1f}s"
     if not quiet:
         print(text, file=sys.stderr)
     _write_log(text)

@@ -137,7 +137,6 @@ def test_log_file_captures_all_levels(tmp_path):
     content = log_path.read_text()
     assert "[add_folder] /data" in content
     assert "📁 subdir" in content
-    assert "scanning file.csv..." in content
     assert "✓ scanning file.csv" in content
     assert "⚠ col has nulls" in content
     assert "⏭ cached.csv (unchanged)" in content

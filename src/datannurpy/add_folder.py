@@ -326,7 +326,7 @@ def add_folder(
         # Single file: standard handling
         data_path_str = str(info.path)
 
-        log_start(info.path.name, q)
+        t0 = log_start(info.path.name, q)
         dataset_id, dataset_name = build_dataset_id_name(info.path, root, prefix)
         folder_id = get_folder_id(info.path, root, prefix, subdir_ids)
 
@@ -383,11 +383,12 @@ def add_folder(
 
         # Log result
         if schema_only:
-            log_done(f"{info.path.name} ({len(result.variables)} vars)", q)
+            log_done(f"{info.path.name} ({len(result.variables)} vars)", q, t0)
         elif result.nb_row and result.nb_row > 0:
             log_done(
                 f"{info.path.name} ({result.nb_row:,} rows, {len(result.variables)} vars)",
                 q,
+                t0,
             )
         else:
             log_warn(f"{info.path.name}: empty file", q)
@@ -433,7 +434,7 @@ def _scan_time_series(
     if existing:
         remove_dataset_cascade(catalog, existing)
 
-    log_start(f"{dataset_name} ({len(series_files)} files)", quiet)
+    t0 = log_start(f"{dataset_name} ({len(series_files)} files)", quiet)
 
     # Step 1: Schema-only scan on all files to get columns per period
     columns_by_period: dict[str, list[str]] = {}
@@ -522,11 +523,12 @@ def _scan_time_series(
 
     # Log result
     if schema_only:
-        log_done(f"{dataset_name} ({len(result.variables)} vars)", quiet)
+        log_done(f"{dataset_name} ({len(result.variables)} vars)", quiet, t0)
     elif result.nb_row and result.nb_row > 0:
         log_done(
             f"{dataset_name} ({result.nb_row:,} rows, {len(result.variables)} vars, {len(series_files)} files)",
             quiet,
+            t0,
         )
     else:
         log_warn(f"{dataset_name}: empty file", quiet)

@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.16.3 (2026-04-18)
+
+- improve: cleaner scan logging — per-dataset timing, progress indicator (`⏳`), better visual spacing between schemas/summaries, and log file no longer contains intermediate `...` lines
+
 ## 0.16.2 (2026-04-17)
 
 - add: `scan` root tag grouping all system-generated tags (`auto` and `db` are now children of `scan`)

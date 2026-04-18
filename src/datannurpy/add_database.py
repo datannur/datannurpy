@@ -343,7 +343,7 @@ def _add_database_impl(
         for table_name in tables:
             if table_name in series_table_names:
                 continue
-            log_start(table_name, q)
+            t0 = log_start(table_name, q)
 
             # Build data_path for incremental lookup
             table_data_path = build_table_data_path(
@@ -423,9 +423,9 @@ def _add_database_impl(
                 if table_vars:
                     build_variable_ids(table_vars, dataset.id)
                     catalog.variable.add_all(table_vars)
-                    log_done(f"{table_name} ({len(table_vars)} vars)", q)
+                    log_done(f"{table_name} ({len(table_vars)} vars)", q, t0)
                 else:
-                    log_done(table_name, q)
+                    log_done(table_name, q, t0)
                 continue
 
             # Compute signature and row count for comparison/storage
@@ -543,7 +543,7 @@ def _add_database_impl(
                 )
             catalog.variable.add_all(table_vars)
 
-            log_done(f"{table_name} ({nb_row:,} rows, {len(table_vars)} vars)", q)
+            log_done(f"{table_name} ({nb_row:,} rows, {len(table_vars)} vars)", q, t0)
 
         # Process time series groups
         for group in series_groups:
@@ -610,7 +610,7 @@ def _scan_table_series(
     if existing:
         remove_dataset_cascade(catalog, existing)
 
-    log_start(f"{dataset_name} ({len(tables)} tables)", quiet)
+    t0 = log_start(f"{dataset_name} ({len(tables)} tables)", quiet)
 
     table_vars: list[Variable] = []
     nb_row: int | None = None
@@ -722,12 +722,15 @@ def _scan_table_series(
             f"{dataset_name} ({nb_row:,} rows, {len(table_vars)} vars, "
             f"{len(tables)} tables)",
             quiet,
+            t0,
         )
     elif table_vars:
         log_done(
-            f"{dataset_name} ({len(table_vars)} vars, {len(tables)} tables)", quiet
+            f"{dataset_name} ({len(table_vars)} vars, {len(tables)} tables)",
+            quiet,
+            t0,
         )
     else:
-        log_done(f"{dataset_name} ({len(tables)} tables)", quiet)
+        log_done(f"{dataset_name} ({len(tables)} tables)", quiet, t0)
 
     return 0
