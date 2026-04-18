@@ -109,6 +109,10 @@ class TestIsSecret:
     def test_few_values_long_no_spaces(self):
         assert _is_secret(["abc123def456ghi789jkl0"]) is True
 
+    def test_short_mixed_token(self):
+        # 12-20 chars with mixed letters+digits → detected as secret
+        assert _is_secret(["abc123def456gh"]) is True
+
     def test_few_values_short(self):
         assert _is_secret(["short"]) is False
 
@@ -140,6 +144,11 @@ class TestIsSecret:
 
     def test_low_uniqueness(self):
         values = ["abc123def456ghi789jkl0"] * 20
+        assert _is_secret(values) is False
+
+    def test_short_no_mix(self):
+        # 12-20 chars, all letters (no digits) → has_mix < 0.5 → not a secret
+        values = [f"abcdefghijklmn{chr(65 + i)}" for i in range(5)]
         assert _is_secret(values) is False
 
 
