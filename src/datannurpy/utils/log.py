@@ -41,12 +41,6 @@ def log_start(msg: str, quiet: bool) -> float:
     return time.perf_counter()
 
 
-def log_progress(msg: str, quiet: bool) -> None:
-    """Update the in-progress line with extra info (overwrites log_start line)."""
-    if not quiet:
-        print(f"\r  ⏳{msg}...", end="", flush=True, file=sys.stderr)
-
-
 def log_done(msg: str, quiet: bool, start_time: float | None = None) -> None:
     """Log completion (replaces the 'start' line)."""
     if start_time is not None:

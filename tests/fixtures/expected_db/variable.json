@@ -3660,8 +3660,8 @@
     "id": "photovoltaik---Project---ProjectWeb",
     "name": "ProjectWeb",
     "dataset_id": "photovoltaik---Project",
-    "modality_ids": "",
-    "tag_ids": "auto---jwt",
+    "modality_ids": "_modalities---mod_f099626334",
+    "tag_ids": "",
     "source_var_ids": "",
     "fk_var_id": null,
     "original_name": null,
@@ -3677,7 +3677,7 @@
     "std": 26.621837,
     "start_date": null,
     "end_date": null,
-    "is_pattern": true
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---Project---ShareOfSubsidisedCosts",

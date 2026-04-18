@@ -3,6 +3,8 @@
 ## 0.16.3 (2026-04-18)
 
 - improve: cleaner scan logging — per-dataset timing, progress indicator (`⏳`), better visual spacing between schemas/summaries, and log file no longer contains intermediate `...` lines
+- add: auto-detect AVS13 (Swiss social security number), MD5, SHA1, SHA256, SHA512 content types
+- fix: JWT false positives on URLs, secret detection for short tokens, phone format coverage
 
 ## 0.16.2 (2026-04-17)
 

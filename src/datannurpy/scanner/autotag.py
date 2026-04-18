@@ -34,6 +34,12 @@ _AUTO_TREE: list[tuple[str, str, str, str | None]] = [
     ("auto---uuid", "UUID", "Values matching UUID format", "auto---format"),
     ("auto---iban", "IBAN", "Values matching IBAN format", "auto---format"),
     (
+        "auto---avs13",
+        "AVS13",
+        "Swiss social security numbers (756.XXXX.XXXX.XX)",
+        "auto---format",
+    ),
+    (
         "auto---security",
         "Security",
         "Sensitive or security-related content",
@@ -77,7 +83,7 @@ _AUTO_TREE: list[tuple[str, str, str, str | None]] = [
 
 _SECURITY_TAGS = frozenset(
     tag_id for tag_id, _, _, parent_id in _AUTO_TREE if parent_id == "auto---security"
-)
+) | {"auto---avs13"}
 
 
 def ensure_auto_tags(catalog: Catalog) -> None:
@@ -103,23 +109,48 @@ _UUID_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.I
 )
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$")
-_PHONE_INTL_RE = re.compile(r"^\+\d[\d\s\-()]{6,}$")
-_PHONE_LOCAL_RE = re.compile(r"^0\d[\d\s\-()]{5,}$")
 _IBAN_RE = re.compile(r"^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$")
 _HASH_PREFIX_RE = re.compile(r"^\$[a-zA-Z0-9]+\$")
+_HEX_MD5_RE = re.compile(r"^[0-9a-f]{32}$")
+_HEX_SHA1_RE = re.compile(r"^[0-9a-f]{40}$")
+_HEX_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+_HEX_SHA512_RE = re.compile(r"^[0-9a-f]{128}$")
+
+
+_B64URL = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_=")
 
 
 def _is_jwt(v: str) -> bool:
     parts = v.split(".")
-    return len(parts) == 3 and all(parts) and len(v) >= 20
+    if len(parts) != 3 or not all(parts) or len(v) < 20:
+        return False
+    header, payload = parts[0], parts[1]
+    if not set(header).issubset(_B64URL) or not set(payload).issubset(_B64URL):
+        return False
+    # Real JWT headers are base64url JSON starting with eyJ ({"...)
+    return header.startswith("eyJ")
+
+
+def _is_avs13(v: str) -> bool:
+    digits = "".join(c for c in v if c.isdigit())
+    if len(digits) != 13 or not digits.startswith("756"):
+        return False
+    non_digit = set(v) - set("0123456789")
+    return not (non_digit - set(" ."))
 
 
 def _is_phone(v: str) -> bool:
-    if _PHONE_INTL_RE.match(v):
-        return True
-    if not _PHONE_LOCAL_RE.match(v) or not any(c in v for c in " -()"):
+    stripped = v.lstrip("+")
+    digits = "".join(c for c in stripped if c.isdigit())
+    non_digit = set(stripped) - set("0123456789")
+    # Only allow common phone separators
+    if non_digit - set(" -./()+"):
         return False
-    return sum(c.isdigit() for c in v) >= 9
+    if v.startswith("+"):
+        return 7 <= len(digits) <= 15
+    if digits.startswith("0") and len(digits) == 10:
+        return True
+    return False
 
 
 _Detector = Callable[[str], bool]
@@ -132,7 +163,12 @@ _SPECIFIC_DETECTORS: list[tuple[str, _Detector, float]] = [
     ("auto---email", lambda v: bool(_EMAIL_RE.match(v)), 0.8),
     ("auto---phone", _is_phone, 0.6),
     ("auto---iban", lambda v: bool(_IBAN_RE.match(v)), 0.8),
+    ("auto---avs13", _is_avs13, 0.8),
     ("auto---secret", lambda v: bool(_HASH_PREFIX_RE.match(v)), 0.8),
+    ("auto---md5", lambda v: bool(_HEX_MD5_RE.match(v)), 0.8),
+    ("auto---sha1", lambda v: bool(_HEX_SHA1_RE.match(v)), 0.8),
+    ("auto---sha256", lambda v: bool(_HEX_SHA256_RE.match(v)), 0.8),
+    ("auto---sha512", lambda v: bool(_HEX_SHA512_RE.match(v)), 0.8),
 ]
 
 
@@ -156,8 +192,19 @@ def _is_secret(values: list[str]) -> bool:
     alnum_ratio = (
         sum(sum(c.isalnum() or c == "_" for c in v) / len(v) for v in values if v) / n
     )
-    if avg_len < 20 or space_ratio >= 0.1 or alnum_ratio < 0.90:
+    if avg_len < 12 or space_ratio >= 0.1 or alnum_ratio < 0.90:
         return False
+    if avg_len < 20:
+        # Shorter strings need mixed letters+digits to look like tokens
+        has_mix = (
+            sum(
+                any(c.isdigit() for c in v) and any(c.isalpha() for c in v)
+                for v in values
+            )
+            / n
+        )
+        if has_mix < 0.5:
+            return False
     if n < 5:
         return True
     return len(set(values)) / n >= 0.9
