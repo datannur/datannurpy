@@ -465,16 +465,6 @@
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_290b7fe59b",
-    "value": "finance,rh",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_290b7fe59b",
-    "value": "rh",
-    "description": null
-  },
-  {
     "modality_id": "_modalities---mod_2dc8eb7aad",
     "value": "Eolien",
     "description": null
@@ -4485,6 +4475,16 @@
     "description": null
   },
   {
+    "modality_id": "_modalities---mod_dd17cc26b6",
+    "value": "finance,rh",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_dd17cc26b6",
+    "value": "rh,policy---freq-hidden",
+    "description": null
+  },
+  {
     "modality_id": "_modalities---mod_de545e0867",
     "value": "Solar",
     "description": null
@@ -5242,6 +5242,56 @@
   {
     "modality_id": "_modalities---mod_ef932f614f",
     "value": "info@techstart.com",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_f099626334",
+    "value": "https://grandsplanssolar.ch",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_f099626334",
+    "value": "https://www.ekz.ch/de/ueber-ekz/unternehmen/engagement/felsenstrom.html",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_f099626334",
+    "value": "https://www.energia-alpina.ch/",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_f099626334",
+    "value": "https://www.engadin.solar",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_f099626334",
+    "value": "https://www.gondosolar.ch/",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_f099626334",
+    "value": "https://www.grengiols-solar.ch/de",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_f099626334",
+    "value": "https://www.jungfrau.ch/de-ch/unternehmen/jungfraubahnen/jungfraubahn-holding-ag/kraftwerk-jungfraubahn/",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_f099626334",
+    "value": "https://www.morgeten.ch",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_f099626334",
+    "value": "https://www.pv-mont-soleil.ch/",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_f099626334",
+    "value": "https://www.scuolsolar.ch/",
     "description": null
   },
   {

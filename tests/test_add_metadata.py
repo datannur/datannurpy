@@ -17,7 +17,9 @@ from datannurpy.schema import Freq, Value, Variable
 from datannurpy.utils.ids import build_freq_id, build_value_id
 from datannurpy.add_metadata import (
     DEPTH_ENTITIES,
+    FREQ_HIDDEN_TAG,
     _convert_row_to_dict,
+    _extract_freq_hidden_ids,
     _find_entity_by_id,
     _find_value,
     _get_catalog_table,
@@ -32,6 +34,8 @@ from datannurpy.add_metadata import (
     _read_json,
     _validate_all_tables,
     _validate_entity_table,
+    add_metadata,
+    ensure_metadata_applied,
 )
 
 ALL_ENTITIES = DEPTH_ENTITIES["value"]
@@ -783,7 +787,7 @@ class TestAddMetadataIntegration:
         (tmp_path / "tag.csv").write_text("id,name\nt1,Tag1\n")
 
         catalog = Catalog()
-        catalog.add_metadata(tmp_path, quiet=True)
+        add_metadata(catalog, tmp_path, quiet=True)
 
         assert len(catalog.folder.all()) == 1
         assert len(catalog.tag.all()) == 1
@@ -798,7 +802,7 @@ class TestAddMetadataIntegration:
         conn.close()
 
         catalog = Catalog()
-        catalog.add_metadata(f"sqlite:///{db_path}", quiet=True)
+        add_metadata(catalog, f"sqlite:///{db_path}", quiet=True)
 
         assert len(catalog.folder.all()) == 1
         assert catalog.folder.all()[0].name == "Folder1"
@@ -812,7 +816,7 @@ class TestAddMetadataIntegration:
         catalog = Catalog()
         catalog.variable.add(Variable(id="v1", name="Var1", dataset_id="ds1"))
 
-        catalog.add_metadata(tmp_path, quiet=True)
+        add_metadata(catalog, tmp_path, quiet=True)
 
         assert catalog.variable.all()[0].description == "New description"
 
@@ -827,7 +831,7 @@ class TestAddMetadataIntegration:
             Variable(id="v1", name="Var1", dataset_id="ds1", tag_ids=["t1"])
         )
 
-        catalog.add_metadata(tmp_path, quiet=True)
+        add_metadata(catalog, tmp_path, quiet=True)
 
         # New values first, then existing
         assert catalog.variable.all()[0].tag_ids == ["t2", "t3", "t1"]
@@ -837,7 +841,7 @@ class TestAddMetadataIntegration:
         catalog = Catalog()
 
         with pytest.raises(ConfigError, match="Metadata folder not found"):
-            catalog.add_metadata("/nonexistent/path", quiet=True)
+            add_metadata(catalog, "/nonexistent/path", quiet=True)
 
     def test_add_metadata_not_a_directory(self, tmp_path: Path):
         """Should raise ValueError if path is not a directory."""
@@ -846,13 +850,13 @@ class TestAddMetadataIntegration:
 
         catalog = Catalog()
 
-        with pytest.raises(ConfigError, match="must be a directory"):
-            catalog.add_metadata(file_path, quiet=True)
+        with pytest.raises(ConfigError, match="not a directory"):
+            add_metadata(catalog, file_path, quiet=True)
 
     def test_add_metadata_no_files_found(self, tmp_path: Path, capsys):
         """Should warn if no metadata files found."""
         catalog = Catalog()
-        catalog.add_metadata(tmp_path, quiet=False)
+        add_metadata(catalog, tmp_path, quiet=False)
 
         captured = capsys.readouterr()
         assert "No metadata files found" in captured.err
@@ -862,7 +866,7 @@ class TestAddMetadataIntegration:
         (tmp_path / "variable.csv").write_text("id\nv1\n")  # Missing required columns
 
         catalog = Catalog()
-        catalog.add_metadata(tmp_path, quiet=False)
+        add_metadata(catalog, tmp_path, quiet=False)
 
         captured = capsys.readouterr()
         assert "Invalid metadata" in captured.err
@@ -873,7 +877,7 @@ class TestAddMetadataIntegration:
         (tmp_path / "folder.csv").write_text("id,name\nf1,Folder1\n")
 
         catalog = Catalog()
-        catalog.add_metadata(tmp_path, quiet=True)
+        add_metadata(catalog, tmp_path, quiet=True)
 
         captured = capsys.readouterr()
         assert captured.err == ""
@@ -883,7 +887,7 @@ class TestAddMetadataIntegration:
         (tmp_path / "folder.csv").write_text("id,name\nf1,Folder1\n")
 
         catalog = Catalog(quiet=True)
-        catalog.add_metadata(tmp_path)
+        add_metadata(catalog, tmp_path)
 
         captured = capsys.readouterr()
         assert captured.err == ""
@@ -902,7 +906,7 @@ class TestAddMetadataIntegration:
         (tmp_path / "doc.csv").write_text("id,name\ndoc1,Doc\n")
 
         catalog = Catalog()
-        catalog.add_metadata(tmp_path, quiet=True)
+        add_metadata(catalog, tmp_path, quiet=True)
 
         assert len(catalog.folder.all()) == 1
         assert len(catalog.dataset.all()) == 1
@@ -918,7 +922,7 @@ class TestAddMetadataIntegration:
         (tmp_path / "folder.csv").write_text("id,name\nf1,Folder1\n")
 
         catalog = Catalog()
-        catalog.add_metadata(tmp_path, quiet=False)
+        add_metadata(catalog, tmp_path, quiet=False)
 
         captured = capsys.readouterr()
         assert "add_metadata" in captured.err
@@ -983,7 +987,7 @@ class TestEdgeCases:
 
         catalog = Catalog()
         catalog.folder.add(Folder(id="f1", name="Folder"))
-        catalog.add_metadata(tmp_path, quiet=False)
+        add_metadata(catalog, tmp_path, quiet=False)
 
         captured = capsys.readouterr()
         assert "0 created, 1 updated" in captured.err
@@ -1009,7 +1013,7 @@ class TestEdgeCases:
             Value(id=build_value_id("m1", "A"), modality_id="m1", value="A")
         )
 
-        catalog.add_metadata(tmp_path, quiet=True)
+        add_metadata(catalog, tmp_path, quiet=True)
         val = catalog.value.all()[0]
         assert val.description == "Updated desc"
 
@@ -1030,7 +1034,7 @@ class TestEdgeCases:
             )
         )
 
-        catalog.add_metadata(tmp_path, quiet=True)
+        add_metadata(catalog, tmp_path, quiet=True)
         val = catalog.value.all()[0]
         assert val.description == "Old"
 
@@ -1046,7 +1050,7 @@ class TestEdgeCases:
         # Add existing modality with _seen=False
         catalog.modality.add(Modality(id="m1", name="Mod", _seen=False))
 
-        catalog.add_metadata(tmp_path, quiet=True)
+        add_metadata(catalog, tmp_path, quiet=True)
 
         # New value should be created
         assert len(catalog.value.all()) == 1
@@ -1062,7 +1066,7 @@ class TestEdgeCases:
         )
 
         catalog = Catalog()
-        catalog.add_metadata(tmp_path, quiet=True)
+        add_metadata(catalog, tmp_path, quiet=True)
 
         assert len(catalog.freq.all()) == 2
         freqs = {f.value: f.freq for f in catalog.freq.all()}
@@ -1076,7 +1080,279 @@ class TestEdgeCases:
         catalog.freq.add(Freq(id=freq_id, variable_id="v1", value="red", freq=3))
 
         (tmp_path / "freq.csv").write_text("variable_id,value,freq\nv1,red,20\n")
-        catalog.add_metadata(tmp_path, quiet=True)
+        add_metadata(catalog, tmp_path, quiet=True)
 
         assert len(catalog.freq.all()) == 1
         assert catalog.freq.all()[0].freq == 20
+
+
+class TestEnsureMetadataApplied:
+    """Tests for ensure_metadata_applied and metadata_path."""
+
+    def test_no_metadata_path_is_noop(self):
+        """Should do nothing when metadata_path is not set."""
+        catalog = Catalog()
+        ensure_metadata_applied(catalog)
+        assert not catalog._metadata_applied
+
+    def test_applies_metadata_from_folder(self, tmp_path: Path):
+        """Should apply metadata when metadata_path is a folder."""
+        (tmp_path / "folder.csv").write_text("id,name\nf1,Folder1\n")
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        ensure_metadata_applied(catalog)
+        assert catalog._metadata_applied
+        assert len(catalog.folder.all()) == 1
+
+    def test_idempotent(self, tmp_path: Path):
+        """Should only apply metadata once."""
+        (tmp_path / "folder.csv").write_text("id,name\nf1,Folder1\n")
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        ensure_metadata_applied(catalog)
+        ensure_metadata_applied(catalog)
+        assert len(catalog.folder.all()) == 1
+
+    def test_invalid_path_raises(self):
+        """Should raise ConfigError for nonexistent path."""
+        with pytest.raises(ConfigError, match="Metadata folder not found"):
+            Catalog(metadata_path="/nonexistent/path", quiet=True)
+
+    def test_file_not_dir_raises(self, tmp_path: Path):
+        """Should raise ConfigError when path is a file, not directory."""
+        file_path = tmp_path / "file.txt"
+        file_path.write_text("hello")
+        with pytest.raises(ConfigError, match="not a directory"):
+            Catalog(metadata_path=file_path, quiet=True)
+
+    def test_triggered_by_export_db(self, tmp_path: Path):
+        """export_db should trigger metadata application."""
+        meta_dir = tmp_path / "meta"
+        meta_dir.mkdir()
+        (meta_dir / "tag.csv").write_text("id,name\nt1,MyTag\n")
+        out_dir = tmp_path / "output"
+        catalog = Catalog(
+            app_path=out_dir, metadata_path=meta_dir, refresh=True, quiet=True
+        )
+        catalog.export_db()
+        assert catalog._metadata_applied
+        assert len(catalog.tag.all()) == 1
+
+    def test_triggered_by_export_app(self, tmp_path: Path):
+        """export_app should trigger metadata application."""
+        meta_dir = tmp_path / "meta"
+        meta_dir.mkdir()
+        (meta_dir / "tag.csv").write_text("id,name\nt1,MyTag\n")
+        out_dir = tmp_path / "output"
+        catalog = Catalog(
+            app_path=out_dir, metadata_path=meta_dir, refresh=True, quiet=True
+        )
+        catalog.export_app()
+        assert catalog._metadata_applied
+        assert len(catalog.tag.all()) == 1
+
+    def test_metadata_path_with_database_uri(self, tmp_path: Path):
+        """Should work with database URI."""
+        import sqlite3
+
+        db_path = tmp_path / "metadata.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE folder (id TEXT, name TEXT)")
+        conn.execute("INSERT INTO folder VALUES ('f1', 'Folder1')")
+        conn.commit()
+        conn.close()
+        catalog = Catalog(metadata_path=f"sqlite:///{db_path}", quiet=True)
+        ensure_metadata_applied(catalog)
+        assert catalog._metadata_applied
+        assert len(catalog.folder.all()) == 1
+
+
+class TestLoadMetadata:
+    """Tests for load_metadata and _extract_freq_hidden_ids."""
+
+    def test_loads_tables_into_memory(self, tmp_path: Path):
+        """Should populate _loaded_metadata at init."""
+        (tmp_path / "tag.csv").write_text("id,name\nt1,Tag1\n")
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        assert catalog._loaded_metadata is not None
+        assert "tag" in catalog._loaded_metadata
+
+    def test_no_metadata_path_leaves_none(self):
+        """Should leave _loaded_metadata as None when no path."""
+        catalog = Catalog()
+        assert catalog._loaded_metadata is None
+        assert catalog._freq_hidden_ids == set()
+
+    def test_extracts_freq_hidden_ids(self, tmp_path: Path):
+        """Should extract variable IDs with policy---freq-hidden tag."""
+        (tmp_path / "variable.csv").write_text(
+            "id,name,dataset_id,tag_ids\n"
+            f'd---v1,v1,d,"{FREQ_HIDDEN_TAG}"\n'
+            "d---v2,v2,d,other\n"
+        )
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        assert catalog._freq_hidden_ids == {"d---v1"}
+
+    def test_freq_hidden_with_multiple_tags(self, tmp_path: Path):
+        """Should detect freq-hidden even with other tags."""
+        (tmp_path / "variable.csv").write_text(
+            f'id,name,dataset_id,tag_ids\nd---v1,v1,d,"rh,{FREQ_HIDDEN_TAG},finance"\n'
+        )
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        assert catalog._freq_hidden_ids == {"d---v1"}
+
+    def test_no_variable_file_empty_hidden(self, tmp_path: Path):
+        """Should have empty _freq_hidden_ids when no variable.csv."""
+        (tmp_path / "tag.csv").write_text("id,name\nt1,Tag1\n")
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        assert catalog._freq_hidden_ids == set()
+
+    def test_ensure_uses_preloaded(self, tmp_path: Path):
+        """ensure_metadata_applied should use _loaded_metadata, not re-read."""
+        (tmp_path / "folder.csv").write_text("id,name\nf1,Folder1\n")
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        assert catalog._loaded_metadata is not None
+        # Remove the folder so re-reading would fail
+        (tmp_path / "folder.csv").unlink()
+        ensure_metadata_applied(catalog)
+        assert catalog._metadata_applied
+        assert len(catalog.folder.all()) == 1
+
+    def test_extract_freq_hidden_no_tag_ids_column(self):
+        """Should return empty set when tag_ids column missing."""
+        df = pd.DataFrame({"id": ["v1"], "name": ["var1"]})
+        tables: dict[str, tuple[pd.DataFrame, str]] = {"variable": (df, "variable.csv")}
+        assert _extract_freq_hidden_ids(tables) == set()
+
+    def test_extract_freq_hidden_no_id_column(self):
+        """Should return empty set when id column missing."""
+        df = pd.DataFrame({"tag_ids": [FREQ_HIDDEN_TAG], "name": ["v1"]})
+        tables: dict[str, tuple[pd.DataFrame, str]] = {"variable": (df, "variable.csv")}
+        assert _extract_freq_hidden_ids(tables) == set()
+
+    def test_extract_freq_hidden_empty_table(self):
+        """Should return empty set for empty dict."""
+        assert _extract_freq_hidden_ids({}) == set()
+
+    def test_ensure_fallback_when_not_preloaded(self, tmp_path: Path):
+        """ensure_metadata_applied should load from disk if _loaded_metadata is None."""
+        (tmp_path / "folder.csv").write_text("id,name\nf1,Folder1\n")
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        catalog._loaded_metadata = None  # simulate missing preload
+        ensure_metadata_applied(catalog)
+        assert catalog._metadata_applied
+        assert len(catalog.folder.all()) == 1
+
+
+class TestFreqHiddenPolicy:
+    """Tests for policy---freq-hidden during scan and export."""
+
+    def _make_csv(self, path: Path) -> Path:
+        """Create a CSV with two low-cardinality columns."""
+        csv_path = path / "data.csv"
+        csv_path.write_text("name,color\nAlice,red\nBob,blue\nAlice,red\n")
+        return csv_path
+
+    def _make_metadata(self, path: Path, folder_id: str) -> Path:
+        """Create metadata tagging 'name' column as freq-hidden."""
+        meta = path / "meta"
+        meta.mkdir()
+        (meta / "variable.csv").write_text(
+            f"id,name,dataset_id,tag_ids\n"
+            f"{folder_id}---data_csv---name,name,{folder_id}---data_csv,"
+            f'"{FREQ_HIDDEN_TAG}"\n'
+        )
+        return meta
+
+    def test_hidden_var_has_no_freq(self, tmp_path: Path):
+        """Freq-hidden variable should have no freq rows."""
+        self._make_csv(tmp_path)
+        meta = self._make_metadata(tmp_path, "src")
+        catalog = Catalog(metadata_path=meta, quiet=True)
+        catalog.add_folder(tmp_path, folder=Folder(id="src"), include="*.csv")
+        ensure_metadata_applied(catalog)
+
+        name_var = catalog.variable.get("src---data_csv---name")
+        color_var = catalog.variable.get("src---data_csv---color")
+        assert name_var is not None
+        assert color_var is not None
+
+        # name: no modality, no freq
+        assert not name_var.modality_ids
+        freq_rows = [
+            f for f in catalog.freq.all() if f.variable_id == "src---data_csv---name"
+        ]
+        assert freq_rows == []
+
+        # color: has modality and freq (not hidden)
+        assert color_var.modality_ids
+        color_freqs = [
+            f for f in catalog.freq.all() if f.variable_id == "src---data_csv---color"
+        ]
+        assert len(color_freqs) > 0
+
+    def test_hidden_var_keeps_stats(self, tmp_path: Path):
+        """Freq-hidden variable should still have stats."""
+        self._make_csv(tmp_path)
+        meta = self._make_metadata(tmp_path, "src")
+        catalog = Catalog(metadata_path=meta, quiet=True)
+        catalog.add_folder(tmp_path, folder=Folder(id="src"), include="*.csv")
+
+        name_var = catalog.variable.get("src---data_csv---name")
+        assert name_var is not None
+        assert name_var.nb_distinct == 2
+
+    def test_hidden_tag_applied_after_metadata(self, tmp_path: Path):
+        """The policy tag should appear on the variable after metadata apply."""
+        self._make_csv(tmp_path)
+        meta = self._make_metadata(tmp_path, "src")
+        catalog = Catalog(metadata_path=meta, quiet=True)
+        catalog.add_folder(tmp_path, folder=Folder(id="src"), include="*.csv")
+        ensure_metadata_applied(catalog)
+
+        name_var = catalog.variable.get("src---data_csv---name")
+        assert name_var is not None
+        assert FREQ_HIDDEN_TAG in (name_var.tag_ids or [])
+
+    def test_no_hidden_ids_without_metadata(self, tmp_path: Path):
+        """Without metadata_path, no variables are hidden."""
+        self._make_csv(tmp_path)
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(tmp_path, folder=Folder(id="src"), include="*.csv")
+
+        name_var = catalog.variable.get("src---data_csv---name")
+        assert name_var is not None
+        # name should have freq (not hidden)
+        freq_rows = [
+            f for f in catalog.freq.all() if f.variable_id == "src---data_csv---name"
+        ]
+        assert len(freq_rows) > 0
+
+    def test_multiple_hidden_variables(self, tmp_path: Path):
+        """Multiple variables tagged freq-hidden should all be suppressed."""
+        csv_path = tmp_path / "data.csv"
+        csv_path.write_text("name,color,age\nAlice,red,30\nBob,blue,25\nAlice,red,30\n")
+        meta = tmp_path / "meta"
+        meta.mkdir()
+        (meta / "variable.csv").write_text(
+            f"id,name,dataset_id,tag_ids\n"
+            f'src---data_csv---name,name,src---data_csv,"{FREQ_HIDDEN_TAG}"\n'
+            f'src---data_csv---color,color,src---data_csv,"{FREQ_HIDDEN_TAG}"\n'
+        )
+        catalog = Catalog(metadata_path=meta, quiet=True)
+        assert catalog._freq_hidden_ids == {
+            "src---data_csv---name",
+            "src---data_csv---color",
+        }
+        catalog.add_folder(tmp_path, folder=Folder(id="src"), include="*.csv")
+        ensure_metadata_applied(catalog)
+
+        for col in ("name", "color"):
+            var = catalog.variable.get(f"src---data_csv---{col}")
+            assert var is not None
+            assert not var.modality_ids
+            assert [f for f in catalog.freq.all() if f.variable_id == var.id] == []
+
+        # age is not hidden — should have freq
+        age_var = catalog.variable.get("src---data_csv---age")
+        assert age_var is not None
+        age_freqs = [f for f in catalog.freq.all() if f.variable_id == age_var.id]
+        assert len(age_freqs) > 0

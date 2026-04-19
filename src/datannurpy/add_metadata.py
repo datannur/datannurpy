@@ -54,6 +54,9 @@ ENTITIES_WITHOUT_ID = {"value", "freq"}
 # List fields that should be merged (union)
 LIST_FIELDS = {"tag_ids", "doc_ids", "modality_ids", "source_var_ids"}
 
+# Policy tag IDs
+FREQ_HIDDEN_TAG = "policy---freq-hidden"
+
 # Supported file extensions for metadata
 SUPPORTED_EXTENSIONS = {".csv", ".xlsx", ".xls", ".json", ".sas7bdat"}
 
@@ -497,6 +500,87 @@ def _get_catalog_table(catalog: Catalog, entity_name: str) -> Any | None:
     return mapping.get(entity_name)
 
 
+def _load_tables(
+    path: str | Path,
+    allowed_entities: set[str],
+    *,
+    quiet: bool = False,
+) -> dict[str, tuple[pd.DataFrame, str]]:
+    """Load metadata tables from folder or database. Returns empty dict on error."""
+    path_str = str(path)
+    if _is_database_connection(path_str):
+        return _load_tables_from_database(path_str, allowed_entities, quiet=quiet)
+    folder_path = Path(path)
+    if not folder_path.exists():
+        raise ConfigError(f"Metadata folder not found: {folder_path}")
+    if not folder_path.is_dir():
+        raise ConfigError(f"Metadata source is not a directory: {folder_path}")
+    return _load_tables_from_folder(folder_path, allowed_entities, quiet=quiet)
+
+
+def _extract_freq_hidden_ids(
+    tables: dict[str, tuple[pd.DataFrame, str]],
+) -> set[str]:
+    """Extract variable IDs tagged with policy---freq-hidden."""
+    if "variable" not in tables:
+        return set()
+    df, _ = tables["variable"]
+    if "tag_ids" not in df.columns or "id" not in df.columns:
+        return set()
+    hidden: set[str] = set()
+    for row in df.to_dict(orient="records"):
+        var_id = row.get("id")
+        tags = _parse_list_field(row.get("tag_ids"))
+        if var_id and FREQ_HIDDEN_TAG in tags:
+            hidden.add(str(var_id))
+    return hidden
+
+
+def load_metadata(
+    catalog: Catalog,
+    path: str | Path,
+) -> None:
+    """Load metadata files into memory without applying to catalog tables."""
+    allowed_entities = DEPTH_ENTITIES[catalog.depth]
+    tables = _load_tables(path, allowed_entities, quiet=catalog.quiet)
+    catalog._loaded_metadata = tables
+    catalog._freq_hidden_ids = _extract_freq_hidden_ids(tables)
+
+
+def _apply_tables(
+    catalog: Catalog,
+    tables: dict[str, tuple[pd.DataFrame, str]],
+    *,
+    quiet: bool = False,
+    start_time: float,
+) -> None:
+    """Validate and merge pre-loaded tables into catalog."""
+    if not tables:
+        log_warn("No metadata files found", quiet)
+        return
+
+    errors = _validate_all_tables(catalog, tables)
+    if errors:
+        s = "s" if len(errors) > 1 else ""
+        log_warn(f"Invalid metadata - {len(errors)} error{s}:", quiet)
+        for err in errors:
+            print(f"    • {err}", file=sys.stderr)
+        return
+
+    total_created = 0
+    total_updated = 0
+
+    for entity_name, (table, _file_name) in tables.items():
+        created, updated = _process_entity_table(catalog, entity_name, table)
+        total_created += created
+        total_updated += updated
+
+        if not quiet and (created or updated):
+            log_done(f"{entity_name}: {created} created, {updated} updated", quiet)
+
+    log_summary_metadata(total_created, total_updated, quiet, start_time)
+
+
 @validate_params
 def add_metadata(
     self: Catalog,
@@ -511,48 +595,24 @@ def add_metadata(
     resolved_depth = depth if depth is not None else self.depth
     allowed_entities = DEPTH_ENTITIES[resolved_depth]
 
-    path_str = str(path)
+    start_time = log_section("add_metadata", str(path), quiet)
+    tables = _load_tables(path, allowed_entities, quiet=quiet)
+    _apply_tables(self, tables, quiet=quiet, start_time=start_time)
 
-    # Load tables from source
-    if _is_database_connection(path_str):
-        start_time = log_section("add_metadata", path_str, quiet)
-        tables = _load_tables_from_database(path_str, allowed_entities, quiet=quiet)
-    else:
-        folder_path = Path(path)
-        if not folder_path.exists():
-            raise ConfigError(f"Metadata folder not found: {folder_path}")
-        if not folder_path.is_dir():
-            raise ConfigError(f"Path must be a directory: {folder_path}")
 
-        start_time = log_section("add_metadata", str(folder_path), quiet)
-        tables = _load_tables_from_folder(folder_path, allowed_entities, quiet=quiet)
-
-    if not tables:
-        log_warn("No metadata files found", quiet)
+def ensure_metadata_applied(catalog: Catalog) -> None:
+    """Apply pre-loaded metadata if configured and not yet applied."""
+    if catalog._metadata_applied or catalog.metadata_path is None:
         return
-
-    # Validate all tables before processing
-    errors = _validate_all_tables(self, tables)
-    if errors:
-        s = "s" if len(errors) > 1 else ""
-        log_warn(f"Invalid metadata - {len(errors)} error{s}:", quiet)
-        for err in errors:
-            print(f"    • {err}", file=sys.stderr)
-        return
-
-    # Process each entity table
-    total_created = 0
-    total_updated = 0
-
-    for entity_name, (table, _file_name) in tables.items():
-        created, updated = _process_entity_table(self, entity_name, table)
-        total_created += created
-        total_updated += updated
-
-        if not quiet and (created or updated):
-            log_done(f"{entity_name}: {created} created, {updated} updated", quiet)
-
-    log_summary_metadata(total_created, total_updated, quiet, start_time)
+    start_time = log_section("add_metadata", str(catalog.metadata_path), catalog.quiet)
+    tables = getattr(catalog, "_loaded_metadata", None)
+    if tables is None:
+        allowed_entities = DEPTH_ENTITIES[catalog.depth]
+        tables = _load_tables(
+            catalog.metadata_path, allowed_entities, quiet=catalog.quiet
+        )
+    _apply_tables(catalog, tables, quiet=catalog.quiet, start_time=start_time)
+    catalog._metadata_applied = True
 
 
 def log_summary_metadata(

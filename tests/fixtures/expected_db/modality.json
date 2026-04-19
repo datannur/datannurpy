@@ -91,13 +91,6 @@
     "type": null
   },
   {
-    "id": "_modalities---mod_290b7fe59b",
-    "folder_id": "_modalities",
-    "name": "finance,rh, rh",
-    "description": null,
-    "type": null
-  },
-  {
     "id": "_modalities---mod_2dc8eb7aad",
     "folder_id": "_modalities",
     "name": "Eolien, Solaire",
@@ -742,6 +735,13 @@
     "type": null
   },
   {
+    "id": "_modalities---mod_dd17cc26b6",
+    "folder_id": "_modalities",
+    "name": "finance,rh, rh,policy---...",
+    "description": null,
+    "type": null
+  },
+  {
     "id": "_modalities---mod_de545e0867",
     "folder_id": "_modalities",
     "name": "Solar, Wind",
@@ -836,6 +836,13 @@
     "id": "_modalities---mod_ef932f614f",
     "folder_id": "_modalities",
     "name": "contact@acme..., info@techsta...",
+    "description": null,
+    "type": null
+  },
+  {
+    "id": "_modalities---mod_f099626334",
+    "folder_id": "_modalities",
+    "name": "https://gran..., https://www...., https://www....... (+7)",
     "description": null,
     "type": null
   },

@@ -9,11 +9,13 @@ import webbrowser
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from .utils.log import _write_log
 from .utils.params import validate_params
 
 if TYPE_CHECKING:
     from .catalog import Catalog
 
+from .add_metadata import ensure_metadata_applied
 from .errors import ConfigError
 
 
@@ -26,6 +28,7 @@ def export_db(
     quiet: bool | None = None,
 ) -> None:
     """Write all catalog entities to JSON files."""
+    ensure_metadata_applied(catalog)
     # Only finalize (cleanup unseen entities) if a scan was performed
     if catalog._has_scanned:
         catalog.finalize()
@@ -87,6 +90,7 @@ def export_app(
     quiet: bool | None = None,
 ) -> None:
     """Export a standalone datannur visualization app with catalog data."""
+    ensure_metadata_applied(catalog)
     # Only finalize (cleanup unseen entities) if a scan was performed
     if catalog._has_scanned:
         catalog.finalize()
@@ -101,8 +105,10 @@ def export_app(
     output_dir = Path(output_dir)
 
     start_time = time.perf_counter()
+    header = f"\n[export_app] {output_dir.name}"
     if not q:
-        print(f"\n[export_app] {output_dir}", file=sys.stderr)
+        print(header, file=sys.stderr)
+    _write_log(header)
 
     # Copy app files
     _copy_app(output_dir)
@@ -111,10 +117,12 @@ def export_app(
     db_dir = output_dir / "data" / "db"
     catalog.export_db(db_dir, quiet=True, track_evolution=track_evolution)
 
+    elapsed = time.perf_counter() - start_time
+    index_uri = (output_dir / "index.html").resolve().as_uri()
+    summary = f"\n  → exported in {elapsed:.1f}s: {index_uri}"
     if not q:
-        elapsed = time.perf_counter() - start_time
-        index_uri = (output_dir / "index.html").resolve().as_uri()
-        print(f"  → app exported in {elapsed:.1f}s: {index_uri}", file=sys.stderr)
+        print(summary, file=sys.stderr)
+    _write_log(summary)
 
     if open_browser:
         index_path = output_dir / "index.html"

@@ -10,7 +10,7 @@ src/datannurpy/
 ├── add_folder.py        # Catalog.add_folder implementation
 ├── add_dataset.py       # Catalog.add_dataset implementation
 ├── add_database.py      # Catalog.add_database implementation
-├── add_metadata.py      # Catalog.add_metadata implementation
+├── add_metadata.py      # Internal metadata merge (_add_metadata)
 ├── finalize.py          # Cleanup of entities not seen during scan
 ├── exporter.py          # export_db, export_app
 ├── schema.py            # Dataclasses: Folder, Dataset, Variable, Modality, Value, Freq, Institution, Tag, Doc
@@ -28,7 +28,7 @@ Functions: `run_config`, `sanitize_id`, `build_dataset_id`, `build_variable_id`
 
 Exception: `ConfigError`
 
-Methods: `add_folder`, `add_dataset`, `add_database`, `add_metadata`, `finalize`, `export_db`, `export_app`
+Methods: `add_folder`, `add_dataset`, `add_database`, `finalize`, `export_db`, `export_app`
 
 Common options: `include`, `exclude`, `depth`, `refresh`
 

@@ -1,4 +1,5 @@
 app_path: ./output_remote
+metadata_path: ../data/metadata
 env_file: ../.env
 refresh: true
 open_browser: true
@@ -22,5 +23,3 @@ add:
         Source: Office fédéral de l'énergie (OFEN) - opendata.swiss
     storage_options:
       key_filename: ${SFTP_KEY}
-
-  - metadata: ../data/metadata

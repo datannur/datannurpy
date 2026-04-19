@@ -555,6 +555,127 @@ def match_patterns(items: list[str], patterns: Sequence[str]) -> set[str]:
     return matched
 
 
+def _quote_ident(name: str, backend: str) -> str:
+    """Quote a SQL identifier for the given backend."""
+    if backend == "mysql":
+        return f"`{name.replace('`', '``')}`"
+    if backend == "mssql":
+        return f"[{name.replace(']', ']]')}]"
+    # postgres, oracle, etc.: double-quote
+    return f'"{name.replace(chr(34), chr(34) + chr(34))}"'
+
+
+def _qualify_table(table: str, schema: str | None, backend: str) -> str:
+    """Build a fully-qualified table reference."""
+    t = table.upper() if backend == "oracle" else table
+    s = schema.upper() if schema and backend == "oracle" else schema
+    if s:
+        return f"{_quote_ident(s, backend)}.{_quote_ident(t, backend)}"
+    return _quote_ident(t, backend)
+
+
+def batch_table_row_count(
+    con: ibis.BaseBackend,
+    tables: list[str],
+    schema: str | None,
+) -> dict[str, int]:
+    """Fetch exact row count for all tables via a single UNION ALL query."""
+    if not tables:
+        return {}
+    backend = get_backend_name(con)
+    raw_sql = getattr(con, "raw_sql", None)
+    if raw_sql is None:
+        return {}
+    try:
+        parts = [
+            f"SELECT '{_quote(t)}' AS n, COUNT(*) AS c "
+            f"FROM {_qualify_table(t, schema, backend)}"
+            for t in tables
+        ]
+        rows = raw_sql(" UNION ALL ".join(parts)).fetchall()
+        return {
+            name.lower() if backend == "oracle" else name: int(cnt)
+            for name, cnt in rows
+        }
+    except Exception:
+        return {}
+
+
+def batch_table_data_size(
+    con: ibis.BaseBackend,
+    tables: list[str],
+    schema: str | None,
+) -> dict[str, int]:
+    """Fetch data size for all tables in one query."""
+    backend = get_backend_name(con)
+    raw_sql = getattr(con, "raw_sql", None)
+    if raw_sql is None or backend not in ("mysql", "postgres", "mssql", "oracle"):
+        return {}
+    if backend == "oracle":
+        try:
+            uc_schema = schema.upper() if schema else None
+            if uc_schema:
+                for view in ("dba_segments", "all_segments"):
+                    try:
+                        rows = raw_sql(
+                            f"SELECT segment_name, SUM(bytes) "
+                            f"FROM {view} WHERE owner = :owner "
+                            f"GROUP BY segment_name",
+                            parameters={"owner": uc_schema},
+                        ).fetchall()
+                        break
+                    except Exception:
+                        continue
+                else:
+                    return {}
+            else:
+                rows = raw_sql(
+                    "SELECT segment_name, SUM(bytes) "
+                    "FROM user_segments GROUP BY segment_name"
+                ).fetchall()
+            table_set = set(tables)
+            return {
+                name.lower(): int(size)
+                for name, size in rows
+                if name.lower() in table_set and size is not None
+            }
+        except Exception:
+            return {}
+    try:
+        if backend == "mysql":
+            query = (
+                "SELECT table_name, data_length + index_length "
+                "FROM information_schema.tables "
+                f"WHERE table_schema = '{_quote(schema or '')}'"
+            )
+        elif backend == "postgres":
+            sch = _quote(schema or "public")
+            query = (
+                "SELECT relname, "
+                "pg_total_relation_size(quote_ident(schemaname) || '.' || quote_ident(relname)) "
+                f"FROM pg_stat_user_tables WHERE schemaname = '{sch}'"
+            )
+        else:  # mssql
+            query = (
+                "SELECT t.name, "
+                "SUM(a.total_pages) * 8 * 1024 "
+                "FROM sys.tables t "
+                "JOIN sys.partitions p ON t.object_id = p.object_id AND p.index_id IN (0,1) "
+                "JOIN sys.allocation_units a ON p.partition_id = a.container_id "
+                f"WHERE SCHEMA_NAME(t.schema_id) = '{_quote(schema or 'dbo')}' "
+                "GROUP BY t.name"
+            )
+        rows = raw_sql(query).fetchall()
+        table_set = set(tables)
+        return {
+            name: int(size)
+            for name, size in rows
+            if name in table_set and size is not None
+        }
+    except Exception:
+        return {}
+
+
 def list_tables(
     con: ibis.BaseBackend,
     schema: str | None = None,
@@ -734,16 +855,15 @@ def compute_schema_signature(
     """Compute a hash signature of the table schema (column names and types)."""
     backend = get_backend_name(con)
     table = _get_table(con, table_name, schema, backend)
+    return _hash_ibis_schema(table.schema())
 
-    # Build schema string from column names and types
-    # Sort by column name for consistency
-    # Normalize unknown(...) types to "unknown" for cross-version stability
+
+def _hash_ibis_schema(sch: ibis.Schema) -> str:
+    """Compute MD5 hash from an ibis Schema."""
     schema_parts = sorted(
-        f"{col}:{_normalize_dtype(dtype)}" for col, dtype in table.schema().items()
+        f"{col}:{_normalize_dtype(dtype)}" for col, dtype in sch.items()
     )
     schema_str = "|".join(schema_parts)
-
-    # Return MD5 hash (fast, collision-resistant enough for this use case)
     return hashlib.md5(schema_str.encode()).hexdigest()
 
 

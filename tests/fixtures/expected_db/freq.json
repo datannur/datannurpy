@@ -1195,106 +1195,6 @@
     "freq": 1
   },
   {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Andre",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Bernard",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Bertrand",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Blanc",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "David",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Dupont",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Durand",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Faure",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Garnier",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Girard",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Leroy",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Martin",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Mercier",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Michel",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Moreau",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Petit",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Richard",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Robert",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Roux",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Simon",
-    "freq": 1
-  },
-  {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Anne",
     "freq": 1
@@ -2516,7 +2416,7 @@
   },
   {
     "variable_id": "data---metadata---variable_csv---tag_ids",
-    "value": "rh",
+    "value": "rh,policy---freq-hidden",
     "freq": 1
   },
   {
@@ -4816,47 +4716,52 @@
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "aaaaa?//aaa.aa-aaaa-aaaaaa.aa/",
+    "value": "https://grandsplanssolar.ch",
     "freq": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "aaaaa?//aaa.aaa.aa/aa/aaaaa-aaa/aaaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaaa.aaaa",
+    "value": "https://www.ekz.ch/de/ueber-ekz/unternehmen/engagement/felsenstrom.html",
     "freq": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "aaaaa?//aaa.aaaaaaa-aaaaaa.aa/",
+    "value": "https://www.energia-alpina.ch/",
     "freq": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "aaaaa?//aaa.aaaaaaa.aaaaa",
+    "value": "https://www.engadin.solar",
     "freq": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "aaaaa?//aaa.aaaaaaaa.aa",
+    "value": "https://www.gondosolar.ch/",
     "freq": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "aaaaa?//aaa.aaaaaaaa.aa/aa-aa/aaaaaaaaaaa/aaaaaaaaaaaaaa/aaaaaaaaaaaa-aaaaaaa-aa/aaaaaaaaa-aaaaaaaaaaaa/",
+    "value": "https://www.grengiols-solar.ch/de",
     "freq": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "aaaaa?//aaa.aaaaaaaaa-aaaaa.aa/aa",
+    "value": "https://www.jungfrau.ch/de-ch/unternehmen/jungfraubahnen/jungfraubahn-holding-ag/kraftwerk-jungfraubahn/",
     "freq": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "aaaaa?//aaa.aaaaaaaaaa.aa/",
-    "freq": 2
+    "value": "https://www.morgeten.ch",
+    "freq": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
-    "value": "aaaaa?//aaaaaaaaaaaaaaaa.aa",
+    "value": "https://www.pv-mont-soleil.ch/",
+    "freq": 1
+  },
+  {
+    "variable_id": "photovoltaik---Project---ProjectWeb",
+    "value": "https://www.scuolsolar.ch/",
     "freq": 1
   },
   {

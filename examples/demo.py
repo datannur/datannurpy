@@ -5,7 +5,9 @@ from datannurpy import Catalog, Folder
 HERE = Path(__file__).parent
 DATA = HERE.parent / "data"
 
-catalog = Catalog(app_path=HERE / "output", refresh=True)
+catalog = Catalog(
+    app_path=HERE / "output", refresh=True, metadata_path=DATA / "metadata"
+)
 catalog.add_folder(DATA)
 catalog.add_database(f"sqlite:///{DATA}/company.db")
 catalog.add_database(
@@ -17,5 +19,4 @@ catalog.add_database(
         "Source: Office fédéral de l'énergie (OFEN) - opendata.swiss",
     ),
 )
-catalog.add_metadata(DATA / "metadata")
 catalog.export_app(open_browser=True)

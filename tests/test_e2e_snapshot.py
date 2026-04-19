@@ -86,7 +86,12 @@ def sort_by_id(data: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def build_demo_catalog(app_dir: Path) -> tuple[Catalog, Path]:
     """Build the catalog exactly like demo.py does. Returns (catalog, db_dir)."""
-    catalog = Catalog(app_path=app_dir, refresh=True, _now=FIXED_TIMESTAMP)
+    catalog = Catalog(
+        app_path=app_dir,
+        refresh=True,
+        _now=FIXED_TIMESTAMP,
+        metadata_path=DATA_DIR / "metadata",
+    )
     catalog.add_folder(DATA_DIR)
     catalog.add_database(f"sqlite:///{DATA_DIR}/company.db")
     catalog.add_database(
@@ -98,7 +103,6 @@ def build_demo_catalog(app_dir: Path) -> tuple[Catalog, Path]:
             "Source: Office fédéral de l'énergie (OFEN) - opendata.swiss",
         ),
     )
-    catalog.add_metadata(DATA_DIR / "metadata")
     catalog.export_db(quiet=True)
     return catalog, app_dir / "data" / "db"
 

@@ -28,25 +28,11 @@
     "description": "No dominant pattern detected"
   },
   {
-    "id": "auto---jwt",
-    "parent_id": "auto---security",
-    "doc_ids": "",
-    "name": "JWT",
-    "description": "JSON Web Tokens"
-  },
-  {
     "id": "auto---natural-text",
     "parent_id": "auto---free-text",
     "doc_ids": "",
     "name": "Natural text",
     "description": "Multi-word natural language text"
-  },
-  {
-    "id": "auto---security",
-    "parent_id": "auto",
-    "doc_ids": "",
-    "name": "Security",
-    "description": "Sensitive or security-related content"
   },
   {
     "id": "auto---text",
@@ -96,6 +82,20 @@
     "doc_ids": "",
     "name": "Finance",
     "description": "Données financières"
+  },
+  {
+    "id": "policy",
+    "parent_id": "scan",
+    "doc_ids": "",
+    "name": "Policy",
+    "description": "User-defined scan policies"
+  },
+  {
+    "id": "policy---freq-hidden",
+    "parent_id": "policy",
+    "doc_ids": "",
+    "name": "Frequencies hidden",
+    "description": "Hide all frequency and modality data for this variable"
   },
   {
     "id": "rh",

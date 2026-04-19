@@ -33,6 +33,8 @@ from .scanner.utils import get_mtime_iso
 from .finalize import remove_dataset_cascade
 from .schema import Dataset, Folder, Variable
 from .scanner.database import (
+    batch_table_data_size,
+    batch_table_row_count,
     build_table_data_path,
     close_connection,
     compute_schema_signature,
@@ -302,6 +304,13 @@ def _add_database_impl(
         else:
             schema_meta = {t: TableMetadata() for t in tables}
 
+        # Batch data size and row counts in bulk queries
+        size_cache: dict[str, int] = {}
+        count_cache: dict[str, int] = {}
+        if resolved_depth in ("stat", "value"):
+            size_cache = batch_table_data_size(con, tables, schema_name)
+            count_cache = batch_table_row_count(con, tables, schema_name)
+
         # Group tables by prefix if enabled
         prefix_folder_ids: dict[str, str] = {}  # prefix → folder_id
         valid_prefixes: set[str] = set()
@@ -343,7 +352,7 @@ def _add_database_impl(
         for table_name in tables:
             if table_name in series_table_names:
                 continue
-            log_start(table_name, q)
+            t0 = log_start(table_name, q)
 
             # Build data_path for incremental lookup
             table_data_path = build_table_data_path(
@@ -423,17 +432,21 @@ def _add_database_impl(
                 if table_vars:
                     build_variable_ids(table_vars, dataset.id)
                     catalog.variable.add_all(table_vars)
-                    log_done(f"{table_name} ({len(table_vars)} vars)", q)
+                    log_done(f"{table_name} ({len(table_vars)} vars)", q, t0)
                 else:
-                    log_done(table_name, q)
+                    log_done(table_name, q, t0)
                 continue
 
-            # Compute signature and row count for comparison/storage
+            # Compute signature and exact row count for incremental check
             try:
                 current_signature = compute_schema_signature(
                     con, table_name, schema_name
                 )
-                current_nb_row = get_table_row_count(con, table_name, schema_name)
+                current_nb_row = (
+                    count_cache[table_name]
+                    if table_name in count_cache
+                    else get_table_row_count(con, table_name, schema_name)
+                )
             except Exception as exc:
                 log_error(table_name, exc, q)
                 scan_errors += 1
@@ -443,14 +456,12 @@ def _add_database_impl(
             preserved_timestamp: int | None = None
 
             if existing_dataset is not None:
-                # Check if data actually changed
                 data_unchanged = (
                     existing_dataset.schema_signature == current_signature
                     and existing_dataset.nb_row == current_nb_row
                 )
 
                 if not do_refresh and data_unchanged:
-                    # Unchanged, skip data scan but refresh structural metadata
                     catalog.dataset.update(existing_dataset.id, _seen=True)
                     catalog.modality_manager.mark_dataset_seen(existing_dataset.id)
                     meta = schema_meta[table_name]
@@ -464,7 +475,6 @@ def _add_database_impl(
                     log_skip(table_name, q)
                     continue
 
-                # Preserve timestamp if data unchanged (even with refresh)
                 if data_unchanged:
                     preserved_timestamp = existing_dataset.last_update_timestamp
 
@@ -480,10 +490,9 @@ def _add_database_impl(
             else:
                 table_folder_id = current_folder_id
 
-            # Build dataset ID
             dataset_id = make_id(table_folder_id, sanitize_id(table_name))
 
-            # First scan → None; rescan with change → now; unchanged → preserved
+            # Timestamps
             if existing_dataset is None:
                 effective_timestamp = None
                 effective_date = None
@@ -494,7 +503,7 @@ def _add_database_impl(
                 effective_timestamp = catalog._now
                 effective_date = now_iso
 
-            # Stat/Value mode: scan table with row count, stats, modalities
+            # Stat/Value mode: scan table
             try:
                 table_vars, nb_row, actual_sample_size, freq_table = scan_table(
                     con,
@@ -511,11 +520,9 @@ def _add_database_impl(
                 scan_errors += 1
                 continue
 
-            # Remove old dataset only after successful scan
             if existing_dataset is not None:
                 remove_dataset_cascade(catalog, existing_dataset)
 
-            # Create dataset with incremental fields
             dataset = Dataset(
                 id=dataset_id,
                 name=table_name,
@@ -524,7 +531,8 @@ def _add_database_impl(
                 last_update_date=effective_date,
                 data_path=table_data_path,
                 nb_row=nb_row,
-                data_size=get_table_data_size(con, table_name, schema_name),
+                data_size=size_cache.get(table_name)
+                or get_table_data_size(con, table_name, schema_name),
                 sample_size=actual_sample_size,
                 schema_signature=current_signature,
                 last_update_timestamp=effective_timestamp,
@@ -543,7 +551,7 @@ def _add_database_impl(
                 )
             catalog.variable.add_all(table_vars)
 
-            log_done(f"{table_name} ({nb_row:,} rows, {len(table_vars)} vars)", q)
+            log_done(f"{table_name} ({nb_row:,} rows, {len(table_vars)} vars)", q, t0)
 
         # Process time series groups
         for group in series_groups:
@@ -610,7 +618,7 @@ def _scan_table_series(
     if existing:
         remove_dataset_cascade(catalog, existing)
 
-    log_start(f"{dataset_name} ({len(tables)} tables)", quiet)
+    t0 = log_start(f"{dataset_name} ({len(tables)} tables)", quiet)
 
     table_vars: list[Variable] = []
     nb_row: int | None = None
@@ -722,12 +730,15 @@ def _scan_table_series(
             f"{dataset_name} ({nb_row:,} rows, {len(table_vars)} vars, "
             f"{len(tables)} tables)",
             quiet,
+            t0,
         )
     elif table_vars:
         log_done(
-            f"{dataset_name} ({len(table_vars)} vars, {len(tables)} tables)", quiet
+            f"{dataset_name} ({len(table_vars)} vars, {len(tables)} tables)",
+            quiet,
+            t0,
         )
     else:
-        log_done(f"{dataset_name} ({len(tables)} tables)", quiet)
+        log_done(f"{dataset_name} ({len(tables)} tables)", quiet, t0)
 
     return 0

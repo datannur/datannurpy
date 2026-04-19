@@ -340,6 +340,16 @@ class TestModalityIncremental:
         result = catalog.modality_manager.get_or_create({"a", "b"})
         assert result == "missing_id"
 
+    def test_get_or_create_existing_modality_marked_seen(self):
+        """get_or_create should mark existing modality as _seen."""
+        catalog = Catalog(quiet=True)
+
+        # First call creates the modality
+        mod_id = catalog.modality_manager.get_or_create({"x", "y"})
+        # Second call should find it in the index and mark _seen
+        result = catalog.modality_manager.get_or_create({"x", "y"})
+        assert result == mod_id
+
 
 class TestStoreFreqTable:
     """Test store_freq_table method."""

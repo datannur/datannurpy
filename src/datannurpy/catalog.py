@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import polars as pl
 
 from .add_database import add_database
 from .add_dataset import add_dataset
 from .add_folder import add_folder
-from .add_metadata import add_metadata
 from .exporter import export_app, export_db
 from .finalize import finalize
 from .schema import Config, DatannurDB
@@ -28,7 +27,6 @@ class Catalog(DatannurDB):
     add_folder = add_folder
     add_dataset = add_dataset
     add_database = add_database
-    add_metadata = add_metadata
     export_app = export_app
     export_db = export_db
     finalize = finalize
@@ -38,6 +36,7 @@ class Catalog(DatannurDB):
         self,
         *,
         app_path: str | Path | None = None,
+        metadata_path: str | Path | None = None,
         depth: Depth = "value",
         refresh: bool = False,
         freq_threshold: int = 100,
@@ -95,6 +94,16 @@ class Catalog(DatannurDB):
         if app_config is not None:
             for key, val in app_config.items():
                 self.config.add(Config(id=key, value=val))
+
+        # Metadata
+        self.metadata_path: str | Path | None = metadata_path
+        self._metadata_applied = False
+        self._loaded_metadata: dict[str, Any] | None = None
+        self._freq_hidden_ids: set[str] = set()
+        if metadata_path is not None:
+            from .add_metadata import load_metadata
+
+            load_metadata(self, metadata_path)
 
         # State
         self._loaded_from_db = load_path is not None

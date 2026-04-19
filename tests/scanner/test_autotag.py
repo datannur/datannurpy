@@ -52,14 +52,31 @@ class TestDetectSpecific:
         values = ["079 123 45 67"] * 10
         assert _detect_specific(values) == "auto---phone"
 
-    def test_phone_no_separator_rejected(self):
-        """Bare digits without + or separators should not match phone."""
+    def test_phone_no_separator_10_digits(self):
+        """Compact 10-digit local numbers should match phone."""
         values = ["0791234567"] * 10
+        assert _detect_specific(values) == "auto---phone"
+
+    def test_phone_no_separator_wrong_length_rejected(self):
+        """Bare digits without separators and not 10 digits should not match."""
+        values = ["07912345678"] * 10
         assert _detect_specific(values) != "auto---phone"
 
     def test_iban(self):
         values = ["CH9300762011623852957"] * 10
         assert _detect_specific(values) == "auto---iban"
+
+    def test_avs13_dotted(self):
+        values = ["756.1234.5678.97"] * 10
+        assert _detect_specific(values) == "auto---avs13"
+
+    def test_avs13_compact(self):
+        values = ["7561234567897"] * 10
+        assert _detect_specific(values) == "auto---avs13"
+
+    def test_avs13_not_756_rejected(self):
+        values = ["123.4567.8901.23"] * 10
+        assert _detect_specific(values) != "auto---avs13"
 
     def test_below_threshold(self):
         values = ["user@example.com"] * 7 + ["not-email"] * 3
@@ -92,6 +109,10 @@ class TestIsSecret:
     def test_few_values_long_no_spaces(self):
         assert _is_secret(["abc123def456ghi789jkl0"]) is True
 
+    def test_short_mixed_token(self):
+        # 12-20 chars with mixed letters+digits → detected as secret
+        assert _is_secret(["abc123def456gh"]) is True
+
     def test_few_values_short(self):
         assert _is_secret(["short"]) is False
 
@@ -123,6 +144,11 @@ class TestIsSecret:
 
     def test_low_uniqueness(self):
         values = ["abc123def456ghi789jkl0"] * 20
+        assert _is_secret(values) is False
+
+    def test_short_no_mix(self):
+        # 12-20 chars, all letters (no digits) → has_mix < 0.5 → not a secret
+        values = [f"abcdefghijklmn{chr(65 + i)}" for i in range(5)]
         assert _is_secret(values) is False
 
 

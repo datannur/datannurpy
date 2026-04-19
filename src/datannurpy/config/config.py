@@ -15,7 +15,7 @@ from ..catalog import Catalog
 from ..errors import ConfigError
 from ..schema import Folder
 
-VALID_TYPES = {"folder", "dataset", "database", "metadata"}
+VALID_TYPES = {"folder", "dataset", "database"}
 RESERVED_KEYS = {
     "add",
     "env",
@@ -59,8 +59,7 @@ def _normalize_entry(
     # Old format: type + path/uri
     if "type" not in item:
         raise ConfigError(
-            "Each 'add' entry must have a type key "
-            "(folder, dataset, database, or metadata)"
+            "Each 'add' entry must have a type key (folder, dataset, or database)"
         )
     item_type = item.pop("type")
     if item_type not in VALID_TYPES:
@@ -179,12 +178,15 @@ def run_config(path: str | Path) -> Catalog:
         catalog_params["app_path"] = _resolve_path(catalog_params["app_path"], base_dir)
     if "log_file" in catalog_params:
         catalog_params["log_file"] = _resolve_path(catalog_params["log_file"], base_dir)
+    if "metadata_path" in catalog_params:
+        catalog_params["metadata_path"] = _resolve_path(
+            catalog_params["metadata_path"], base_dir
+        )
 
     catalog = Catalog(**catalog_params)
 
-    # Process add entries (metadata always last to override auto-scanned values)
+    # Process add entries
     entries = config.get("add", [])
-    entries.sort(key=lambda e: "metadata" in e or e.get("type") == "metadata")
     for raw_item in entries:
         item_type, item, primary_value = _normalize_entry(raw_item)
         if "folder" in item and isinstance(item["folder"], dict):
@@ -202,7 +204,7 @@ def run_config(path: str | Path) -> Catalog:
             else:
                 dataset_path = _resolve_paths(item.pop("path"), base_dir)
             catalog.add_dataset(dataset_path, **item)
-        elif item_type == "database":
+        else:
             if primary_value is not None:
                 uri = primary_value
             else:
@@ -216,12 +218,6 @@ def run_config(path: str | Path) -> Catalog:
                 db_path = uri[len("sqlite:///") :]
                 uri = f"sqlite:///{_resolve_path(db_path, base_dir)}"
             catalog.add_database(uri, **item)
-        else:
-            if primary_value is not None:
-                meta_path = _resolve_path(primary_value, base_dir)
-            else:
-                meta_path = _resolve_path(item.pop("path"), base_dir)
-            catalog.add_metadata(meta_path, **item)
 
     # Export: app_path implies app export, output_dir implies db-only export
     export_dir: Path | None = None
