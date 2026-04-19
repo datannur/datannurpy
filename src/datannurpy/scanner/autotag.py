@@ -79,6 +79,14 @@ _AUTO_TREE: list[tuple[str, str, str, str | None]] = [
         "Multi-word natural language text",
         "auto---free-text",
     ),
+    # Policy tags — manual overrides applied via metadata
+    ("policy", "Policy", "User-defined scan policies", SCAN_TAG_ID),
+    (
+        "policy---freq-hidden",
+        "Frequencies hidden",
+        "Hide all frequency and modality data for this variable",
+        "policy",
+    ),
 ]
 
 _SECURITY_TAGS = frozenset(

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import polars as pl
 
@@ -98,6 +98,12 @@ class Catalog(DatannurDB):
         # Metadata
         self.metadata_path: str | Path | None = metadata_path
         self._metadata_applied = False
+        self._loaded_metadata: dict[str, Any] | None = None
+        self._freq_hidden_ids: set[str] = set()
+        if metadata_path is not None:
+            from .add_metadata import load_metadata
+
+            load_metadata(self, metadata_path)
 
         # State
         self._loaded_from_db = load_path is not None

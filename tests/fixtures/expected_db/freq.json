@@ -1195,106 +1195,6 @@
     "freq": 1
   },
   {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Andre",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Bernard",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Bertrand",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Blanc",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "David",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Dupont",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Durand",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Faure",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Garnier",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Girard",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Leroy",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Martin",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Mercier",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Michel",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Moreau",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Petit",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Richard",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Robert",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Roux",
-    "freq": 1
-  },
-  {
-    "variable_id": "data---csv---employees_csv---nom",
-    "value": "Simon",
-    "freq": 1
-  },
-  {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Anne",
     "freq": 1
@@ -2516,7 +2416,7 @@
   },
   {
     "variable_id": "data---metadata---variable_csv---tag_ids",
-    "value": "rh",
+    "value": "rh,policy---freq-hidden",
     "freq": 1
   },
   {

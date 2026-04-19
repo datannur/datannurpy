@@ -84,6 +84,20 @@
     "description": "Données financières"
   },
   {
+    "id": "policy",
+    "parent_id": "scan",
+    "doc_ids": "",
+    "name": "Policy",
+    "description": "User-defined scan policies"
+  },
+  {
+    "id": "policy---freq-hidden",
+    "parent_id": "policy",
+    "doc_ids": "",
+    "name": "Frequencies hidden",
+    "description": "Hide all frequency and modality data for this variable"
+  },
+  {
     "id": "rh",
     "parent_id": null,
     "doc_ids": "",

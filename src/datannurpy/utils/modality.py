@@ -112,10 +112,18 @@ class ModalityManager:
         var_id_mapping: dict[str, str],
     ) -> None:
         """Assign modalities to variables from freq table and store it."""
+        # Determine columns to exclude (policy---freq-hidden)
+        hidden_ids = self._catalog._freq_hidden_ids
+        hidden_cols = {
+            col for col, var_id in var_id_mapping.items() if var_id in hidden_ids
+        }
+
         # Parse freq table to extract values by variable
         freq_by_var: dict[str, set[str]] = {}
         for row in freq_table.to_pylist():
             col_name = row["variable_id"]
+            if col_name in hidden_cols:
+                continue
             val: str = row["value"]
             if col_name not in freq_by_var:
                 freq_by_var[col_name] = set()
@@ -130,10 +138,10 @@ class ModalityManager:
             if var.is_pattern:
                 continue
             old_col_name = next(k for k, v in var_id_mapping.items() if v == var.id)
-            if old_col_name not in freq_by_var or not freq_by_var[old_col_name]:
+            values = freq_by_var.get(old_col_name)
+            if not values:
                 continue
 
-            values = freq_by_var[old_col_name]
             signature = frozenset(values)
 
             if signature in self._modality_index:
@@ -172,18 +180,21 @@ class ModalityManager:
         if new_values:
             self._catalog.value.add_all(new_values)
 
-        # Store freq table with updated IDs
-        self.store_freq_table(freq_table, var_id_mapping)
+        # Store freq table with updated IDs (excluding hidden vars)
+        self.store_freq_table(freq_table, var_id_mapping, hidden_cols)
 
     def store_freq_table(
         self,
         freq_table: pa.Table,
         var_id_mapping: dict[str, str],
+        exclude_cols: set[str] | None = None,
     ) -> None:
         """Convert freq table to Freq objects and add to catalog."""
         freqs: list[Freq] = []
         for row in freq_table.to_pylist():
             old_var_id: str = row["variable_id"]
+            if exclude_cols and old_var_id in exclude_cols:
+                continue
             new_var_id = var_id_mapping.get(old_var_id, old_var_id)
             value: str | None = row["value"]
             freq_id = build_freq_id(new_var_id, value)

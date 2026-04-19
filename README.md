@@ -146,6 +146,23 @@ Each variable receives at most **one leaf tag**. The frontend can use `parent_id
 
 **Security-tagged columns** (bcrypt, argon2, jwt, secret) have their raw frequency values suppressed — only pattern frequencies are emitted, so no actual secrets appear in the exported catalog.
 
+### Policy tags
+
+Policy tags let you manually control scan behavior for specific variables. Like auto-tags, they live under the `scan` hierarchy and are auto-created — no `tag.csv` entry needed.
+
+| Tag                      | Effect                                                         |
+| ------------------------ | -------------------------------------------------------------- |
+| `policy---freq-hidden`   | Suppress all frequency and modality data (stats remain visible) |
+
+Assign the tag in your `variable.csv` metadata:
+
+```csv
+id,tag_ids
+source---employees_csv---first_name,"policy---freq-hidden"
+```
+
+This is useful for sensitive columns that auto-tagging does not flag (e.g. first names, internal IDs, business codes).
+
 ## Scanning files
 
 ```yaml

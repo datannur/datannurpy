@@ -1,7 +1,8 @@
 # datannurpy
 
-## 0.16.3 (2026-04-19)
+## 0.17.0 (2026-04-19)
 
+- add: `policy---freq-hidden` tag — assign to a variable in metadata to suppress all frequency and modality data while keeping stats; tag is auto-created in the `scan > policy` hierarchy like other system tags
 - breaking: `add_metadata()` removed from public API — metadata is now loaded automatically via `metadata_path` parameter on `Catalog()` (also supported as top-level YAML field)
 - improve: cleaner scan logging — per-dataset timing, progress indicator (`⏳`), better visual spacing between schemas/summaries, and log file no longer contains intermediate `...` lines
 - add: auto-detect AVS13 (Swiss social security number), MD5, SHA1, SHA256, SHA512 content types

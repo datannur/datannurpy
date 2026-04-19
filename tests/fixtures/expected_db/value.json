@@ -465,16 +465,6 @@
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_290b7fe59b",
-    "value": "finance,rh",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_290b7fe59b",
-    "value": "rh",
-    "description": null
-  },
-  {
     "modality_id": "_modalities---mod_2dc8eb7aad",
     "value": "Eolien",
     "description": null
@@ -4482,6 +4472,16 @@
   {
     "modality_id": "_modalities---mod_db169b4a86",
     "value": "300.25",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_dd17cc26b6",
+    "value": "finance,rh",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_dd17cc26b6",
+    "value": "rh,policy---freq-hidden",
     "description": null
   },
   {
