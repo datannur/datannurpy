@@ -15,6 +15,7 @@ from .utils.params import validate_params
 if TYPE_CHECKING:
     from .catalog import Catalog
 
+from .add_metadata import ensure_metadata_applied
 from .errors import ConfigError
 
 
@@ -27,6 +28,7 @@ def export_db(
     quiet: bool | None = None,
 ) -> None:
     """Write all catalog entities to JSON files."""
+    ensure_metadata_applied(catalog)
     # Only finalize (cleanup unseen entities) if a scan was performed
     if catalog._has_scanned:
         catalog.finalize()
@@ -88,6 +90,7 @@ def export_app(
     quiet: bool | None = None,
 ) -> None:
     """Export a standalone datannur visualization app with catalog data."""
+    ensure_metadata_applied(catalog)
     # Only finalize (cleanup unseen entities) if a scan was performed
     if catalog._has_scanned:
         catalog.finalize()

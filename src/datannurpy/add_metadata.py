@@ -555,6 +555,24 @@ def add_metadata(
     log_summary_metadata(total_created, total_updated, quiet, start_time)
 
 
+def ensure_metadata_applied(catalog: Catalog) -> None:
+    """Apply metadata if configured and not yet applied."""
+    if catalog._metadata_applied or catalog.metadata_path is None:
+        return
+    path = (
+        Path(catalog.metadata_path)
+        if not isinstance(catalog.metadata_path, Path)
+        else catalog.metadata_path
+    )
+    if not _is_database_connection(str(catalog.metadata_path)):
+        if not path.exists():
+            raise ConfigError(f"Metadata source not found: {path}")
+        if not path.is_dir():
+            raise ConfigError(f"Metadata source is not a directory: {path}")
+    add_metadata(catalog, catalog.metadata_path)
+    catalog._metadata_applied = True
+
+
 def log_summary_metadata(
     created: int, updated: int, quiet: bool, start_time: float
 ) -> None:

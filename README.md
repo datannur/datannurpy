@@ -380,15 +380,14 @@ csv_skip_copy: true
 ## Manual metadata
 
 ```yaml
-add:
-  # Load from a folder containing metadata files
-  - metadata: ./metadata
+# Load from a folder containing metadata files
+metadata_path: ./metadata
 
-  # Load from a database
-  - metadata: sqlite:///metadata.db
+# Or from a database
+metadata_path: sqlite:///metadata.db
 ```
 
-Can be used alone or combined with auto-scanned metadata (`add_folder`, `add_database`).
+Can be used alone or combined with auto-scanned sources (`add_folder`, `add_database`). Metadata is applied automatically before export.
 
 **Expected structure:** One file/table per entity, named after the entity type:
 
@@ -420,7 +419,7 @@ source---employees_csv---department,"Department code","hr"
 - New entities are created
 - List fields (`tag_ids`, `doc_ids`, etc.) are merged
 
-**Ordering:** In YAML, `add_metadata` is automatically processed last regardless of declaration order. In Python, call `add_metadata` **after** `add_folder`, `add_dataset`, and `add_database` so manual values take precedence.
+**Ordering:** Metadata is automatically applied before export/finalization, after all `add_folder`, `add_dataset`, and `add_database` calls, so manual values take precedence.
 
 ## Environment variables
 
@@ -533,12 +532,13 @@ All YAML features are also available programmatically via the Python API.
 ### `Catalog`
 
 ```python
-Catalog(app_path=None, depth="value", refresh=False, freq_threshold=100, csv_encoding=None, sample_size=100_000, csv_skip_copy=False, app_config=None, quiet=False, verbose=False, log_file=None)
+Catalog(app_path=None, metadata_path=None, depth="value", refresh=False, freq_threshold=100, csv_encoding=None, sample_size=100_000, csv_skip_copy=False, app_config=None, quiet=False, verbose=False, log_file=None)
 ```
 
 | Attribute      | Type                              | Description                                        |
 | -------------- | --------------------------------- | -------------------------------------------------- |
 | app_path       | str \| Path \| None               | Load existing catalog for incremental scan         |
+| metadata_path  | str \| Path \| None               | Metadata source folder or database URI             |
 | depth          | "dataset" \| "variable" \| "stat" \| "value" | Default scan depth (default: "value")              |
 | refresh        | bool                              | Force full rescan ignoring cache (default: False)  |
 | freq_threshold | int                               | Max distinct values for frequency/modality detection. Strings above this threshold get pattern frequencies instead |
@@ -686,20 +686,6 @@ catalog.add_database(
 | id                 | str \| None                                     | None     | Override folder ID                         |
 | name               | str \| None                                     | None     | Override folder name                       |
 | description        | str \| None                                     | None     | Override folder description                |
-
-### `Catalog.add_metadata()`
-
-```python
-catalog.add_metadata(path, depth=None, quiet=None)
-```
-
-| Parameter | Type                                      | Default  | Description                                  |
-| --------- | ----------------------------------------- | -------- | -------------------------------------------- |
-| path      | str \| Path                               | required | Folder or database containing metadata files |
-| depth     | "dataset" \| "variable" \| "stat" \| "value" \| None | None     | Filter which entities to load                |
-| quiet     | bool \| None                              | None     | Override catalog quiet setting               |
-
-**Supported entity files/tables:** all catalog entities. The `id` column is not required for `value` and `freq` (composite key computed automatically).
 
 ### `Catalog.export_db()`
 

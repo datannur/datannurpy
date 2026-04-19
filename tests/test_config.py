@@ -133,20 +133,18 @@ add:
         assert (output_dir / "index.html").exists()
 
     def test_run_config_with_metadata(self, tmp_path: Path, data_dir: Path):
-        """Config with metadata should load metadata."""
+        """Config with metadata_path should load metadata."""
         output_dir = tmp_path / "output"
         config_file = tmp_path / "catalog.yml"
         config_file.write_text(f"""
 app_path: {output_dir}
+metadata_path: {data_dir / "metadata"}
 refresh: true
 quiet: true
 
 add:
   - type: folder
     path: {data_dir / "csv"}
-
-  - type: metadata
-    path: {data_dir / "metadata"}
 """)
         catalog = run_config(config_file)
 
@@ -863,17 +861,17 @@ add:
         assert len(catalog.dataset.all()) == 1
         assert catalog.dataset.all()[0].name == "Employees"
 
-    def test_metadata_shorthand(self, tmp_path: Path, data_dir: Path):
-        """Shorthand metadata entry loads correctly."""
+    def test_metadata_path_shorthand(self, tmp_path: Path, data_dir: Path):
+        """Top-level metadata_path loads correctly."""
         config_file = tmp_path / "catalog.yml"
         config_file.write_text(f"""
 app_path: {tmp_path / "output"}
+metadata_path: {data_dir / "metadata"}
 refresh: true
 quiet: true
 
 add:
   - folder: {data_dir / "csv"}
-  - metadata: {data_dir / "metadata"}
 """)
         catalog = run_config(config_file)
         assert len(catalog.dataset.all()) > 0
