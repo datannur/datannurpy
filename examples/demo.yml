@@ -2,8 +2,6 @@ app_path: ./output
 metadata_path: ../data/metadata
 refresh: true
 open_browser: true
-post_export:
-  - generate_links
 
 add:
   - folder: ../data

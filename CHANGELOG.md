@@ -1,5 +1,12 @@
 # datannurpy
 
+## 0.17.1 (2026-04-21)
+
+- add: `concept` entity (business glossary) and `concept_id` field on `Variable` — `concept.{csv,xlsx,json}` in `metadata_path` is now loaded instead of ignored
+- add: `metadata_path` accepts a list — sources are applied in order (list fields unioned, scalars overridden)
+- add: auto-load `config.{csv,xlsx,json}` (columns `id`, `value`) from `metadata_path` when `app_config` is not set
+- add: `make download-app` preserves `db-source/` into `examples/datannur_app/` for the editorial demo
+
 ## 0.17.0 (2026-04-19)
 
 - add: `policy---freq-hidden` tag — assign to a variable in metadata to suppress all frequency and modality data while keeping stats; tag is auto-created in the `scan > policy` hierarchy like other system tags

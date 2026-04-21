@@ -1,0 +1,25 @@
+# Metadata-only demo using the editorial xlsx files shipped with the datannur app.
+#
+# These files come from `make download-app`, which preserves the app's
+# db-source/ into data/datannur_app/db-source. They describe a manually curated
+# catalog (SITG demo) with rich descriptions, tags, institutions, modalities,
+# etc. No filesystem/database scan is performed here.
+app_path: ./output_editorial
+metadata_path:
+  - ./datannur_app/db-source
+  - ./datannur_app_overlay
+refresh: true
+open_browser: true
+
+add:
+  - folder: ../data
+
+  - database: sqlite:///../data/company.db
+
+  - database: sqlite:///../data/photovoltaik.gpkg
+    folder:
+      id: photovoltaik
+      name: Grandes installations photovoltaïques
+      description: >
+        Installations photovoltaïques de haute altitude en Suisse.
+        Source: Office fédéral de l'énergie (OFEN) - opendata.swiss

@@ -402,6 +402,11 @@ metadata_path: ./metadata
 
 # Or from a database
 metadata_path: sqlite:///metadata.db
+
+# Or a list of sources applied in order (later overrides/extends earlier)
+metadata_path:
+  - ./metadata-base        # shared or generated metadata
+  - ./metadata-overlay     # local overrides (e.g. add policy tags)
 ```
 
 Can be used alone or combined with auto-scanned sources (`add_folder`, `add_database`). Metadata is applied automatically before export.
@@ -414,8 +419,10 @@ metadata/
 ├── dataset.xlsx      # Datasets
 ├── institution.json  # Institutions (owners, managers)
 ├── tag.csv           # Tags
+├── concept.csv       # Business glossary concepts
 ├── modality.csv      # Modalities
 ├── value.csv         # Modality values
+├── config.csv        # Web app config (see app_config)
 └── ...
 ```
 
@@ -515,19 +522,19 @@ app_config:
   more_info: "Data from [open data portal](https://example.com)."
 ```
 
-If `app_config` is not provided, no `config.json` is generated.
+If `app_config` is not provided, `config.csv`/`config.xlsx`/`config.json` (columns `id`, `value`) from `metadata_path` is used instead. If neither is provided, no `config.json` is generated.
 
 ## post_export
 
 Run Python scripts automatically after export:
 
 ```yaml
-# Single script (bare name → python-scripts/generate_links.py)
-post_export: generate_links
+# Single script (bare name → python-scripts/start_app.py)
+post_export: start_app
 
 # Multiple scripts
 post_export:
-  - generate_links
+  - export_dcat
   - start_app
 ```
 
@@ -535,7 +542,7 @@ Script resolution:
 
 | Format | Resolved path |
 |---|---|
-| `generate_links` | `{output}/python-scripts/generate_links.py` |
+| `start_app` | `{output}/python-scripts/start_app.py` |
 | `hook.py` | `{output}/hook.py` |
 | `scripts/hook.py` | `{output}/scripts/hook.py` |
 | `/absolute/path.py` | `/absolute/path.py` |
@@ -555,7 +562,7 @@ Catalog(app_path=None, metadata_path=None, depth="value", refresh=False, freq_th
 | Attribute      | Type                              | Description                                        |
 | -------------- | --------------------------------- | -------------------------------------------------- |
 | app_path       | str \| Path \| None               | Load existing catalog for incremental scan         |
-| metadata_path  | str \| Path \| None               | Metadata source folder or database URI             |
+| metadata_path  | str \| Path \| list \| None       | Metadata source folder, database URI, or list of sources |
 | depth          | "dataset" \| "variable" \| "stat" \| "value" | Default scan depth (default: "value")              |
 | refresh        | bool                              | Force full rescan ignoring cache (default: False)  |
 | freq_threshold | int                               | Max distinct values for frequency/modality detection. Strings above this threshold get pattern frequencies instead |
@@ -575,6 +582,8 @@ Catalog(app_path=None, metadata_path=None, depth="value", refresh=False, freq_th
 | institution    | Table[Institution]                | Institution table                                  |
 | tag            | Table[Tag]                        | Tag table                                          |
 | doc            | Table[Doc]                        | Document table                                     |
+| concept        | Table[Concept]                    | Business glossary concept table                    |
+| config         | Table[Config]                     | Web app config key-value table                     |
 
 ### `Catalog.add_folder()`
 

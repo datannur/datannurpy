@@ -81,6 +81,7 @@ class Variable:
     start_date: str | None = None
     end_date: str | None = None
     is_pattern: bool = False
+    concept_id: str | None = None
 
 
 @dataclass
@@ -159,6 +160,19 @@ class Doc:
 
 
 @dataclass
+class Concept:
+    """A business glossary concept."""
+
+    id: str
+    parent_id: str | None = None
+    tag_ids: list[str] = field(default_factory=list)
+    doc_ids: list[str] = field(default_factory=list)
+    name: str | None = None
+    description: str | None = None
+    _seen: bool = False  # Runtime field for incremental scan
+
+
+@dataclass
 class Config:
     """A key-value config entry for the web app."""
 
@@ -178,6 +192,7 @@ class DatannurDB(Jsonjsdb):
     institution: Table[Institution]
     tag: Table[Tag]
     doc: Table[Doc]
+    concept: Table[Concept]
     config: Table[Config]
 
     def __init__(self, path: str | None = None) -> None:
@@ -192,6 +207,7 @@ class DatannurDB(Jsonjsdb):
         self.institution._entity_type = Institution
         self.tag._entity_type = Tag
         self.doc._entity_type = Doc
+        self.concept._entity_type = Concept
         self.config._entity_type = Config
         # Set runtime fields (not persisted)
         self.folder.runtime_fields = {"_seen"}
@@ -200,5 +216,6 @@ class DatannurDB(Jsonjsdb):
         self.institution.runtime_fields = {"_seen"}
         self.tag.runtime_fields = {"_seen"}
         self.doc.runtime_fields = {"_seen"}
+        self.concept.runtime_fields = {"_seen"}
         self.value.runtime_fields = {"id"}
         self.freq.runtime_fields = {"id"}
