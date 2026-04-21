@@ -876,6 +876,26 @@ add:
         catalog = run_config(config_file)
         assert len(catalog.dataset.all()) > 0
 
+    def test_metadata_path_list(self, tmp_path: Path, data_dir: Path):
+        """metadata_path can be a list of sources resolved relative to config."""
+        overlay = tmp_path / "overlay"
+        overlay.mkdir()
+        (overlay / "tag.csv").write_text("id,name\nextra,Extra Tag\n")
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+app_path: {tmp_path / "output"}
+metadata_path:
+  - {data_dir / "metadata"}
+  - ./overlay
+refresh: true
+quiet: true
+
+add:
+  - folder: {data_dir / "csv"}
+""")
+        catalog = run_config(config_file)
+        assert catalog.tag.get("extra") is not None
+
     def test_mixed_shorthand_and_old_format(self, tmp_path: Path, data_dir: Path):
         """Both shorthand and old format entries can coexist."""
         config_file = tmp_path / "catalog.yml"
@@ -1010,8 +1030,8 @@ class TestPostExport:
 
     def test_resolve_script_bare_name(self, tmp_path: Path):
         """Bare name resolves to python-scripts/{name}.py."""
-        result = _resolve_script("generate_links", tmp_path)
-        assert result == tmp_path / "python-scripts" / "generate_links.py"
+        result = _resolve_script("start_app", tmp_path)
+        assert result == tmp_path / "python-scripts" / "start_app.py"
 
     def test_resolve_script_with_extension(self, tmp_path: Path):
         """Name with .py resolves relative to output_dir."""

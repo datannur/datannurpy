@@ -179,9 +179,11 @@ def run_config(path: str | Path) -> Catalog:
     if "log_file" in catalog_params:
         catalog_params["log_file"] = _resolve_path(catalog_params["log_file"], base_dir)
     if "metadata_path" in catalog_params:
-        catalog_params["metadata_path"] = _resolve_path(
-            catalog_params["metadata_path"], base_dir
-        )
+        mp = catalog_params["metadata_path"]
+        if isinstance(mp, list):
+            catalog_params["metadata_path"] = [_resolve_path(p, base_dir) for p in mp]
+        else:
+            catalog_params["metadata_path"] = _resolve_path(mp, base_dir)
 
     catalog = Catalog(**catalog_params)
 

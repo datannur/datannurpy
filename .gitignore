@@ -9,6 +9,7 @@ examples/test_*
 .env
 .python-version
 *.log
+examples/datannur_app/*
 
 # Coverage
 htmlcov/

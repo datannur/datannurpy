@@ -1,0 +1,26 @@
+# Hybrid demo: scan the local data/ folder and merge it with the editorial
+# metadata shipped with the datannur front app (rich descriptions, tags,
+# institutions, concepts, etc.), plus a small local overlay.
+#
+# Prerequisite: run `make download-app` first — it fetches the front repo and
+# preserves its db-source/ into examples/datannur_app/db-source (this folder
+# is gitignored to keep a single source of truth in the front repo).
+app_path: ./output_editorial
+metadata_path:
+  - ./datannur_app/db-source
+  - ./datannur_app_overlay
+refresh: true
+open_browser: true
+
+add:
+  - folder: ../data
+
+  - database: sqlite:///../data/company.db
+
+  - database: sqlite:///../data/photovoltaik.gpkg
+    folder:
+      id: photovoltaik
+      name: Grandes installations photovoltaïques
+      description: >
+        Installations photovoltaïques de haute altitude en Suisse.
+        Source: Office fédéral de l'énergie (OFEN) - opendata.swiss

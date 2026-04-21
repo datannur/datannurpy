@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 import ibis
 
 from .schema import (
+    Config,
     Dataset,
     Doc,
     Folder,
@@ -23,6 +24,7 @@ from .schema import (
     Tag,
     Value,
     Variable,
+    Concept,
 )
 from .scanner import read_csv, read_excel, read_statistical
 from .utils import log_done, log_error, log_section, log_warn
@@ -46,6 +48,7 @@ ENTITY_CLASSES: dict[str, type] = {
     "institution": Institution,
     "tag": Tag,
     "doc": Doc,
+    "concept": Concept,
 }
 
 # Entities without required id (use composite key)
@@ -61,19 +64,22 @@ FREQ_HIDDEN_TAG = "policy---freq-hidden"
 SUPPORTED_EXTENSIONS = {".csv", ".xlsx", ".xls", ".json", ".sas7bdat"}
 
 # Entities allowed per depth level
-_VARIABLE_ENTITIES = {
+_DATASET_ENTITIES = {
     "folder",
     "dataset",
     "institution",
     "tag",
     "doc",
-    "variable",
+    "concept",
+    "config",
 }
+_VARIABLE_ENTITIES = _DATASET_ENTITIES | {"variable"}
+_VALUE_ENTITIES = _VARIABLE_ENTITIES | {"modality", "value", "freq"}
 DEPTH_ENTITIES: dict[str, set[str]] = {
-    "dataset": {"folder", "dataset", "institution", "tag", "doc"},
+    "dataset": _DATASET_ENTITIES,
     "variable": _VARIABLE_ENTITIES,
     "stat": _VARIABLE_ENTITIES,
-    "value": _VARIABLE_ENTITIES | {"modality", "value", "freq"},
+    "value": _VALUE_ENTITIES,
 }
 
 
@@ -496,6 +502,7 @@ def _get_catalog_table(catalog: Catalog, entity_name: str) -> Any | None:
         "institution": catalog.institution,
         "tag": catalog.tag,
         "doc": catalog.doc,
+        "concept": catalog.concept,
     }
     return mapping.get(entity_name)
 
@@ -536,15 +543,56 @@ def _extract_freq_hidden_ids(
     return hidden
 
 
+def _normalize_paths(
+    path: str | Path | list[str | Path],
+) -> list[str | Path]:
+    """Normalize a metadata_path argument to a list of sources."""
+    if isinstance(path, (list, tuple)):
+        return list(path)
+    return [path]
+
+
 def load_metadata(
     catalog: Catalog,
-    path: str | Path,
+    path: str | Path | list[str | Path],
 ) -> None:
     """Load metadata files into memory without applying to catalog tables."""
     allowed_entities = DEPTH_ENTITIES[catalog.depth]
-    tables = _load_tables(path, allowed_entities, quiet=catalog.quiet)
-    catalog._loaded_metadata = tables
-    catalog._freq_hidden_ids = _extract_freq_hidden_ids(tables)
+    sources: list[dict[str, Any]] = []
+    hidden: set[str] = set()
+    for p in _normalize_paths(path):
+        tables = _load_tables(p, allowed_entities, quiet=catalog.quiet)
+        sources.append(tables)
+        hidden |= _extract_freq_hidden_ids(tables)
+    catalog._loaded_metadata = sources
+    catalog._freq_hidden_ids = hidden
+
+
+def _apply_config_table(
+    catalog: Catalog,
+    df: pd.DataFrame,
+    *,
+    quiet: bool = False,
+) -> None:
+    """Populate catalog.config from a config metadata file.
+
+    Skipped if catalog.config already has rows (user provided app_config).
+    """
+    if catalog.config.count > 0:
+        return
+    if "id" not in df.columns or "value" not in df.columns:
+        log_warn("config: missing required columns 'id' and 'value'", quiet)
+        return
+    count = 0
+    for row in df.to_dict(orient="records"):
+        rid = row.get("id")
+        val = row.get("value")
+        if rid is not None and not (isinstance(rid, float) and rid != rid):
+            if val is None or (isinstance(val, float) and val != val):
+                val = ""
+            catalog.config.add(Config(id=str(rid), value=str(val)))
+            count += 1
+    log_done(f"config: {count} entries loaded", quiet)
 
 
 def _apply_tables(
@@ -557,6 +605,14 @@ def _apply_tables(
     """Validate and merge pre-loaded tables into catalog."""
     if not tables:
         log_warn("No metadata files found", quiet)
+        return
+
+    # Handle config specially (not a merge-style entity)
+    config_entry = tables.pop("config", None)
+    if config_entry is not None:
+        _apply_config_table(catalog, config_entry[0], quiet=quiet)
+
+    if not tables:
         return
 
     errors = _validate_all_tables(catalog, tables)
@@ -584,7 +640,7 @@ def _apply_tables(
 @validate_params
 def add_metadata(
     self: Catalog,
-    path: str | Path,
+    path: str | Path | list[str | Path],
     *,
     depth: Depth | None = None,
     quiet: bool | None = None,
@@ -595,23 +651,26 @@ def add_metadata(
     resolved_depth = depth if depth is not None else self.depth
     allowed_entities = DEPTH_ENTITIES[resolved_depth]
 
-    start_time = log_section("add_metadata", str(path), quiet)
-    tables = _load_tables(path, allowed_entities, quiet=quiet)
-    _apply_tables(self, tables, quiet=quiet, start_time=start_time)
+    for p in _normalize_paths(path):
+        start_time = log_section("add_metadata", str(p), quiet)
+        tables = _load_tables(p, allowed_entities, quiet=quiet)
+        _apply_tables(self, tables, quiet=quiet, start_time=start_time)
 
 
 def ensure_metadata_applied(catalog: Catalog) -> None:
     """Apply pre-loaded metadata if configured and not yet applied."""
     if catalog._metadata_applied or catalog.metadata_path is None:
         return
-    start_time = log_section("add_metadata", str(catalog.metadata_path), catalog.quiet)
-    tables = getattr(catalog, "_loaded_metadata", None)
-    if tables is None:
-        allowed_entities = DEPTH_ENTITIES[catalog.depth]
-        tables = _load_tables(
-            catalog.metadata_path, allowed_entities, quiet=catalog.quiet
-        )
-    _apply_tables(catalog, tables, quiet=catalog.quiet, start_time=start_time)
+    sources = getattr(catalog, "_loaded_metadata", None)
+    paths = _normalize_paths(catalog.metadata_path)
+    allowed_entities = DEPTH_ENTITIES[catalog.depth]
+    for idx, p in enumerate(paths):
+        start_time = log_section("add_metadata", str(p), catalog.quiet)
+        if sources is not None and idx < len(sources):
+            tables = sources[idx]
+        else:
+            tables = _load_tables(p, allowed_entities, quiet=catalog.quiet)
+        _apply_tables(catalog, tables, quiet=catalog.quiet, start_time=start_time)
     catalog._metadata_applied = True
 
 

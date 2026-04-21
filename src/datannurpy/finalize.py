@@ -47,6 +47,9 @@ def finalize(catalog: Catalog) -> None:
     # 7. Remove unseen docs
     catalog.doc.remove_where("_seen", "==", False)
 
+    # 7b. Remove unseen concepts
+    catalog.concept.remove_where("_seen", "==", False)
+
     # 8. Remove values of removed modalities
     if removed_modality_ids:
         catalog.value.remove_where("modality_id", "in", removed_modality_ids)

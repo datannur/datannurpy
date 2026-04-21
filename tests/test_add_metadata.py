@@ -1173,7 +1173,8 @@ class TestLoadMetadata:
         (tmp_path / "tag.csv").write_text("id,name\nt1,Tag1\n")
         catalog = Catalog(metadata_path=tmp_path, quiet=True)
         assert catalog._loaded_metadata is not None
-        assert "tag" in catalog._loaded_metadata
+        assert len(catalog._loaded_metadata) == 1
+        assert "tag" in catalog._loaded_metadata[0]
 
     def test_no_metadata_path_leaves_none(self):
         """Should leave _loaded_metadata as None when no path."""
@@ -1356,3 +1357,159 @@ class TestFreqHiddenPolicy:
         assert age_var is not None
         age_freqs = [f for f in catalog.freq.all() if f.variable_id == age_var.id]
         assert len(age_freqs) > 0
+
+
+class TestConceptEntity:
+    """Test concept entity loading."""
+
+    def test_concept_loads_from_csv(self, tmp_path: Path):
+        """Concept rows from concept.csv should be loaded into catalog.concept."""
+        (tmp_path / "concept.csv").write_text(
+            "id,parent_id,name,description\n"
+            "revenu,,Revenu,Total revenue\n"
+            "revenu_net,revenu,Revenu net,Net revenue\n"
+        )
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        ensure_metadata_applied(catalog)
+        assert catalog.concept.count == 2
+        net = catalog.concept.get("revenu_net")
+        assert net is not None
+        assert net.parent_id == "revenu"
+        assert net.name == "Revenu net"
+
+    def test_concept_list_fields(self, tmp_path: Path):
+        """tag_ids and doc_ids on concept should be parsed as lists."""
+        (tmp_path / "concept.csv").write_text('id,tag_ids,doc_ids\nc1,"t1, t2","d1"\n')
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        ensure_metadata_applied(catalog)
+        c1 = catalog.concept.get("c1")
+        assert c1 is not None
+        assert c1.tag_ids == ["t1", "t2"]
+        assert c1.doc_ids == ["d1"]
+
+    def test_variable_concept_id_loaded(self, tmp_path: Path):
+        """concept_id column on variable should be loaded."""
+        (tmp_path / "concept.csv").write_text("id,name\nc1,Concept 1\n")
+        (tmp_path / "variable.csv").write_text(
+            "id,name,dataset_id,concept_id\nds---v1,v1,ds,c1\n"
+        )
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        ensure_metadata_applied(catalog)
+        var = catalog.variable.get("ds---v1")
+        assert var is not None
+        assert var.concept_id == "c1"
+
+    def test_unseen_concept_removed_on_finalize(self, tmp_path: Path):
+        """Concepts with _seen=False should be removed on finalize."""
+        (tmp_path / "concept.csv").write_text("id,name\nc1,Concept 1\n")
+        (tmp_path / "data.csv").write_text("a,b\n1,2\n")
+        meta = tmp_path / "meta"
+        meta.mkdir()
+        (meta / "concept.csv").write_text("id,name\nc1,C1\n")
+        catalog = Catalog(metadata_path=meta, quiet=True)
+        catalog.add_folder(tmp_path, folder=Folder(id="src"), include="data.csv")
+        # concept not referenced by any variable -> unseen -> removed
+        assert catalog.concept.count == 0
+
+
+class TestConfigAutoLoad:
+    """Test auto-loading of config.<ext> from metadata folder."""
+
+    def test_config_csv_loaded(self, tmp_path: Path):
+        """config.csv should populate catalog.config."""
+        (tmp_path / "config.csv").write_text(
+            "id,value\ncontact_email,a@b.c\nmore_info,https://x\n"
+        )
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        ensure_metadata_applied(catalog)
+        assert catalog.config.count == 2
+        entry = catalog.config.get("contact_email")
+        assert entry is not None
+        assert entry.value == "a@b.c"
+
+    def test_app_config_param_takes_precedence(self, tmp_path: Path):
+        """If app_config is provided, config.csv is ignored."""
+        (tmp_path / "config.csv").write_text("id,value\nk,from_file\n")
+        catalog = Catalog(
+            metadata_path=tmp_path,
+            app_config={"k": "from_param"},
+            quiet=True,
+        )
+        ensure_metadata_applied(catalog)
+        assert catalog.config.count == 1
+        entry = catalog.config.get("k")
+        assert entry is not None
+        assert entry.value == "from_param"
+
+    def test_config_missing_columns_warns(self, tmp_path: Path, capsys):
+        """config.csv without id/value columns should warn and skip."""
+        (tmp_path / "config.csv").write_text("foo,bar\n1,2\n")
+        catalog = Catalog(metadata_path=tmp_path, quiet=False)
+        ensure_metadata_applied(catalog)
+        assert catalog.config.count == 0
+        captured = capsys.readouterr()
+        assert "config" in captured.err.lower()
+
+    def test_config_skips_none_and_nan(self, tmp_path: Path):
+        """Rows with None id or None value should be handled."""
+        (tmp_path / "config.csv").write_text("id,value\nk1,v1\n,v2\nk3,\n")
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        ensure_metadata_applied(catalog)
+        # Row with empty id skipped, row with empty value kept as ""
+        assert catalog.config.count == 2
+        k3 = catalog.config.get("k3")
+        assert k3 is not None
+        assert k3.value == ""
+
+
+class TestMetadataPathList:
+    """Test support for a list of metadata_path sources (overlay pattern)."""
+
+    def test_list_applies_in_order(self, tmp_path: Path):
+        """Later sources override earlier ones (scalar fields)."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "tag.csv").write_text("id,name\nt1,Base\n")
+        overlay = tmp_path / "overlay"
+        overlay.mkdir()
+        (overlay / "tag.csv").write_text("id,name\nt1,Override\n")
+
+        catalog = Catalog(metadata_path=[base, overlay], quiet=True)
+        ensure_metadata_applied(catalog)
+        tag = catalog.tag.get("t1")
+        assert tag is not None
+        assert tag.name == "Override"
+
+    def test_list_merges_list_fields(self, tmp_path: Path):
+        """List fields (tag_ids) from later sources are unioned."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "variable.csv").write_text(
+            "id,name,dataset_id,tag_ids\nds---v1,v1,ds,base_tag\n"
+        )
+        overlay = tmp_path / "overlay"
+        overlay.mkdir()
+        (overlay / "variable.csv").write_text(
+            "id,dataset_id,tag_ids\nds---v1,ds,overlay_tag\n"
+        )
+
+        catalog = Catalog(metadata_path=[base, overlay], quiet=True)
+        ensure_metadata_applied(catalog)
+        var = catalog.variable.get("ds---v1")
+        assert var is not None
+        assert set(var.tag_ids) == {"base_tag", "overlay_tag"}
+
+    def test_list_unions_freq_hidden_ids(self, tmp_path: Path):
+        """freq-hidden ids are unioned across all sources."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "variable.csv").write_text(
+            f"id,name,dataset_id,tag_ids\nds---a,a,ds,{FREQ_HIDDEN_TAG}\n"
+        )
+        overlay = tmp_path / "overlay"
+        overlay.mkdir()
+        (overlay / "variable.csv").write_text(
+            f"id,dataset_id,tag_ids\nds---b,ds,{FREQ_HIDDEN_TAG}\n"
+        )
+        catalog = Catalog(metadata_path=[base, overlay], quiet=True)
+        assert catalog._freq_hidden_ids == {"ds---a", "ds---b"}

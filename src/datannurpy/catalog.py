@@ -36,7 +36,7 @@ class Catalog(DatannurDB):
         self,
         *,
         app_path: str | Path | None = None,
-        metadata_path: str | Path | None = None,
+        metadata_path: str | Path | list[str | Path] | None = None,
         depth: Depth = "value",
         refresh: bool = False,
         freq_threshold: int = 100,
@@ -96,9 +96,9 @@ class Catalog(DatannurDB):
                 self.config.add(Config(id=key, value=val))
 
         # Metadata
-        self.metadata_path: str | Path | None = metadata_path
+        self.metadata_path: str | Path | list[str | Path] | None = metadata_path
         self._metadata_applied = False
-        self._loaded_metadata: dict[str, Any] | None = None
+        self._loaded_metadata: list[dict[str, Any]] | None = None
         self._freq_hidden_ids: set[str] = set()
         if metadata_path is not None:
             from .add_metadata import load_metadata
@@ -128,6 +128,7 @@ class Catalog(DatannurDB):
             self.institution,
             self.tag,
             self.doc,
+            self.concept,
         ]:
             if "_seen" in table.runtime_fields and not table.is_empty:
                 table._df = table._df.with_columns(pl.lit(False).alias("_seen"))
@@ -148,6 +149,7 @@ class Catalog(DatannurDB):
             f"  values={self.value.count},\n"
             f"  institutions={self.institution.count},\n"
             f"  tags={self.tag.count},\n"
-            f"  docs={self.doc.count}\n"
+            f"  docs={self.doc.count},\n"
+            f"  concepts={self.concept.count}\n"
             f")"
         )

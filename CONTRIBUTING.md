@@ -46,6 +46,29 @@ make test-db-all      # same, plus Oracle 18
 make test-db-down     # stop and remove containers
 ```
 
+## Demo Publication
+
+Manual, 2-step workflow for publishing the hybrid demo (local `data/` scan + editorial metadata from the datannur front repo) to a remote server via SSH.
+
+**One-time setup:**
+
+```bash
+make download-app         # fetches the front repo (also preserves db-source/)
+make demo                 # scan + export to examples/output_editorial/
+make demo-setup           # npm install + playwright chromium (~90 MB)
+make demo-configs-init    # creates templates in examples/datannur_app/configs/
+# then edit examples/datannur_app/configs/{deploy,static-make,llm-web}.config.json
+```
+
+**Regular workflow:**
+
+```bash
+make demo           # refresh scan + local preview (opens browser)
+make demo-publish   # inject configs + prerender + deploy via SSH
+```
+
+The configs folder is gitignored (single source of truth for editorial content stays in the front repo).
+
 ## Pull Requests
 
 1. Create a branch from `main`
