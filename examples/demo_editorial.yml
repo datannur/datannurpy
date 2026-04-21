@@ -1,9 +1,10 @@
-# Metadata-only demo using the editorial xlsx files shipped with the datannur app.
+# Hybrid demo: scan the local data/ folder and merge it with the editorial
+# metadata shipped with the datannur front app (rich descriptions, tags,
+# institutions, concepts, etc.), plus a small local overlay.
 #
-# These files come from `make download-app`, which preserves the app's
-# db-source/ into data/datannur_app/db-source. They describe a manually curated
-# catalog (SITG demo) with rich descriptions, tags, institutions, modalities,
-# etc. No filesystem/database scan is performed here.
+# Prerequisite: run `make download-app` first — it fetches the front repo and
+# preserves its db-source/ into examples/datannur_app/db-source (this folder
+# is gitignored to keep a single source of truth in the front repo).
 app_path: ./output_editorial
 metadata_path:
   - ./datannur_app/db-source
