@@ -1,4 +1,9 @@
-.PHONY: test lint typecheck check download-app coverage test-cov update-snapshots test-db test-db-all test-db-oracle18 test-db-setup test-db-up test-db-down audit
+.PHONY: test lint typecheck check download-app coverage test-cov update-snapshots test-db test-db-all test-db-oracle18 test-db-setup test-db-up test-db-down audit demo demo-setup demo-publish demo-configs-init
+
+DEMO_CONFIG   := examples/demo_editorial.yml
+DEMO_OUT      := examples/output_editorial
+DEMO_CONFIGS  := examples/datannur_app/configs
+DEMO_CFG_FILES := deploy.config.json static-make.config.json llm-web.config.json
 
 test:
 	uv run pytest
@@ -64,3 +69,43 @@ test-db-oracle18: test-db-up
 	uv run pytest tests/database/test_oracle.py -v -n 0
 
 test-db-all: test-db test-db-oracle18
+
+# Demo publication (manual, 2-step)
+#
+#   1. make demo              → scan + export to $(DEMO_OUT), opens in browser
+#   2. make demo-setup        → one-shot: npm install + playwright chromium
+#   3. make demo-publish      → inject configs + prerender + deploy via SSH
+#
+# Configs (deploy, static-make, llm-web) live in $(DEMO_CONFIGS) (gitignored).
+# Bootstrap them once with `make demo-configs-init`, then edit manually.
+
+demo:
+	uv run python -m datannurpy $(DEMO_CONFIG)
+
+demo-setup:
+	@test -f $(DEMO_OUT)/package.json || { echo "Run 'make demo' first"; exit 1; }
+	cd $(DEMO_OUT) && npm install && npx playwright install chromium
+
+demo-configs-init:
+	@test -d $(DEMO_OUT)/data-template || { echo "Run 'make demo' first to get the templates"; exit 1; }
+	@mkdir -p $(DEMO_CONFIGS)
+	@for f in $(DEMO_CFG_FILES); do \
+		if [ ! -f $(DEMO_CONFIGS)/$$f ]; then \
+			cp $(DEMO_OUT)/data-template/$$f $(DEMO_CONFIGS)/$$f; \
+			echo "Created $(DEMO_CONFIGS)/$$f — edit it with your values"; \
+		else \
+			echo "Exists   $(DEMO_CONFIGS)/$$f"; \
+		fi; \
+	done
+
+demo-publish:
+	@test -d $(DEMO_OUT) || { echo "Run 'make demo' first"; exit 1; }
+	@test -d $(DEMO_OUT)/node_modules || { echo "Run 'make demo-setup' first"; exit 1; }
+	@test -f $(DEMO_CONFIGS)/deploy.config.json || { echo "Missing configs — run 'make demo-configs-init' and fill in $(DEMO_CONFIGS)/"; exit 1; }
+	@for f in $(DEMO_CFG_FILES); do \
+		if [ -f $(DEMO_CONFIGS)/$$f ]; then \
+			cp $(DEMO_CONFIGS)/$$f $(DEMO_OUT)/data/$$f; \
+			echo "Injected $$f"; \
+		fi; \
+	done
+	cd $(DEMO_OUT) && npm run static-deploy
