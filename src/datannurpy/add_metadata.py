@@ -587,12 +587,11 @@ def _apply_config_table(
     for row in df.to_dict(orient="records"):
         rid = row.get("id")
         val = row.get("value")
-        if rid is None or (isinstance(rid, float) and rid != rid):
-            continue
-        if val is None or (isinstance(val, float) and val != val):
-            val = ""
-        catalog.config.add(Config(id=str(rid), value=str(val)))
-        count += 1
+        if rid is not None and not (isinstance(rid, float) and rid != rid):
+            if val is None or (isinstance(val, float) and val != val):
+                val = ""
+            catalog.config.add(Config(id=str(rid), value=str(val)))
+            count += 1
     log_done(f"config: {count} entries loaded", quiet)
 
 
