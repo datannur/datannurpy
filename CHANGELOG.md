@@ -1,5 +1,11 @@
 # datannurpy
 
+## 0.18.0 (2026-04-22)
+
+- breaking: `paramiko` moved to optional `[ssh]` extra — SSH tunneling to remote databases now requires `pip install datannurpy[ssh]`. Reduces the core supply-chain surface for users scanning only local files or DuckDB.
+- add: CycloneDX SBOM (`*-sbom.cyclonedx.json`) published as a GitHub Release asset on each version, listing all dependencies, versions, licenses and hashes for CVE audits (Dependency-Track, Grype…)
+- doc: air-gapped install recipe in README (`pip download` + `pip install --no-index --find-links`) for environments behind strict corporate proxies
+
 ## 0.17.1 (2026-04-21)
 
 - add: `concept` entity (business glossary) and `concept_id` field on `Variable` — `concept.{csv,xlsx,json}` in `metadata_path` is now loaded instead of ignored

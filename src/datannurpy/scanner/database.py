@@ -14,7 +14,6 @@ from typing import TYPE_CHECKING, Any, NoReturn
 from urllib.parse import parse_qs, quote, unquote, urlparse, urlunparse
 
 import ibis
-import paramiko
 import pyarrow as pa
 
 from ..errors import ConfigError
@@ -193,6 +192,15 @@ def open_ssh_tunnel(
     connection: str,
 ) -> Any:
     """Open an SSH tunnel to a database and yield the tunneled URI."""
+    try:
+        import paramiko
+    except ImportError as exc:
+        msg = (
+            "SSH tunneling requires optional dependencies. "
+            "Install with: pip install datannurpy[ssh]"
+        )
+        raise ConfigError(msg) from exc
+
     backend, kwargs = parse_connection_string(connection)
     remote_host = kwargs.get("host", "localhost")
     remote_port = int(kwargs.get("port", DEFAULT_PORTS.get(backend, 3306)))

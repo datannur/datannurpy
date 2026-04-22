@@ -35,6 +35,7 @@ pip install datannurpy[postgres]  # PostgreSQL
 pip install datannurpy[mysql]     # MySQL
 pip install datannurpy[oracle]    # Oracle
 pip install datannurpy[mssql]     # SQL Server
+pip install datannurpy[ssh]       # SSH tunneling to remote databases
 
 # File formats
 pip install datannurpy[stat]      # SAS, SPSS, Stata
@@ -58,6 +59,27 @@ pip install datannurpy[postgres,stat,delta]
 - macOS: `brew install unixodbc freetds`
 - Linux: `apt install unixodbc-dev tdsodbc`
 - Windows: [Microsoft ODBC Driver](https://learn.microsoft.com/sql/connect/odbc/download-odbc-driver-for-sql-server)
+
+### Air-gapped install
+
+For environments without direct internet access (strict corporate proxies,
+classified networks), download wheels on a connected machine and transfer
+them to the target:
+
+```bash
+# On a connected machine (match target OS/Python if different):
+pip download 'datannurpy[postgres,ssh]' -d ./wheels/ \
+    --platform manylinux2014_x86_64 --python-version 3.11 \
+    --only-binary=:all:
+
+# On the air-gapped target:
+pip install --no-index --find-links ./wheels/ 'datannurpy[postgres,ssh]'
+```
+
+Omit `--platform`/`--python-version` if source and target share the same
+OS and Python version. A CycloneDX SBOM (`*-sbom.cyclonedx.json`) is
+published as a GitHub Release asset for each version to support CVE audits
+with tools like Dependency-Track or Grype.
 
 ## Quick start
 
@@ -324,6 +346,7 @@ add:
     schema: [public, sales, hr]
 
   # SSH tunnel (for databases behind a firewall)
+  # Requires: pip install datannurpy[ssh]
   - database: mysql://user:pass@dbhost/mydb
     ssh_tunnel:
       host: ssh.example.com
