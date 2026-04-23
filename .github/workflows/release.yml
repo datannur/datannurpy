@@ -79,14 +79,11 @@ jobs:
         run: uv build
 
       - name: Generate CycloneDX SBOM
-        uses: anchore/sbom-action@v0
-        with:
-          path: .
-          format: cyclonedx-json
-          artifact-name: datannurpy-${{ needs.check-version.outputs.version }}-sbom.cyclonedx.json
-          output-file: sbom/datannurpy-${{ needs.check-version.outputs.version }}-sbom.cyclonedx.json
-          upload-artifact: false
-          upload-release-assets: false
+        run: |
+          mkdir -p sbom
+          SBOM_FILE="sbom/datannurpy-${{ needs.check-version.outputs.version }}-sbom.cyclonedx.json"
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin v1.42.3
+          syft scan dir:. -o cyclonedx-json="${SBOM_FILE}"
 
       - name: Extract changelog
         id: changelog
