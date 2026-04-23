@@ -396,12 +396,12 @@ class TestOpenSshTunnel:
         mock_sock.getsockname.return_value = ("127.0.0.1", local_port)
 
         with (
-            patch("datannurpy.scanner.database.paramiko") as mock_paramiko,
+            patch("paramiko.SSHClient", return_value=mock_client),
+            patch("paramiko.AutoAddPolicy", return_value="auto_policy"),
+            patch("paramiko.RejectPolicy", return_value="reject_policy"),
             patch("datannurpy.scanner.database.socket") as mock_socket_mod,
             patch("datannurpy.scanner.database.select") as mock_select,
         ):
-            mock_paramiko.SSHClient.return_value = mock_client
-            mock_paramiko.AutoAddPolicy.return_value = "auto_policy"
             mock_socket_mod.AF_INET = 2
             mock_socket_mod.SOCK_STREAM = 1
             mock_socket_mod.socket.return_value = mock_sock
@@ -476,20 +476,37 @@ class TestOpenSshTunnel:
         )
 
         with (
-            patch("datannurpy.scanner.database.paramiko") as mock_paramiko,
+            patch("paramiko.SSHClient", return_value=mock_client),
+            patch("paramiko.RejectPolicy", return_value="reject_policy"),
             patch("datannurpy.scanner.database.socket"),
             pytest.raises(ConfigError, match="SSH host key verification failed"),
         ):
-            mock_paramiko.SSHClient.return_value = mock_client
-            mock_paramiko.RejectPolicy.return_value = "reject_policy"
-            mock_paramiko.SSHException = real_paramiko.SSHException
-
             from datannurpy.scanner.database import open_ssh_tunnel
 
             with open_ssh_tunnel({"host": "ssh.host"}, "mysql://a:b@db/mydb"):
                 pass  # pragma: no cover
 
         mock_client.close.assert_called_once()
+
+    def test_missing_paramiko_raises_config_error(self) -> None:
+        """Missing paramiko raises ConfigError suggesting the [ssh] extra."""
+        import builtins
+
+        real_import = builtins.__import__
+
+        def fake_import(name: str, *args: Any, **kwargs: Any) -> Any:
+            if name == "paramiko":
+                raise ImportError("No module named 'paramiko'")
+            return real_import(name, *args, **kwargs)
+
+        from datannurpy.scanner.database import open_ssh_tunnel
+
+        with (
+            patch("builtins.__import__", side_effect=fake_import),
+            pytest.raises(ConfigError, match=r"datannurpy\[ssh\]"),
+        ):
+            with open_ssh_tunnel({"host": "ssh.host"}, "mysql://a:b@db/mydb"):
+                pass  # pragma: no cover
 
 
 class TestAddDatabaseSshTunnel:

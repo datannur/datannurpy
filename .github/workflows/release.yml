@@ -78,6 +78,16 @@ jobs:
       - name: Build package
         run: uv build
 
+      - name: Generate CycloneDX SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          artifact-name: datannurpy-${{ needs.check-version.outputs.version }}-sbom.cyclonedx.json
+          output-file: sbom/datannurpy-${{ needs.check-version.outputs.version }}-sbom.cyclonedx.json
+          upload-artifact: false
+          upload-release-assets: false
+
       - name: Extract changelog
         id: changelog
         run: |
@@ -96,9 +106,9 @@ jobs:
         run: |
           TAG="${{ needs.check-version.outputs.tag }}"
           if [[ "${{ steps.changelog.outputs.found }}" == "true" ]]; then
-            gh release create "${TAG}" --title "datannurpy ${TAG}" --notes-file /tmp/changelog_section.md dist/*
+            gh release create "${TAG}" --title "datannurpy ${TAG}" --notes-file /tmp/changelog_section.md dist/* sbom/*
           else
-            gh release create "${TAG}" --title "datannurpy ${TAG}" --generate-notes dist/*
+            gh release create "${TAG}" --title "datannurpy ${TAG}" --generate-notes dist/* sbom/*
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

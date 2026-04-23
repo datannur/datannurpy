@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "datannurpy"
-version = "0.17.1"
+version = "0.19.0"
 description = "Python library for datannur catalog metadata management"
 authors = [{ name = "datannur" }]
 readme = "README.md"
@@ -28,7 +28,6 @@ dependencies = [
   "openpyxl>=3.0",
   "xlrd>=2.0",
   "fsspec>=2024.0",
-  "paramiko>=4.0",
   "cryptography>=46.0.7",
   "pyyaml>=6.0",
   "python-dotenv>=1.0",
@@ -41,6 +40,7 @@ mysql = ["ibis-framework[mysql]>=11.0"]
 oracle = ["ibis-framework[oracle]>=11.0"]
 mssql = ["ibis-framework[mssql]>=11.0"]
 databases = ["ibis-framework[postgres,mysql,oracle,mssql]>=11.0"]
+ssh = ["paramiko>=4.0"]
 delta = ["deltalake>=0.18.0"]
 iceberg = [
   "pyiceberg>=0.10.0; python_version >= '3.10'",
@@ -74,6 +74,7 @@ dev = [
   "pyright>=1.1.400",
   "deltalake>=0.18.0",
   "oracledb>=2.0.0",
+  "paramiko>=4.0",
   "pyiceberg>=0.10.0",
   "pyreadstat>=1.2.0,<=1.2.8; python_version < '3.10'",
   "pyreadstat>=1.2.0; python_version >= '3.10'",

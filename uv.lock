@@ -1059,7 +1059,7 @@ wheels = [
 
 [[package]]
 name = "datannurpy"
-version = "0.17.1"
+version = "0.19.0"
 source = { editable = "." }
 dependencies = [
     { name = "cryptography" },
@@ -1068,7 +1068,6 @@ dependencies = [
     { name = "ibis-framework", extra = ["duckdb"] },
     { name = "jsonjsdb" },
     { name = "openpyxl" },
-    { name = "paramiko" },
     { name = "polars", version = "1.36.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "polars", version = "1.39.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "python-dotenv", version = "1.2.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
@@ -1116,6 +1115,9 @@ postgres = [
 s3 = [
     { name = "s3fs", marker = "python_full_version >= '3.10'" },
 ]
+ssh = [
+    { name = "paramiko" },
+]
 stat = [
     { name = "pyreadstat", version = "1.2.8", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "pyreadstat", version = "1.3.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
@@ -1126,6 +1128,7 @@ dev = [
     { name = "deltalake", version = "1.2.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "deltalake", version = "1.3.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "oracledb" },
+    { name = "paramiko" },
     { name = "pyiceberg", version = "0.10.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "pyiceberg", version = "0.11.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "pyreadstat", version = "1.2.8", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
@@ -1155,7 +1158,7 @@ requires-dist = [
     { name = "ibis-framework", extras = ["postgres", "mysql", "oracle", "mssql"], marker = "extra == 'databases'", specifier = ">=11.0" },
     { name = "jsonjsdb", specifier = ">=0.8.6" },
     { name = "openpyxl", specifier = ">=3.0" },
-    { name = "paramiko", specifier = ">=4.0" },
+    { name = "paramiko", marker = "extra == 'ssh'", specifier = ">=4.0" },
     { name = "polars", specifier = ">=1.0" },
     { name = "pyiceberg", marker = "python_full_version >= '3.10' and extra == 'iceberg'", specifier = ">=0.10.0" },
     { name = "pyreadstat", marker = "python_full_version >= '3.10' and extra == 'stat'", specifier = ">=1.2.0" },
@@ -1168,12 +1171,13 @@ requires-dist = [
     { name = "typing-extensions", marker = "python_full_version < '3.11'", specifier = ">=4.0" },
     { name = "xlrd", specifier = ">=2.0" },
 ]
-provides-extras = ["postgres", "mysql", "oracle", "mssql", "databases", "delta", "iceberg", "stat", "s3", "azure", "gcs", "cloud"]
+provides-extras = ["postgres", "mysql", "oracle", "mssql", "databases", "ssh", "delta", "iceberg", "stat", "s3", "azure", "gcs", "cloud"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "deltalake", specifier = ">=0.18.0" },
     { name = "oracledb", specifier = ">=2.0.0" },
+    { name = "paramiko", specifier = ">=4.0" },
     { name = "pyiceberg", specifier = ">=0.10.0" },
     { name = "pyreadstat", marker = "python_full_version < '3.10'", specifier = ">=1.2.0,<=1.2.8" },
     { name = "pyreadstat", marker = "python_full_version >= '3.10'", specifier = ">=1.2.0" },
