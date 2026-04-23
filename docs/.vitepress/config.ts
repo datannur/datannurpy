@@ -39,6 +39,7 @@ export default defineConfig({
       { text: "Remote storage", link: "/remote-storage" },
       { text: "Metadata & configuration", link: "/metadata" },
       { text: "Output & exports", link: "/output" },
+      { text: "Python API", link: "/python-api" },
     ],
 
     socialLinks: [
