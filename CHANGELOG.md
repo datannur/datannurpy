@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.19.0 (2026-04-23)
+
+- add: VitePress documentation site under `docs/` — flat structure (one page per section) sourced from the README, published to [docs.datannur.com/builder](https://docs.datannur.com/builder/) via `npm run docs:release`
+- doc: slim README focused on intro, quick start, and links to the full doc site; detailed guides now live in VitePress
+
 ## 0.18.0 (2026-04-22)
 
 - breaking: `paramiko` moved to optional `[ssh]` extra — SSH tunneling to remote databases now requires `pip install datannurpy[ssh]`. Reduces the core supply-chain surface for users scanning only local files or DuckDB.
