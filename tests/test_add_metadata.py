@@ -20,8 +20,6 @@ from datannurpy.add_metadata import (
     FREQ_HIDDEN_TAG,
     _convert_row_to_dict,
     _extract_freq_hidden_ids,
-    _find_entity_by_id,
-    _find_value,
     _get_catalog_table,
     _get_required_fields,
     _is_database_connection,
@@ -178,6 +176,21 @@ class TestConvertRowToDict:
         result = _convert_row_to_dict(row, Variable)
         assert "description" not in result
 
+    def test_handles_pandas_na_and_nat(self):
+        """pd.NA and pd.NaT should be skipped (e.g. fully-empty CSV column)."""
+        import pandas as pd
+
+        row: dict[Hashable, Any] = {
+            "id": "test",
+            "name": "Test",
+            "dataset_id": "ds",
+            "nb_distinct": pd.NA,
+            "description": pd.NaT,
+        }
+        result = _convert_row_to_dict(row, Variable)
+        assert "nb_distinct" not in result
+        assert "description" not in result
+
     def test_handles_list_fields(self):
         """List fields should be parsed correctly."""
         row: dict[Hashable, Any] = {
@@ -229,52 +242,6 @@ class TestMergeEntity:
         entity = Variable(id="test", name="Test", dataset_id="ds")
         _merge_entity(entity, {"tag_ids": ["a", "b"]})
         assert entity.tag_ids == ["a", "b"]
-
-
-class TestFindEntityById:
-    """Test _find_entity_by_id function."""
-
-    def test_find_existing(self):
-        """Should find existing entity."""
-        entities = [
-            Variable(id="v1", name="V1", dataset_id="ds"),
-            Variable(id="v2", name="V2", dataset_id="ds"),
-        ]
-        result = _find_entity_by_id(entities, "v2")
-        assert result is not None
-        assert result.id == "v2"
-
-    def test_not_found(self):
-        """Should return None if not found."""
-        entities = [Variable(id="v1", name="V1", dataset_id="ds")]
-        result = _find_entity_by_id(entities, "v999")
-        assert result is None
-
-    def test_empty_list(self):
-        """Should return None for empty list."""
-        assert _find_entity_by_id([], "v1") is None
-
-
-class TestFindValue:
-    """Test _find_value function."""
-
-    def test_find_existing(self):
-        """Should find value by composite key."""
-        values = [
-            Value(id=build_value_id("m1", "a"), modality_id="m1", value="a"),
-            Value(id=build_value_id("m1", "b"), modality_id="m1", value="b"),
-            Value(id=build_value_id("m2", "a"), modality_id="m2", value="a"),
-        ]
-        result = _find_value(values, "m1", "b")
-        assert result is not None
-        assert result.modality_id == "m1"
-        assert result.value == "b"
-
-    def test_not_found(self):
-        """Should return None if not found."""
-        values = [Value(id=build_value_id("m1", "a"), modality_id="m1", value="a")]
-        assert _find_value(values, "m1", "x") is None
-        assert _find_value(values, "m2", "a") is None
 
 
 class TestGetCatalogTable:
@@ -764,6 +731,80 @@ class TestProcessEntityTable:
 
         created, updated = _process_entity_table(catalog, "freq", df)
         assert created == 0  # Both skipped
+
+    def test_update_value_without_description(self):
+        """Updating an existing Value without description in CSV should be a no-op update."""
+        catalog = Catalog()
+        value_id = build_value_id("m1", "a")
+        catalog.value.add(
+            Value(id=value_id, modality_id="m1", value="a", description="kept")
+        )
+
+        df = pd.DataFrame({"modality_id": ["m1"], "value": ["a"]})
+
+        created, updated = _process_entity_table(catalog, "value", df)
+
+        assert created == 0
+        assert updated == 1
+        assert catalog.value.all()[0].description == "kept"
+
+    def test_duplicate_id_in_same_csv_standard(self):
+        """Duplicate id for a new entity in the same CSV should be merged."""
+        catalog = Catalog()
+        df = pd.DataFrame(
+            {
+                "id": ["f1", "f1"],
+                "name": ["First", "Second"],
+                "description": [None, "Merged"],
+            }
+        )
+
+        created, updated = _process_entity_table(catalog, "folder", df)
+
+        assert created == 1
+        assert updated == 0
+        folder = catalog.folder.all()[0]
+        # Second row overrides scalars (last-wins merge semantics)
+        assert folder.name == "Second"
+        assert folder.description == "Merged"
+
+    def test_duplicate_composite_key_in_same_csv_value(self):
+        """Duplicate composite key for a new Value in same CSV should be merged."""
+        catalog = Catalog()
+        df = pd.DataFrame(
+            {
+                "modality_id": ["m1", "m1", "m2", "m2"],
+                "value": ["a", "a", "b", "b"],
+                # First pair: later row overrides (None → "Second").
+                # Second pair: later row has no description, keeps first.
+                "description": [None, "Second", "First", None],
+            }
+        )
+
+        created, updated = _process_entity_table(catalog, "value", df)
+
+        assert created == 2
+        assert updated == 0
+        by_id = {v.id: v for v in catalog.value.all()}
+        assert by_id[build_value_id("m1", "a")].description == "Second"
+        assert by_id[build_value_id("m2", "b")].description == "First"
+
+    def test_duplicate_composite_key_in_same_csv_freq(self):
+        """Duplicate composite key for a new Freq in same CSV should be merged."""
+        catalog = Catalog()
+        df = pd.DataFrame(
+            {
+                "variable_id": ["v1", "v1"],
+                "value": ["a", "a"],
+                "freq": [1, 7],
+            }
+        )
+
+        created, updated = _process_entity_table(catalog, "freq", df)
+
+        assert created == 1
+        assert updated == 0
+        assert catalog.freq.all()[0].freq == 7
 
 
 class TestUnknownEntityType:

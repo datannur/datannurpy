@@ -7,6 +7,7 @@ import sys
 import time
 from collections.abc import Hashable
 from dataclasses import MISSING, fields
+from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
@@ -83,13 +84,20 @@ DEPTH_ENTITIES: dict[str, set[str]] = {
 }
 
 
-def _get_required_fields(entity_class: type) -> set[str]:
+@lru_cache(maxsize=None)
+def _get_required_fields(entity_class: type) -> frozenset[str]:
     """Get required field names for an entity class (fields without defaults)."""
-    return {
+    return frozenset(
         f.name
         for f in fields(entity_class)
         if f.default is MISSING and f.default_factory is MISSING
-    }
+    )
+
+
+@lru_cache(maxsize=None)
+def _get_field_names(entity_class: type) -> frozenset[str]:
+    """Get all field names for an entity class."""
+    return frozenset(f.name for f in fields(entity_class))
 
 
 def _validate_entity_table(
@@ -113,7 +121,7 @@ def _validate_entity_table(
 
     # Check for missing required columns at file level
     # "name" can be inferred from "id" for variables
-    check_required = required.copy()
+    check_required = set(required)
     if entity_name == "variable" and "id" in csv_columns:
         check_required.discard("name")
 
@@ -122,6 +130,12 @@ def _validate_entity_table(
         missing_str = ", ".join(sorted(missing_columns))
         errors.append(f"{file_name}: missing column(s) {missing_str}")
         return errors  # No point checking rows if columns are missing
+
+    # Pre-compute existing ids once (O(1) lookup per row)
+    if not catalog_table.df.is_empty() and "id" in catalog_table.df.columns:
+        existing_ids = set(catalog_table.df["id"].to_list())
+    else:
+        existing_ids = set()
 
     # Check for empty required values in each row (for new entities only)
     rows = df.to_dict(orient="records")
@@ -133,8 +147,7 @@ def _validate_entity_table(
             continue
 
         # Check if entity already exists (will be updated, not created)
-        existing = catalog_table.get(str(entity_id))
-        if existing:
+        if str(entity_id) in existing_ids:
             continue
 
         # For new entities, check required fields have values
@@ -282,8 +295,9 @@ def _convert_row_to_dict(
     row: dict[Hashable, Any], entity_class: type
 ) -> dict[str, Any]:
     """Convert a row dict to entity constructor kwargs."""
-    # Get valid field names for this entity
-    valid_fields = {f.name for f in fields(entity_class)}
+    valid_fields = _get_field_names(entity_class)
+
+    import pandas as pd
 
     result: dict[str, Any] = {}
     for key, value in row.items():
@@ -291,8 +305,10 @@ def _convert_row_to_dict(
         if key_str not in valid_fields:
             continue
 
-        # Handle None/NaN values
-        if value is None or (isinstance(value, float) and value != value):  # NaN check
+        # Skip missing values (None, NaN, pd.NA, pd.NaT, np.datetime64('NaT'))
+        if value is None or (
+            not isinstance(value, (list, dict)) and bool(pd.isna(value))
+        ):
             continue
 
         # Handle list fields
@@ -332,160 +348,182 @@ def _merge_entity(
             setattr(existing, key, value)
 
 
-def _compute_merge_updates(
-    existing: Any,
-    new_data: dict[str, Any],
-) -> dict[str, Any]:
-    """Compute update dict for Table.update() (override + merge lists)."""
-    updates: dict[str, Any] = {}
-
-    for key, value in new_data.items():
-        if key == "id":
-            continue  # Never override id
-
-        if key in LIST_FIELDS:
-            # Merge lists: new values first, then existing (deduplicated)
-            existing_list = getattr(existing, key, []) or []
-            new_list = value if isinstance(value, list) else []
-            merged = list(dict.fromkeys(new_list + existing_list))
-            updates[key] = merged
-        else:
-            # Override with new value
-            updates[key] = value
-
-    # Mark entity as seen for incremental scan
-    if hasattr(existing, "_seen"):
-        updates["_seen"] = True
-
-    return updates
-
-
-def _find_entity_by_id(
-    entities: list[Any],
-    entity_id: str,
-) -> Any | None:
-    """Find entity by id in list."""
-    for entity in entities:
-        if entity.id == entity_id:
-            return entity
-    return None
-
-
-def _find_value(
-    values: list[Value],
-    modality_id: str,
-    value: str,
-) -> Value | None:
-    """Find Value by composite key."""
-    for v in values:
-        if v.modality_id == modality_id and v.value == value:
-            return v
-    return None
-
-
 def _process_entity_table(
     catalog: Catalog,
     entity_name: str,
     df: pd.DataFrame,
 ) -> tuple[int, int]:
-    """Process a single entity DataFrame and merge into catalog."""
-    entity_class = ENTITY_CLASSES[entity_name]
-    created = 0
-    updated = 0
+    """Process a single entity DataFrame and merge into catalog (batched)."""
+    # Convert DataFrame to list of dicts once
+    rows = df.to_dict(orient="records")
 
-    # Get the appropriate catalog table
+    if entity_name == "value":
+        return _process_value_table(catalog, rows)
+    if entity_name == "freq":
+        return _process_freq_table(catalog, rows)
+    return _process_standard_table(catalog, entity_name, rows)
+
+
+def _process_standard_table(
+    catalog: Catalog,
+    entity_name: str,
+    rows: list[dict[Hashable, Any]],
+) -> tuple[int, int]:
+    """Process an id-keyed entity table in batch mode.
+
+    Builds an in-memory lookup of existing entities, merges all rows, then
+    applies a single remove_all + add_all per group (O(N) instead of O(N²)).
+    """
+    entity_class = ENTITY_CLASSES[entity_name]
     catalog_table = _get_catalog_table(catalog, entity_name)
     assert catalog_table is not None  # entity_name is always valid
 
-    # Convert DataFrame to list of dicts
-    rows = df.to_dict(orient="records")
+    existing_map: dict[str, Any] = {e.id: e for e in catalog_table.all()}
+    updated_by_id: dict[str, Any] = {}
+    new_by_id: dict[str, Any] = {}
 
     for row in rows:
         row_data = _convert_row_to_dict(row, entity_class)
+        entity_id = row_data.get("id")
+        if entity_id is None:
+            continue
+        entity_id = str(entity_id)
+        row_data["id"] = entity_id
 
-        if entity_name == "value":
-            # Value uses composite key (modality_id, value)
-            modality_id = row_data.get("modality_id")
-            value_str = row_data.get("value")
-            if modality_id is None or value_str is None:
-                continue
+        # For Variable: infer name from id if not provided
+        if entity_name == "variable" and "name" not in row_data:
+            row_data["name"] = entity_id.split("---")[-1]
 
-            value_id = build_value_id(str(modality_id), str(value_str))
-            existing = catalog.value.get(value_id)
-            if existing:
-                # Update using Table.update()
-                updates = {}
-                if row_data.get("description") is not None:
-                    updates["description"] = row_data["description"]
-                if updates:
-                    catalog.value.update(value_id, **updates)
-                updated += 1
-            else:
-                new_value = Value(
-                    id=value_id,
-                    modality_id=str(modality_id),
-                    value=str(value_str),
-                    description=row_data.get("description"),
-                )
-                catalog.value.add(new_value)
-                created += 1
-                # Mark parent modality as seen
-                modality = catalog.modality.get(str(modality_id))
-                if modality and hasattr(modality, "_seen"):
-                    catalog.modality.update(str(modality_id), _seen=True)
-
-        elif entity_name == "freq":
-            # Freq uses composite key (variable_id, value)
-            variable_id = row_data.get("variable_id")
-            value_str = row_data.get("value")
-            if variable_id is None or value_str is None:
-                continue
-
-            freq_id = build_freq_id(str(variable_id), str(value_str))
-            freq_count = int(row_data.get("freq", 0))
-            existing = catalog.freq.get(freq_id)
-            if existing:
-                catalog.freq.update(freq_id, freq=freq_count)
-                updated += 1
-            else:
-                new_freq = Freq(
-                    id=freq_id,
-                    variable_id=str(variable_id),
-                    value=str(value_str),
-                    freq=freq_count,
-                )
-                catalog.freq.add(new_freq)
-                created += 1
-
+        existing = existing_map.get(entity_id)
+        if existing is not None:
+            # Mutate in-place (sets _seen, merges list fields, overrides scalars)
+            _merge_entity(existing, row_data)
+            updated_by_id[entity_id] = existing
+        elif entity_id in new_by_id:
+            # Same id appears twice in the CSV for a brand-new entity: merge
+            _merge_entity(new_by_id[entity_id], row_data)
         else:
-            # Standard entity with id
-            entity_id = row_data.get("id")
-            if entity_id is None:
-                continue
+            new_entity = entity_class(**row_data)
+            if hasattr(new_entity, "_seen"):
+                new_entity._seen = True
+            new_by_id[entity_id] = new_entity
 
-            entity_id = str(entity_id)
-            row_data["id"] = entity_id
+    created = len(new_by_id)
+    updated = len(updated_by_id)
 
-            # For Variable: infer name from id if not provided
-            if entity_name == "variable" and "name" not in row_data:
-                # id format: folder---dataset---variable_name
-                parts = entity_id.split("---")
-                row_data["name"] = parts[-1]
+    if updated_by_id:
+        catalog_table.remove_all(list(updated_by_id.keys()))
+        catalog_table.add_all(list(updated_by_id.values()))
+    if new_by_id:
+        catalog_table.add_all(list(new_by_id.values()))
 
-            existing = catalog_table.get(entity_id)
-            if existing:
-                # Compute updates and use Table.update()
-                updates = _compute_merge_updates(existing, row_data)
-                catalog_table.update(entity_id, **updates)
-                updated += 1
-            else:
-                # Validation already done, just create the entity
-                new_entity = entity_class(**row_data)
-                # Mark new entity as seen for incremental scan
-                if hasattr(new_entity, "_seen"):
-                    new_entity._seen = True
-                catalog_table.add(new_entity)
-                created += 1
+    return created, updated
+
+
+def _process_value_table(
+    catalog: Catalog,
+    rows: list[dict[Hashable, Any]],
+) -> tuple[int, int]:
+    """Batch-process the value table (composite key: modality_id + value)."""
+    existing_map: dict[str, Value] = {v.id: v for v in catalog.value.all()}
+    modality_ids: set[str] = (
+        set(catalog.modality.df["id"].to_list())
+        if (not catalog.modality.df.is_empty() and "id" in catalog.modality.df.columns)
+        else set()
+    )
+
+    updated_by_id: dict[str, Value] = {}
+    new_by_id: dict[str, Value] = {}
+    modalities_to_mark: set[str] = set()
+
+    for row in rows:
+        row_data = _convert_row_to_dict(row, Value)
+        modality_id = row_data.get("modality_id")
+        value_str = row_data.get("value")
+        if modality_id is None or value_str is None:
+            continue
+
+        modality_id = str(modality_id)
+        value_str = str(value_str)
+        value_id = build_value_id(modality_id, value_str)
+        description = row_data.get("description")
+
+        if value_id in existing_map:
+            target = existing_map[value_id]
+            if description is not None:
+                target.description = description
+            updated_by_id[value_id] = target
+        elif value_id in new_by_id:
+            if description is not None:
+                new_by_id[value_id].description = description
+        else:
+            new_by_id[value_id] = Value(
+                id=value_id,
+                modality_id=modality_id,
+                value=value_str,
+                description=description,
+            )
+            if modality_id in modality_ids:
+                modalities_to_mark.add(modality_id)
+
+    created = len(new_by_id)
+    updated = len(updated_by_id)
+
+    if updated_by_id:
+        catalog.value.remove_all(list(updated_by_id.keys()))
+        catalog.value.add_all(list(updated_by_id.values()))
+    if new_by_id:
+        catalog.value.add_all(list(new_by_id.values()))
+    if modalities_to_mark:
+        catalog.modality.update_many(list(modalities_to_mark), _seen=True)
+
+    return created, updated
+
+
+def _process_freq_table(
+    catalog: Catalog,
+    rows: list[dict[Hashable, Any]],
+) -> tuple[int, int]:
+    """Batch-process the freq table (composite key: variable_id + value)."""
+    existing_map: dict[str, Freq] = {f.id: f for f in catalog.freq.all()}
+
+    updated_by_id: dict[str, Freq] = {}
+    new_by_id: dict[str, Freq] = {}
+
+    for row in rows:
+        row_data = _convert_row_to_dict(row, Freq)
+        variable_id = row_data.get("variable_id")
+        value_str = row_data.get("value")
+        if variable_id is None or value_str is None:
+            continue
+
+        variable_id = str(variable_id)
+        value_str = str(value_str)
+        freq_id = build_freq_id(variable_id, value_str)
+        freq_count = int(row_data.get("freq", 0))
+
+        if freq_id in existing_map:
+            target = existing_map[freq_id]
+            target.freq = freq_count
+            updated_by_id[freq_id] = target
+        elif freq_id in new_by_id:
+            new_by_id[freq_id].freq = freq_count
+        else:
+            new_by_id[freq_id] = Freq(
+                id=freq_id,
+                variable_id=variable_id,
+                value=value_str,
+                freq=freq_count,
+            )
+
+    created = len(new_by_id)
+    updated = len(updated_by_id)
+
+    if updated_by_id:
+        catalog.freq.remove_all(list(updated_by_id.keys()))
+        catalog.freq.add_all(list(updated_by_id.values()))
+    if new_by_id:
+        catalog.freq.add_all(list(new_by_id.values()))
 
     return created, updated
 

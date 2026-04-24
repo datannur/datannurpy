@@ -97,32 +97,41 @@ def update_cached_metadata(
         if ds and not ds.description:
             catalog.dataset.update(dataset_id, description=meta.table_comment)
 
-    var_ids = catalog.variable.ids_having.dataset(dataset_id)
+    # Fetch all variables of the dataset in one polars pass
+    dataset_vars = catalog.variable.having.dataset(dataset_id)
     all_db_tag_ids = set(_DB_CONSTRAINT_TAGS.keys())
-    for var_id in var_ids:
-        var = catalog.variable.get(var_id)
-        assert var is not None  # guaranteed by ids_having
+    changed: list[Variable] = []
+
+    for var in dataset_vars:
         name = var.name
-        updates: dict[str, object] = {}
+        dirty = False
 
         pk_pos = meta.pk_map.get(name)
         if pk_pos is not None and var.key != pk_pos:
-            updates["key"] = pk_pos
+            var.key = pk_pos
+            dirty = True
         elif pk_pos is None and var.key is not None:
-            updates["key"] = None
+            var.key = None
+            dirty = True
 
         if name in meta.col_comments and not var.description:
-            updates["description"] = meta.col_comments[name]
+            var.description = meta.col_comments[name]
+            dirty = True
 
         db_tags = _compute_var_db_tags(name, meta)
         existing_tags = list(var.tag_ids) if var.tag_ids else []
         non_db_tags = [t for t in existing_tags if t not in all_db_tag_ids]
         new_tags = list(dict.fromkeys(non_db_tags + db_tags))
         if new_tags != existing_tags:
-            updates["tag_ids"] = new_tags
+            var.tag_ids = new_tags
+            dirty = True
 
-        if updates:
-            catalog.variable.update(var_id, **updates)
+        if dirty:
+            changed.append(var)
+
+    if changed:
+        catalog.variable.remove_all([v.id for v in changed])
+        catalog.variable.add_all(changed)
 
 
 def collect_fk_refs(
@@ -141,12 +150,23 @@ def resolve_foreign_keys(
     raw_fk_refs: list[tuple[str, str | None, str, str]],
     table_to_dataset_id: dict[tuple[str | None, str], str],
 ) -> None:
-    """Resolve FK references to actual variable IDs."""
+    """Resolve FK references to actual variable IDs (batched)."""
+    # Resolve target FK for each var_id in a single pass
+    fk_updates: dict[str, str] = {}
     for var_id, ref_schema, ref_table, ref_col in raw_fk_refs:
-        target_dataset_id = table_to_dataset_id.get((ref_schema, ref_table))
-        if target_dataset_id is None:
-            target_dataset_id = table_to_dataset_id.get((None, ref_table))
+        target_dataset_id = table_to_dataset_id.get(
+            (ref_schema, ref_table)
+        ) or table_to_dataset_id.get((None, ref_table))
         if target_dataset_id is None:
             continue
-        fk_var_id = make_id(target_dataset_id, sanitize_id(ref_col))
-        catalog.variable.update(var_id, fk_var_id=fk_var_id)
+        fk_updates[var_id] = make_id(target_dataset_id, sanitize_id(ref_col))
+
+    if not fk_updates:
+        return
+
+    # Fetch all impacted variables in one pass, mutate, then batch replace
+    vars_to_update = catalog.variable.where("id", "in", list(fk_updates.keys()))
+    for var in vars_to_update:
+        var.fk_var_id = fk_updates[var.id]
+    catalog.variable.remove_all([v.id for v in vars_to_update])
+    catalog.variable.add_all(vars_to_update)
