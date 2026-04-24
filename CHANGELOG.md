@@ -1,5 +1,11 @@
 # datannurpy
 
+## 0.19.1 (2026-04-24)
+
+- perf: `add_metadata` now O(N) via batched `add_all` / `remove_all`
+- perf: batched variable updates in `update_cached_metadata` and `resolve_foreign_keys` (DB introspection of cached tables)
+- fix: `add_metadata` skips `pd.NA` / `pd.NaT` (fully-empty nullable columns)
+
 ## 0.19.0 (2026-04-23)
 
 - add: VitePress documentation site under `docs/` — flat structure (one page per section) sourced from the README, published to [docs.datannur.com/builder](https://docs.datannur.com/builder/) via `npm run docs:release`
