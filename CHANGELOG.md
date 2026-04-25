@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.20.0a5 (2026-04-25)
+
+- fix: CSV header on `depth: variable` — deduplicate repeated column names (DuckDB-style `name_1`, `name_2`) and normalize bare `\r` line endings (Mac Classic / SDMX exports)
+
 ## 0.20.0a4 (2026-04-25)
 
 - fix: CSV header parsing on `depth: variable` (BOM, `;` separator with commas in headers, multi-line quoted fields)
