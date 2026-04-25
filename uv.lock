@@ -1059,7 +1059,7 @@ wheels = [
 
 [[package]]
 name = "datannurpy"
-version = "0.20.0a3"
+version = "0.20.0a5"
 source = { editable = "." }
 dependencies = [
     { name = "cryptography" },

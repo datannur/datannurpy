@@ -38,6 +38,20 @@ _CSV_HEADER_DELIMITERS = ",;\t|"
 _CSV_HEADER_SAMPLE_BYTES = 64 * 1024
 
 
+def _deduplicate_columns(names: list[str]) -> list[str]:
+    """Suffix duplicate column names as DuckDB does (`name`, `name_1`, `name_2`, …)."""
+    seen: dict[str, int] = {}
+    out: list[str] = []
+    for n in names:
+        if n in seen:
+            seen[n] += 1
+            out.append(f"{n}_{seen[n]}")
+        else:
+            seen[n] = 0
+            out.append(n)
+    return out
+
+
 def _read_csv_header(sample: bytes, csv_encoding: str | None = None) -> list[str]:
     """Parse column names from a CSV header sample (raw bytes, may span multiple lines)."""
     try:
@@ -47,7 +61,10 @@ def _read_csv_header(sample: bytes, csv_encoding: str | None = None) -> list[str
     # Strip UTF-8 BOM if present (common on Windows-exported CSVs)
     if text.startswith("\ufeff"):
         text = text[1:]
-    text = text.lstrip("\r\n")
+    # Normalize line endings: stdlib csv only accepts \n or \r\n, but some files
+    # (Mac Classic, legacy SDMX exports) use bare \r as line terminator.
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    text = text.lstrip("\n")
     if not text.strip():
         return []
     # Sniff dialect on a reasonable sample, restricted to common delimiters so
@@ -63,7 +80,7 @@ def _read_csv_header(sample: bytes, csv_encoding: str | None = None) -> list[str
         else csv.reader(io.StringIO(text))
     )
     row = next(reader, [])
-    return [c for c in row if c.strip()]
+    return _deduplicate_columns([c for c in row if c.strip()])
 
 
 @contextmanager

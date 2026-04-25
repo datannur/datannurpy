@@ -266,6 +266,23 @@ class TestReadCsvHeaderEdgeCases:
         cols = _read_csv_header(sample)
         assert cols == ["a", "b\nwith newline", "c"]
 
+    def test_duplicate_column_names_suffixed(self):
+        """Duplicate header names must be suffixed (DuckDB convention) to avoid ID collisions."""
+        from datannurpy.scanner.csv import _read_csv_header
+
+        sample = b"ts_key;value;ts_key\n1;2;3\n"
+        cols = _read_csv_header(sample)
+        assert cols == ["ts_key", "value", "ts_key_1"]
+
+    def test_cr_only_line_endings(self):
+        """Files using bare \\r as line terminator (Mac Classic) must parse."""
+        from datannurpy.scanner.csv import _read_csv_header
+
+        # BOM + \r-only line endings
+        sample = b"\xef\xbb\xbfa;b;c\r1;2;3\r4;5;6\r"
+        cols = _read_csv_header(sample)
+        assert cols == ["a", "b", "c"]
+
 
 class TestScanCsvErrorPath:
     """Test scan_csv error handling."""
