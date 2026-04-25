@@ -238,6 +238,34 @@ class TestReadCsvHeaderEdgeCases:
         cols = _read_csv_header(b"pr\xe9nom,\xe2ge\n")
         assert "prénom" in cols
 
+    def test_utf8_bom_stripped(self):
+        """_read_csv_header should strip a UTF-8 BOM from the first column name."""
+        from datannurpy.scanner.csv import _read_csv_header
+
+        # BOM (\xef\xbb\xbf) + ';'-separated header with a comma inside a header field.
+        sample = b"\xef\xbb\xbfAnn\xc3\xa9e;Niveau;PIB (mio. francs, na)\n1;A;10\n"
+        cols = _read_csv_header(sample)
+        assert cols == ["Année", "Niveau", "PIB (mio. francs, na)"]
+
+    def test_semicolon_with_comma_in_header_field(self):
+        """Sniffer must pick ';' over ',' when commas appear inside header fields."""
+        from datannurpy.scanner.csv import _read_csv_header
+
+        sample = (
+            b'Annee;"Taux (nominal, na)";"PIB (mio., francs)"\n'
+            b"2020;1.5;100\n2021;2.0;110\n"
+        )
+        cols = _read_csv_header(sample)
+        assert cols == ["Annee", "Taux (nominal, na)", "PIB (mio., francs)"]
+
+    def test_multiline_quoted_header_field(self):
+        """A quoted header field containing a newline must not crash the parser."""
+        from datannurpy.scanner.csv import _read_csv_header
+
+        sample = b'a;"b\nwith newline";c\n1;2;3\n4;5;6\n'
+        cols = _read_csv_header(sample)
+        assert cols == ["a", "b\nwith newline", "c"]
+
 
 class TestScanCsvErrorPath:
     """Test scan_csv error handling."""
