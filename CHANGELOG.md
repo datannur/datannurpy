@@ -3,6 +3,7 @@
 ## 0.19.2 (2026-04-25)
 
 - fix: `add_metadata` coerces `datetime` / `pd.Timestamp` to ISO-8601 string (CSV/Excel date columns auto-inferred by DuckDB broke `export_db` / `export_app`)
+- fix: time series detection no longer groups files/tables when no full 4-digit year is present anywhere (trailing 2-digit suffixes like `MONTH12`/`MONTH13` were falsely interpreted as month/day fragments)
 
 ## 0.19.1 (2026-04-24)
 
