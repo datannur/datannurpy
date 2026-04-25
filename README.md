@@ -1,5 +1,7 @@
-![datannur logo](https://raw.githubusercontent.com/datannur/datannur/main/public/assets/main-banner-dark.png?raw=true#gh-dark-mode-only)
-![datannur logo](https://raw.githubusercontent.com/datannur/datannur/main/public/assets/main-banner.png?raw=true#gh-light-mode-only)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/datannur/datannur/main/public/assets/main-banner-dark.png">
+  <img alt="datannur logo" src="https://raw.githubusercontent.com/datannur/datannur/main/public/assets/main-banner.png">
+</picture>
 
 [![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PyPI version](https://img.shields.io/pypi/v/datannurpy.svg)](https://pypi.org/project/datannurpy/)
