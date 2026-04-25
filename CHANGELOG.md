@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.20.0a1 (2026-04-25)
+
+- add: `Folder` now exposes `manager_id` and `owner_id` (institution links), with matching kwargs on `add_folder` / `add_database`
+
 ## 0.19.2 (2026-04-25)
 
 - fix: `add_metadata` coerces `datetime` / `pd.Timestamp` to ISO-8601 string (CSV/Excel date columns auto-inferred by DuckDB broke `export_db` / `export_app`)

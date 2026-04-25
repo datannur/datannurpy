@@ -100,6 +100,21 @@ Structure:
 3. Run `make check`
 4. Submit PR
 
+## Releases
+
+Publishing is automated: pushing to `main` with a new version in `pyproject.toml` triggers PyPI publication and a GitHub Release (see [.github/workflows/release.yml](.github/workflows/release.yml)).
+
+Versions follow [PEP 440](https://peps.python.org/pep-0440/):
+
+- **Stable** (e.g. `0.20.0`) — installed by default with `pip install datannurpy`.
+- **Pre-release** (e.g. `0.20.0a1`, `0.20.0b1`, `0.20.0rc1`) — ignored by default; users opt in with `pip install --pre datannurpy` or pin explicitly. Marked as pre-release on GitHub.
+
+Workflow for a new feature cycle:
+
+1. Bump `pyproject.toml` to `X.Y.0a1` and add a `## X.Y.0a1 (date)` section in `CHANGELOG.md` — push to `main` to publish a preview.
+2. Iterate with `a2`, `a3`… as feedback comes in.
+3. When stable, bump to `X.Y.0` (final) and update `CHANGELOG.md` accordingly.
+
 ## Code Style
 
 - Python 3.9+ (`from __future__ import annotations`)
