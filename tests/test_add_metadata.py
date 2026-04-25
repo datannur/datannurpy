@@ -191,11 +191,13 @@ class TestConvertRowToDict:
         assert "nb_distinct" not in result
         assert "description" not in result
 
-    def test_coerces_datetime_to_isoformat(self):
-        """datetime / pd.Timestamp / date are coerced to ISO-8601 string.
+    def test_coerces_datetime_to_yyyy_mm_dd(self):
+        """datetime / pd.Timestamp / date are coerced to `YYYY/MM/DD`.
 
         DuckDB-based CSV reader and Excel parser auto-infer ISO-8601 columns
-        as datetime; the schema declares date fields as `str | None`.
+        as datetime; the schema declares date fields as `str | None`. Aligning
+        on `YYYY/MM/DD` matches `get_mtime_iso` (filesystem scan), so lexical
+        order = chronological order across both code paths.
         """
         import datetime as _dt
 
@@ -208,7 +210,7 @@ class TestConvertRowToDict:
             "last_update_date": ts,
         }
         result = _convert_row_to_dict(row, Folder)
-        assert result["last_update_date"] == "2026-04-23T12:11:38.685876"
+        assert result["last_update_date"] == "2026/04/23"
         assert isinstance(result["last_update_date"], str)
 
         row2: dict[Hashable, Any] = {
@@ -217,7 +219,7 @@ class TestConvertRowToDict:
             "last_update_date": _dt.date(2026, 4, 23),
         }
         result2 = _convert_row_to_dict(row2, Folder)
-        assert result2["last_update_date"] == "2026-04-23"
+        assert result2["last_update_date"] == "2026/04/23"
 
     def test_handles_list_fields(self):
         """List fields should be parsed correctly."""

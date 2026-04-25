@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.20.0a2 (2026-04-25)
+
+- fix: `add_metadata` formats dates as `YYYY/MM/DD` (was ISO-8601), aligned with `get_mtime_iso` — lexical order = chronological order across filesystem scan and CSV/Excel metadata
+
 ## 0.20.0a1 (2026-04-25)
 
 - add: `Folder` now exposes `manager_id` and `owner_id` (institution links), with matching kwargs on `add_folder` / `add_database`
