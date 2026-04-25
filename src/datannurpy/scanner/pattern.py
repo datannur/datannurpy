@@ -38,10 +38,16 @@ def _prepare_table(table: ibis.Table, cols: list[str]) -> ibis.Table:
     """Ensure DuckDB-compatible regex support, materializing if needed."""
     try:
         test_expr: Any = ibis.literal("é")
-        table.select(test_expr.re_replace(_LETTER_UNICODE, "a").name("_t")).limit(
-            1
-        ).to_pyarrow()
-        return table
+        result = (
+            table.select(test_expr.re_replace(_LETTER_UNICODE, "a").name("_t"))
+            .limit(1)
+            .to_pyarrow()
+        )
+        # Validate the probe output: some backends (e.g. Oracle) accept \p{L}
+        # syntactically but only treat ASCII letters as letters, leaving "é"
+        # unchanged. Fall back to DuckDB materialization in that case.
+        if result.num_rows > 0 and result.column("_t")[0].as_py() == "a":
+            return table
     except Exception:
         pass
     arrow = table.select(*cols).to_pyarrow()

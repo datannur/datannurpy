@@ -221,6 +221,21 @@ class TestGroupTimeSeries:
         assert len(series) == 0
         assert len(singles) == 2
 
+    def test_no_year_anywhere_not_grouped(self, tmp_path: Path):
+        """Files without any 4-digit year must not be grouped as a series.
+
+        Regression: trailing two-digit suffixes were previously interpreted as
+        month_only / day_only fragments and grouped, producing bogus periods.
+        """
+        files = [
+            (tmp_path / "TABLE_LOOKUP_MONTH12.csv", 1000),
+            (tmp_path / "TABLE_LOOKUP_MONTH13.csv", 2000),
+        ]
+        series, singles = group_time_series(files, tmp_path)
+
+        assert len(series) == 0
+        assert len(singles) == 2
+
 
 class TestGroupLevelPeriodDetection:
     """Test group-level period detection (constant vs variable positions)."""
@@ -876,6 +891,18 @@ class TestGroupTableTimeSeries:
         tables = ["t1", "t2", "t3", "t4"]
         series, singles = group_table_time_series(tables)
         assert len(series) == 0
+        assert sorted(singles) == sorted(tables)
+
+    def test_no_year_anywhere_not_grouped(self):
+        """Tables without any 4-digit year must not be grouped as a series.
+
+        Regression: trailing two-digit suffixes like 'MONTH12' / 'MONTH13' were
+        previously interpreted as month/day fragments and grouped, producing
+        bogus periods such as '0/12' and '0/00/13'.
+        """
+        tables = ["TABLE_LOOKUP_MONTH12", "TABLE_LOOKUP_MONTH13"]
+        series, singles = group_table_time_series(tables)
+        assert series == []
         assert sorted(singles) == sorted(tables)
 
     def test_constant_prefix_digit_not_treated_as_period(self):

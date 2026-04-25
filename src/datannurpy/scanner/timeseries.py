@@ -423,6 +423,17 @@ def group_time_series(
                 singles.append((path, mtime))
             continue
 
+        # Require at least one full 4-digit year somewhere in the path/name;
+        # otherwise partial fragments (e.g. trailing "12"/"13") would form a
+        # bogus series. See group_table_time_series for the same guard.
+        has_year = any(
+            info.year > 0 for _, _, positions in file_list for info in positions
+        )
+        if not has_year:
+            for path, mtime, _ in file_list:
+                singles.append((path, mtime))
+            continue
+
         # Classify variable/constant positions and potentially sub-group
         for refined_path, result_files in _refine_group(normalized, file_list):
             if len(result_files) >= 2:
@@ -496,6 +507,16 @@ def group_table_time_series(
         file_list = [
             (PurePosixPath(name), 0, positions) for name, positions in table_list
         ]
+        # Require at least one full 4-digit year; otherwise partial digits
+        # like "MONTH12"/"MONTH13" would be falsely grouped as a series.
+        has_year = any(
+            info.year > 0 for _, _, positions in file_list for info in positions
+        )
+        if not has_year:
+            for path, _, _ in file_list:
+                singles.append(path.name)
+            continue
+
         for refined_name, result_files in _refine_group(normalized, file_list):
             if len(result_files) < 2:
                 for _, path, _ in result_files:
