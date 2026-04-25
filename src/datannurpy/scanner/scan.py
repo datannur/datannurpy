@@ -381,11 +381,11 @@ def _scan_schema_only_remote(
 
     # CSV: stream only the header line (readline guarantees a complete line)
     if delivery_format == "csv":
-        from .csv import _read_csv_header
+        from .csv import _CSV_HEADER_SAMPLE_BYTES, _read_csv_header
 
         full_path = fs._full_path(str(path))
         with fs.fs.open(full_path, "rb") as f:
-            header_bytes = f.readline()
+            header_bytes = f.read(_CSV_HEADER_SAMPLE_BYTES)
         columns = _read_csv_header(header_bytes, csv_encoding)
         variables = [
             Variable(
@@ -438,10 +438,10 @@ def _scan_schema_only_local(
 ) -> ScanResult:
     """Schema-only scan for local files."""
     if delivery_format == "csv":
-        from .csv import _read_csv_header
+        from .csv import _CSV_HEADER_SAMPLE_BYTES, _read_csv_header
 
         with open(path, "rb") as f:
-            columns = _read_csv_header(f.readline(), csv_encoding)
+            columns = _read_csv_header(f.read(_CSV_HEADER_SAMPLE_BYTES), csv_encoding)
         variables = [
             Variable(
                 id=f"{dataset_id}---{col}",
