@@ -103,6 +103,7 @@ def _create_dataset(
         updating_each=meta.updating_each,
         no_more_update=meta.no_more_update,
         _seen=True,
+        _match_path=data_path,
     )
 
 
@@ -231,7 +232,7 @@ def add_dataset(
     data_path_str = str(dataset_path)
 
     # Check for existing dataset (incremental scan)
-    existing = catalog.dataset.get_by("data_path", data_path_str)
+    existing = catalog.dataset.get_by("_match_path", data_path_str)
     if existing is not None:
         if not do_refresh and existing.last_update_timestamp == current_mtime:
             # Unchanged - skip and mark as seen
@@ -351,7 +352,7 @@ def _add_parquet_directory(
     dir_name = str(dir_path).rstrip("/").rsplit("/", 1)[-1]
 
     # Check for existing dataset (incremental scan)
-    existing = catalog.dataset.get_by("data_path", data_path_str)
+    existing = catalog.dataset.get_by("_match_path", data_path_str)
     if existing is not None:
         if not refresh and existing.last_update_timestamp == current_mtime:
             catalog.dataset.update(existing.id, _seen=True)

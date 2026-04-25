@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.20.0a3 (2026-04-25)
+
+- add: metadata-first pattern. `add_folder(create_folders=False)` skips creating folders from disk and reuses `id`/`folder_id` from `metadata/dataset.csv` (matched by `data_path`). New `on_unmatched` parameter (`"skip"` / `"warn"` / `"error"`) controls behavior for files with no metadata match.
+- internal: new runtime field `Dataset._match_path` (absolute path used for scan↔metadata matching, not exported). `data_path` is now treated as the public link only.
+
 ## 0.20.0a2 (2026-04-25)
 
 - fix: `add_metadata` formats dates as `YYYY/MM/DD` (was ISO-8601), aligned with `get_mtime_iso` — lexical order = chronological order across filesystem scan and CSV/Excel metadata

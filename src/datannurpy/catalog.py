@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import polars as pl
 
@@ -17,6 +17,9 @@ from .schema import Config, DatannurDB
 from .utils import ModalityManager, configure_logging
 from .utils.ids import compute_runtime_ids
 from .utils.params import validate_params
+
+if TYPE_CHECKING:
+    from .add_metadata import LoadedDatasetRef
 
 Depth = Literal["dataset", "variable", "stat", "value"]
 
@@ -99,6 +102,7 @@ class Catalog(DatannurDB):
         self.metadata_path: str | Path | list[str | Path] | None = metadata_path
         self._metadata_applied = False
         self._loaded_metadata: list[dict[str, Any]] | None = None
+        self._dataset_match_index: dict[str, LoadedDatasetRef] | None = None
         self._freq_hidden_ids: set[str] = set()
         if metadata_path is not None:
             from .add_metadata import load_metadata
@@ -132,6 +136,16 @@ class Catalog(DatannurDB):
         ]:
             if "_seen" in table.runtime_fields and not table.is_empty:
                 table._df = table._df.with_columns(pl.lit(False).alias("_seen"))
+
+        # Restore _match_path from data_path (runtime field, not persisted).
+        # data_path is the right default match key for filesystem-first and
+        # database datasets (where it's already absolute / a stable URI).
+        # For metadata-first datasets where data_path is a relative string
+        # or URL, load_metadata re-resolves _match_path from the CSV source.
+        if not self.dataset.is_empty and "data_path" in self.dataset._df.columns:
+            self.dataset._df = self.dataset._df.with_columns(
+                pl.col("data_path").alias("_match_path")
+            )
 
         self.modality_manager.rebuild_index()
 

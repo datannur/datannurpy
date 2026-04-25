@@ -376,7 +376,7 @@ def _add_database_impl(
             )
 
             # Check if table exists in cache
-            existing_dataset = catalog.dataset.get_by("data_path", table_data_path)
+            existing_dataset = catalog.dataset.get_by("_match_path", table_data_path)
 
             # Structure/Variable mode: no signature, no row count, no incremental check
             if resolved_depth not in ("stat", "value"):
@@ -438,6 +438,7 @@ def _add_database_impl(
                     data_size=get_table_data_size(con, table_name, schema_name),
                     last_update_timestamp=catalog._now if is_change else None,
                     _seen=True,
+                    _match_path=table_data_path,
                 )
                 if do_introspect:
                     meta = schema_meta[table_name]
@@ -553,6 +554,7 @@ def _add_database_impl(
                 schema_signature=current_signature,
                 last_update_timestamp=effective_timestamp,
                 _seen=True,
+                _match_path=table_data_path,
             )
             meta = schema_meta[table_name]
             apply_metadata_to_new_vars(table_vars, dataset, meta)
@@ -630,7 +632,7 @@ def _scan_table_series(
     data_path = build_table_data_path(backend_name, db_name, schema_name, last_table)
 
     # Remove existing dataset if present
-    existing = catalog.dataset.get_by("data_path", data_path)
+    existing = catalog.dataset.get_by("_match_path", data_path)
     if existing:
         remove_dataset_cascade(catalog, existing)
 
@@ -730,6 +732,7 @@ def _scan_table_series(
         end_date=last_period,
         sample_size=actual_sample_size,
         _seen=True,
+        _match_path=data_path,
     )
     catalog.dataset.add(dataset)
 
