@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.20.0a4 (2026-04-25)
+
+- fix: CSV header parsing on `depth: variable` (BOM, `;` separator with commas in headers, multi-line quoted fields)
+
 ## 0.20.0a3 (2026-04-25)
 
 - add: metadata-first pattern. `add_folder(create_folders=False)` skips creating folders from disk and reuses `id`/`folder_id` from `metadata/dataset.csv` (matched by `data_path`). New `on_unmatched` parameter (`"skip"` / `"warn"` / `"error"`) controls behavior for files with no metadata match.
