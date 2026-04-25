@@ -120,6 +120,31 @@ class TestPrepareTable:
         assert list(result.columns) == ["a"]
         assert result.count().execute() == 2
 
+    def test_materializes_when_probe_returns_unicode_unchanged(self, monkeypatch):
+        """Backend (e.g. Oracle) accepts \\p{L} syntactically but leaves 'é' as-is.
+
+        Regression: previously the probe only checked for absence of an
+        exception, so Unicode letters later collapsed to '?' in the output.
+        """
+        import pyarrow as pa
+
+        t = ibis.memtable({"a": ["hello"], "b": [1]})
+        # Force the probe to return the original "é" instead of "a"
+        bad_probe = pa.table({"_t": pa.array(["é"], type=pa.string())})
+        orig_to_pyarrow = ibis.expr.types.relations.Table.to_pyarrow
+
+        def fake_to_pyarrow(self, *args, **kwargs):
+            if "_t" in self.columns:
+                return bad_probe
+            return orig_to_pyarrow(self, *args, **kwargs)
+
+        monkeypatch.setattr(
+            "ibis.expr.types.relations.Table.to_pyarrow", fake_to_pyarrow
+        )
+        result = _prepare_table(t, ["a"])
+        assert result is not t
+        assert list(result.columns) == ["a"]
+
 
 class TestComputePatternFreqs:
     """Test compute_pattern_freqs end-to-end."""

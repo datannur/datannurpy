@@ -3,7 +3,8 @@
 ## 0.19.2 (2026-04-25)
 
 - fix: `add_metadata` coerces `datetime` / `pd.Timestamp` to ISO-8601 string (CSV/Excel date columns auto-inferred by DuckDB broke `export_db` / `export_app`)
-- fix: time series detection no longer groups files/tables when no full 4-digit year is present anywhere (trailing 2-digit suffixes like `MONTH12`/`MONTH13` were falsely interpreted as month/day fragments)
+- fix: time series detection requires a 4-digit year (suffixes like `MONTH12`/`MONTH13` no longer falsely grouped)
+- fix: pattern detection validates `\p{L}` probe output and falls back to DuckDB on Oracle (accents no longer collapse to `?`)
 
 ## 0.19.1 (2026-04-24)
 
