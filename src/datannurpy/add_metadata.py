@@ -312,12 +312,14 @@ def _convert_row_to_dict(
         ):
             continue
 
-        # Coerce datetime / date / pd.Timestamp to ISO-8601 string —
+        # Coerce datetime / date / pd.Timestamp to YYYY/MM/DD —
         # CSV (DuckDB) and Excel parsers infer date columns natively, but the
-        # schema declares date fields as `str | None` (rendered as-is by the app
-        # and serialized by jsonjsdb's `json.dump(allow_nan=False)`).
+        # schema declares date fields as `str | None`. Aligning on YYYY/MM/DD
+        # matches `get_mtime_iso` (filesystem scan) so lexical order = chronological
+        # order across both code paths, and survives jsonjsdb's
+        # `json.dump(allow_nan=False)` serialization.
         if isinstance(value, (datetime, date)):
-            value = value.isoformat()
+            value = value.strftime("%Y/%m/%d")
 
         # Handle list fields
         if key_str in LIST_FIELDS:
