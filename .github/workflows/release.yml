@@ -19,6 +19,7 @@ jobs:
       changed: ${{ steps.version_check.outputs.changed }}
       version: ${{ steps.current_version.outputs.version }}
       tag: ${{ steps.current_version.outputs.tag }}
+      prerelease: ${{ steps.current_version.outputs.prerelease }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
@@ -28,6 +29,12 @@ jobs:
           VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+          # PEP 440 pre-release detection (a/b/rc/dev)
+          if [[ "${VERSION}" =~ (a|b|rc|\.dev)[0-9]+$ ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Check if version changed
         id: version_check
@@ -102,10 +109,14 @@ jobs:
       - name: Create GitHub release
         run: |
           TAG="${{ needs.check-version.outputs.tag }}"
+          PRERELEASE_FLAG=""
+          if [[ "${{ needs.check-version.outputs.prerelease }}" == "true" ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
           if [[ "${{ steps.changelog.outputs.found }}" == "true" ]]; then
-            gh release create "${TAG}" --title "datannurpy ${TAG}" --notes-file /tmp/changelog_section.md dist/* sbom/*
+            gh release create "${TAG}" ${PRERELEASE_FLAG} --title "datannurpy ${TAG}" --notes-file /tmp/changelog_section.md dist/* sbom/*
           else
-            gh release create "${TAG}" --title "datannurpy ${TAG}" --generate-notes dist/* sbom/*
+            gh release create "${TAG}" ${PRERELEASE_FLAG} --title "datannurpy ${TAG}" --generate-notes dist/* sbom/*
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

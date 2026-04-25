@@ -2,6 +2,8 @@
   {
     "id": "_modalities",
     "parent_id": null,
+    "manager_id": null,
+    "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
     "name": "Modalities",
@@ -12,6 +14,8 @@
   {
     "id": "company",
     "parent_id": null,
+    "manager_id": null,
+    "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
     "name": "company",
@@ -22,6 +26,8 @@
   {
     "id": "company---hr",
     "parent_id": "company",
+    "manager_id": null,
+    "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
     "name": "hr",
@@ -32,6 +38,8 @@
   {
     "id": "company---inventory",
     "parent_id": "company",
+    "manager_id": null,
+    "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
     "name": "inventory",
@@ -42,6 +50,8 @@
   {
     "id": "company---sales",
     "parent_id": "company",
+    "manager_id": null,
+    "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
     "name": "sales",
@@ -52,6 +62,8 @@
   {
     "id": "company---sales---sales_order",
     "parent_id": "company---sales",
+    "manager_id": null,
+    "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
     "name": "sales_order",
@@ -62,6 +74,8 @@
   {
     "id": "data",
     "parent_id": null,
+    "manager_id": null,
+    "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
     "name": "data",
@@ -72,6 +86,8 @@
   {
     "id": "data---csv",
     "parent_id": "data",
+    "manager_id": null,
+    "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
     "name": "csv",
@@ -82,6 +98,8 @@
   {
     "id": "data---iceberg_warehouse",
     "parent_id": "data",
+    "manager_id": null,
+    "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
     "name": "iceberg_warehouse",
@@ -92,6 +110,8 @@
   {
     "id": "data---iceberg_warehouse---default",
     "parent_id": "data---iceberg_warehouse",
+    "manager_id": null,
+    "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
     "name": "default",
@@ -102,6 +122,8 @@
   {
     "id": "data---metadata",
     "parent_id": "data",
+    "manager_id": null,
+    "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
     "name": "metadata",
@@ -112,6 +134,8 @@
   {
     "id": "data---subfolder1",
     "parent_id": "data",
+    "manager_id": null,
+    "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
     "name": "subfolder1",
@@ -122,6 +146,8 @@
   {
     "id": "data---timeseries",
     "parent_id": "data",
+    "manager_id": null,
+    "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
     "name": "timeseries",
@@ -132,6 +158,8 @@
   {
     "id": "data---timeseries---mixed",
     "parent_id": "data---timeseries",
+    "manager_id": null,
+    "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
     "name": "mixed",
@@ -142,6 +170,8 @@
   {
     "id": "data---timeseries---monthly_folders",
     "parent_id": "data---timeseries",
+    "manager_id": null,
+    "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
     "name": "monthly_folders",
@@ -152,6 +182,8 @@
   {
     "id": "data---timeseries---quarterly",
     "parent_id": "data---timeseries",
+    "manager_id": null,
+    "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
     "name": "quarterly",
@@ -162,6 +194,8 @@
   {
     "id": "data---timeseries---schema_evolution",
     "parent_id": "data---timeseries",
+    "manager_id": null,
+    "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
     "name": "schema_evolution",
@@ -172,6 +206,8 @@
   {
     "id": "data---timeseries---yearly",
     "parent_id": "data---timeseries",
+    "manager_id": null,
+    "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
     "name": "yearly",
@@ -182,6 +218,8 @@
   {
     "id": "photovoltaik",
     "parent_id": null,
+    "manager_id": null,
+    "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
     "name": "Grandes installations photovoltaïques",

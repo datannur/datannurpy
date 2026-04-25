@@ -57,6 +57,8 @@ catalog.add_folder(
     id=None,
     name=None,
     description=None,
+    manager_id=None,
+    owner_id=None,
 )
 ```
 
@@ -78,6 +80,8 @@ catalog.add_folder(
 | id              | str \| None                               | None     | Override folder ID                            |
 | name            | str \| None                               | None     | Override folder name                          |
 | description     | str \| None                               | None     | Override folder description                   |
+| manager_id      | str \| None                               | None     | Institution ID managing the folder            |
+| owner_id        | str \| None                               | None     | Institution ID owning the folder              |
 
 ### `Catalog.add_dataset()`
 
@@ -140,6 +144,8 @@ catalog.add_database(
     id=None,
     name=None,
     description=None,
+    manager_id=None,
+    owner_id=None,
 )
 ```
 
@@ -163,6 +169,8 @@ catalog.add_database(
 | id                 | str \| None                                     | None     | Override folder ID                         |
 | name               | str \| None                                     | None     | Override folder name                       |
 | description        | str \| None                                     | None     | Override folder description                |
+| manager_id         | str \| None                                     | None     | Institution ID managing the folder         |
+| owner_id           | str \| None                                     | None     | Institution ID owning the folder           |
 
 ### `Catalog.export_db()`
 

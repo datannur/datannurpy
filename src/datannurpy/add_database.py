@@ -93,12 +93,28 @@ def add_database(
     id: str | None = None,
     name: str | None = None,
     description: str | None = None,
+    manager_id: str | None = None,
+    owner_id: str | None = None,
 ) -> None:
     """Scan a database and add its tables to the catalog."""
-    if id is not None or name is not None or description is not None:
+    if (
+        id is not None
+        or name is not None
+        or description is not None
+        or manager_id is not None
+        or owner_id is not None
+    ):
         if folder is not None:
-            raise ConfigError("Cannot specify both folder and id/name/description")
-        folder = Folder(id=id or "", name=name, description=description)
+            raise ConfigError(
+                "Cannot specify both folder and id/name/description/manager_id/owner_id"
+            )
+        folder = Folder(
+            id=id or "",
+            name=name,
+            description=description,
+            manager_id=manager_id,
+            owner_id=owner_id,
+        )
     if isinstance(schema, list):
         kwargs = {k: v for k, v in locals().items() if k not in ("catalog", "schema")}
         for s in schema:

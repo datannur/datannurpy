@@ -13,6 +13,8 @@ class Folder:
 
     id: str
     parent_id: str | None = None
+    manager_id: str | None = None
+    owner_id: str | None = None
     tag_ids: list[str] = field(default_factory=list)
     doc_ids: list[str] = field(default_factory=list)
     name: str | None = None
