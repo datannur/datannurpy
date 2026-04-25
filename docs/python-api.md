@@ -54,6 +54,8 @@ catalog.add_folder(
     refresh=None,
     quiet=None,
     time_series=True,
+    create_folders=True,
+    on_unmatched="warn",
     id=None,
     name=None,
     description=None,
@@ -77,6 +79,8 @@ catalog.add_folder(
 | refresh         | bool \| None                              | None     | Force rescan (overrides catalog setting)      |
 | quiet           | bool \| None                              | None     | Override catalog quiet setting                |
 | time_series     | bool                                      | True     | Group files with temporal patterns            |
+| create_folders  | bool                                      | True     | If False, do not create folders from disk; rely on `metadata_path` for structure (metadata-first) |
+| on_unmatched    | "skip" \| "warn" \| "error"               | "warn"   | Policy when a scanned file has no metadata match (only when `create_folders=False`) |
 | id              | str \| None                               | None     | Override folder ID                            |
 | name            | str \| None                               | None     | Override folder name                          |
 | description     | str \| None                               | None     | Override folder description                   |

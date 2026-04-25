@@ -10,7 +10,7 @@ from dataclasses import MISSING, fields
 from datetime import date, datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, NamedTuple
 from urllib.parse import urlparse
 
 import ibis
@@ -244,7 +244,33 @@ def _load_tables_from_folder(
                     tables[entity_name] = (df, file_path.name)
                 break
 
+    # Resolve dataset.data_path → _match_path (absolute, used for scan↔metadata
+    # matching). data_path stays as-is in the export; _match_path is internal.
+    if "dataset" in tables:
+        df, fname = tables["dataset"]
+        if "data_path" in df.columns:
+            df = df.copy()
+            df["_match_path"] = df["data_path"].map(
+                lambda p: _resolve_match_path(p, folder_path)
+            )
+            tables["dataset"] = (df, fname)
+
     return tables
+
+
+def _resolve_match_path(data_path: Any, base_dir: Path) -> str | None:
+    """Resolve a CSV data_path to an absolute match path (or None if URL/missing)."""
+    import pandas as pd
+
+    if data_path is None or (isinstance(data_path, float) and pd.isna(data_path)):
+        return None
+    s = str(data_path).strip()
+    if not s or "://" in s:
+        return None
+    candidate = Path(s)
+    if not candidate.is_absolute():
+        candidate = (base_dir / candidate).resolve()
+    return str(candidate) if candidate.exists() else None
 
 
 def _load_tables_from_database(
@@ -614,6 +640,57 @@ def load_metadata(
         hidden |= _extract_freq_hidden_ids(tables)
     catalog._loaded_metadata = sources
     catalog._freq_hidden_ids = hidden
+    # Reset the peek index; it will be rebuilt lazily on first lookup.
+    catalog._dataset_match_index = None
+
+
+class LoadedDatasetRef(NamedTuple):
+    """Minimal reference to a dataset pre-loaded from metadata."""
+
+    id: str
+    folder_id: str | None
+
+
+def _build_dataset_match_index(
+    sources: list[dict[str, tuple[pd.DataFrame, str]]] | None,
+) -> dict[str, LoadedDatasetRef]:
+    """Build {abs_match_path: LoadedDatasetRef} from pre-loaded metadata sources."""
+    index: dict[str, LoadedDatasetRef] = {}
+    for source in sources or []:
+        entry = source.get("dataset")
+        if entry is not None:
+            df = entry[0]
+            if "_match_path" in df.columns and "id" in df.columns:
+                for record in df.to_dict(orient="records"):
+                    mp = _optional_str(record.get("_match_path"))
+                    row_id = _optional_str(record.get("id"))
+                    if mp is not None and row_id is not None:
+                        index[mp] = LoadedDatasetRef(
+                            id=row_id,
+                            folder_id=_optional_str(record.get("folder_id")),
+                        )
+    return index
+
+
+def _optional_str(value: Any) -> str | None:
+    """Coerce a value to str, returning None for None/NaN/empty."""
+    import pandas as pd
+
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+    s = str(value).strip()
+    return s if s else None
+
+
+def find_loaded_dataset_by_match_path(
+    catalog: Catalog, abs_match_path: str
+) -> LoadedDatasetRef | None:
+    """Return id/folder_id of pre-loaded dataset matching abs_match_path."""
+    if catalog._dataset_match_index is None:
+        catalog._dataset_match_index = _build_dataset_match_index(
+            catalog._loaded_metadata
+        )
+    return catalog._dataset_match_index.get(abs_match_path)
 
 
 def _apply_config_table(

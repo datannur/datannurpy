@@ -52,6 +52,40 @@ source---employees_csv---department,"Department code","hr"
 
 **Ordering:** Metadata is automatically applied before export/finalization, after all `add_folder`, `add_dataset`, and `add_database` calls, so manual values take precedence.
 
+## Metadata-first pattern
+
+When the structure of the catalog (folders, dataset IDs, hierarchy) is defined entirely by `metadata_path` and the filesystem only provides files to scan for technical info (variables, stats, sizes, formats), use `create_folders=False`:
+
+```yaml
+metadata_path: ./metadata
+add:
+  - folder: ./data/parquet
+    create_folders: false
+```
+
+In this mode:
+
+- No folder is created from the scanned directory; the hierarchy is taken from `metadata/folder.csv`.
+- Each scanned file is matched to its metadata entry via the `data_path` column of `metadata/dataset.csv`. The scan reuses the metadata-defined `id` and `folder_id`.
+- Files with no metadata match are reported according to `on_unmatched`: `"warn"` (default), `"skip"`, or `"error"`.
+
+**Matching:** the scan computes an absolute path for each file and compares it to the resolved `data_path` from `metadata/dataset.csv`. Relative `data_path` values are resolved against the metadata source directory (the folder containing `dataset.csv`). URLs and missing files are not matched.
+
+**Example** — `./metadata/dataset.csv`:
+
+```csv
+id,name,folder_id,data_path
+sales-2024,Sales 2024,finance,../data/parquet/sales-2024.parquet
+hr-headcount,HR headcount,hr,../data/parquet/hr-headcount.parquet
+```
+
+Combined with `add_folder('./data/parquet', create_folders=False)`, the scan attaches variables and stats to `sales-2024` and `hr-headcount` (the IDs declared in metadata) without creating any folder from the disk layout.
+
+**Constraints:**
+
+- `create_folders=False` is incompatible with `folder=` / `id=` / `name=` / `description=` / `manager_id=` / `owner_id=` (no folder is created).
+- The `data_path` you write in `metadata/dataset.csv` is also exported as-is in the output (it is the public link to the data, not a private match key). Use a URL or a deployment-relative path if you want it to remain valid in the front-end.
+
 ## Environment variables
 
 

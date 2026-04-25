@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path, PurePath, PurePosixPath
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from .utils import (
     build_dataset_id_name,
@@ -22,6 +22,7 @@ from .utils import (
     upsert_folder,
 )
 from .utils.params import _UNSET, validate_params
+from .add_metadata import LoadedDatasetRef, find_loaded_dataset_by_match_path
 from .errors import ConfigError
 from .finalize import remove_dataset_cascade
 from .schema import Dataset, Folder
@@ -46,6 +47,8 @@ if TYPE_CHECKING:
 
 _DIR_FORMATS = {"delta", "hive", "iceberg"}
 
+OnUnmatched = Literal["skip", "warn", "error"]
+
 
 def _build_series_folder_id(normalized: str, prefix: str) -> str:
     """Build folder_id for a time series using non-temporal parent folders."""
@@ -53,6 +56,36 @@ def _build_series_folder_id(normalized: str, prefix: str) -> str:
     if non_temporal_parts:
         return make_id(prefix, *[sanitize_id(p) for p in non_temporal_parts])
     return prefix
+
+
+def _handle_unmatched(
+    path_label: str,
+    on_unmatched: OnUnmatched,
+    quiet: bool,
+) -> None:
+    """Apply the configured policy for a scanned file with no metadata match."""
+    if on_unmatched == "error":
+        raise ConfigError(
+            f"No metadata match for {path_label} (create_folders=False, "
+            f'on_unmatched="error")'
+        )
+    if on_unmatched == "warn":
+        log_warn(f"{path_label}: no metadata match, skipped", quiet)
+
+
+def _resolve_ids_from_peek(
+    peek: LoadedDatasetRef | None,
+    fallback_id: str,
+    fallback_folder_id: str,
+    create_folders: bool,
+) -> tuple[str, str | None]:
+    """Resolve (dataset_id, folder_id) from peek with fallback to scan-derived ids."""
+    if peek is None:
+        return fallback_id, fallback_folder_id
+    folder_id = peek.folder_id
+    if folder_id is None and create_folders:
+        folder_id = fallback_folder_id
+    return peek.id, folder_id
 
 
 @validate_params
@@ -72,6 +105,8 @@ def add_folder(
     quiet: bool | None = None,
     refresh: bool | None = None,
     storage_options: dict[str, Any] | None = None,
+    create_folders: bool = True,
+    on_unmatched: OnUnmatched = "warn",
     id: str | None = None,
     name: str | None = None,
     description: str | None = None,
@@ -96,6 +131,11 @@ def add_folder(
             description=description,
             manager_id=manager_id,
             owner_id=owner_id,
+        )
+    if not create_folders and folder is not None:
+        raise ConfigError(
+            "create_folders=False is incompatible with folder/id/name/"
+            "description/manager_id/owner_id (no folder is created)"
         )
     if isinstance(path, list):
         kwargs = {k: v for k, v in locals().items() if k not in ("catalog", "path")}
@@ -148,72 +188,79 @@ def add_folder(
     datasets_before = catalog.dataset.count
     vars_before = catalog.variable.count
 
-    # Create default folder from directory name if not provided
-    if folder is None:
-        folder = Folder(id=sanitize_id(root_name), name=root_name)
-    elif not folder.id:
-        folder.id = sanitize_id(root_name)
-        if folder.name is None:
-            folder.name = root_name
-
-    # Set data_path for root folder
-    folder.data_path = str(root)
-    folder.type = "filesystem"
-
-    # Add or update root folder
-    upsert_folder(catalog, folder)
-    prefix = folder.id
-
     # Discover all datasets (parquet + other formats)
     discovery = discover_datasets(
         root, include, exclude, recursive, time_series=time_series, fs=fs
     )
 
-    # Extract subdirs from discovered datasets (skip time series temporal paths)
-    subdirs: set[PurePath] = set()
-    for info in discovery.datasets:
-        # Determine starting parent for folder traversal
-        start_parent: PurePath | None = None
-        if info.series_files is not None:
-            # For time series: only add non-temporal parent folders
-            assert info.series_normalized_path is not None
-            non_temporal_parts = get_series_folder_parts(info.series_normalized_path)
-            if non_temporal_parts:
-                start_parent = root / "/".join(non_temporal_parts)
-        else:
-            start_parent = info.path.parent
+    if create_folders:
+        # Create default folder from directory name if not provided
+        if folder is None:
+            folder = Folder(id=sanitize_id(root_name), name=root_name)
+        elif not folder.id:
+            folder.id = sanitize_id(root_name)
+            if folder.name is None:
+                folder.name = root_name
 
-        # Add parent folders up to root
-        if start_parent is not None:
-            parent = start_parent
-            while parent != root and parent not in discovery.excluded_dirs:
-                if parent not in subdirs:
-                    subdirs.add(parent)
-                parent = parent.parent
+        # Set data_path for root folder
+        folder.data_path = str(root)
+        folder.type = "filesystem"
 
-    # Create sub-folders
-    subdir_ids: dict[PurePath, str] = {}
-    for subdir in sorted(subdirs):
-        rel_path = subdir.relative_to(root)
-        parts = [sanitize_id(p) for p in rel_path.parts]
-        folder_id = make_id(prefix, *parts)
+        # Add or update root folder
+        upsert_folder(catalog, folder)
+        prefix = folder.id
 
-        parent_path = subdir.parent
-        parent_id = (
-            prefix if parent_path == root else subdir_ids.get(parent_path, prefix)
-        )
+        # Extract subdirs from discovered datasets (skip time series temporal paths)
+        subdirs: set[PurePath] = set()
+        for info in discovery.datasets:
+            # Determine starting parent for folder traversal
+            start_parent: PurePath | None = None
+            if info.series_files is not None:
+                # For time series: only add non-temporal parent folders
+                assert info.series_normalized_path is not None
+                non_temporal_parts = get_series_folder_parts(
+                    info.series_normalized_path
+                )
+                if non_temporal_parts:
+                    start_parent = root / "/".join(non_temporal_parts)
+            else:
+                start_parent = info.path.parent
 
-        upsert_folder(
-            catalog,
-            Folder(
-                id=folder_id,
-                name=subdir.name,
-                parent_id=parent_id,
-                type="filesystem",
-                data_path=str(subdir),
-            ),
-        )
-        subdir_ids[subdir] = folder_id
+            # Add parent folders up to root
+            if start_parent is not None:
+                parent = start_parent
+                while parent != root and parent not in discovery.excluded_dirs:
+                    if parent not in subdirs:
+                        subdirs.add(parent)
+                    parent = parent.parent
+
+        # Create sub-folders
+        subdir_ids: dict[PurePath, str] = {}
+        for subdir in sorted(subdirs):
+            rel_path = subdir.relative_to(root)
+            parts = [sanitize_id(p) for p in rel_path.parts]
+            folder_id = make_id(prefix, *parts)
+
+            parent_path = subdir.parent
+            parent_id = (
+                prefix if parent_path == root else subdir_ids.get(parent_path, prefix)
+            )
+
+            upsert_folder(
+                catalog,
+                Folder(
+                    id=folder_id,
+                    name=subdir.name,
+                    parent_id=parent_id,
+                    type="filesystem",
+                    data_path=str(subdir),
+                ),
+            )
+            subdir_ids[subdir] = folder_id
+    else:
+        # Metadata-first mode: do not create any folder; rely on peek for ids.
+        prefix = ""
+        subdir_ids = {}
 
     # Compute scan plan (what to scan vs skip)
     plan = compute_scan_plan(discovery.datasets, catalog, do_refresh)
@@ -222,14 +269,14 @@ def add_folder(
     if resolved_depth == "dataset":
         # Skip unchanged datasets
         for info in plan.to_skip:
-            existing = catalog.dataset.get_by("data_path", str(info.path))
+            existing = catalog.dataset.get_by("_match_path", str(info.path))
             assert existing is not None
             catalog.dataset.update(existing.id, _seen=True)
 
         # Create or update modified datasets
         for info in plan.to_scan:
             data_path_str = str(info.path)
-            existing = catalog.dataset.get_by("data_path", data_path_str)
+            existing = catalog.dataset.get_by("_match_path", data_path_str)
             if existing:
                 # Update metadata for modified dataset
                 data_size = (
@@ -246,25 +293,35 @@ def add_folder(
                 )
                 continue
 
-            # Handle time series vs single file
+            # Metadata-first peek: reuse pre-loaded id/folder_id if available.
+            peek = find_loaded_dataset_by_match_path(catalog, data_path_str)
+            if peek is None and not create_folders:
+                _handle_unmatched(info.path.name, on_unmatched, q)
+                continue
+
+            # Compute name and time-series fields (always needed)
             if info.series_files is not None:
                 periods = [period for period, _ in info.series_files]
                 assert info.series_normalized_path is not None
                 normalized = info.series_normalized_path
-                dataset_id = build_series_dataset_id(normalized, prefix)
                 dataset_name = build_series_dataset_name(normalized, periods)
                 nb_resources = len(info.series_files)
                 start_date = periods[0]
                 end_date = periods[-1]
-                folder_id = _build_series_folder_id(normalized, prefix)
+                fallback_id = build_series_dataset_id(normalized, prefix)
+                fallback_folder_id = _build_series_folder_id(normalized, prefix)
             else:
-                dataset_id, dataset_name = build_dataset_id_name(
+                fallback_id, dataset_name = build_dataset_id_name(
                     info.path, root, prefix
                 )
                 nb_resources = None
                 start_date = None
                 end_date = None
-                folder_id = get_folder_id(info.path, root, prefix, subdir_ids)
+                fallback_folder_id = get_folder_id(info.path, root, prefix, subdir_ids)
+
+            dataset_id, folder_id = _resolve_ids_from_peek(
+                peek, fallback_id, fallback_folder_id, create_folders
+            )
 
             dataset = Dataset(
                 id=dataset_id,
@@ -283,6 +340,7 @@ def add_folder(
                 start_date=start_date,
                 end_date=end_date,
                 _seen=True,
+                _match_path=data_path_str,
             )
             catalog.dataset.add(dataset)
 
@@ -292,7 +350,7 @@ def add_folder(
 
     # Handle skipped datasets (mark as seen)
     for info in plan.to_skip:
-        existing = catalog.dataset.get_by("data_path", str(info.path))
+        existing = catalog.dataset.get_by("_match_path", str(info.path))
         assert existing is not None  # compute_scan_plan guarantees this
         catalog.dataset.update(existing.id, _seen=True)
         catalog.modality_manager.mark_dataset_seen(existing.id)
@@ -333,6 +391,8 @@ def add_folder(
                     csv_skip_copy=resolved_csv_skip_copy,
                     quiet=q,
                     fs=fs,
+                    create_folders=create_folders,
+                    on_unmatched=on_unmatched,
                 )
             except Exception as exc:
                 log_error(info.path.name, exc, q)
@@ -343,8 +403,18 @@ def add_folder(
         data_path_str = str(info.path)
 
         t0 = log_start(info.path.name, q)
-        dataset_id, dataset_name = build_dataset_id_name(info.path, root, prefix)
-        folder_id = get_folder_id(info.path, root, prefix, subdir_ids)
+
+        # Metadata-first peek: reuse pre-loaded id/folder_id if available.
+        peek = find_loaded_dataset_by_match_path(catalog, data_path_str)
+        if peek is None and not create_folders:
+            _handle_unmatched(info.path.name, on_unmatched, q)
+            continue
+
+        fallback_id, dataset_name = build_dataset_id_name(info.path, root, prefix)
+        fallback_folder_id = get_folder_id(info.path, root, prefix, subdir_ids)
+        dataset_id, folder_id = _resolve_ids_from_peek(
+            peek, fallback_id, fallback_folder_id, create_folders
+        )
 
         # Scan dataset
         try:
@@ -366,7 +436,7 @@ def add_folder(
             continue
 
         # Remove old dataset only after successful scan
-        existing = catalog.dataset.get_by("data_path", data_path_str)
+        existing = catalog.dataset.get_by("_match_path", data_path_str)
         if existing:
             remove_dataset_cascade(catalog, existing)
 
@@ -387,6 +457,7 @@ def add_folder(
                 else get_data_size(info.path, fs=fs)
             ),
             _seen=True,
+            _match_path=data_path_str,
         )
         catalog.dataset.add(dataset)
 
@@ -426,6 +497,8 @@ def _scan_time_series(
     csv_skip_copy: bool,
     quiet: bool,
     fs: FileSystem | None,
+    create_folders: bool,
+    on_unmatched: OnUnmatched,
 ) -> None:
     """Scan a time series dataset (multiple files with temporal pattern)."""
     assert info.series_files is not None
@@ -437,16 +510,26 @@ def _scan_time_series(
 
     # Build dataset ID using normalized path
     normalized = info.series_normalized_path
-    dataset_id = build_series_dataset_id(normalized, prefix)
-
+    fallback_id = build_series_dataset_id(normalized, prefix)
     # Build dataset name from normalized path
     dataset_name = build_series_dataset_name(normalized, periods)
 
     # Folder ID: use non-temporal parent folders only
-    folder_id = _build_series_folder_id(normalized, prefix)
+    fallback_folder_id = _build_series_folder_id(normalized, prefix)
+
+    # Metadata-first peek: reuse pre-loaded id/folder_id if available.
+    # Time series match on the latest period (the canonical data_path).
+    peek = find_loaded_dataset_by_match_path(catalog, str(last_path))
+    if peek is None and not create_folders:
+        _handle_unmatched(dataset_name, on_unmatched, quiet)
+        return
+
+    dataset_id, folder_id = _resolve_ids_from_peek(
+        peek, fallback_id, fallback_folder_id, create_folders
+    )
 
     # Remove old dataset if exists
-    existing = catalog.dataset.get_by("data_path", str(last_path))
+    existing = catalog.dataset.get_by("_match_path", str(last_path))
     if existing:
         remove_dataset_cascade(catalog, existing)
 
@@ -500,6 +583,7 @@ def _scan_time_series(
         start_date=first_period,
         end_date=last_period,
         _seen=True,
+        _match_path=str(last_path),
     )
     catalog.dataset.add(dataset)
 

@@ -54,8 +54,12 @@ class Dataset:
     no_more_update: str | None = None
     last_update_timestamp: int | None = None
     schema_signature: str | None = None
-    # Runtime field (not persisted)
+    # Runtime fields (not persisted)
     _seen: bool = False
+    # Absolute path used to match this dataset to a physical file/directory.
+    # Computed at scan time (= data_path) or when loading metadata
+    # (resolved relative to the metadata source directory).
+    _match_path: str | None = None
 
 
 @dataclass
@@ -213,7 +217,7 @@ class DatannurDB(Jsonjsdb):
         self.config._entity_type = Config
         # Set runtime fields (not persisted)
         self.folder.runtime_fields = {"_seen"}
-        self.dataset.runtime_fields = {"_seen"}
+        self.dataset.runtime_fields = {"_seen", "_match_path"}
         self.modality.runtime_fields = {"_seen"}
         self.institution.runtime_fields = {"_seen"}
         self.tag.runtime_fields = {"_seen"}
