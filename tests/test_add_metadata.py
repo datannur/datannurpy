@@ -191,6 +191,34 @@ class TestConvertRowToDict:
         assert "nb_distinct" not in result
         assert "description" not in result
 
+    def test_coerces_datetime_to_isoformat(self):
+        """datetime / pd.Timestamp / date are coerced to ISO-8601 string.
+
+        DuckDB-based CSV reader and Excel parser auto-infer ISO-8601 columns
+        as datetime; the schema declares date fields as `str | None`.
+        """
+        import datetime as _dt
+
+        import pandas as pd
+
+        ts = pd.Timestamp("2026-04-23T12:11:38.685876")
+        row: dict[Hashable, Any] = {
+            "id": "f1",
+            "name": "F1",
+            "last_update_date": ts,
+        }
+        result = _convert_row_to_dict(row, Folder)
+        assert result["last_update_date"] == "2026-04-23T12:11:38.685876"
+        assert isinstance(result["last_update_date"], str)
+
+        row2: dict[Hashable, Any] = {
+            "id": "f2",
+            "name": "F2",
+            "last_update_date": _dt.date(2026, 4, 23),
+        }
+        result2 = _convert_row_to_dict(row2, Folder)
+        assert result2["last_update_date"] == "2026-04-23"
+
     def test_handles_list_fields(self):
         """List fields should be parsed correctly."""
         row: dict[Hashable, Any] = {

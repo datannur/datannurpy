@@ -7,6 +7,7 @@ import sys
 import time
 from collections.abc import Hashable
 from dataclasses import MISSING, fields
+from datetime import date, datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -310,6 +311,13 @@ def _convert_row_to_dict(
             not isinstance(value, (list, dict)) and bool(pd.isna(value))
         ):
             continue
+
+        # Coerce datetime / date / pd.Timestamp to ISO-8601 string —
+        # CSV (DuckDB) and Excel parsers infer date columns natively, but the
+        # schema declares date fields as `str | None` (rendered as-is by the app
+        # and serialized by jsonjsdb's `json.dump(allow_nan=False)`).
+        if isinstance(value, (datetime, date)):
+            value = value.isoformat()
 
         # Handle list fields
         if key_str in LIST_FIELDS:
