@@ -1,25 +1,13 @@
 # datannurpy
 
-## 0.20.0a5 (2026-04-25)
+## 0.20.0 (2026-04-26)
 
-- fix: CSV header on `depth: variable` — deduplicate repeated column names (DuckDB-style `name_1`, `name_2`) and normalize bare `\r` line endings (Mac Classic / SDMX exports)
-
-## 0.20.0a4 (2026-04-25)
-
-- fix: CSV header parsing on `depth: variable` (BOM, `;` separator with commas in headers, multi-line quoted fields)
-
-## 0.20.0a3 (2026-04-25)
-
-- add: metadata-first pattern. `add_folder(create_folders=False)` skips creating folders from disk and reuses `id`/`folder_id` from `metadata/dataset.csv` (matched by `data_path`). New `on_unmatched` parameter (`"skip"` / `"warn"` / `"error"`) controls behavior for files with no metadata match.
-- internal: new runtime field `Dataset._match_path` (absolute path used for scan↔metadata matching, not exported). `data_path` is now treated as the public link only.
-
-## 0.20.0a2 (2026-04-25)
-
-- fix: `add_metadata` formats dates as `YYYY/MM/DD` (was ISO-8601), aligned with `get_mtime_iso` — lexical order = chronological order across filesystem scan and CSV/Excel metadata
-
-## 0.20.0a1 (2026-04-25)
-
-- add: `Folder` now exposes `manager_id` and `owner_id` (institution links), with matching kwargs on `add_folder` / `add_database`
+- add: metadata-first pattern — `add_folder(create_folders=False)` skips folder creation from disk, reuses `id`/`folder_id` from `metadata/dataset.csv` (matched by `data_path`). New `on_unmatched` parameter (`"skip"` / `"warn"` / `"error"`)
+- add: `Folder` exposes `manager_id` and `owner_id` (institution links), with matching kwargs on `add_folder` / `add_database`
+- fix: `add_metadata` formats dates as `YYYY/MM/DD` (was ISO-8601), aligned with `get_mtime_iso`
+- fix: CSV header parsing on `depth: variable` — BOM, `;` separator with commas in headers, multi-line quoted fields
+- fix: CSV header deduplication (DuckDB-style `name_1`, `name_2`) and bare `\r` normalization (Mac Classic / SDMX exports)
+- internal: `Dataset._match_path` runtime field for scan↔metadata matching (not exported)
 
 ## 0.19.2 (2026-04-25)
 
