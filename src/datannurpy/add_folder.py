@@ -451,6 +451,7 @@ def add_folder(
             delivery_format=info.format,
             description=result.description,
             nb_row=result.nb_row,
+            sample_size=result.sample_size,
             data_size=(
                 result.data_size
                 if info.format in _DIR_FORMATS
@@ -578,6 +579,7 @@ def _scan_time_series(
         delivery_format=info.format,
         description=result.description,
         nb_row=result.nb_row,
+        sample_size=result.sample_size,
         nb_resources=len(series_files),
         data_size=get_data_size(last_path, fs=fs),
         start_date=first_period,

@@ -73,6 +73,7 @@ def _create_dataset(
     delivery_format: str,
     meta: DatasetMeta,
     nb_row: int | None = None,
+    sample_size: int | None = None,
     data_size: int | None = None,
     scanned_description: str | None = None,
     fs: FileSystem | None = None,
@@ -87,6 +88,7 @@ def _create_dataset(
         last_update_timestamp=current_mtime,
         delivery_format=delivery_format,
         nb_row=nb_row,
+        sample_size=sample_size,
         data_size=data_size,
         description=meta.description
         if meta.description is not None
@@ -198,6 +200,10 @@ def add_dataset(
         no_more_update=no_more_update,
     )
 
+    resolved_sample_size = (
+        sample_size if sample_size is not _UNSET else catalog.sample_size
+    )
+
     # Check if it's a partitioned Parquet directory
     if fs:
         is_dir = fs.isdir(fs.root)
@@ -211,6 +217,7 @@ def add_dataset(
             resolved_folder_id,
             meta,
             depth=resolved_depth,
+            sample_size=resolved_sample_size,
             quiet=q,
             refresh=do_refresh,
             start_time=start_time,
@@ -258,10 +265,6 @@ def add_dataset(
     resolved_csv_skip_copy = (
         csv_skip_copy if csv_skip_copy is not None else catalog.csv_skip_copy
     )
-    resolved_sample_size = (
-        sample_size if sample_size is not _UNSET else catalog.sample_size
-    )
-
     # Structure mode: create dataset without scanning
     if resolved_depth == "dataset":
         dataset = _create_dataset(
@@ -309,6 +312,7 @@ def add_dataset(
         delivery_format,
         meta,
         nb_row=result.nb_row,
+        sample_size=result.sample_size,
         data_size=get_data_size(dataset_path, fs=fs),
         scanned_description=result.description,
         fs=fs,
@@ -341,6 +345,7 @@ def _add_parquet_directory(
     meta: DatasetMeta,
     *,
     depth: Depth,
+    sample_size: int | None,
     quiet: bool,
     refresh: bool,
     start_time: float,
@@ -404,6 +409,7 @@ def _add_parquet_directory(
         dataset_id=dataset_id,
         infer_stats=not schema_only,
         freq_threshold=(catalog.freq_threshold if depth == "value" else None),
+        sample_size=(sample_size if depth == "value" else None),
     )
 
     # Override meta.name with parquet metadata if not user-provided
@@ -420,6 +426,7 @@ def _add_parquet_directory(
         delivery_format,
         meta,
         nb_row=nb_row,
+        sample_size=pq_meta.sample_size,
         data_size=pq_meta.data_size,
         scanned_description=scanned_desc,
         fs=fs,

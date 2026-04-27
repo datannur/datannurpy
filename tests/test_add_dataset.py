@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
 
 from datannurpy import Catalog, Folder
@@ -32,6 +35,24 @@ class TestAddDataset:
 
         assert len(catalog.dataset.all()) == 1
         assert len(catalog.variable.all()) == 9
+
+    def test_add_dataset_exports_effective_sample_size_for_csv(self, tmp_path: Path):
+        """add_dataset should persist effective sample_size for sampled CSV scans."""
+        csv_file = tmp_path / "big.csv"
+        lines = ["id,value\n"] + [f"{i},{i * 10}\n" for i in range(250)]
+        csv_file.write_text("".join(lines))
+
+        catalog = Catalog(quiet=True)
+        catalog.add_dataset(csv_file, sample_size=100)
+
+        dataset = catalog.dataset.all()[0]
+        assert dataset.nb_row == 250
+        assert dataset.sample_size == 100
+
+        out_dir = tmp_path / "out"
+        catalog.export_db(out_dir, quiet=True)
+        exported = json.loads((out_dir / "dataset.json").read_text())
+        assert exported[0]["sample_size"] == 100
 
     def test_add_dataset_with_folder(self):
         """add_dataset with folder should create folder and link."""
@@ -176,6 +197,20 @@ class TestAddDatasetHive:
         assert ds.id == "test_partitioned"
         assert ds.delivery_format == "parquet"
         assert ds.nb_row == 6
+
+    def test_add_dataset_hive_directory_persists_sample_size(self, tmp_path: Path):
+        """add_dataset should pass sample_size through Hive partitioned scans."""
+        hive_dir = tmp_path / "sales"
+        (hive_dir / "year=2024").mkdir(parents=True)
+        table = pa.table({"id": list(range(250)), "value": list(range(250))})
+        pq.write_table(table, hive_dir / "year=2024" / "part-0.parquet")
+
+        catalog = Catalog(quiet=True)
+        catalog.add_dataset(hive_dir, sample_size=100)
+
+        dataset = catalog.dataset.all()[0]
+        assert dataset.nb_row == 250
+        assert dataset.sample_size == 100
 
 
 class TestAddDatasetIceberg:

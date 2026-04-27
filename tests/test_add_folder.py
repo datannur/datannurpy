@@ -772,6 +772,20 @@ class TestDepthParameter:
         assert len(catalog.modality.all()) == 0
         assert catalog.freq.is_empty
 
+    def test_folder_scan_persists_effective_sample_size(self, tmp_path: Path):
+        """add_folder should store effective sample_size for sampled file scans."""
+        csv_file = tmp_path / "big.csv"
+        csv_file.write_text(
+            "id,value\n" + "".join(f"{i},{i * 10}\n" for i in range(220))
+        )
+
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(tmp_path, sample_size=100)
+
+        dataset = catalog.dataset.all()[0]
+        assert dataset.nb_row == 220
+        assert dataset.sample_size == 100
+
 
 class TestRemoteStorage:
     """Test remote storage URL handling."""

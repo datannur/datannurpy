@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.20.1 (2026-04-27)
+
+- fix: export effective `sample_size` for sampled file-based scans (`dataset.json`)
+
 ## 0.20.0 (2026-04-26)
 
 - add: metadata-first pattern — `add_folder(create_folders=False)` skips folder creation from disk, reuses `id`/`folder_id` from `metadata/dataset.csv` (matched by `data_path`). New `on_unmatched` parameter (`"skip"` / `"warn"` / `"error"`)
