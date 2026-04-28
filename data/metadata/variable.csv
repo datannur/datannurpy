@@ -1,4 +1,4 @@
 id,dataset_id,description,tag_ids
-data---csv---employees_csv---nom,data---csv---employees_csv,Nom de famille de l'employé,"rh,policy---freq-hidden"
+data---csv---employees_csv---nom,data---csv---employees_csv,Nom de famille de l'employé,"rh,policy---frequency-hidden"
 data---csv---employees_csv---salaire,data---csv---employees_csv,Salaire mensuel brut en euros,"finance,rh"
 data---csv---employees_csv---salaire2,data---csv---employees_csv,Salaire mensuel brut en euros,"finance,rh"

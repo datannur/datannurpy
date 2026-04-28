@@ -34,6 +34,7 @@ class ScanResult:
 
     variables: list[Variable]
     nb_row: int | None
+    sample_size: int | None = None
     freq_table: pa.Table | None = None
     description: str | None = None
     name: str | None = None  # Dataset name from metadata (Delta, Iceberg)
@@ -122,6 +123,7 @@ def _scan_local(
         return ScanResult(
             variables=variables,
             nb_row=nb_row,
+            sample_size=metadata.sample_size if metadata else None,
             freq_table=freq_table,
             description=metadata.description if metadata else None,
             name=metadata.name if metadata else None,
@@ -129,7 +131,7 @@ def _scan_local(
         )
 
     if delivery_format in ("sas", "spss", "stata"):
-        variables, nb_row, _actual_sample_size, freq_table, metadata = scan_statistical(
+        variables, nb_row, actual_sample_size, freq_table, metadata = scan_statistical(
             path,
             dataset_id=dataset_id,
             freq_threshold=freq_threshold,
@@ -139,12 +141,13 @@ def _scan_local(
         return ScanResult(
             variables=variables,
             nb_row=nb_row,
+            sample_size=actual_sample_size,
             freq_table=freq_table,
             description=metadata.description if metadata else None,
         )
 
     if delivery_format == "csv":
-        variables, nb_row, _actual_sample_size, freq_table = scan_csv(
+        variables, nb_row, actual_sample_size, freq_table = scan_csv(
             path,
             dataset_id=dataset_id,
             freq_threshold=freq_threshold,
@@ -153,7 +156,12 @@ def _scan_local(
             csv_skip_copy=csv_skip_copy,
             quiet=quiet,
         )
-        return ScanResult(variables=variables, nb_row=nb_row, freq_table=freq_table)
+        return ScanResult(
+            variables=variables,
+            nb_row=nb_row,
+            sample_size=actual_sample_size,
+            freq_table=freq_table,
+        )
 
     # Excel (xls, xlsx)
     variables, nb_row, freq_table = scan_excel(

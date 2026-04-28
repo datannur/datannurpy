@@ -13,9 +13,9 @@ src/datannurpy/
 ├── add_metadata.py      # Internal metadata merge (_add_metadata)
 ├── finalize.py          # Cleanup of entities not seen during scan
 ├── exporter.py          # export_db, export_app
-├── schema.py            # Dataclasses: Folder, Dataset, Variable, Modality, Value, Freq, Institution, Tag, Doc
+├── schema.py            # Dataclasses: Folder, Dataset, Variable, Enumeration, Value, Frequency, Organization, Tag, Doc
 ├── config/              # YAML config loader (run_config)
-├── utils/               # Internal utilities (ids, log, modality, prefix, folder, time)
+├── utils/               # Internal utilities (ids, log, enumeration, prefix, folder, time)
 ├── scanner/             # File/DB scanning → Variables + stats
 └── app/                 # Web app template files (copied during export)
 ```

@@ -69,7 +69,7 @@ class Variable:
     id: str
     name: str
     dataset_id: str
-    modality_ids: list[str] = field(default_factory=list)
+    enumeration_ids: list[str] = field(default_factory=list)
     tag_ids: list[str] = field(default_factory=list)
     source_var_ids: list[str] = field(default_factory=list)
     fk_var_id: str | None = None
@@ -91,7 +91,7 @@ class Variable:
 
 
 @dataclass
-class Modality:
+class Enumeration:
     """A reusable set of categorical values."""
 
     id: str
@@ -105,26 +105,26 @@ class Modality:
 
 @dataclass
 class Value:
-    """A value within a modality."""
+    """A value within an enumeration."""
 
-    id: str = ""  # Computed at runtime from modality_id + value
-    modality_id: str = ""
+    id: str = ""  # Computed at runtime from enumeration_id + value
+    enumeration_id: str = ""
     value: str | None = None
     description: str | None = None
 
 
 @dataclass
-class Freq:
+class Frequency:
     """Frequency count for a variable value."""
 
     id: str = ""  # Computed at runtime from variable_id + value
     variable_id: str = ""
     value: str | None = None
-    freq: int = 0
+    frequency: int = 0
 
 
 @dataclass
-class Institution:
+class Organization:
     """An organization that manages data."""
 
     id: str
@@ -192,10 +192,10 @@ class DatannurDB(Jsonjsdb):
     folder: Table[Folder]
     dataset: Table[Dataset]
     variable: Table[Variable]
-    modality: Table[Modality]
+    enumeration: Table[Enumeration]
     value: Table[Value]
-    freq: Table[Freq]
-    institution: Table[Institution]
+    frequency: Table[Frequency]
+    organization: Table[Organization]
     tag: Table[Tag]
     doc: Table[Doc]
     concept: Table[Concept]
@@ -207,10 +207,10 @@ class DatannurDB(Jsonjsdb):
         self.folder._entity_type = Folder
         self.dataset._entity_type = Dataset
         self.variable._entity_type = Variable
-        self.modality._entity_type = Modality
+        self.enumeration._entity_type = Enumeration
         self.value._entity_type = Value
-        self.freq._entity_type = Freq
-        self.institution._entity_type = Institution
+        self.frequency._entity_type = Frequency
+        self.organization._entity_type = Organization
         self.tag._entity_type = Tag
         self.doc._entity_type = Doc
         self.concept._entity_type = Concept
@@ -218,10 +218,10 @@ class DatannurDB(Jsonjsdb):
         # Set runtime fields (not persisted)
         self.folder.runtime_fields = {"_seen"}
         self.dataset.runtime_fields = {"_seen", "_match_path"}
-        self.modality.runtime_fields = {"_seen"}
-        self.institution.runtime_fields = {"_seen"}
+        self.enumeration.runtime_fields = {"_seen"}
+        self.organization.runtime_fields = {"_seen"}
         self.tag.runtime_fields = {"_seen"}
         self.doc.runtime_fields = {"_seen"}
         self.concept.runtime_fields = {"_seen"}
         self.value.runtime_fields = {"id"}
-        self.freq.runtime_fields = {"id"}
+        self.frequency.runtime_fields = {"id"}

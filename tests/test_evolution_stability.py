@@ -147,50 +147,50 @@ class TestEvolutionStability:
                 f"Evolution count not stable: {evolution_counts}"
             )
 
-    def test_modalities_folder_not_deleted_on_rerun(self, tmp_path: Path):
-        """_modalities folder should not be deleted on successive runs with refresh=True."""
+    def test_enumerations_folder_not_deleted_on_rerun(self, tmp_path: Path):
+        """_enumerations folder should not be deleted on successive runs with refresh=True."""
         app_dir = tmp_path / "app"
         db_dir = app_dir / "data" / "db"
         data_dir = tmp_path / "source"
         data_dir.mkdir()
 
-        # Create CSV with categorical data that generates modalities
+        # Create CSV with categorical data that generates enumerations
         (data_dir / "colors.csv").write_text("id,color\n1,red\n2,blue\n3,red\n")
 
-        # Run 1 - creates modalities and _modalities folder
+        # Run 1 - creates enumerations and _enumerations folder
         catalog1 = Catalog(app_path=app_dir, refresh=True)
         catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
         catalog1.export_db()
 
-        # Verify _modalities folder exists
+        # Verify _enumerations folder exists
         with open(db_dir / "folder.json") as f:
             folders1 = json.load(f)
-        modalities_folder = [f for f in folders1 if f["id"] == "_modalities"]
-        assert len(modalities_folder) == 1, "_modalities folder should exist"
+        enumerations_folder = [f for f in folders1 if f["id"] == "_enumerations"]
+        assert len(enumerations_folder) == 1, "_enumerations folder should exist"
 
         # No evolution on first run
         assert not (db_dir / "evolution.json").exists()
 
-        # Run 2 - with refresh=True, _modalities folder should NOT be deleted
+        # Run 2 - with refresh=True, _enumerations folder should NOT be deleted
         catalog2 = Catalog(app_path=app_dir, refresh=True)
         catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
         catalog2.export_db()
 
-        # Check evolution - should NOT contain delete of _modalities
+        # Check evolution - should NOT contain delete of _enumerations
         if (db_dir / "evolution.json").exists():
             with open(db_dir / "evolution.json") as f:
                 evolution = json.load(f)
-            modalities_deletes = [
+            enumerations_deletes = [
                 e
                 for e in evolution
-                if e.get("entity_id") == "_modalities" and e.get("type") == "delete"
+                if e.get("entity_id") == "_enumerations" and e.get("type") == "delete"
             ]
-            assert len(modalities_deletes) == 0, (
-                "_modalities folder should not be deleted on rerun"
+            assert len(enumerations_deletes) == 0, (
+                "_enumerations folder should not be deleted on rerun"
             )
 
-        # _modalities folder should still exist
+        # _enumerations folder should still exist
         with open(db_dir / "folder.json") as f:
             folders2 = json.load(f)
-        modalities_folder = [f for f in folders2 if f["id"] == "_modalities"]
-        assert len(modalities_folder) == 1, "_modalities folder should still exist"
+        enumerations_folder = [f for f in folders2 if f["id"] == "_enumerations"]
+        assert len(enumerations_folder) == 1, "_enumerations folder should still exist"

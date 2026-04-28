@@ -404,7 +404,7 @@ class BaseSchemaTests(ABC):
         )
 
         # Root folder + schema sub-folder
-        user_folders = catalog.folder.where("id", "!=", "_modalities")
+        user_folders = catalog.folder.where("id", "!=", "_enumerations")
         assert len(user_folders) == 2
         assert user_folders[0].id == "sales_db"
         schema_folder = next(f for f in user_folders if f.id == "sales_db---sales")

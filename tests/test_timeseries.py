@@ -599,6 +599,23 @@ class TestAddFolderTimeSeries:
         var_names = {v.name for v in variables}
         assert var_names == {"id", "nom", "revenu", "email"}
 
+    def test_time_series_persists_effective_sample_size(self, tmp_path: Path):
+        """Time series datasets should keep the latest scan effective sample_size."""
+        ts_dir = tmp_path / "ts"
+        ts_dir.mkdir()
+        for year in ("2023", "2024"):
+            csv_file = ts_dir / f"sales_{year}.csv"
+            csv_file.write_text(
+                "id,value\n" + "".join(f"{i},{i * 10}\n" for i in range(240))
+            )
+
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(ts_dir, Folder(id="ts", name="TS"), sample_size=100)
+
+        dataset = catalog.dataset.all()[0]
+        assert dataset.nb_row == 240
+        assert dataset.sample_size == 100
+
 
 class TestPeriodEdgeCases:
     """Edge case tests for period extraction and sorting."""
@@ -823,7 +840,7 @@ class TestTimeSeriesRescan:
         assert len(datasets) == 1
         assert datasets[0].nb_resources == 2
         # No child folders should be created from file paths
-        # (only the scanned folder and system folders like _modalities exist)
+        # (only the scanned folder and system folders like _enumerations exist)
         folder_ids = {f.id for f in catalog.folder.all()}
         assert "root" in folder_ids
         # No subfolders like "2020" or "2021" should exist

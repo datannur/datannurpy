@@ -480,7 +480,7 @@ def _add_database_impl(
 
                 if not do_refresh and data_unchanged:
                     catalog.dataset.update(existing_dataset.id, _seen=True)
-                    catalog.modality_manager.mark_dataset_seen(existing_dataset.id)
+                    catalog.enumeration_manager.mark_dataset_seen(existing_dataset.id)
                     meta = schema_meta[table_name]
                     update_cached_metadata(
                         catalog,
@@ -564,7 +564,7 @@ def _add_database_impl(
 
             var_id_mapping = build_variable_ids(table_vars, dataset.id)
             if freq_table is not None:
-                catalog.modality_manager.assign_from_freq(
+                catalog.enumeration_manager.assign_from_freq(
                     table_vars, freq_table, var_id_mapping
                 )
             catalog.variable.add_all(table_vars)
@@ -739,7 +739,7 @@ def _scan_table_series(
     if table_vars:
         var_id_mapping = build_variable_ids(table_vars, dataset.id)
         if freq_table is not None:
-            catalog.modality_manager.assign_from_freq(
+            catalog.enumeration_manager.assign_from_freq(
                 table_vars, freq_table, var_id_mapping
             )
         catalog.variable.add_all(table_vars)

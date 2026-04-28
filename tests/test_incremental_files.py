@@ -40,6 +40,36 @@ class TestIncrementalScanFiles:
         ds = catalog2.dataset.all()[0]
         assert getattr(ds, "_seen", False) is True
 
+    def test_unchanged_file_with_dataset_metadata_is_skipped(self, tmp_path: Path):
+        """dataset.csv metadata should not break incremental matching on reload."""
+        app_dir = tmp_path / "catalog"
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        csv_file = data_dir / "test.csv"
+        csv_file.write_text("a,b\n1,2\n3,4\n")
+
+        meta_dir = tmp_path / "metadata"
+        meta_dir.mkdir()
+        (meta_dir / "dataset.csv").write_text(
+            "id,name,folder_id,data_path\nsrc---test_csv,Test,src,../data/test.csv\n"
+        )
+
+        catalog1 = Catalog(app_path=app_dir, metadata_path=meta_dir, quiet=True)
+        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.export_db()
+
+        catalog2 = Catalog(app_path=app_dir, metadata_path=meta_dir, quiet=True)
+        ds_before = catalog2.dataset.get_by("id", "src---test_csv")
+        assert ds_before is not None
+        assert ds_before._match_path == str(csv_file)
+
+        catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
+
+        assert len(catalog2.dataset.all()) == 1
+        ds_after = catalog2.dataset.get_by("id", "src---test_csv")
+        assert ds_after is not None
+        assert getattr(ds_after, "_seen", False) is True
+
     def test_modified_file_is_rescanned(self, tmp_path: Path):
         """Modified file should be rescanned."""
         app_dir = tmp_path
@@ -218,13 +248,13 @@ class TestRemoveDatasetCascade:
         csv_file.write_text("color\nred\nblue\nred\n")
         catalog.add_dataset(csv_file)
 
-        assert len(catalog.freq.all()) > 0
+        assert len(catalog.frequency.all()) > 0
 
         # Remove dataset cascade
         remove_dataset_cascade(catalog, catalog.dataset.all()[0])
 
-        # Freq table should be empty
-        assert len(catalog.freq.all()) == 0
+        # Frequency table should be empty
+        assert len(catalog.frequency.all()) == 0
 
 
 class TestLastUpdateTimestamp:
@@ -361,7 +391,7 @@ class TestRemoveDatasetCascadeWithMultipleDatasets:
         catalog.add_dataset(csv2)
 
         assert len(catalog.dataset.all()) == 2
-        total_before = len(catalog.freq.all())
+        total_before = len(catalog.frequency.all())
         assert total_before > 0
 
         # Remove first dataset
@@ -369,12 +399,12 @@ class TestRemoveDatasetCascadeWithMultipleDatasets:
 
         # Should still have second dataset's frequencies
         assert len(catalog.dataset.all()) == 1
-        total_after = len(catalog.freq.all())
+        total_after = len(catalog.frequency.all())
         assert total_after > 0
         assert total_after < total_before
 
     def test_removes_all_frequencies_when_single_dataset(self, tmp_path: Path):
-        """remove_dataset_cascade drops freq table when all rows are removed."""
+        """remove_dataset_cascade drops the frequency table when all rows are removed."""
         catalog = Catalog(quiet=True)
 
         # Create a single CSV with frequencies
@@ -384,16 +414,16 @@ class TestRemoveDatasetCascadeWithMultipleDatasets:
         catalog.add_dataset(csv1)
 
         assert len(catalog.dataset.all()) == 1
-        assert len(catalog.freq.all()) > 0
+        assert len(catalog.frequency.all()) > 0
 
         # Remove the only dataset
         remove_dataset_cascade(catalog, catalog.dataset.all()[0])
 
         # All frequencies should be removed
         assert len(catalog.dataset.all()) == 0
-        assert len(catalog.freq.all()) == 0
+        assert len(catalog.frequency.all()) == 0
 
-    def test_removes_dataset_without_freq_tables(self, tmp_path: Path):
+    def test_removes_dataset_without_frequency_tables(self, tmp_path: Path):
         """remove_dataset_cascade handles dataset without frequencies."""
         from datannurpy.schema import Dataset
 
@@ -405,7 +435,7 @@ class TestRemoveDatasetCascadeWithMultipleDatasets:
         catalog.dataset.add(ds)
 
         assert len(catalog.dataset.all()) == 1
-        assert len(catalog.freq.all()) == 0
+        assert len(catalog.frequency.all()) == 0
 
         # Remove it
         remove_dataset_cascade(catalog, ds)

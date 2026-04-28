@@ -283,12 +283,12 @@ class TestScanExcelValidation:
         numeric_df = pd.DataFrame({2023: [100], 2024: [200]})
         monkeypatch.setattr(excel_mod, "read_excel", lambda *_a, **_kw: numeric_df)
 
-        vars_, count, freq = excel_mod.scan_excel(
+        vars_, count, frequency = excel_mod.scan_excel(
             xls_path, dataset_id="test---pivot_xls"
         )
         assert vars_ == []
         assert count == 0
-        assert freq is None
+        assert frequency is None
 
     def test_xls_empty_sheet(self, tmp_path: Path, monkeypatch):
         """xls with empty sheet should return None from read_excel."""

@@ -82,9 +82,9 @@ _AUTO_TREE: list[tuple[str, str, str, str | None]] = [
     # Policy tags — manual overrides applied via metadata
     ("policy", "Policy", "User-defined scan policies", SCAN_TAG_ID),
     (
-        "policy---freq-hidden",
+        "policy---frequency-hidden",
         "Frequencies hidden",
-        "Hide all frequency and modality data for this variable",
+        "Hide all frequency and enumeration data for this variable",
         "policy",
     ),
 ]

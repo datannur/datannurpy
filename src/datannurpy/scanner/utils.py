@@ -497,7 +497,7 @@ def build_variables(
                 else:
                     raise
 
-    # Auto-tag string columns BEFORE freq (security tags suppress raw freq values)
+    # Auto-tag string columns BEFORE frequency (security tags suppress raw frequency values)
     auto_tag_map: dict[str, str] = {}
     security_cols: set[str] = set()
     if freq_threshold is not None:
@@ -512,7 +512,7 @@ def build_variables(
                 col for col, tag in auto_tag_map.items() if tag in _SECURITY_TAGS
             }
 
-    # Compute freq if threshold is set
+    # Compute frequency if threshold is set
     freq_table: pa.Table | None = None
     pattern_info: dict[str, str] = {}
     if freq_threshold is not None and stats:
@@ -526,11 +526,11 @@ def build_variables(
             for col in eligible_cols:
                 # Value counts: group by column, count occurrences (nulls excluded)
                 non_null = table.filter(table[col].notnull())
-                grouped = non_null.group_by(col).agg(freq=non_null.count())
+                grouped = non_null.group_by(col).agg(frequency=non_null.count())
                 vc = grouped.select(
                     ibis.literal(col).name("variable_id"),
                     grouped[col].cast("string").name("value"),
-                    grouped["freq"],
+                    grouped["frequency"],
                 )
                 freq_tables.append(vc)
             # Try server-side UNION first (fast on DuckDB/SQLite), fall back to
@@ -542,7 +542,7 @@ def build_variables(
 
                 freq_table = pa.concat_tables([ft.to_pyarrow() for ft in freq_tables])
 
-        # Pattern freq for high-cardinality string columns + security-tagged columns
+        # Pattern frequency for high-cardinality string columns + security-tagged columns
         pattern_cols = [
             col
             for col, (nb_distinct, _, _) in stats.items()

@@ -24,6 +24,7 @@ class DatasetMetadata:
     name: str | None = None
     column_descriptions: dict[str, str] | None = None
     data_size: int | None = None
+    sample_size: int | None = None
 
 
 def apply_column_descriptions(
@@ -73,7 +74,7 @@ def _build_with_sampling(
     freq_threshold: int | None,
     sample_size: int | None,
     table_name: str,
-) -> tuple[list[Variable], pa.Table | None]:
+) -> tuple[list[Variable], int | None, pa.Table | None]:
     """Build variables with optional DuckDB reservoir sampling."""
     if sample_size is not None and row_count > sample_size and infer_stats:
         cursor: Any = con.raw_sql(
@@ -81,7 +82,7 @@ def _build_with_sampling(
         )
         sample_arrow = cursor.fetch_arrow_table()
         sample_table = ibis.memtable(sample_arrow)
-        return build_variables(
+        variables, freq_table = build_variables(
             sample_table,
             nb_rows=len(sample_arrow),
             dataset_id=dataset_id,
@@ -90,13 +91,15 @@ def _build_with_sampling(
             full_table=table,
             full_nb_rows=row_count,
         )
-    return build_variables(
+        return variables, len(sample_arrow), freq_table
+    variables, freq_table = build_variables(
         table,
         nb_rows=row_count,
         dataset_id=dataset_id,
         infer_stats=infer_stats,
         freq_threshold=freq_threshold,
     )
+    return variables, None, freq_table
 
 
 def scan_simple(
@@ -120,7 +123,7 @@ def scan_simple(
         row_count = int(table.count().to_pyarrow().as_py())
         table_name = table.get_name()
 
-        variables, freq_table = _build_with_sampling(
+        variables, actual_sample_size, freq_table = _build_with_sampling(
             con,
             table,
             row_count=row_count,
@@ -132,6 +135,7 @@ def scan_simple(
         )
 
         apply_column_descriptions(variables, metadata.column_descriptions)
+        metadata.sample_size = actual_sample_size
 
         return variables, row_count, freq_table, metadata
     finally:
@@ -179,7 +183,7 @@ def scan_delta(
         row_count = int(table.count().to_pyarrow().as_py())
         table_name = table.get_name()
 
-        variables, freq_table = _build_with_sampling(
+        variables, actual_sample_size, freq_table = _build_with_sampling(
             con,
             table,
             row_count=row_count,
@@ -189,6 +193,8 @@ def scan_delta(
             sample_size=sample_size,
             table_name=table_name,
         )
+
+        metadata.sample_size = actual_sample_size
 
         return variables, row_count, freq_table, metadata
     finally:
@@ -220,7 +226,7 @@ def scan_hive(
         row_count = int(table.count().to_pyarrow().as_py())
         table_name = table.get_name()
 
-        variables, freq_table = _build_with_sampling(
+        variables, actual_sample_size, freq_table = _build_with_sampling(
             con,
             table,
             row_count=row_count,
@@ -230,6 +236,8 @@ def scan_hive(
             sample_size=sample_size,
             table_name=table_name,
         )
+
+        metadata.sample_size = actual_sample_size
 
         return variables, row_count, freq_table, metadata
     finally:
@@ -320,7 +328,7 @@ def scan_iceberg(
         table = con.create_table("_iceberg", arrow_table, temp=True)
         table_name = table.get_name()
 
-        variables, freq_table = _build_with_sampling(
+        variables, actual_sample_size, freq_table = _build_with_sampling(
             con,
             table,
             row_count=row_count,
@@ -334,6 +342,7 @@ def scan_iceberg(
         con.disconnect()
 
     apply_column_descriptions(variables, metadata.column_descriptions)
+    metadata.sample_size = actual_sample_size
 
     return variables, row_count, freq_table, metadata
 

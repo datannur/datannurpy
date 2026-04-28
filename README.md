@@ -18,7 +18,7 @@ datannurpy is the Python builder for [datannur](https://github.com/datannur/data
 - **Broad format support** - CSV, Excel, Parquet, Delta Lake, Iceberg, SAS, SPSS, Stata
 - **Database introspection** - PostgreSQL, MySQL, Oracle, SQL Server, SQLite, DuckDB
 - **Remote & cloud storage** - SFTP, S3, Azure Blob, GCS via fsspec
-- **Rich metadata** - schema, statistics, frequencies, modalities, auto-tagging
+- **Rich metadata** - schema, statistics, frequencies, enumerations, auto-tagging
 - **Incremental scans** - only rescan what changed between runs
 - **YAML or Python API** - declarative configuration or programmatic control
 

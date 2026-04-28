@@ -14,7 +14,7 @@ from .add_folder import add_folder
 from .exporter import export_app, export_db
 from .finalize import finalize
 from .schema import Config, DatannurDB
-from .utils import ModalityManager, configure_logging
+from .utils import EnumerationManager, configure_logging
 from .utils.ids import compute_runtime_ids
 from .utils.params import validate_params
 
@@ -114,22 +114,22 @@ class Catalog(DatannurDB):
         self._has_scanned = False
         self._finalized = False
 
-        self.modality_manager = ModalityManager(self)
+        self.enumeration_manager = EnumerationManager(self)
 
         if not self._loaded_from_db:
             return
 
         # Dataset-only mode: clear variable-level tables
         if depth == "dataset":
-            for t in [self.variable, self.modality, self.value, self.freq]:
+            for t in [self.variable, self.enumeration, self.value, self.frequency]:
                 t._df = t._df.clear()
 
         # Add _seen runtime column to trackable tables
         for table in [
             self.folder,
             self.dataset,
-            self.modality,
-            self.institution,
+            self.enumeration,
+            self.organization,
             self.tag,
             self.doc,
             self.concept,
@@ -137,21 +137,48 @@ class Catalog(DatannurDB):
             if "_seen" in table.runtime_fields and not table.is_empty:
                 table._df = table._df.with_columns(pl.lit(False).alias("_seen"))
 
-        # Restore _match_path from data_path (runtime field, not persisted).
-        # data_path is the right default match key for filesystem-first and
-        # database datasets (where it's already absolute / a stable URI).
-        # For metadata-first datasets where data_path is a relative string
-        # or URL, load_metadata re-resolves _match_path from the CSV source.
-        if not self.dataset.is_empty and "data_path" in self.dataset._df.columns:
-            self.dataset._df = self.dataset._df.with_columns(
-                pl.col("data_path").alias("_match_path")
-            )
+        # Restore _match_path (runtime field, not persisted).
+        # data_path is the default match key, then metadata-loaded dataset.csv
+        # rows override it with their resolved absolute scan path before any
+        # incremental discovery runs.
+        if not self.dataset.is_empty:
+            if "data_path" in self.dataset._df.columns:
+                self.dataset._df = self.dataset._df.with_columns(
+                    pl.col("data_path").alias("_match_path")
+                )
+            else:
+                self.dataset._df = self.dataset._df.with_columns(
+                    pl.lit(None, dtype=pl.String).alias("_match_path")
+                )
 
-        self.modality_manager.rebuild_index()
+            if metadata_path is not None and "id" in self.dataset._df.columns:
+                from .add_metadata import _build_dataset_match_paths_by_id
+
+                metadata_match_paths = _build_dataset_match_paths_by_id(
+                    self._loaded_metadata
+                )
+                if metadata_match_paths:
+                    self.dataset._df = self.dataset._df.with_columns(
+                        pl.col("id")
+                        .map_elements(
+                            lambda dataset_id: metadata_match_paths.get(
+                                str(dataset_id)
+                            ),
+                            return_dtype=pl.String,
+                        )
+                        .fill_null(pl.col("_match_path"))
+                        .alias("_match_path")
+                    )
+
+        self.enumeration_manager.rebuild_index()
 
         # Compute runtime id columns
-        self.value._df = compute_runtime_ids(self.value._df, ["modality_id", "value"])
-        self.freq._df = compute_runtime_ids(self.freq._df, ["variable_id", "value"])
+        self.value._df = compute_runtime_ids(
+            self.value._df, ["enumeration_id", "value"]
+        )
+        self.frequency._df = compute_runtime_ids(
+            self.frequency._df, ["variable_id", "value"]
+        )
 
     def __repr__(self) -> str:
         return (
@@ -159,9 +186,9 @@ class Catalog(DatannurDB):
             f"  folders={self.folder.count},\n"
             f"  datasets={self.dataset.count},\n"
             f"  variables={self.variable.count},\n"
-            f"  modalities={self.modality.count},\n"
+            f"  enumerations={self.enumeration.count},\n"
             f"  values={self.value.count},\n"
-            f"  institutions={self.institution.count},\n"
+            f"  organizations={self.organization.count},\n"
             f"  tags={self.tag.count},\n"
             f"  docs={self.doc.count},\n"
             f"  concepts={self.concept.count}\n"

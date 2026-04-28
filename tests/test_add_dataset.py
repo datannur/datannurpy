@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
 
 from datannurpy import Catalog, Folder
@@ -33,6 +36,24 @@ class TestAddDataset:
         assert len(catalog.dataset.all()) == 1
         assert len(catalog.variable.all()) == 9
 
+    def test_add_dataset_exports_effective_sample_size_for_csv(self, tmp_path: Path):
+        """add_dataset should persist effective sample_size for sampled CSV scans."""
+        csv_file = tmp_path / "big.csv"
+        lines = ["id,value\n"] + [f"{i},{i * 10}\n" for i in range(250)]
+        csv_file.write_text("".join(lines))
+
+        catalog = Catalog(quiet=True)
+        catalog.add_dataset(csv_file, sample_size=100)
+
+        dataset = catalog.dataset.all()[0]
+        assert dataset.nb_row == 250
+        assert dataset.sample_size == 100
+
+        out_dir = tmp_path / "out"
+        catalog.export_db(out_dir, quiet=True)
+        exported = json.loads((out_dir / "dataset.json").read_text())
+        assert exported[0]["sample_size"] == 100
+
     def test_add_dataset_with_folder(self):
         """add_dataset with folder should create folder and link."""
         catalog = Catalog()
@@ -41,7 +62,7 @@ class TestAddDataset:
             folder=Folder(id="hr", name="HR Data"),
         )
 
-        assert len(catalog.folder.where("id", "!=", "_modalities")) == 1
+        assert len(catalog.folder.where("id", "!=", "_enumerations")) == 1
         assert catalog.folder.all()[0].id == "hr"
         assert catalog.dataset.all()[0].folder_id == "hr"
         assert catalog.dataset.all()[0].id == "hr---employees"
@@ -61,7 +82,7 @@ class TestAddDataset:
         catalog.add_dataset(CSV_DIR / "employees.csv", folder=folder)
         catalog.add_dataset(CSV_DIR / "regions_france.csv", folder=folder)
 
-        assert len(catalog.folder.where("id", "!=", "_modalities")) == 1
+        assert len(catalog.folder.where("id", "!=", "_enumerations")) == 1
         assert len(catalog.dataset.all()) == 2
 
     def test_add_dataset_with_metadata(self):
@@ -177,6 +198,20 @@ class TestAddDatasetHive:
         assert ds.delivery_format == "parquet"
         assert ds.nb_row == 6
 
+    def test_add_dataset_hive_directory_persists_sample_size(self, tmp_path: Path):
+        """add_dataset should pass sample_size through Hive partitioned scans."""
+        hive_dir = tmp_path / "sales"
+        (hive_dir / "year=2024").mkdir(parents=True)
+        table = pa.table({"id": list(range(250)), "value": list(range(250))})
+        pq.write_table(table, hive_dir / "year=2024" / "part-0.parquet")
+
+        catalog = Catalog(quiet=True)
+        catalog.add_dataset(hive_dir, sample_size=100)
+
+        dataset = catalog.dataset.all()[0]
+        assert dataset.nb_row == 250
+        assert dataset.sample_size == 100
+
 
 class TestAddDatasetIceberg:
     """Test add_dataset with Iceberg table directories."""
@@ -228,8 +263,8 @@ class TestAddDatasetDepth:
         # Schema mode doesn't read data, so nb_row is None
         assert ds.nb_row is None
         assert len(catalog.variable.all()) == 9
-        # Schema mode skips modalities
-        assert len(catalog.modality.all()) == 0
+        # Schema mode skips enumerations
+        assert len(catalog.enumeration.all()) == 0
 
     def test_add_dataset_dataset_depth_delta(self):
         """depth=dataset should create dataset without scanning Delta."""
@@ -251,10 +286,10 @@ class TestAddDatasetDepth:
         ds = catalog.dataset.all()[0]
         assert ds.nb_row is not None
         assert len(catalog.variable.all()) > 0
-        assert len(catalog.modality.all()) == 0
+        assert len(catalog.enumeration.all()) == 0
 
     def test_add_dataset_stat_file(self):
-        """depth=stat should compute stats but skip modalities."""
+        """depth=stat should compute stats but skip enumerations."""
         catalog = Catalog(freq_threshold=10)
         catalog.add_dataset(CSV_DIR / "employees.csv", depth="stat")
 
@@ -264,12 +299,12 @@ class TestAddDatasetDepth:
         assert len(catalog.variable.all()) > 0
         # Stats computed
         assert any(v.nb_distinct is not None for v in catalog.variable.all())
-        # No modalities
-        assert len(catalog.modality.all()) == 0
-        assert catalog.freq.is_empty
+        # No enumerations
+        assert len(catalog.enumeration.all()) == 0
+        assert catalog.frequency.is_empty
 
     def test_add_dataset_stat_delta(self):
-        """depth=stat should compute Delta stats but skip modalities."""
+        """depth=stat should compute Delta stats but skip enumerations."""
         catalog = Catalog(freq_threshold=10)
         catalog.add_dataset(DATA_DIR / "test_delta", depth="stat")
 
@@ -277,7 +312,7 @@ class TestAddDatasetDepth:
         ds = catalog.dataset.all()[0]
         assert ds.nb_row is not None
         assert len(catalog.variable.all()) > 0
-        assert len(catalog.modality.all()) == 0
+        assert len(catalog.enumeration.all()) == 0
 
     def test_add_dataset_inherits_catalog_depth(self):
         """add_dataset should use Catalog.depth when not overridden."""

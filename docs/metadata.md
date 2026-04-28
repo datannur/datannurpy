@@ -24,11 +24,11 @@ Can be used alone or combined with auto-scanned sources (`add_folder`, `add_data
 metadata/
 ├── variable.csv      # Variables (descriptions, tags...)
 ├── dataset.xlsx      # Datasets
-├── institution.json  # Institutions (owners, managers)
+├── organization.json # Organizations (owners, managers)
 ├── tag.csv           # Tags
 ├── concept.csv       # Business glossary concepts
-├── modality.csv      # Modalities
-├── value.csv         # Modality values
+├── enumeration.csv   # Enumerations
+├── value.csv         # Enumeration values
 ├── config.csv        # Web app config (see app_config)
 └── ...
 ```

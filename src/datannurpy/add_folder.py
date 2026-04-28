@@ -353,7 +353,7 @@ def add_folder(
         existing = catalog.dataset.get_by("_match_path", str(info.path))
         assert existing is not None  # compute_scan_plan guarantees this
         catalog.dataset.update(existing.id, _seen=True)
-        catalog.modality_manager.mark_dataset_seen(existing.id)
+        catalog.enumeration_manager.mark_dataset_seen(existing.id)
         log_skip(info.path.name, q)
 
     # Process datasets to scan
@@ -451,6 +451,7 @@ def add_folder(
             delivery_format=info.format,
             description=result.description,
             nb_row=result.nb_row,
+            sample_size=result.sample_size,
             data_size=(
                 result.data_size
                 if info.format in _DIR_FORMATS
@@ -463,7 +464,7 @@ def add_folder(
 
         var_id_mapping = build_variable_ids(result.variables, dataset.id)
         if result.freq_table is not None:
-            catalog.modality_manager.assign_from_freq(
+            catalog.enumeration_manager.assign_from_freq(
                 result.variables, result.freq_table, var_id_mapping
             )
         catalog.variable.add_all(result.variables)
@@ -578,6 +579,7 @@ def _scan_time_series(
         delivery_format=info.format,
         description=result.description,
         nb_row=result.nb_row,
+        sample_size=result.sample_size,
         nb_resources=len(series_files),
         data_size=get_data_size(last_path, fs=fs),
         start_date=first_period,
@@ -613,10 +615,10 @@ def _scan_time_series(
         )
         result.variables.append(var)
 
-    # Build variable IDs and assign modalities
+    # Build variable IDs and assign enumerations
     var_id_mapping = build_variable_ids(result.variables, dataset.id)
     if result.freq_table is not None:
-        catalog.modality_manager.assign_from_freq(
+        catalog.enumeration_manager.assign_from_freq(
             result.variables, result.freq_table, var_id_mapping
         )
     catalog.variable.add_all(result.variables)

@@ -591,8 +591,8 @@ class TestDepthParameterDatabase:
         assert len(catalog.dataset.all()) == 2
         assert len(catalog.variable.all()) > 0
 
-    def test_depth_stat_computes_stats_without_modalities(self, sample_db: Path):
-        """depth='stat' should compute stats but skip modalities."""
+    def test_depth_stat_computes_stats_without_enumerations(self, sample_db: Path):
+        """depth='stat' should compute stats but skip enumerations."""
         conn_str = f"sqlite:////{sample_db}"
 
         catalog = Catalog(freq_threshold=10, quiet=True)
@@ -607,9 +607,9 @@ class TestDepthParameterDatabase:
 
         assert any(v.nb_distinct is not None for v in catalog.variable.all())
 
-        # No modalities
-        assert len(catalog.modality.all()) == 0
-        assert catalog.freq.is_empty
+        # No enumerations
+        assert len(catalog.enumeration.all()) == 0
+        assert catalog.frequency.is_empty
 
     def test_depth_dataset_incremental_skips_unchanged(self, sample_db: Path):
         """depth='dataset' second run marks existing datasets as seen."""

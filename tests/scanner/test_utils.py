@@ -195,14 +195,14 @@ class TestBuildVariables:
     def test_empty_string_treated_as_missing(self):
         """Empty strings should be treated as missing values."""
         table = ibis.memtable({"val": ["a", "", None, "b", ""]})
-        variables, freq = build_variables(
+        variables, frequency = build_variables(
             table, nb_rows=5, dataset_id="test", freq_threshold=100
         )
         v = variables[0]
         assert v.nb_missing == 3  # 1 NULL + 2 ""
         assert v.nb_distinct == 2  # "a", "b"
-        assert freq is not None
-        assert "" not in freq.column("value").to_pylist()
+        assert frequency is not None
+        assert "" not in frequency.column("value").to_pylist()
 
     def test_extra_stats_with_nulls(self):
         """build_variables should exclude nulls from min/max/mean/std."""
@@ -356,7 +356,7 @@ class TestBuildVariables:
         # Type must come from full_table (int64 → "integer"), not sample (float64 → "float")
         assert variables[0].type == "integer"
 
-    def test_freq_union_fallback_on_error(self):
+    def test_frequency_union_fallback_on_error(self):
         """build_variables falls back to pa.concat_tables when ibis.union fails."""
         from unittest.mock import patch
 
@@ -366,7 +366,7 @@ class TestBuildVariables:
             raise Exception("Illegal mix of collations for operation 'UNION'")
 
         with patch("datannurpy.scanner.utils.ibis.union", side_effect=failing_union):
-            variables, freq_table = build_variables(
+            variables, frequency_table = build_variables(
                 table,
                 nb_rows=3,
                 dataset_id="test",
@@ -374,8 +374,8 @@ class TestBuildVariables:
                 freq_threshold=10,
             )
 
-        assert freq_table is not None
-        assert len(freq_table) == 5  # 2 cat values + 3 num values
+        assert frequency_table is not None
+        assert len(frequency_table) == 5  # 2 cat values + 3 num values
 
     def test_unknown_mappable_raw_type_not_skipped(self):
         """Unknown columns with mappable raw_type should not be skipped for stats."""
@@ -421,14 +421,14 @@ class TestGetDirDataSize:
         fs.glob.assert_any_call("bucket/dir/**/*.pq")
 
 
-class TestPatternFreqIntegration:
+class TestPatternFrequencyIntegration:
     """Test pattern frequency integration in build_variables."""
 
     def test_high_cardinality_string_gets_pattern(self):
-        """String column with nb_distinct > freq_threshold should get pattern freq."""
+        """String column with nb_distinct > freq_threshold should get pattern frequency."""
         values = [f"AB-{i:04d}" for i in range(50)]
         table = ibis.memtable({"code": values, "num": list(range(50))})
-        variables, freq_table = build_variables(
+        variables, frequency_table = build_variables(
             table, nb_rows=50, dataset_id="test", infer_stats=True, freq_threshold=10
         )
         var_by_name = {v.name: v for v in variables}
@@ -437,9 +437,11 @@ class TestPatternFreqIntegration:
         # Integer column should not be a pattern
         assert var_by_name["num"].is_pattern is False
         assert var_by_name["num"].tag_ids == []
-        # freq_table should contain pattern entries
-        assert freq_table is not None
-        code_freqs = [r for r in freq_table.to_pylist() if r["variable_id"] == "code"]
+        # frequency_table should contain pattern entries
+        assert frequency_table is not None
+        code_freqs = [
+            r for r in frequency_table.to_pylist() if r["variable_id"] == "code"
+        ]
         assert len(code_freqs) > 0
         assert code_freqs[0]["value"] == "aa-9999"
 
@@ -525,7 +527,7 @@ class TestPatternFreqIntegration:
         assert freq_table is not None
 
     def test_security_column_uses_pattern_not_raw_freq(self):
-        """Security-tagged columns should never expose raw values in freq."""
+        """Security-tagged columns should never expose raw values in frequency."""
         hashes = [f"$2a$10$salt{i:040d}hashvalue" for i in range(10)]
         table = ibis.memtable({"password": hashes, "name": ["alice", "bob"] * 5})
         variables, freq_table = build_variables(

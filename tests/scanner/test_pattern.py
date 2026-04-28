@@ -165,7 +165,7 @@ class TestComputePatternFreqs:
         rows = freq_table.to_pylist()
         assert all(r["variable_id"] == "phone" for r in rows)
         assert rows[0]["value"] == "999 999 99 99"
-        assert rows[0]["freq"] == 70
+        assert rows[0]["frequency"] == 70
 
     def test_semi_structured_mixed_codes(self):
         values = (
@@ -211,8 +211,12 @@ class TestComputePatternFreqs:
         var_ids = set(freq_table.column("variable_id").to_pylist())
         assert var_ids == {"phone", "email"}
 
-    def test_freq_table_schema(self):
+    def test_frequency_table_schema(self):
         t = ibis.memtable({"code": ["AB-1234"] * 10})
-        freq_table, _ = compute_pattern_freqs(t, ["code"])
-        assert freq_table is not None
-        assert set(freq_table.column_names) == {"variable_id", "value", "freq"}
+        frequency_table, _ = compute_pattern_freqs(t, ["code"])
+        assert frequency_table is not None
+        assert set(frequency_table.column_names) == {
+            "variable_id",
+            "value",
+            "frequency",
+        }
