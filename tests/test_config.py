@@ -1030,22 +1030,24 @@ class TestPostExport:
 
     def test_resolve_script_bare_name(self, tmp_path: Path):
         """Bare name resolves to python-scripts/{name}.py."""
-        result = _resolve_script("start_app", tmp_path)
+        result = _resolve_script("start_app", tmp_path, tmp_path / "config")
         assert result == tmp_path / "python-scripts" / "start_app.py"
 
     def test_resolve_script_with_extension(self, tmp_path: Path):
-        """Name with .py resolves relative to output_dir."""
-        result = _resolve_script("my_hook.py", tmp_path)
-        assert result == tmp_path / "my_hook.py"
+        """Name with .py resolves relative to config directory."""
+        config_dir = tmp_path / "config"
+        result = _resolve_script("my_hook.py", tmp_path / "output", config_dir)
+        assert result == (config_dir / "my_hook.py").resolve()
 
     def test_resolve_script_with_slash(self, tmp_path: Path):
-        """Path with / resolves relative to output_dir."""
-        result = _resolve_script("scripts/hook.py", tmp_path)
-        assert result == tmp_path / "scripts" / "hook.py"
+        """Path with / resolves relative to config directory."""
+        config_dir = tmp_path / "config"
+        result = _resolve_script("scripts/hook.py", tmp_path / "output", config_dir)
+        assert result == (config_dir / "scripts" / "hook.py").resolve()
 
     def test_resolve_script_absolute(self, tmp_path: Path):
         """Absolute path is returned as-is."""
-        result = _resolve_script("/usr/local/bin/hook.py", tmp_path)
+        result = _resolve_script("/usr/local/bin/hook.py", tmp_path, tmp_path)
         assert result == Path("/usr/local/bin/hook.py")
 
     def test_post_export_runs_script(self, tmp_path: Path, data_dir: Path):
@@ -1053,8 +1055,7 @@ class TestPostExport:
         output = tmp_path / "output"
         output.mkdir(parents=True)
         marker = tmp_path / "marker.txt"
-        # Place script at output root (python-scripts/ gets overwritten by _copy_app)
-        script = output / "my_hook.py"
+        script = tmp_path / "my_hook.py"
         script.write_text(
             f"from pathlib import Path\nPath({str(marker)!r}).write_text('ok')\n"
         )
@@ -1082,7 +1083,7 @@ add:
         output = tmp_path / "output"
         output.mkdir(parents=True)
         marker = tmp_path / "marker.txt"
-        (output / "hook.py").write_text(
+        (tmp_path / "hook.py").write_text(
             f"from pathlib import Path\nPath({str(marker)!r}).write_text('v')\n"
         )
 
@@ -1108,10 +1109,10 @@ add:
         output.mkdir(parents=True)
         marker1 = tmp_path / "m1.txt"
         marker2 = tmp_path / "m2.txt"
-        (output / "hook1.py").write_text(
+        (tmp_path / "hook1.py").write_text(
             f"from pathlib import Path\nPath({str(marker1)!r}).write_text('1')\n"
         )
-        (output / "hook2.py").write_text(
+        (tmp_path / "hook2.py").write_text(
             f"from pathlib import Path\nPath({str(marker2)!r}).write_text('2')\n"
         )
 
@@ -1157,7 +1158,7 @@ add:
         """post_export raises on script failure."""
         output = tmp_path / "output"
         output.mkdir(parents=True)
-        (output / "bad.py").write_text("raise SystemExit(1)\n")
+        (tmp_path / "bad.py").write_text("raise SystemExit(1)\n")
 
         config_file = tmp_path / "catalog.yml"
         config_file.write_text(f"""
@@ -1183,7 +1184,7 @@ add:
 
         output = tmp_path / "output"
         output.mkdir(parents=True)
-        (output / "hook.py").write_text("pass\n")
+        (tmp_path / "hook.py").write_text("pass\n")
 
         config_file = tmp_path / "catalog.yml"
         config_file.write_text(f"""
@@ -1207,7 +1208,7 @@ add:
         output = tmp_path / "output"
         output.mkdir(parents=True)
         marker = tmp_path / "marker.txt"
-        script = output / "hook.py"
+        script = tmp_path / "hook.py"
         script.write_text(
             f"from pathlib import Path\nPath({str(marker)!r}).write_text('db')\n"
         )
@@ -1227,6 +1228,35 @@ add:
 """)
         run_config(config_file)
         assert marker.read_text() == "db"
+
+    def test_post_export_relative_path_uses_config_dir(
+        self, tmp_path: Path, data_dir: Path
+    ):
+        """Relative script paths resolve from the YAML directory, not output_dir."""
+        config_dir = tmp_path / "config"
+        scripts_dir = config_dir / "scripts"
+        output = tmp_path / "exports" / "app"
+        scripts_dir.mkdir(parents=True)
+        marker = tmp_path / "marker.txt"
+        (scripts_dir / "hook.py").write_text(
+            f"from pathlib import Path\nPath({str(marker)!r}).write_text('config-dir')\n"
+        )
+
+        config_file = config_dir / "catalog.yml"
+        config_file.write_text(f"""
+app_path: {output}
+refresh: true
+quiet: true
+post_export: scripts/hook.py
+
+add:
+  - type: folder
+    path: {data_dir / "csv"}
+    folder:
+      id: test
+""")
+        run_config(config_file)
+        assert marker.read_text() == "config-dir"
 
     def test_post_export_bare_name_resolves_to_python_scripts(
         self, tmp_path: Path, data_dir: Path

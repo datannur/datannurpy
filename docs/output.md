@@ -63,9 +63,11 @@ Script resolution:
 | Format | Resolved path |
 |---|---|
 | `start_app` | `{output}/python-scripts/start_app.py` |
-| `hook.py` | `{output}/hook.py` |
-| `scripts/hook.py` | `{output}/scripts/hook.py` |
+| `hook.py` | `{config_dir}/hook.py` |
+| `scripts/hook.py` | `{config_dir}/scripts/hook.py` |
 | `/absolute/path.py` | `/absolute/path.py` |
+
+Explicit script paths are resolved relative to the YAML config file directory, like the other path-based options.
 
 Works with both `app_path` and `output_dir` exports.
 

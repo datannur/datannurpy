@@ -96,20 +96,27 @@ def _resolve_paths(p: str | list[str], base_dir: Path) -> str | list[str]:
     return _resolve_path(p, base_dir)
 
 
-def _resolve_script(name: str, output_dir: Path) -> Path:
-    """Resolve a post_export script name to an absolute path."""
-    if os.path.isabs(name):
-        return Path(name)
-    if "/" in name or name.endswith(".py"):
-        return output_dir / name
+def _resolve_script(name: str, output_dir: Path, base_dir: Path) -> Path:
+    """Resolve a post_export script path.
+
+    Bare names target the generated python-scripts directory.
+    Explicit script paths remain relative to the config file directory.
+    """
+    script_path = Path(name)
+    if script_path.is_absolute():
+        return script_path
+    if len(script_path.parts) > 1 or script_path.suffix == ".py":
+        return (base_dir / script_path).resolve()
     return output_dir / "python-scripts" / f"{name}.py"
 
 
-def _run_post_export(scripts: str | list[str], output_dir: Path, quiet: bool) -> None:
+def _run_post_export(
+    scripts: str | list[str], output_dir: Path, base_dir: Path, quiet: bool
+) -> None:
     """Run post_export scripts after export."""
     names = scripts if isinstance(scripts, list) else [scripts]
     for name in names:
-        script = _resolve_script(name, output_dir)
+        script = _resolve_script(name, output_dir, base_dir)
         if not script.exists():
             raise ConfigError(f"post_export script not found: {script}")
         if not quiet:
@@ -232,6 +239,6 @@ def run_config(path: str | Path) -> Catalog:
 
     if post_export and export_dir is not None:
         quiet = catalog_params.get("quiet", False)
-        _run_post_export(post_export, export_dir, bool(quiet))
+        _run_post_export(post_export, export_dir, base_dir, bool(quiet))
 
     return catalog

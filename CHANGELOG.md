@@ -2,6 +2,7 @@
 
 ## 0.20.1 (2026-04-27)
 
+- fix: `post_export` resolves explicit script paths relative to the YAML config directory; bare names still target `python-scripts/`
 - fix: incremental file refresh now keeps matching unchanged datasets after reload when `metadata/dataset.csv` provides relative `data_path` values
 - fix: export effective `sample_size` for sampled file-based scans (`dataset.json`)
 
