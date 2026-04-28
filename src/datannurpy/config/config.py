@@ -13,11 +13,13 @@ from dotenv import load_dotenv
 
 from ..catalog import Catalog
 from ..errors import ConfigError
+from ..exporter import copy_assets as export_copy_assets
 from ..schema import Folder
 
 VALID_TYPES = {"folder", "dataset", "database"}
 RESERVED_KEYS = {
     "add",
+    "copy_assets",
     "env",
     "env_file",
     "open_browser",
@@ -173,6 +175,7 @@ def run_config(path: str | Path) -> Catalog:
 
     # Pop export options before building catalog params
     open_browser = config.pop("open_browser", False)
+    copy_assets = config.pop("copy_assets", None)
     track_evolution = config.pop("track_evolution", True)
     post_export = config.pop("post_export", None)
     output_dir = config.pop("output_dir", None)
@@ -236,6 +239,12 @@ def run_config(path: str | Path) -> Catalog:
     elif catalog.app_path is not None:
         catalog.export_app(open_browser=open_browser, track_evolution=track_evolution)
         export_dir = Path(catalog.app_path)
+
+    if copy_assets is not None and export_dir is not None:
+        quiet = catalog_params.get("quiet", False)
+        export_copy_assets(
+            copy_assets, export_dir, base_dir=base_dir, quiet=bool(quiet)
+        )
 
     if post_export and export_dir is not None:
         quiet = catalog_params.get("quiet", False)

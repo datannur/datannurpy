@@ -43,6 +43,33 @@ Disable tracking:
 track_evolution: false
 ```
 
+## copy_assets
+
+
+Copy local files or directories into the exported catalog after export:
+
+```yaml
+copy_assets:
+  - from: ./staging/docs
+    to: data/doc
+    include: "*.pdf"
+    clean: true
+
+  - from: ./data
+    to: data/source
+```
+
+Rules:
+
+- `from` is resolved relative to the YAML config directory
+- `to` is resolved relative to the export directory and must stay inside it
+- directories are copied recursively; single files are copied into the destination directory
+- `include` is optional and accepts a glob string or list of globs
+- `clean: true` removes destination files that are not present in the filtered source set
+- copies are incremental: a file is updated only when it is missing, its size changed, or its source `mtime` is newer
+
+Works with both `app_path` and `output_dir` exports.
+
 ## post_export
 
 
@@ -68,6 +95,8 @@ Script resolution:
 | `/absolute/path.py` | `/absolute/path.py` |
 
 Explicit script paths are resolved relative to the YAML config file directory, like the other path-based options.
+
+`copy_assets` runs before `post_export`, so custom scripts can consume copied files.
 
 Works with both `app_path` and `output_dir` exports.
 

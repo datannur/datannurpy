@@ -1302,3 +1302,86 @@ add:
 """)
         catalog = run_config(config_file)
         assert len(catalog.dataset.all()) > 0
+
+
+class TestCopyAssetsConfig:
+    """Test copy_assets integration in YAML config."""
+
+    def test_copy_assets_empty_mapping_raises(self, tmp_path: Path, data_dir: Path):
+        """An empty copy_assets mapping is validated and rejected."""
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+output_dir: {tmp_path / "output"}
+refresh: true
+quiet: true
+copy_assets: {{}}
+
+add:
+  - type: folder
+    path: {data_dir / "csv"}
+    folder:
+      id: test
+""")
+
+        with pytest.raises(ConfigError, match="must define 'from' and 'to'"):
+            run_config(config_file)
+
+    def test_copy_assets_runs_before_post_export(self, tmp_path: Path, data_dir: Path):
+        """post_export scripts can consume files copied by copy_assets."""
+        assets_dir = tmp_path / "assets"
+        assets_dir.mkdir()
+        (assets_dir / "guide.txt").write_text("copied")
+        marker = tmp_path / "marker.txt"
+        script = tmp_path / "check_assets.py"
+        script.write_text(
+            "from pathlib import Path\n"
+            f"content = Path({str(tmp_path / 'output' / 'data' / 'doc' / 'guide.txt')!r}).read_text()\n"
+            f"Path({str(marker)!r}).write_text(content)\n"
+        )
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+app_path: {tmp_path / "output"}
+refresh: true
+quiet: true
+copy_assets:
+  - from: ./assets
+    to: data/doc
+post_export: check_assets.py
+
+add:
+  - type: folder
+    path: {data_dir / "csv"}
+    folder:
+      id: test
+""")
+
+        run_config(config_file)
+
+        assert marker.read_text() == "copied"
+
+    def test_copy_assets_with_output_dir(self, tmp_path: Path, data_dir: Path):
+        """copy_assets also works for db-only exports."""
+        assets_dir = tmp_path / "assets"
+        assets_dir.mkdir()
+        (assets_dir / "source.csv").write_text("a,b\n1,2\n")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+output_dir: {tmp_path / "output"}
+refresh: true
+quiet: true
+copy_assets:
+  - from: ./assets
+    to: data/source
+
+add:
+  - type: folder
+    path: {data_dir / "csv"}
+    folder:
+      id: test
+""")
+
+        run_config(config_file)
+
+        assert (tmp_path / "output" / "data" / "source" / "source.csv").exists()
