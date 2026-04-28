@@ -129,7 +129,7 @@ class Catalog(DatannurDB):
             self.folder,
             self.dataset,
             self.modality,
-            self.institution,
+            self.organization,
             self.tag,
             self.doc,
             self.concept,
@@ -184,7 +184,7 @@ class Catalog(DatannurDB):
             f"  variables={self.variable.count},\n"
             f"  modalities={self.modality.count},\n"
             f"  values={self.value.count},\n"
-            f"  institutions={self.institution.count},\n"
+            f"  organizations={self.organization.count},\n"
             f"  tags={self.tag.count},\n"
             f"  docs={self.doc.count},\n"
             f"  concepts={self.concept.count}\n"

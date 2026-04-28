@@ -287,7 +287,7 @@ class TestGetCatalogTable:
         assert _get_catalog_table(catalog, "modality") is catalog.modality
         assert _get_catalog_table(catalog, "value") is catalog.value
         assert _get_catalog_table(catalog, "freq") is catalog.freq
-        assert _get_catalog_table(catalog, "institution") is catalog.institution
+        assert _get_catalog_table(catalog, "organization") is catalog.organization
         assert _get_catalog_table(catalog, "tag") is catalog.tag
         assert _get_catalog_table(catalog, "doc") is catalog.doc
 
@@ -972,7 +972,7 @@ class TestAddMetadataIntegration:
         (tmp_path / "value.csv").write_text(
             "modality_id,value,description\nm1,a,Val A\n"
         )
-        (tmp_path / "institution.csv").write_text("id,name\ni1,Inst\n")
+        (tmp_path / "organization.csv").write_text("id,name\ni1,Org\n")
         (tmp_path / "tag.csv").write_text("id,name\nt1,Tag\n")
         (tmp_path / "doc.csv").write_text("id,name\ndoc1,Doc\n")
 
@@ -984,7 +984,7 @@ class TestAddMetadataIntegration:
         assert len(catalog.variable.all()) == 1
         assert len(catalog.modality.all()) == 1
         assert len(catalog.value.all()) == 1
-        assert len(catalog.institution.all()) == 1
+        assert len(catalog.organization.all()) == 1
         assert len(catalog.tag.all()) == 1
         assert len(catalog.doc.all()) == 1
 

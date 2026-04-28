@@ -3,6 +3,7 @@
 ## 0.20.1 (2026-04-27)
 
 - add: `copy_assets` export option — copy local files or directories into the exported catalog with optional `include` filters and `clean` cleanup
+- change: rename `institution` to `organization` in the Python API, metadata files, and exported DB tables
 - fix: `post_export` resolves explicit script paths relative to the YAML config directory; bare names still target `python-scripts/`
 - fix: incremental file refresh now keeps matching unchanged datasets after reload when `metadata/dataset.csv` provides relative `data_path` values
 - fix: export effective `sample_size` for sampled file-based scans (`dataset.json`)
@@ -10,7 +11,7 @@
 ## 0.20.0 (2026-04-26)
 
 - add: metadata-first pattern — `add_folder(create_folders=False)` skips folder creation from disk, reuses `id`/`folder_id` from `metadata/dataset.csv` (matched by `data_path`). New `on_unmatched` parameter (`"skip"` / `"warn"` / `"error"`)
-- add: `Folder` exposes `manager_id` and `owner_id` (institution links), with matching kwargs on `add_folder` / `add_database`
+- add: `Folder` exposes `manager_id` and `owner_id` (organization links), with matching kwargs on `add_folder` / `add_database`
 - fix: `add_metadata` formats dates as `YYYY/MM/DD` (was ISO-8601), aligned with `get_mtime_iso`
 - fix: CSV header parsing on `depth: variable` — BOM, `;` separator with commas in headers, multi-line quoted fields
 - fix: CSV header deduplication (DuckDB-style `name_1`, `name_2`) and bare `\r` normalization (Mac Classic / SDMX exports)

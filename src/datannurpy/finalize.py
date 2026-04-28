@@ -35,8 +35,8 @@ def finalize(catalog: Catalog) -> None:
     if removed_modality_ids:
         catalog.modality.remove_all(removed_modality_ids)
 
-    # 4. Remove unseen institutions
-    catalog.institution.remove_where("_seen", "==", False)
+    # 4. Remove unseen organizations
+    catalog.organization.remove_where("_seen", "==", False)
 
     # 5. Remove unseen tags
     catalog.tag.remove_where("_seen", "==", False)
@@ -80,7 +80,7 @@ def _collect_referenced_tag_ids(catalog: Catalog) -> set[str]:
         referenced.update(entity.tag_ids)
     for entity in catalog.folder.all():
         referenced.update(entity.tag_ids)
-    for entity in catalog.institution.all():
+    for entity in catalog.organization.all():
         referenced.update(entity.tag_ids)
     return referenced
 

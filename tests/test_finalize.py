@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from datannurpy import Catalog, Folder
-from datannurpy.schema import Doc, Institution, Modality, Tag, Value, Variable
+from datannurpy.schema import Doc, Modality, Organization, Tag, Value, Variable
 from datannurpy.utils.ids import build_value_id
 
 
@@ -281,34 +281,34 @@ class TestFinalizeModalitiesWithoutFolder:
         assert len(catalog2.modality.all()) >= 0  # May or may not have modalities
 
 
-class TestFinalizeUnseenInstitutions:
-    """Tests for removing unseen institutions."""
+class TestFinalizeUnseenOrganizations:
+    """Tests for removing unseen organizations."""
 
-    def test_unseen_institution_is_removed(self, tmp_path: Path):
-        """Institutions with _seen=False should be removed."""
+    def test_unseen_organization_is_removed(self, tmp_path: Path):
+        """Organizations with _seen=False should be removed."""
         app_dir = tmp_path
 
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        inst = Institution(id="old_inst", name="Old")
-        inst._seen = True
-        catalog1.institution.add(inst)
+        org = Organization(id="old_org", name="Old")
+        org._seen = True
+        catalog1.organization.add(org)
         catalog1.export_db()
 
         catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.finalize()
-        assert len(catalog2.institution.all()) == 0
+        assert len(catalog2.organization.all()) == 0
 
-    def test_seen_institution_is_kept(self, tmp_path: Path):
-        """Institutions with _seen=True should be kept."""
+    def test_seen_organization_is_kept(self, tmp_path: Path):
+        """Organizations with _seen=True should be kept."""
         app_dir = tmp_path
 
         catalog = Catalog(app_path=app_dir, quiet=True)
-        inst = Institution(id="kept", name="Kept")
-        inst._seen = True
-        catalog.institution.add(inst)
+        org = Organization(id="kept", name="Kept")
+        org._seen = True
+        catalog.organization.add(org)
 
         catalog.finalize()
-        assert len(catalog.institution.all()) == 1
+        assert len(catalog.organization.all()) == 1
 
 
 class TestFinalizeUnseenTags:

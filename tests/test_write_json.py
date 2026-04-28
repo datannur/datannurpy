@@ -226,21 +226,21 @@ class TestCatalogWrite:
         assert "variable" in table_names
         assert all("last_modif" in t for t in data)
 
-    def test_write_institutions(self, tmp_path: Path):
-        """export_db should write institution.json when institutions exist."""
-        from datannurpy.schema import Institution
+    def test_write_organizations(self, tmp_path: Path):
+        """export_db should write organization.json when organizations exist."""
+        from datannurpy.schema import Organization
 
         catalog = Catalog()
-        catalog.institution.add(Institution(id="inst1", name="Institution 1"))
+        catalog.organization.add(Organization(id="org1", name="Organization 1"))
         catalog.export_db(tmp_path)
 
-        assert (tmp_path / "institution.json").exists()
-        assert (tmp_path / "institution.json.js").exists()
+        assert (tmp_path / "organization.json").exists()
+        assert (tmp_path / "organization.json.js").exists()
 
-        with open(tmp_path / "institution.json") as f:
+        with open(tmp_path / "organization.json") as f:
             data = json.load(f)
         assert len(data) == 1
-        assert data[0]["id"] == "inst1"
+        assert data[0]["id"] == "org1"
 
     def test_write_tags(self, tmp_path: Path):
         """export_db should write tag.json when tags exist."""

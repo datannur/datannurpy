@@ -1,6 +1,6 @@
 # Hybrid demo: scan the local data/ folder and merge it with the editorial
 # metadata shipped with the datannur front app (rich descriptions, tags,
-# institutions, concepts, etc.), plus a small local overlay.
+# Organizations, concepts, etc.), plus a small local overlay.
 #
 # Prerequisite: run `make download-app` first — it fetches the front repo and
 # preserves its db-source/ into examples/datannur_app/db-source (this folder

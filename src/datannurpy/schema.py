@@ -124,7 +124,7 @@ class Freq:
 
 
 @dataclass
-class Institution:
+class Organization:
     """An organization that manages data."""
 
     id: str
@@ -195,7 +195,7 @@ class DatannurDB(Jsonjsdb):
     modality: Table[Modality]
     value: Table[Value]
     freq: Table[Freq]
-    institution: Table[Institution]
+    organization: Table[Organization]
     tag: Table[Tag]
     doc: Table[Doc]
     concept: Table[Concept]
@@ -210,7 +210,7 @@ class DatannurDB(Jsonjsdb):
         self.modality._entity_type = Modality
         self.value._entity_type = Value
         self.freq._entity_type = Freq
-        self.institution._entity_type = Institution
+        self.organization._entity_type = Organization
         self.tag._entity_type = Tag
         self.doc._entity_type = Doc
         self.concept._entity_type = Concept
@@ -219,7 +219,7 @@ class DatannurDB(Jsonjsdb):
         self.folder.runtime_fields = {"_seen"}
         self.dataset.runtime_fields = {"_seen", "_match_path"}
         self.modality.runtime_fields = {"_seen"}
-        self.institution.runtime_fields = {"_seen"}
+        self.organization.runtime_fields = {"_seen"}
         self.tag.runtime_fields = {"_seen"}
         self.doc.runtime_fields = {"_seen"}
         self.concept.runtime_fields = {"_seen"}

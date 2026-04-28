@@ -32,7 +32,7 @@ SNAPSHOT_FILES = [
     "variable.json",
     "modality.json",
     "value.json",
-    "institution.json",
+    "organization.json",
     "tag.json",
     "freq.json",
 ]

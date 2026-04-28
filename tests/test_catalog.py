@@ -24,7 +24,7 @@ class TestCatalogRepr:
         assert "variables=0" in result
         assert "modalities=0" in result
         assert "values=0" in result
-        assert "institutions=0" in result
+        assert "organizations=0" in result
         assert "tags=0" in result
         assert "docs=0" in result
 

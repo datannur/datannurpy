@@ -30,7 +30,7 @@ Catalog(app_path=None, metadata_path=None, depth="value", refresh=False, freq_th
 | modality       | Table[Modality]                   | Modality table                                     |
 | value          | Table[Value]                      | Modality value table                               |
 | freq           | Table[Freq]                       | Frequency table (computed)                         |
-| institution    | Table[Institution]                | Institution table                                  |
+| organization   | Table[Organization]               | Organization table |
 | tag            | Table[Tag]                        | Tag table                                          |
 | doc            | Table[Doc]                        | Document table                                     |
 | concept        | Table[Concept]                    | Business glossary concept table                    |
@@ -84,8 +84,8 @@ catalog.add_folder(
 | id              | str \| None                               | None     | Override folder ID                            |
 | name            | str \| None                               | None     | Override folder name                          |
 | description     | str \| None                               | None     | Override folder description                   |
-| manager_id      | str \| None                               | None     | Institution ID managing the folder            |
-| owner_id        | str \| None                               | None     | Institution ID owning the folder              |
+| manager_id      | str \| None                               | None     | Organization ID managing the folder           |
+| owner_id        | str \| None                               | None     | Organization ID owning the folder             |
 
 ### `Catalog.add_dataset()`
 
@@ -173,8 +173,8 @@ catalog.add_database(
 | id                 | str \| None                                     | None     | Override folder ID                         |
 | name               | str \| None                                     | None     | Override folder name                       |
 | description        | str \| None                                     | None     | Override folder description                |
-| manager_id         | str \| None                                     | None     | Institution ID managing the folder         |
-| owner_id           | str \| None                                     | None     | Institution ID owning the folder           |
+| manager_id         | str \| None                                     | None     | Organization ID managing the folder        |
+| owner_id           | str \| None                                     | None     | Organization ID owning the folder          |
 
 ### `Catalog.export_db()`
 

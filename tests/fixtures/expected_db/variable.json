@@ -1992,9 +1992,9 @@
     "concept_id": null
   },
   {
-    "id": "data---metadata---institution_csv---description",
+    "id": "data---metadata---organization_csv---description",
     "name": "description",
-    "dataset_id": "data---metadata---institution_csv",
+    "dataset_id": "data---metadata---organization_csv",
     "modality_ids": "_modalities---mod_3515a63dfa",
     "tag_ids": "",
     "source_var_ids": "",
@@ -2016,9 +2016,9 @@
     "concept_id": null
   },
   {
-    "id": "data---metadata---institution_csv---email",
+    "id": "data---metadata---organization_csv---email",
     "name": "email",
-    "dataset_id": "data---metadata---institution_csv",
+    "dataset_id": "data---metadata---organization_csv",
     "modality_ids": "_modalities---mod_ae6d5a38cc",
     "tag_ids": "auto---email",
     "source_var_ids": "",
@@ -2040,9 +2040,9 @@
     "concept_id": null
   },
   {
-    "id": "data---metadata---institution_csv---id",
+    "id": "data---metadata---organization_csv---id",
     "name": "id",
-    "dataset_id": "data---metadata---institution_csv",
+    "dataset_id": "data---metadata---organization_csv",
     "modality_ids": "_modalities---mod_741f0d5c51",
     "tag_ids": "",
     "source_var_ids": "",
@@ -2064,9 +2064,9 @@
     "concept_id": null
   },
   {
-    "id": "data---metadata---institution_csv---name",
+    "id": "data---metadata---organization_csv---name",
     "name": "name",
-    "dataset_id": "data---metadata---institution_csv",
+    "dataset_id": "data---metadata---organization_csv",
     "modality_ids": "_modalities---mod_ecdfc6dc16",
     "tag_ids": "",
     "source_var_ids": "",

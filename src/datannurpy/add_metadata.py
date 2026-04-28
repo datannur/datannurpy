@@ -17,16 +17,16 @@ import ibis
 
 from .schema import (
     Config,
+    Concept,
     Dataset,
     Doc,
     Folder,
     Freq,
-    Institution,
     Modality,
+    Organization,
     Tag,
     Value,
     Variable,
-    Concept,
 )
 from .scanner import read_csv, read_excel, read_statistical
 from .utils import log_done, log_error, log_section, log_warn
@@ -47,7 +47,7 @@ ENTITY_CLASSES: dict[str, type] = {
     "modality": Modality,
     "value": Value,
     "freq": Freq,
-    "institution": Institution,
+    "organization": Organization,
     "tag": Tag,
     "doc": Doc,
     "concept": Concept,
@@ -69,7 +69,7 @@ SUPPORTED_EXTENSIONS = {".csv", ".xlsx", ".xls", ".json", ".sas7bdat"}
 _DATASET_ENTITIES = {
     "folder",
     "dataset",
-    "institution",
+    "organization",
     "tag",
     "doc",
     "concept",
@@ -573,7 +573,7 @@ def _get_catalog_table(catalog: Catalog, entity_name: str) -> Any | None:
         "modality": catalog.modality,
         "value": catalog.value,
         "freq": catalog.freq,
-        "institution": catalog.institution,
+        "organization": catalog.organization,
         "tag": catalog.tag,
         "doc": catalog.doc,
         "concept": catalog.concept,
