@@ -1,12 +1,12 @@
 [
   {
-    "id": "_modalities",
+    "id": "_enumerations",
     "parent_id": null,
     "manager_id": null,
     "owner_id": null,
     "tag_ids": "",
     "doc_ids": "",
-    "name": "Modalities",
+    "name": "Enumerations",
     "description": null,
     "type": null,
     "data_path": null

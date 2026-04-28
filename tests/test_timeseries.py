@@ -840,7 +840,7 @@ class TestTimeSeriesRescan:
         assert len(datasets) == 1
         assert datasets[0].nb_resources == 2
         # No child folders should be created from file paths
-        # (only the scanned folder and system folders like _modalities exist)
+        # (only the scanned folder and system folders like _enumerations exist)
         folder_ids = {f.id for f in catalog.folder.all()}
         assert "root" in folder_ids
         # No subfolders like "2020" or "2021" should exist

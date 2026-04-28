@@ -22,7 +22,7 @@ class TestCatalogRepr:
         assert "folders=0" in result
         assert "datasets=0" in result
         assert "variables=0" in result
-        assert "modalities=0" in result
+        assert "enumerations=0" in result
         assert "values=0" in result
         assert "organizations=0" in result
         assert "tags=0" in result
@@ -271,8 +271,8 @@ class TestCatalogExportDbDefault:
         # Second run: load existing catalog
         catalog2 = Catalog(app_path=app_dir)
 
-        # Filter out _modalities folder
-        user_folders = catalog2.folder.where("id", "!=", "_modalities")
+        # Filter out _enumerations folder
+        user_folders = catalog2.folder.where("id", "!=", "_enumerations")
         assert len(user_folders) == 1
         assert user_folders[0].id == "src"
         assert len(catalog2.dataset.all()) == 1
@@ -282,11 +282,11 @@ class TestCatalogDepth:
     """Test Catalog depth parameter."""
 
     def test_depth_dataset_clears_variable_tables_on_load(self, tmp_path: Path):
-        """Loading with depth='dataset' should clear variable/modality/value/frequency."""
+        """Loading with depth='dataset' should clear variable/enumeration/value/frequency."""
         app_dir = tmp_path / "app"
         data_dir = tmp_path / "data"
         data_dir.mkdir()
-        # Create CSV with repeated values to ensure frequency and modalities are created
+        # Create CSV with repeated values to ensure frequency and enumerations are created
         (data_dir / "test.csv").write_text("a,b\n1,x\n2,x\n3,x\n")
 
         # First run: full scan with low freq_threshold to create frequency entries
@@ -296,7 +296,7 @@ class TestCatalogDepth:
 
         # Verify we have data in all tables
         assert len(catalog1.variable.all()) > 0
-        assert len(catalog1.modality.all()) > 0
+        assert len(catalog1.enumeration.all()) > 0
         assert len(catalog1.value.all()) > 0
         assert len(catalog1.frequency.all()) > 0
 
@@ -305,7 +305,7 @@ class TestCatalogDepth:
 
         # Structure mode should have cleared these tables
         assert len(catalog2.variable.all()) == 0
-        assert len(catalog2.modality.all()) == 0
+        assert len(catalog2.enumeration.all()) == 0
         assert len(catalog2.value.all()) == 0
         assert len(catalog2.frequency.all()) == 0
 
@@ -319,7 +319,7 @@ class TestCatalogDepth:
 
         # Should have empty tables
         assert len(catalog.variable.all()) == 0
-        assert len(catalog.modality.all()) == 0
+        assert len(catalog.enumeration.all()) == 0
         assert len(catalog.value.all()) == 0
         assert len(catalog.frequency.all()) == 0
 

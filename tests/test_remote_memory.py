@@ -198,8 +198,8 @@ class TestCatalogWithMemoryFS:
             f"memory://{memory_root}/file.csv", folder=Folder(id="myfolder")
         )
 
-        assert len(catalog.folder.where("id", "!=", "_modalities")) == 1
-        assert catalog.folder.where("id", "!=", "_modalities")[0].id == "myfolder"
+        assert len(catalog.folder.where("id", "!=", "_enumerations")) == 1
+        assert catalog.folder.where("id", "!=", "_enumerations")[0].id == "myfolder"
         # add_dataset uses name without extension for ID
         assert catalog.dataset.all()[0].id == "myfolder---file"
         assert catalog.dataset.all()[0].folder_id == "myfolder"

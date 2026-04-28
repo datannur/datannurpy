@@ -25,7 +25,7 @@ add:
 | Variables (names, types)             |           | ✓          | ✓              | ✓                  |
 | DB introspection (PK, FK, comments)  |           | ✓          | ✓              | ✓                  |
 | Row count, statistics                |           |            | ✓              | ✓                  |
-| Modalities, frequencies, patterns    |           |            |                | ✓                  |
+| Enumerations, frequencies, patterns  |           |            |                | ✓                  |
 | Auto-tagging (format, security, text)|           |            |                | ✓                  |
 
 > **Note:** At `depth="variable"`, CSV and Excel files only extract column **names** (types require reading data, available from `depth="stat"`). All other formats provide types at this level.
@@ -34,8 +34,8 @@ add:
 
 - **`dataset`** — quick inventory of available files/tables without reading data
 - **`variable`** — lightweight schema discovery (column names and types)
-- **`stat`** — data profiling without modality detection (faster than `value`)
-- **`value`** — full catalog with frequency tables and modality assignment (default)
+- **`stat`** — data profiling without enumeration detection (faster than `value`)
+- **`value`** — full catalog with frequency tables and enumeration assignment (default)
 
 ### Auto-tagging
 
@@ -57,7 +57,7 @@ Policy tags let you manually control scan behavior for specific variables. Like 
 
 | Tag                      | Effect                                                         |
 | ------------------------ | -------------------------------------------------------------- |
-| `policy---frequency-hidden`   | Suppress all frequency and modality data (stats remain visible) |
+| `policy---frequency-hidden`   | Suppress all frequency and enumeration data (stats remain visible) |
 
 Assign the tag in your `variable.csv` metadata:
 
@@ -177,6 +177,6 @@ To disable sampling globally:
 sample_size: null
 ```
 
-When a dataset has more rows than `sample_size`, a uniform random sample is used for frequency counts and modality detection. All other statistics (`nb_row`, `nb_missing`, `nb_distinct`, `min`, `max`, `mean`, `std`) are computed on the full dataset.
+When a dataset has more rows than `sample_size`, a uniform random sample is used for frequency counts and enumeration detection. All other statistics (`nb_row`, `nb_missing`, `nb_distinct`, `min`, `max`, `mean`, `std`) are computed on the full dataset.
 
 The actual number of sampled rows is recorded in `Dataset.sample_size` (`null` when no sampling was applied).

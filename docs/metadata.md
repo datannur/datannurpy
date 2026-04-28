@@ -27,8 +27,8 @@ metadata/
 ├── organization.json # Organizations (owners, managers)
 ├── tag.csv           # Tags
 ├── concept.csv       # Business glossary concepts
-├── modality.csv      # Modalities
-├── value.csv         # Modality values
+├── enumeration.csv   # Enumerations
+├── value.csv         # Enumeration values
 ├── config.csv        # Web app config (see app_config)
 └── ...
 ```

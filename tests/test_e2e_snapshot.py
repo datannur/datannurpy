@@ -30,7 +30,7 @@ SNAPSHOT_FILES = [
     "folder.json",
     "dataset.json",
     "variable.json",
-    "modality.json",
+    "enumeration.json",
     "value.json",
     "organization.json",
     "tag.json",
@@ -72,9 +72,9 @@ def sort_by_id(data: list[dict[str, Any]]) -> list[dict[str, Any]]:
         # For frequency.json: sort by variable_id + value
         if "variable_id" in x and "value" in x:
             return (x.get("variable_id", ""), str(x.get("value", "")))
-        # For value.json: sort by modality_id + value
-        if "modality_id" in x and "value" in x:
-            return (x.get("modality_id", ""), str(x.get("value", "")))
+        # For value.json: sort by enumeration_id + value
+        if "enumeration_id" in x and "value" in x:
+            return (x.get("enumeration_id", ""), str(x.get("value", "")))
         # For __table__.json: sort by name
         if "name" in x and "id" not in x:
             return (x.get("name", ""),)
@@ -180,7 +180,7 @@ class TestE2EStructural:
 
     def test_folders_count(self, catalog: Catalog) -> None:
         """Should have expected number of folders."""
-        # data + subfolders + company_db + photovoltaik + _modalities
+        # data + subfolders + company_db + photovoltaik + _enumerations
         assert len(catalog.folder.all()) >= 5
 
     def test_datasets_count(self, catalog: Catalog) -> None:
@@ -212,6 +212,6 @@ class TestE2EStructural:
         """Metadata from add_metadata should be merged."""
         # Check that some metadata file was applied
         # This depends on what's in data/metadata/
-        modalities = catalog.modality.all()
-        # Should have at least some modalities from metadata
-        assert len(modalities) >= 0  # Adjust based on actual metadata content
+        enumerations = catalog.enumeration.all()
+        # Should have at least some enumerations from metadata
+        assert len(enumerations) >= 0  # Adjust based on actual metadata content

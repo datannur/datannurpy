@@ -245,7 +245,7 @@ class TestAddFolderOther:
     def test_add_folder_sets_type_filesystem(self, full_catalog):
         """add_folder should set type='filesystem' on all folders."""
         for folder in full_catalog.folder.all():
-            if folder.id != "_modalities":
+            if folder.id != "_enumerations":
                 assert folder.type == "filesystem"
 
 
@@ -272,7 +272,7 @@ class TestSubfolders:
         catalog = Catalog()
         catalog.add_folder(tmp_path, Folder(id="root", name="Root"))
 
-        user_folders = catalog.folder.where("id", "!=", "_modalities")
+        user_folders = catalog.folder.where("id", "!=", "_enumerations")
         assert len(user_folders) == 2  # root + 2024
         subfolder = user_folders[1]
         assert subfolder.id == "root---2024"
@@ -287,7 +287,7 @@ class TestSubfolders:
         catalog = Catalog()
         catalog.add_folder(tmp_path, Folder(id="x", name="X"))
 
-        user_folders = catalog.folder.where("id", "!=", "_modalities")
+        user_folders = catalog.folder.where("id", "!=", "_enumerations")
         assert len(user_folders) == 4
         folder_ids = [f.id for f in user_folders]
         assert "x" in folder_ids
@@ -545,8 +545,8 @@ class TestIncrementalScanSubfolders:
         catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
         catalog2.finalize()
 
-        # All user folders should be kept (excluding _modalities system folder)
-        user_folders = catalog2.folder.where("id", "!=", "_modalities")
+        # All user folders should be kept (excluding _enumerations system folder)
+        user_folders = catalog2.folder.where("id", "!=", "_enumerations")
         assert len(user_folders) == 2
         assert any(f.id == "src" for f in user_folders)
         assert any("subdir" in f.id for f in user_folders)
@@ -750,8 +750,8 @@ class TestDepthParameter:
         if ds:
             assert ds.nb_row is None
 
-    def test_depth_stat_computes_stats_without_modalities(self, tmp_path: Path):
-        """depth='stat' should compute stats but skip modalities and frequency."""
+    def test_depth_stat_computes_stats_without_enumerations(self, tmp_path: Path):
+        """depth='stat' should compute stats but skip enumerations and frequency."""
         (tmp_path / "data.csv").write_text("a,b\nfoo,1\nbar,2\nbaz,3\n")
 
         catalog = Catalog(freq_threshold=10)
@@ -768,8 +768,8 @@ class TestDepthParameter:
         assert vars_by_name["b"].nb_distinct is not None
         assert vars_by_name["b"].min is not None
 
-        # No modalities or frequency tables
-        assert len(catalog.modality.all()) == 0
+        # No enumerations or frequency tables
+        assert len(catalog.enumeration.all()) == 0
         assert catalog.frequency.is_empty
 
     def test_folder_scan_persists_effective_sample_size(self, tmp_path: Path):

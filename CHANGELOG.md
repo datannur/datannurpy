@@ -1,9 +1,9 @@
 # datannurpy
 
-## 0.20.1 (2026-04-27)
+## 0.21.0 (2026-04-27)
 
 - add: `copy_assets` export option — copy local files or directories into the exported catalog with optional `include` filters and `clean` cleanup
-- change: rename `institution` to `organization` in the Python API, metadata files, and exported DB tables
+- change: rename `institution` to `organization`, `freq` to `frequency`, and `modality` to `enumeration`
 - fix: `post_export` resolves explicit script paths relative to the YAML config directory; bare names still target `python-scripts/`
 - fix: incremental file refresh now keeps matching unchanged datasets after reload when `metadata/dataset.csv` provides relative `data_path` values
 - fix: export effective `sample_size` for sampled file-based scans (`dataset.json`)
@@ -49,13 +49,13 @@
 
 ## 0.17.0 (2026-04-19)
 
-- add: `policy---freq-hidden` tag — assign to a variable in metadata to suppress all frequency and modality data while keeping stats; tag is auto-created in the `scan > policy` hierarchy like other system tags
+- add: `policy---freq-hidden` tag — assign to a variable in metadata to suppress all frequency and enumeration data while keeping stats; tag is auto-created in the `scan > policy` hierarchy like other system tags
 - breaking: `add_metadata()` removed from public API — metadata is now loaded automatically via `metadata_path` parameter on `Catalog()` (also supported as top-level YAML field)
 - improve: cleaner scan logging — per-dataset timing, progress indicator (`⏳`), better visual spacing between schemas/summaries, and log file no longer contains intermediate `...` lines
 - add: auto-detect AVS13 (Swiss social security number), MD5, SHA1, SHA256, SHA512 content types
 - fix: JWT false positives on URLs, secret detection for short tokens, phone format coverage
 - perf: batch database introspection — `batch_table_data_size` and `batch_table_row_count` fetch size/count for all tables in a single query per schema instead of per table
-- perf: batched modality assignment — `assign_from_freq` processes all variables at once via `add_all()` instead of one at a time
+- perf: batched enumeration assignment — `assign_from_freq` processes all variables at once via `add_all()` instead of one at a time
 
 ## 0.16.2 (2026-04-17)
 
@@ -86,7 +86,7 @@
 ## 0.15.0 (2026-04-14)
 
 - breaking: renamed depth levels — `"structure"` → `"dataset"`, `"schema"` → `"variable"`, `"full"` → `"value"`
-- add: new `depth="stat"` level — computes statistics (row count, min, max, mean, etc.) without modality detection or frequency tables
+- add: new `depth="stat"` level — computes statistics (row count, min, max, mean, etc.) without enumeration detection or frequency tables
 - removed `infer_stats` parameter from `add_folder`, `add_dataset`, `add_database` — use `depth` to control scan level
 - fix: variable types preserved during sampling — `build_variables` now reads schema from original source table instead of degraded memtable
 - fix: `_READSTAT_TYPE_MAP` expanded to cover `int8`, `int16`, `int32`, `float` (Stata/SPSS types now map to standard `"integer"`/`"float"`)
@@ -127,7 +127,7 @@
 - add: time series prefix grouping now uses effective table list — series datasets are placed in the correct prefix folder instead of year-specific subfolders
 - fix: `ibis_type_to_str` now maps `dt.Binary` to `"binary"` — MySQL `BINARY(n)`, `VARBINARY`, `BLOB`, `LONGBLOB` were reported as `"unknown"`
 - fix: frequency table `ibis.union` fallback to `pa.concat_tables` for MySQL mixed collations
-- fix: modality value/freq IDs now use hash-based keys instead of `sanitize_id` — eliminates ID collisions for values with special characters (JSON, URLs with `$@~`)
+- fix: enumeration value/freq IDs now use hash-based keys instead of `sanitize_id` — eliminates ID collisions for values with special characters (JSON, URLs with `$@~`)
 - fix: YAML config `log_file` path now resolved relative to config file directory
 - fix: `ibis_type_to_str` now resolves `dt.Unknown` columns with known `raw_type` (e.g. MySQL `DOUBLE` → `"float"`, `TINYINT`/`MEDIUMINT` → `"integer"`) — previously reported as `"unknown"` with no stats
 
@@ -273,7 +273,7 @@
 ## 0.6.0 (2026-03-08)
 
 - add: `depth` parameter for `add_dataset` and `add_metadata`
-- refactor: `depth="structure"` now clears variable/modality/value/freq at load time
+- refactor: `depth="structure"` now clears variable/enumeration/value/freq at load time
 
 ## 0.5.0 (2026-03-07)
 
@@ -281,7 +281,7 @@
 - add: Value.id and Freq.id are now runtime fields (not persisted)
 - fix: evolution stability - no spurious changes on successive runs
 - fix: preserve last_update_timestamp for unchanged database tables
-- fix: \_modalities folder no longer deleted on incremental scan
+- fix: \_enumerations folder no longer deleted on incremental scan
 - refactor: \_compute_runtime_id helper for id column computation
 
 ## 0.4.2 (2026-03-05)
@@ -318,7 +318,7 @@
 
 ## 0.3.0 (2026-01-22)
 
-- add: modality support
+- add: enumeration support
 - add: folder based on db table prefix
 - add: support for parquet files and Delta/Hive/Iceberg directories
 - add: support for SAS, SPSS and Stata files

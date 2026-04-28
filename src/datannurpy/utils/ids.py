@@ -12,15 +12,15 @@ import polars as pl
 # Separator for path components (folder---dataset---variable)
 ID_SEPARATOR = "---"
 
-# Folder ID for auto-generated modalities
-MODALITIES_FOLDER_ID = "_modalities"
+# Folder ID for auto-generated enumerations
+ENUMERATIONS_FOLDER_ID = "_enumerations"
 
 # Valid ID pattern: a-zA-Z0-9_, - (and space)
 _INVALID_ID_CHARS = re.compile(r"[^a-zA-Z0-9_,\- ]")
 
-# Modality name settings
-_MODALITY_NAME_MAX_VALUES = 3
-_MODALITY_NAME_VALUE_MAX_LEN = 15
+# Enumeration name settings
+_ENUMERATION_NAME_MAX_VALUES = 3
+_ENUMERATION_NAME_VALUE_MAX_LEN = 15
 
 
 def sanitize_id(value: str) -> str:
@@ -43,13 +43,13 @@ def build_variable_id(folder_id: str, dataset_name: str, variable_name: str) -> 
     return make_id(folder_id, sanitize_id(dataset_name), sanitize_id(variable_name))
 
 
-def compute_modality_hash(values: set[str]) -> str:
+def compute_enumeration_hash(values: set[str]) -> str:
     """Compute deterministic 10-char hash for a set of values."""
     signature = json.dumps(sorted(values), ensure_ascii=False)
     return hashlib.md5(signature.encode()).hexdigest()[:10]
 
 
-def build_modality_name(values: set[str]) -> str:
+def build_enumeration_name(values: set[str]) -> str:
     """Build human-readable name from values.
 
     Rules:
@@ -61,15 +61,15 @@ def build_modality_name(values: set[str]) -> str:
     sorted_vals = sorted(values, key=str.lower)
     display_vals: list[str] = []
 
-    for val in sorted_vals[:_MODALITY_NAME_MAX_VALUES]:
-        truncated = val[:_MODALITY_NAME_VALUE_MAX_LEN]
-        if len(val) > _MODALITY_NAME_VALUE_MAX_LEN:
+    for val in sorted_vals[:_ENUMERATION_NAME_MAX_VALUES]:
+        truncated = val[:_ENUMERATION_NAME_VALUE_MAX_LEN]
+        if len(val) > _ENUMERATION_NAME_VALUE_MAX_LEN:
             truncated = truncated[:-3] + "..."
         display_vals.append(truncated)
 
     name = ", ".join(display_vals)
 
-    remaining = len(sorted_vals) - _MODALITY_NAME_MAX_VALUES
+    remaining = len(sorted_vals) - _ENUMERATION_NAME_MAX_VALUES
     if remaining > 0:
         name += f"... (+{remaining})"
 
@@ -83,9 +83,9 @@ def _hash_value(value: str | None) -> str:
     return hashlib.md5(value.encode()).hexdigest()[:16]
 
 
-def build_value_id(modality_id: str, value: str | None) -> str:
-    """Build value ID from modality and value."""
-    return make_id(modality_id, _hash_value(value))
+def build_value_id(enumeration_id: str, value: str | None) -> str:
+    """Build value ID from enumeration and value."""
+    return make_id(enumeration_id, _hash_value(value))
 
 
 def build_frequency_id(variable_id: str, value: str | None) -> str:

@@ -166,8 +166,8 @@ class TestCatalogWrite:
             data = json.load(f)
 
         assert isinstance(data, list)
-        # Filter out auto-generated _modalities folder
-        user_folders = [f for f in data if f["id"] != "_modalities"]
+        # Filter out auto-generated _enumerations folder
+        user_folders = [f for f in data if f["id"] != "_enumerations"]
         assert len(user_folders) == 1
         assert user_folders[0]["id"] == "test"
         assert user_folders[0]["name"] == "Test"

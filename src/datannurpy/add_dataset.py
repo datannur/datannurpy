@@ -244,7 +244,7 @@ def add_dataset(
         if not do_refresh and existing.last_update_timestamp == current_mtime:
             # Unchanged - skip and mark as seen
             catalog.dataset.update(existing.id, _seen=True)
-            catalog.modality_manager.mark_dataset_seen(existing.id)
+            catalog.enumeration_manager.mark_dataset_seen(existing.id)
             log_skip(path_name, q)
             return
         else:
@@ -321,7 +321,7 @@ def add_dataset(
 
     var_id_mapping = build_variable_ids(result.variables, dataset.id)
     if result.freq_table is not None:
-        catalog.modality_manager.assign_from_freq(
+        catalog.enumeration_manager.assign_from_freq(
             result.variables, result.freq_table, var_id_mapping
         )
     catalog.variable.add_all(result.variables)
@@ -361,7 +361,7 @@ def _add_parquet_directory(
     if existing is not None:
         if not refresh and existing.last_update_timestamp == current_mtime:
             catalog.dataset.update(existing.id, _seen=True)
-            catalog.modality_manager.mark_dataset_seen(existing.id)
+            catalog.enumeration_manager.mark_dataset_seen(existing.id)
             log_skip(dir_name, quiet)
             return
         remove_dataset_cascade(catalog, existing)
@@ -437,7 +437,9 @@ def _add_parquet_directory(
 
     var_id_mapping = build_variable_ids(variables, dataset.id)
     if freq_table is not None:
-        catalog.modality_manager.assign_from_freq(variables, freq_table, var_id_mapping)
+        catalog.enumeration_manager.assign_from_freq(
+            variables, freq_table, var_id_mapping
+        )
     catalog.variable.add_all(variables)
 
     # Log result

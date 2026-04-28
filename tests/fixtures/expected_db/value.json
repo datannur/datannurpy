@@ -1,5506 +1,5506 @@
 [
   {
-    "modality_id": "_modalities---mod_029a67f9a3",
+    "enumeration_id": "_enumerations---enum_029a67f9a3",
     "value": "finance,rh",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_029a67f9a3",
+    "enumeration_id": "_enumerations---enum_029a67f9a3",
     "value": "rh,policy---frequency-hidden",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_06d1e3109c",
+    "enumeration_id": "_enumerations---enum_06d1e3109c",
     "value": "1583-01-01",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_06d1e3109c",
+    "enumeration_id": "_enumerations---enum_06d1e3109c",
     "value": "1880-05-06",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_06d1e3109c",
+    "enumeration_id": "_enumerations---enum_06d1e3109c",
     "value": "1960-01-01",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_06d1e3109c",
+    "enumeration_id": "_enumerations---enum_06d1e3109c",
     "value": "2018-05-06",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0712b1b367",
+    "enumeration_id": "_enumerations---enum_0712b1b367",
     "value": "Engineering",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0712b1b367",
+    "enumeration_id": "_enumerations---enum_0712b1b367",
     "value": "HR",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0712b1b367",
+    "enumeration_id": "_enumerations---enum_0712b1b367",
     "value": "Sales",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "505",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "527",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "533",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "539",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "541",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "562",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "567",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "571",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "572",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "587",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "600",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "613",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "615",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "631",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "632",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "637",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "638",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "646",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "667",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "673",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "677",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "696",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "714",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "716",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "745",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "751",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "761",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "873",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0aff41590a",
+    "enumeration_id": "_enumerations---enum_0aff41590a",
     "value": "903",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0b3bf09e4d",
+    "enumeration_id": "_enumerations---enum_0b3bf09e4d",
     "value": "1450",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0b3bf09e4d",
+    "enumeration_id": "_enumerations---enum_0b3bf09e4d",
     "value": "1600",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0b3bf09e4d",
+    "enumeration_id": "_enumerations---enum_0b3bf09e4d",
     "value": "1700",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0d98aec329",
+    "enumeration_id": "_enumerations---enum_0d98aec329",
     "value": "Alsace…",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0d98aec329",
+    "enumeration_id": "_enumerations---enum_0d98aec329",
     "value": "Côte d'Or",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0d98aec329",
+    "enumeration_id": "_enumerations---enum_0d98aec329",
     "value": "Rhône-Alpes",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_0d98aec329",
+    "enumeration_id": "_enumerations---enum_0d98aec329",
     "value": "Île-de-France",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_11b1cdf31f",
+    "enumeration_id": "_enumerations---enum_11b1cdf31f",
     "value": "est",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_11b1cdf31f",
+    "enumeration_id": "_enumerations---enum_11b1cdf31f",
     "value": "nord",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_11b1cdf31f",
+    "enumeration_id": "_enumerations---enum_11b1cdf31f",
     "value": "sud",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_186dce4adb",
+    "enumeration_id": "_enumerations---enum_186dce4adb",
     "value": "Lyon Depot",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_186dce4adb",
+    "enumeration_id": "_enumerations---enum_186dce4adb",
     "value": "Paris Central",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_18a1b0c317",
+    "enumeration_id": "_enumerations---enum_18a1b0c317",
     "value": "BE",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_18a1b0c317",
+    "enumeration_id": "_enumerations---enum_18a1b0c317",
     "value": "BE ",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_18a1b0c317",
+    "enumeration_id": "_enumerations---enum_18a1b0c317",
     "value": "GR",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_18a1b0c317",
+    "enumeration_id": "_enumerations---enum_18a1b0c317",
     "value": "SG",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_18a1b0c317",
+    "enumeration_id": "_enumerations---enum_18a1b0c317",
     "value": "TI",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_18a1b0c317",
+    "enumeration_id": "_enumerations---enum_18a1b0c317",
     "value": "UR",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_18a1b0c317",
+    "enumeration_id": "_enumerations---enum_18a1b0c317",
     "value": "VS",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_18a1b0c317",
+    "enumeration_id": "_enumerations---enum_18a1b0c317",
     "value": "Valais",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_18cda72a94",
+    "enumeration_id": "_enumerations---enum_18cda72a94",
     "value": "25",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_18cda72a94",
+    "enumeration_id": "_enumerations---enum_18cda72a94",
     "value": "30",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_18cda72a94",
+    "enumeration_id": "_enumerations---enum_18cda72a94",
     "value": "35",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_18cda72a94",
+    "enumeration_id": "_enumerations---enum_18cda72a94",
     "value": "40",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_18cda72a94",
+    "enumeration_id": "_enumerations---enum_18cda72a94",
     "value": "45",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_18cda72a94",
+    "enumeration_id": "_enumerations---enum_18cda72a94",
     "value": "50",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1bf03e385e",
+    "enumeration_id": "_enumerations---enum_1bf03e385e",
     "value": "1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1bf03e385e",
+    "enumeration_id": "_enumerations---enum_1bf03e385e",
     "value": "2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1bf03e385e",
+    "enumeration_id": "_enumerations---enum_1bf03e385e",
     "value": "3",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1bf03e385e",
+    "enumeration_id": "_enumerations---enum_1bf03e385e",
     "value": "4",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1bf03e385e",
+    "enumeration_id": "_enumerations---enum_1bf03e385e",
     "value": "5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1bf03e385e",
+    "enumeration_id": "_enumerations---enum_1bf03e385e",
     "value": "6",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1bf03e385e",
+    "enumeration_id": "_enumerations---enum_1bf03e385e",
     "value": "7",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1bf03e385e",
+    "enumeration_id": "_enumerations---enum_1bf03e385e",
     "value": "8",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "41000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "42000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "43000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "45000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "46000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "47000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "48000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "49000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "50000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "51000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "52000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "54000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "55000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "56000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "58000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "61000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "62000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "65000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "68000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_1d39ff883d",
+    "enumeration_id": "_enumerations---enum_1d39ff883d",
     "value": "72000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_209e6cf0ea",
+    "enumeration_id": "_enumerations---enum_209e6cf0ea",
     "value": "es1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_209e6cf0ea",
+    "enumeration_id": "_enumerations---enum_209e6cf0ea",
     "value": "es2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_25465bed0b",
+    "enumeration_id": "_enumerations---enum_25465bed0b",
     "value": "0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_2dc8eb7aad",
+    "enumeration_id": "_enumerations---enum_2dc8eb7aad",
     "value": "Eolien",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_2dc8eb7aad",
+    "enumeration_id": "_enumerations---enum_2dc8eb7aad",
     "value": "Solaire",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_2e497825fa",
+    "enumeration_id": "_enumerations---enum_2e497825fa",
     "value": "105",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_2e497825fa",
+    "enumeration_id": "_enumerations---enum_2e497825fa",
     "value": "241",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_2e497825fa",
+    "enumeration_id": "_enumerations---enum_2e497825fa",
     "value": "48",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "10",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "15",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "18",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "19",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "27",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "28",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "29",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "3",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "32",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "42",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "43",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "44",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "45",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "46",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "47",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "48",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "49",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "50",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "51",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "52",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "53",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "54",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "55",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "56",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "7",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_31d8f08e11",
+    "enumeration_id": "_enumerations---enum_31d8f08e11",
     "value": "9",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "12.8",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "14.4",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "20.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "21.41",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "22.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "4.08",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "4.4",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "4.57",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "4.6",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "4.75",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "4.87",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "4.9",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "5.274",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "5.335",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "5.36",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "5.4",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "5.5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "5.6",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "5.66",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "6.13",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "6.3",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "6.72",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "64.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "7.2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "7.56",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "7.8246",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "8.6",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "8.602",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "8.733",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "8.92",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3286dc76f0",
+    "enumeration_id": "_enumerations---enum_3286dc76f0",
     "value": "9.165",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_32d8c4d0c0",
+    "enumeration_id": "_enumerations---enum_32d8c4d0c0",
     "value": "Acme Corp",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_32d8c4d0c0",
+    "enumeration_id": "_enumerations---enum_32d8c4d0c0",
     "value": "TechStart",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3429529c0e",
+    "enumeration_id": "_enumerations---enum_3429529c0e",
     "value": "25.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3429529c0e",
+    "enumeration_id": "_enumerations---enum_3429529c0e",
     "value": "26.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3429529c0e",
+    "enumeration_id": "_enumerations---enum_3429529c0e",
     "value": "27.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3429529c0e",
+    "enumeration_id": "_enumerations---enum_3429529c0e",
     "value": "28.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3429529c0e",
+    "enumeration_id": "_enumerations---enum_3429529c0e",
     "value": "29.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3429529c0e",
+    "enumeration_id": "_enumerations---enum_3429529c0e",
     "value": "30.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3429529c0e",
+    "enumeration_id": "_enumerations---enum_3429529c0e",
     "value": "31.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3429529c0e",
+    "enumeration_id": "_enumerations---enum_3429529c0e",
     "value": "32.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3429529c0e",
+    "enumeration_id": "_enumerations---enum_3429529c0e",
     "value": "33.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3429529c0e",
+    "enumeration_id": "_enumerations---enum_3429529c0e",
     "value": "34.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3429529c0e",
+    "enumeration_id": "_enumerations---enum_3429529c0e",
     "value": "35.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3429529c0e",
+    "enumeration_id": "_enumerations---enum_3429529c0e",
     "value": "36.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3429529c0e",
+    "enumeration_id": "_enumerations---enum_3429529c0e",
     "value": "37.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3429529c0e",
+    "enumeration_id": "_enumerations---enum_3429529c0e",
     "value": "39.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3429529c0e",
+    "enumeration_id": "_enumerations---enum_3429529c0e",
     "value": "40.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3429529c0e",
+    "enumeration_id": "_enumerations---enum_3429529c0e",
     "value": "41.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3429529c0e",
+    "enumeration_id": "_enumerations---enum_3429529c0e",
     "value": "42.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3429529c0e",
+    "enumeration_id": "_enumerations---enum_3429529c0e",
     "value": "44.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3429529c0e",
+    "enumeration_id": "_enumerations---enum_3429529c0e",
     "value": "45.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3515a63dfa",
+    "enumeration_id": "_enumerations---enum_3515a63dfa",
     "value": "Direction générale des Finances publiques",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3515a63dfa",
+    "enumeration_id": "_enumerations---enum_3515a63dfa",
     "value": "Institut national de la statistique et des études économiques",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_36192d4ee6",
+    "enumeration_id": "_enumerations---enum_36192d4ee6",
     "value": "es1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_36ee647ea7",
+    "enumeration_id": "_enumerations---enum_36ee647ea7",
     "value": "Belgium",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_36ee647ea7",
+    "enumeration_id": "_enumerations---enum_36ee647ea7",
     "value": "France",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_377b0126b2",
+    "enumeration_id": "_enumerations---enum_377b0126b2",
     "value": "Berlin",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_377b0126b2",
+    "enumeration_id": "_enumerations---enum_377b0126b2",
     "value": "London",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_377b0126b2",
+    "enumeration_id": "_enumerations---enum_377b0126b2",
     "value": "Madrid",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_377b0126b2",
+    "enumeration_id": "_enumerations---enum_377b0126b2",
     "value": "Paris",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_377b0126b2",
+    "enumeration_id": "_enumerations---enum_377b0126b2",
     "value": "Rome",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3890764482",
+    "enumeration_id": "_enumerations---enum_3890764482",
     "value": "Finance",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3890764482",
+    "enumeration_id": "_enumerations---enum_3890764482",
     "value": "IT",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3890764482",
+    "enumeration_id": "_enumerations---enum_3890764482",
     "value": "Marketing",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3890764482",
+    "enumeration_id": "_enumerations---enum_3890764482",
     "value": "RH",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3eee4f2a23",
+    "enumeration_id": "_enumerations---enum_3eee4f2a23",
     "value": "company_name",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_3eee4f2a23",
+    "enumeration_id": "_enumerations---enum_3eee4f2a23",
     "value": "version",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4082c9af55",
+    "enumeration_id": "_enumerations---enum_4082c9af55",
     "value": "alice@mail.com",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4082c9af55",
+    "enumeration_id": "_enumerations---enum_4082c9af55",
     "value": "bob@mail.com",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4082c9af55",
+    "enumeration_id": "_enumerations---enum_4082c9af55",
     "value": "claire@mail.com",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "1250",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "1650",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "1693",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "1705",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "1768",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "1894",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "1962",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "1988",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "2003",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "2014",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "2029",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "2071",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "2127",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "2156",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "2189",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "2190",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "2240",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "2272",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "2342",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "2382",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "2425",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "2444",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "2481",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "2591",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "2718",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "2800",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "2897",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "3142",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_408c5f41d6",
+    "enumeration_id": "_enumerations---enum_408c5f41d6",
     "value": "454",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2023-10-30",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2023-11-06",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2023-11-08",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2024-01-03",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2024-01-04",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2024-01-09",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2024-01-22",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2024-02-09",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2024-05-07",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2024-05-28",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2024-06-03",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2024-06-07",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2024-06-12",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2024-06-14",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2024-06-21",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2024-07-01",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2024-08-15",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2024-09-05",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2024-09-06",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2024-10-04",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2024-10-11",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2024-10-18",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-01-20",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-01-24",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-02-20",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-02-28",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-03-13",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-03-21",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-03-28",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-04-04",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-04-18",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-04-30",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-06-12",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-08-22",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-08-26",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-08-29",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-09-24",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-10-01",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-10-17",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-10-20",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-11-04",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-11-07",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-11-14",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-11-24",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-12-04",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-12-12",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_42d79e60af",
+    "enumeration_id": "_enumerations---enum_42d79e60af",
     "value": "2025-12-18",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_433535a949",
+    "enumeration_id": "_enumerations---enum_433535a949",
     "value": "Lyon",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_433535a949",
+    "enumeration_id": "_enumerations---enum_433535a949",
     "value": "Marseille",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_433535a949",
+    "enumeration_id": "_enumerations---enum_433535a949",
     "value": "Paris",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_433535a949",
+    "enumeration_id": "_enumerations---enum_433535a949",
     "value": "Toulouse",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "Andre",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "Bernard",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "Bertrand",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "Blanc",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "David",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "Dupont",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "Durand",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "Faure",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "Garnier",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "Girard",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "Leroy",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "Martin",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "Mercier",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "Michel",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "Moreau",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "Petit",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "Richard",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "Robert",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "Roux",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4aa562f5c5",
+    "enumeration_id": "_enumerations---enum_4aa562f5c5",
     "value": "Simon",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d8a15e3cc",
+    "enumeration_id": "_enumerations---enum_4d8a15e3cc",
     "value": "1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "10.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "10.12",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "10.5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "10.8",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "12.6",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "12.9",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "14.5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "15.9",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "18.4",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "19.2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "28.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "32.7",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "33.6",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "6.2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "6.3",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "7.53",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "7.7",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "8.04",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "8.07",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "8.3",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "8.47",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "8.62",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "8.64",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "8.8",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "9.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "9.2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "9.39",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "9.93",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4d9304adb8",
+    "enumeration_id": "_enumerations---enum_4d9304adb8",
     "value": "92.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "enumeration_id": "_enumerations---enum_4e4aadcc2b",
     "value": "1456789",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "enumeration_id": "_enumerations---enum_4e4aadcc2b",
     "value": "223456",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "enumeration_id": "_enumerations---enum_4e4aadcc2b",
     "value": "234567",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "enumeration_id": "_enumerations---enum_4e4aadcc2b",
     "value": "289234",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "enumeration_id": "_enumerations---enum_4e4aadcc2b",
     "value": "334567",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "enumeration_id": "_enumerations---enum_4e4aadcc2b",
     "value": "34567",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "enumeration_id": "_enumerations---enum_4e4aadcc2b",
     "value": "378901",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "enumeration_id": "_enumerations---enum_4e4aadcc2b",
     "value": "445678",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "enumeration_id": "_enumerations---enum_4e4aadcc2b",
     "value": "456123",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "enumeration_id": "_enumerations---enum_4e4aadcc2b",
     "value": "456789",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "enumeration_id": "_enumerations---enum_4e4aadcc2b",
     "value": "523456",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "enumeration_id": "_enumerations---enum_4e4aadcc2b",
     "value": "567234",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_4e4aadcc2b",
+    "enumeration_id": "_enumerations---enum_4e4aadcc2b",
     "value": "845123",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_50424576d6",
+    "enumeration_id": "_enumerations---enum_50424576d6",
     "value": "fevrier",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_50424576d6",
+    "enumeration_id": "_enumerations---enum_50424576d6",
     "value": "janvier",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_50424576d6",
+    "enumeration_id": "_enumerations---enum_50424576d6",
     "value": "mars",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_51e321b770",
+    "enumeration_id": "_enumerations---enum_51e321b770",
     "value": "149.99",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_51e321b770",
+    "enumeration_id": "_enumerations---enum_51e321b770",
     "value": "99.99",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5cbe3d324b",
+    "enumeration_id": "_enumerations---enum_5cbe3d324b",
     "value": "entrée en force de l'autorisation",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5cbe3d324b",
+    "enumeration_id": "_enumerations---enum_5cbe3d324b",
     "value": "exploitation après 3 ans",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5cbe3d324b",
+    "enumeration_id": "_enumerations---enum_5cbe3d324b",
     "value": "mise en service complète",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5cbe3d324b",
+    "enumeration_id": "_enumerations---enum_5cbe3d324b",
     "value": "mise en service partielle",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5cbe3d324b",
+    "enumeration_id": "_enumerations---enum_5cbe3d324b",
     "value": "mise à l'enquête publique",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5cbe3d324b",
+    "enumeration_id": "_enumerations---enum_5cbe3d324b",
     "value": "octroi de l'autorisation de première instance",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5cbe3d324b",
+    "enumeration_id": "_enumerations---enum_5cbe3d324b",
     "value": "refusé",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5cbe3d324b",
+    "enumeration_id": "_enumerations---enum_5cbe3d324b",
     "value": "retiré",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5dc1df8b13",
+    "enumeration_id": "_enumerations---enum_5dc1df8b13",
     "value": "GADGET-002",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5dc1df8b13",
+    "enumeration_id": "_enumerations---enum_5dc1df8b13",
     "value": "WIDGET-001",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5e1931a693",
+    "enumeration_id": "_enumerations---enum_5e1931a693",
     "value": "Auvergne-Rhône-Alpes",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5e1931a693",
+    "enumeration_id": "_enumerations---enum_5e1931a693",
     "value": "Bourgogne-Franche-Comté",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5e1931a693",
+    "enumeration_id": "_enumerations---enum_5e1931a693",
     "value": "Bretagne",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5e1931a693",
+    "enumeration_id": "_enumerations---enum_5e1931a693",
     "value": "Centre-Val de Loire",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5e1931a693",
+    "enumeration_id": "_enumerations---enum_5e1931a693",
     "value": "Corse",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5e1931a693",
+    "enumeration_id": "_enumerations---enum_5e1931a693",
     "value": "Grand Est",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5e1931a693",
+    "enumeration_id": "_enumerations---enum_5e1931a693",
     "value": "Hauts-de-France",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5e1931a693",
+    "enumeration_id": "_enumerations---enum_5e1931a693",
     "value": "Normandie",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5e1931a693",
+    "enumeration_id": "_enumerations---enum_5e1931a693",
     "value": "Nouvelle-Aquitaine",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5e1931a693",
+    "enumeration_id": "_enumerations---enum_5e1931a693",
     "value": "Occitanie",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5e1931a693",
+    "enumeration_id": "_enumerations---enum_5e1931a693",
     "value": "Pays de la Loire",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5e1931a693",
+    "enumeration_id": "_enumerations---enum_5e1931a693",
     "value": "Provence-Alpes-Côte d'Azur",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_5e1931a693",
+    "enumeration_id": "_enumerations---enum_5e1931a693",
     "value": "Île-de-France",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6188567694",
+    "enumeration_id": "_enumerations---enum_6188567694",
     "value": "2023",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6188567694",
+    "enumeration_id": "_enumerations---enum_6188567694",
     "value": "2024",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_61a859a3a1",
+    "enumeration_id": "_enumerations---enum_61a859a3a1",
     "value": "Electronics",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_63eb5b6e11",
+    "enumeration_id": "_enumerations---enum_63eb5b6e11",
     "value": "data---csv---employees_csv---nom",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_63eb5b6e11",
+    "enumeration_id": "_enumerations---enum_63eb5b6e11",
     "value": "data---csv---employees_csv---salaire",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_63eb5b6e11",
+    "enumeration_id": "_enumerations---enum_63eb5b6e11",
     "value": "data---csv---employees_csv---salaire2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_649d7c0cd5",
+    "enumeration_id": "_enumerations---enum_649d7c0cd5",
     "value": "st11",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_649d7c0cd5",
+    "enumeration_id": "_enumerations---enum_649d7c0cd5",
     "value": "st12",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_649d7c0cd5",
+    "enumeration_id": "_enumerations---enum_649d7c0cd5",
     "value": "st13",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_649d7c0cd5",
+    "enumeration_id": "_enumerations---enum_649d7c0cd5",
     "value": "st14",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_64cf737ed5",
+    "enumeration_id": "_enumerations---enum_64cf737ed5",
     "value": "38000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_64cf737ed5",
+    "enumeration_id": "_enumerations---enum_64cf737ed5",
     "value": "45000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_64cf737ed5",
+    "enumeration_id": "_enumerations---enum_64cf737ed5",
     "value": "50€",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_64cf737ed5",
+    "enumeration_id": "_enumerations---enum_64cf737ed5",
     "value": "52000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_68ee6ca832",
+    "enumeration_id": "_enumerations---enum_68ee6ca832",
     "value": "101",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_68ee6ca832",
+    "enumeration_id": "_enumerations---enum_68ee6ca832",
     "value": "102",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Airolo",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Amden",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Anniviers",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Davos",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Disentis/Mustér",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Gampel-Bratsch",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Grengiols",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Hérémence",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Klosters",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Laax",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Lenk und Adelboden",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Lütschental",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Mezzovico-Vira",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Naters",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Obergoms",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Oberwil im Simmental",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Poschiavo",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Saas-Grund",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Saint-Imier",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Samedan",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Scuol",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Spiringen",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Termen und Ried-Brig",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Tujetsch",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Törbel/ Embd/ Stalden",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Visperterminen",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Zermatt",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6939a68d43",
+    "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Zwischbergen",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "10.69",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "11.2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "11.38",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "11.45",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "11.46",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "12.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "12.1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "12.2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "12.4",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "12.6",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "12.62",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "12.9",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "13.8",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "14.3",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "14.43",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "14.6",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "148.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "15.3",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "16.9",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "18.25",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "18.8",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "18.83",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "19.1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "19.5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "22.1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "28.6",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "31.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "44.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "45.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6970c2b793",
+    "enumeration_id": "_enumerations---enum_6970c2b793",
     "value": "48.13",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_69987225ba",
+    "enumeration_id": "_enumerations---enum_69987225ba",
     "value": "Betrieb nach 3 Jahren",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_69987225ba",
+    "enumeration_id": "_enumerations---enum_69987225ba",
     "value": "abgewiesen",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_69987225ba",
+    "enumeration_id": "_enumerations---enum_69987225ba",
     "value": "erstinstanzlich bewilligt",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_69987225ba",
+    "enumeration_id": "_enumerations---enum_69987225ba",
     "value": "rechtskräftig bewilligt",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_69987225ba",
+    "enumeration_id": "_enumerations---enum_69987225ba",
     "value": "teilweise in Betrieb",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_69987225ba",
+    "enumeration_id": "_enumerations---enum_69987225ba",
     "value": "vollständig in Betrieb",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_69987225ba",
+    "enumeration_id": "_enumerations---enum_69987225ba",
     "value": "zurückgezogen",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_69987225ba",
+    "enumeration_id": "_enumerations---enum_69987225ba",
     "value": "öffentlich aufgelegt",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "APV Sidenplangg AG (in Gründung), c/o EWA‑energieUri AG",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "Axpo Solutions AG",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "Azienda Comunale di Airolo e Azienda Multiservizi di Bellinzona5.5555",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "Bernina Solar AG",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "EnAlpin AG",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "EnBAG AG",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "Energia Alpina SA",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "Energia Solara Engiandinaisa SA",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "FMV SA",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "Felsenstrom AG",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "Genossenschaft Lenk Bergbahnen",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "Gondosolar c/o E.E.S",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "Grands Plans Solar SA",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "Grengiols Solar c/o FMV SA",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "Jungfraubahn AG",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "Madrisa Solar AG",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "MontSol SA",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "Morgeten Solar AG",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "NalpSolar AG",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "Ovra Solara Magriel SA (in Gründung), handelnd durch Axpo Solutions AG",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "Prafleuri Solaire SA",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "Projektträgerschaft PVA Hohsaas c/o FMV SA",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "S'ROK AG",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "ScuolSolar c/o Engadiner KraftwerkeAG",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "Swisspower AG",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6a1d1f89e0",
+    "enumeration_id": "_enumerations---enum_6a1d1f89e0",
     "value": "Weisse Arena Bergbahnen AG",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6adc02e862",
+    "enumeration_id": "_enumerations---enum_6adc02e862",
     "value": "Defective",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6bc4c3e856",
+    "enumeration_id": "_enumerations---enum_6bc4c3e856",
     "value": "0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6bc4c3e856",
+    "enumeration_id": "_enumerations---enum_6bc4c3e856",
     "value": "1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6bd28bfeff",
+    "enumeration_id": "_enumerations---enum_6bd28bfeff",
     "value": "Gaelle",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6bd28bfeff",
+    "enumeration_id": "_enumerations---enum_6bd28bfeff",
     "value": "Hugo",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6bd28bfeff",
+    "enumeration_id": "_enumerations---enum_6bd28bfeff",
     "value": "Isabelle",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6e1c74353a",
+    "enumeration_id": "_enumerations---enum_6e1c74353a",
     "value": "Alice",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6e1c74353a",
+    "enumeration_id": "_enumerations---enum_6e1c74353a",
     "value": "Bob",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6e1c74353a",
+    "enumeration_id": "_enumerations---enum_6e1c74353a",
     "value": "Charlie",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6e1c74353a",
+    "enumeration_id": "_enumerations---enum_6e1c74353a",
     "value": "David",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6e1c74353a",
+    "enumeration_id": "_enumerations---enum_6e1c74353a",
     "value": "Eve",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6e1c74353a",
+    "enumeration_id": "_enumerations---enum_6e1c74353a",
     "value": "Frank",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6ecad2a9fb",
+    "enumeration_id": "_enumerations---enum_6ecad2a9fb",
     "value": "60",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6ecad2a9fb",
+    "enumeration_id": "_enumerations---enum_6ecad2a9fb",
     "value": "65",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6ecad2a9fb",
+    "enumeration_id": "_enumerations---enum_6ecad2a9fb",
     "value": "68",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6fb4b7bd75",
+    "enumeration_id": "_enumerations---enum_6fb4b7bd75",
     "value": "Dupré",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6fb4b7bd75",
+    "enumeration_id": "_enumerations---enum_6fb4b7bd75",
     "value": "Léger",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6fb4b7bd75",
+    "enumeration_id": "_enumerations---enum_6fb4b7bd75",
     "value": "Müller",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_6fb4b7bd75",
+    "enumeration_id": "_enumerations---enum_6fb4b7bd75",
     "value": "Çelik",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_71409fff3c",
+    "enumeration_id": "_enumerations---enum_71409fff3c",
     "value": "1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_71409fff3c",
+    "enumeration_id": "_enumerations---enum_71409fff3c",
     "value": "2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_71409fff3c",
+    "enumeration_id": "_enumerations---enum_71409fff3c",
     "value": "5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_730f7b7bab",
+    "enumeration_id": "_enumerations---enum_730f7b7bab",
     "value": "1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_730f7b7bab",
+    "enumeration_id": "_enumerations---enum_730f7b7bab",
     "value": "2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_730f7b7bab",
+    "enumeration_id": "_enumerations---enum_730f7b7bab",
     "value": "3",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_730f7b7bab",
+    "enumeration_id": "_enumerations---enum_730f7b7bab",
     "value": "4",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_730f7b7bab",
+    "enumeration_id": "_enumerations---enum_730f7b7bab",
     "value": "5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_730f7b7bab",
+    "enumeration_id": "_enumerations---enum_730f7b7bab",
     "value": "6",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_73d75aa99b",
+    "enumeration_id": "_enumerations---enum_73d75aa99b",
     "value": "André",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_73d75aa99b",
+    "enumeration_id": "_enumerations---enum_73d75aa99b",
     "value": "François",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_73d75aa99b",
+    "enumeration_id": "_enumerations---enum_73d75aa99b",
     "value": "José",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_73d75aa99b",
+    "enumeration_id": "_enumerations---enum_73d75aa99b",
     "value": "Sœur",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_741f0d5c51",
+    "enumeration_id": "_enumerations---enum_741f0d5c51",
     "value": "dgfip",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_741f0d5c51",
+    "enumeration_id": "_enumerations---enum_741f0d5c51",
     "value": "insee",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_748614813d",
+    "enumeration_id": "_enumerations---enum_748614813d",
     "value": "29",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_748614813d",
+    "enumeration_id": "_enumerations---enum_748614813d",
     "value": "31",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_748614813d",
+    "enumeration_id": "_enumerations---enum_748614813d",
     "value": "42",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7973835a5d",
+    "enumeration_id": "_enumerations---enum_7973835a5d",
     "value": "10000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7973835a5d",
+    "enumeration_id": "_enumerations---enum_7973835a5d",
     "value": "5000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "APV Sidenplangg",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Alpine Photovoltaik-Anlage Hintisberg",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Alpines Solarprojekt \"Morgeten\"",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Belalp Solar",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Bernina Solar AG",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Centrale photovoltaïque en cohabitation du Grand Chasseral",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Gibidum Solar",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Gletschersolar Matterhorn",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Hohsaas",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Impianto fotovoltaico alpino Pontino",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Madrisa Solar",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "NalpSolar",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "PV Alpin Parsenn",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "PV Anlage Grengiols Solar",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "PVA Gries",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "PVA Rosswald Solar",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "PVA Z Opmisch Hubil Gampel-Bratsch",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Parc solaire de Prafleuri",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Parc solaire des Grands Plans",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Parco Solare Alpino Duragno",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Photovoltaik-Grossanlage \"Felsenstrom\"",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Projekt Gondosolar",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "ScuolSolar",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "SedrunSolar",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Solara Magriel ",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Solaranlage Hanenmoosbärgli",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Solarfeld Mäsweide",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Solarkraftwerk Samedan",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_7a1f654122",
+    "enumeration_id": "_enumerations---enum_7a1f654122",
     "value": "Vorab",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_802a13bf34",
+    "enumeration_id": "_enumerations---enum_802a13bf34",
     "value": "data---csv---employees_csv",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_81fce7934e",
+    "enumeration_id": "_enumerations---enum_81fce7934e",
     "value": "Lyon",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_81fce7934e",
+    "enumeration_id": "_enumerations---enum_81fce7934e",
     "value": "Marseille",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_81fce7934e",
+    "enumeration_id": "_enumerations---enum_81fce7934e",
     "value": "Paris",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_87f94b760f",
+    "enumeration_id": "_enumerations---enum_87f94b760f",
     "value": "25",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_87f94b760f",
+    "enumeration_id": "_enumerations---enum_87f94b760f",
     "value": "30",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_87f94b760f",
+    "enumeration_id": "_enumerations---enum_87f94b760f",
     "value": "35",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "10",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "11",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "12",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "13",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "14",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "15",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "16",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "17",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "18",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "19",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "20",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "21",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "22",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "23",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "24",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "25",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "26",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "27",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "28",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "29",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "3",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "30",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "31",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "32",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "33",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "34",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "35",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "36",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "37",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "38",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "39",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "4",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "40",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "41",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "42",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "43",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "44",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "45",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "46",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "47",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "48",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "49",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "50",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "51",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "52",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "53",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "6",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "7",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "8",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_89d629b09d",
+    "enumeration_id": "_enumerations---enum_89d629b09d",
     "value": "9",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_8bcead3a0b",
+    "enumeration_id": "_enumerations---enum_8bcead3a0b",
     "value": "Alice",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_8bcead3a0b",
+    "enumeration_id": "_enumerations---enum_8bcead3a0b",
     "value": "Bob",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_8bcead3a0b",
+    "enumeration_id": "_enumerations---enum_8bcead3a0b",
     "value": "Charlie",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_8e4901402e",
+    "enumeration_id": "_enumerations---enum_8e4901402e",
     "value": "2150000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_8e4901402e",
+    "enumeration_id": "_enumerations---enum_8e4901402e",
     "value": "525000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_8e4901402e",
+    "enumeration_id": "_enumerations---enum_8e4901402e",
     "value": "872000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9164b880af",
+    "enumeration_id": "_enumerations---enum_9164b880af",
     "value": "Alice Martin",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9164b880af",
+    "enumeration_id": "_enumerations---enum_9164b880af",
     "value": "Bob Dupont",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9164b880af",
+    "enumeration_id": "_enumerations---enum_9164b880af",
     "value": "Claire Durand",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "101.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "104.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "105.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "107.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "108.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "110.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "111.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "112.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "113.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "114.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "115.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "116.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "119.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "120.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "121.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "122.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "130.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "131.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "134.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "135.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "140.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "141.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "144.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "145.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "146.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "151.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "155.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "156.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "163.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "168.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "171.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "173.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "181.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "183.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "198.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "199.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "200.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "225.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "231.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "232.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "250.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "258.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "260.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "262.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "267.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "302.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "304.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "305.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "307.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "318.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "340.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "350.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "351.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "360.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "383.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "390.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "400.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "429.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "440.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "454.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "455.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "68.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "70.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "71.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "72.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "76.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "78.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "79.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "80.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "81.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "83.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "85.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "86.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "88.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "89.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "90.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "91.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "96.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "97.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "97.5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_92ae6bfb54",
+    "enumeration_id": "_enumerations---enum_92ae6bfb54",
     "value": "98.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9434755384",
+    "enumeration_id": "_enumerations---enum_9434755384",
     "value": "full commissioning",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9434755384",
+    "enumeration_id": "_enumerations---enum_9434755384",
     "value": "granting of the first-instance authorisation",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9434755384",
+    "enumeration_id": "_enumerations---enum_9434755384",
     "value": "legally authorised",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9434755384",
+    "enumeration_id": "_enumerations---enum_9434755384",
     "value": "operation after 3 years",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9434755384",
+    "enumeration_id": "_enumerations---enum_9434755384",
     "value": "partial commissioning",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9434755384",
+    "enumeration_id": "_enumerations---enum_9434755384",
     "value": "public circulation",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9434755384",
+    "enumeration_id": "_enumerations---enum_9434755384",
     "value": "rejected",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9434755384",
+    "enumeration_id": "_enumerations---enum_9434755384",
     "value": "withdrawn",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_945de5144a",
+    "enumeration_id": "_enumerations---enum_945de5144a",
     "value": "2024-01-25",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_979ac80ce0",
+    "enumeration_id": "_enumerations---enum_979ac80ce0",
     "value": "completed",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_979ac80ce0",
+    "enumeration_id": "_enumerations---enum_979ac80ce0",
     "value": "pending",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_97cd29cff3",
+    "enumeration_id": "_enumerations---enum_97cd29cff3",
     "value": "Eolico",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_97cd29cff3",
+    "enumeration_id": "_enumerations---enum_97cd29cff3",
     "value": "Solare",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2018-07-30",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2018-12-11",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2019-05-17",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2019-09-05",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2019-11-08",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2020-03-22",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2020-04-29",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2020-08-21",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2020-11-12",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2020-12-03",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2021-04-18",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2021-06-10",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2021-09-06",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2021-10-25",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2022-01-15",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2022-03-14",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2022-08-14",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2023-01-09",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2023-02-28",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9897c16df0",
+    "enumeration_id": "_enumerations---enum_9897c16df0",
     "value": "2023-05-22",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9a0e339ece",
+    "enumeration_id": "_enumerations---enum_9a0e339ece",
     "value": "104.2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9a0e339ece",
+    "enumeration_id": "_enumerations---enum_9a0e339ece",
     "value": "125.4",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9a0e339ece",
+    "enumeration_id": "_enumerations---enum_9a0e339ece",
     "value": "159.7",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9a0e339ece",
+    "enumeration_id": "_enumerations---enum_9a0e339ece",
     "value": "168.9",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9a0e339ece",
+    "enumeration_id": "_enumerations---enum_9a0e339ece",
     "value": "172.1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9a0e339ece",
+    "enumeration_id": "_enumerations---enum_9a0e339ece",
     "value": "179.2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9a0e339ece",
+    "enumeration_id": "_enumerations---enum_9a0e339ece",
     "value": "189.3",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9a0e339ece",
+    "enumeration_id": "_enumerations---enum_9a0e339ece",
     "value": "289.4",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9a0e339ece",
+    "enumeration_id": "_enumerations---enum_9a0e339ece",
     "value": "69.8",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9a0e339ece",
+    "enumeration_id": "_enumerations---enum_9a0e339ece",
     "value": "71.9",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9a0e339ece",
+    "enumeration_id": "_enumerations---enum_9a0e339ece",
     "value": "765.8",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9a0e339ece",
+    "enumeration_id": "_enumerations---enum_9a0e339ece",
     "value": "8.9",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9a0e339ece",
+    "enumeration_id": "_enumerations---enum_9a0e339ece",
     "value": "91.8",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9b5b9b2291",
+    "enumeration_id": "_enumerations---enum_9b5b9b2291",
     "value": "6.2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9b5b9b2291",
+    "enumeration_id": "_enumerations---enum_9b5b9b2291",
     "value": "6.8",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9b5b9b2291",
+    "enumeration_id": "_enumerations---enum_9b5b9b2291",
     "value": "6.9",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9b5b9b2291",
+    "enumeration_id": "_enumerations---enum_9b5b9b2291",
     "value": "7.1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9b5b9b2291",
+    "enumeration_id": "_enumerations---enum_9b5b9b2291",
     "value": "7.2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9b5b9b2291",
+    "enumeration_id": "_enumerations---enum_9b5b9b2291",
     "value": "7.4",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9b5b9b2291",
+    "enumeration_id": "_enumerations---enum_9b5b9b2291",
     "value": "7.5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9b5b9b2291",
+    "enumeration_id": "_enumerations---enum_9b5b9b2291",
     "value": "7.8",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9b5b9b2291",
+    "enumeration_id": "_enumerations---enum_9b5b9b2291",
     "value": "8.1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9b5b9b2291",
+    "enumeration_id": "_enumerations---enum_9b5b9b2291",
     "value": "8.3",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9b5b9b2291",
+    "enumeration_id": "_enumerations---enum_9b5b9b2291",
     "value": "8.7",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9b5b9b2291",
+    "enumeration_id": "_enumerations---enum_9b5b9b2291",
     "value": "8.9",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9b5b9b2291",
+    "enumeration_id": "_enumerations---enum_9b5b9b2291",
     "value": "9.2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9da81bde5f",
+    "enumeration_id": "_enumerations---enum_9da81bde5f",
     "value": "EU",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9da81bde5f",
+    "enumeration_id": "_enumerations---enum_9da81bde5f",
     "value": "US",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9ff855e637",
+    "enumeration_id": "_enumerations---enum_9ff855e637",
     "value": "1583-01-01 00:00:00",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9ff855e637",
+    "enumeration_id": "_enumerations---enum_9ff855e637",
     "value": "1880-05-06 10:10:10",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9ff855e637",
+    "enumeration_id": "_enumerations---enum_9ff855e637",
     "value": "1960-01-01 00:00:00",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_9ff855e637",
+    "enumeration_id": "_enumerations---enum_9ff855e637",
     "value": "2018-05-06 10:10:10",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1247",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1279",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1297",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1324",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1343",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1345",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1346",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1390",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1393",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1415",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1430",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1432",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1435",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1446",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1448",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1453",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1458",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1481",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1521",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1522",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1554",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1565",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1568",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1607",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1609",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1617",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1622",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1636",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1663",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1794",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "1968",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a0ddf6b2aa",
+    "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
     "value": "2081",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a4750880c6",
+    "enumeration_id": "_enumerations---enum_a4750880c6",
     "value": "a",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a4750880c6",
+    "enumeration_id": "_enumerations---enum_a4750880c6",
     "value": "b",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a4750880c6",
+    "enumeration_id": "_enumerations---enum_a4750880c6",
     "value": "c",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a4750880c6",
+    "enumeration_id": "_enumerations---enum_a4750880c6",
     "value": "d",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a4750880c6",
+    "enumeration_id": "_enumerations---enum_a4750880c6",
     "value": "e",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a6091cf7c5",
+    "enumeration_id": "_enumerations---enum_a6091cf7c5",
     "value": "290",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a6091cf7c5",
+    "enumeration_id": "_enumerations---enum_a6091cf7c5",
     "value": "320",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a6091cf7c5",
+    "enumeration_id": "_enumerations---enum_a6091cf7c5",
     "value": "340",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a61987ee8a",
+    "enumeration_id": "_enumerations---enum_a61987ee8a",
     "value": "11.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a61987ee8a",
+    "enumeration_id": "_enumerations---enum_a61987ee8a",
     "value": "7.1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a61987ee8a",
+    "enumeration_id": "_enumerations---enum_a61987ee8a",
     "value": "9.3",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a647a41f8d",
+    "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "Anne",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a647a41f8d",
+    "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "Claire",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a647a41f8d",
+    "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "Céline",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a647a41f8d",
+    "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "Emma",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a647a41f8d",
+    "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "François",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a647a41f8d",
+    "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "Isabelle",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a647a41f8d",
+    "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "Jean",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a647a41f8d",
+    "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "Julie",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a647a41f8d",
+    "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "Julien",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a647a41f8d",
+    "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "Laura",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a647a41f8d",
+    "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "Luc",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a647a41f8d",
+    "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "Marc",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a647a41f8d",
+    "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "Marie",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a647a41f8d",
+    "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "Nicolas",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a647a41f8d",
+    "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "Paul",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a647a41f8d",
+    "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "Pierre",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a647a41f8d",
+    "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "Sophie",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a647a41f8d",
+    "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "Sylvie",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a647a41f8d",
+    "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "Thomas",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a666ee0ac9",
+    "enumeration_id": "_enumerations---enum_a666ee0ac9",
     "value": "Données financières",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a666ee0ac9",
+    "enumeration_id": "_enumerations---enum_a666ee0ac9",
     "value": "Ressources humaines",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a814e33106",
+    "enumeration_id": "_enumerations---enum_a814e33106",
     "value": "48000.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a814e33106",
+    "enumeration_id": "_enumerations---enum_a814e33106",
     "value": "55000.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_a814e33106",
+    "enumeration_id": "_enumerations---enum_a814e33106",
     "value": "60000.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_aabc56e083",
+    "enumeration_id": "_enumerations---enum_aabc56e083",
     "value": "st11",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_aabc56e083",
+    "enumeration_id": "_enumerations---enum_aabc56e083",
     "value": "st12",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_aabc56e083",
+    "enumeration_id": "_enumerations---enum_aabc56e083",
     "value": "st13",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_aabc56e083",
+    "enumeration_id": "_enumerations---enum_aabc56e083",
     "value": "st14",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_aabc56e083",
+    "enumeration_id": "_enumerations---enum_aabc56e083",
     "value": "st15",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_aabc56e083",
+    "enumeration_id": "_enumerations---enum_aabc56e083",
     "value": "st16",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_aabc56e083",
+    "enumeration_id": "_enumerations---enum_aabc56e083",
     "value": "st17",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_aabc56e083",
+    "enumeration_id": "_enumerations---enum_aabc56e083",
     "value": "st18",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_ac565f22a4",
+    "enumeration_id": "_enumerations---enum_ac565f22a4",
     "value": "Bordeaux",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_ac565f22a4",
+    "enumeration_id": "_enumerations---enum_ac565f22a4",
     "value": "Lille",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_ac565f22a4",
+    "enumeration_id": "_enumerations---enum_ac565f22a4",
     "value": "Strasbourg",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_ae6d5a38cc",
+    "enumeration_id": "_enumerations---enum_ae6d5a38cc",
     "value": "contact@insee.fr",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_b2fef6eb8f",
+    "enumeration_id": "_enumerations---enum_b2fef6eb8f",
     "value": "1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_b2fef6eb8f",
+    "enumeration_id": "_enumerations---enum_b2fef6eb8f",
     "value": "2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_b71b2cc283",
+    "enumeration_id": "_enumerations---enum_b71b2cc283",
     "value": "00:00:00",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_b71b2cc283",
+    "enumeration_id": "_enumerations---enum_b71b2cc283",
     "value": "10:10:10",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_b71b2cc283",
+    "enumeration_id": "_enumerations---enum_b71b2cc283",
     "value": "16:10:10",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_b71b2cc283",
+    "enumeration_id": "_enumerations---enum_b71b2cc283",
     "value": "23:10:10",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_b974ffb0d5",
+    "enumeration_id": "_enumerations---enum_b974ffb0d5",
     "value": "Alice",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_b974ffb0d5",
+    "enumeration_id": "_enumerations---enum_b974ffb0d5",
     "value": "Bob",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_b974ffb0d5",
+    "enumeration_id": "_enumerations---enum_b974ffb0d5",
     "value": "Claire",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_bda75bc83c",
+    "enumeration_id": "_enumerations---enum_bda75bc83c",
     "value": "Finance",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_bda75bc83c",
+    "enumeration_id": "_enumerations---enum_bda75bc83c",
     "value": "RH",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_c0a038d9c2",
+    "enumeration_id": "_enumerations---enum_c0a038d9c2",
     "value": "7",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_c0a038d9c2",
+    "enumeration_id": "_enumerations---enum_c0a038d9c2",
     "value": "8",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_c0a038d9c2",
+    "enumeration_id": "_enumerations---enum_c0a038d9c2",
     "value": "9",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_c0e1a30973",
+    "enumeration_id": "_enumerations---enum_c0e1a30973",
     "value": "1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_c0e1a30973",
+    "enumeration_id": "_enumerations---enum_c0e1a30973",
     "value": "2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_c0e1a30973",
+    "enumeration_id": "_enumerations---enum_c0e1a30973",
     "value": "3",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_c0e1a30973",
+    "enumeration_id": "_enumerations---enum_c0e1a30973",
     "value": "4",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_c0e1a30973",
+    "enumeration_id": "_enumerations---enum_c0e1a30973",
     "value": "5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_c60568ab09",
+    "enumeration_id": "_enumerations---enum_c60568ab09",
     "value": "infra",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_c60568ab09",
+    "enumeration_id": "_enumerations---enum_c60568ab09",
     "value": "rh",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_c83ffa1257",
+    "enumeration_id": "_enumerations---enum_c83ffa1257",
     "value": "Alice",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_c83ffa1257",
+    "enumeration_id": "_enumerations---enum_c83ffa1257",
     "value": "Bob",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_c83ffa1257",
+    "enumeration_id": "_enumerations---enum_c83ffa1257",
     "value": "Charlie",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_c83ffa1257",
+    "enumeration_id": "_enumerations---enum_c83ffa1257",
     "value": "Diana",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_c83ffa1257",
+    "enumeration_id": "_enumerations---enum_c83ffa1257",
     "value": "Eve",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_c8ab539531",
+    "enumeration_id": "_enumerations---enum_c8ab539531",
     "value": "2024-01-10",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_c8ab539531",
+    "enumeration_id": "_enumerations---enum_c8ab539531",
     "value": "2024-02-15",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_c8ab539531",
+    "enumeration_id": "_enumerations---enum_c8ab539531",
     "value": "2024-03-01",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_cbc487e7ce",
+    "enumeration_id": "_enumerations---enum_cbc487e7ce",
     "value": "Nom de famille de l'employé",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_cbc487e7ce",
+    "enumeration_id": "_enumerations---enum_cbc487e7ce",
     "value": "Salaire mensuel brut en euros",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_ccaef67ab9",
+    "enumeration_id": "_enumerations---enum_ccaef67ab9",
     "value": "alice@company.com",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_ccaef67ab9",
+    "enumeration_id": "_enumerations---enum_ccaef67ab9",
     "value": "bob@company.com",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_ccaef67ab9",
+    "enumeration_id": "_enumerations---enum_ccaef67ab9",
     "value": "claire@company.com",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_cd314db7df",
+    "enumeration_id": "_enumerations---enum_cd314db7df",
     "value": "2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_cdae6051e3",
+    "enumeration_id": "_enumerations---enum_cdae6051e3",
     "value": "concessione dell'autorizzazione di prima istanza",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_cdae6051e3",
+    "enumeration_id": "_enumerations---enum_cdae6051e3",
     "value": "deposito pubblico della domanda",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_cdae6051e3",
+    "enumeration_id": "_enumerations---enum_cdae6051e3",
     "value": "messa in esercizio completa",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_cdae6051e3",
+    "enumeration_id": "_enumerations---enum_cdae6051e3",
     "value": "messa in esercizio parziale",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_cdae6051e3",
+    "enumeration_id": "_enumerations---enum_cdae6051e3",
     "value": "operatività dopo 3 anni",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_cdae6051e3",
+    "enumeration_id": "_enumerations---enum_cdae6051e3",
     "value": "passaggio in giudicato dell'autorizzazione",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_cdae6051e3",
+    "enumeration_id": "_enumerations---enum_cdae6051e3",
     "value": "rifiutato",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_cdae6051e3",
+    "enumeration_id": "_enumerations---enum_cdae6051e3",
     "value": "ritirato",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_ceb2957b9e",
+    "enumeration_id": "_enumerations---enum_ceb2957b9e",
     "value": "Gadget Plus",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_ceb2957b9e",
+    "enumeration_id": "_enumerations---enum_ceb2957b9e",
     "value": "Widget Pro",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_d7cb333b55",
+    "enumeration_id": "_enumerations---enum_d7cb333b55",
     "value": "15000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_d7cb333b55",
+    "enumeration_id": "_enumerations---enum_d7cb333b55",
     "value": "52000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_d7cb333b55",
+    "enumeration_id": "_enumerations---enum_d7cb333b55",
     "value": "6000",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_d89a50a28b",
+    "enumeration_id": "_enumerations---enum_d89a50a28b",
     "value": "1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_d89a50a28b",
+    "enumeration_id": "_enumerations---enum_d89a50a28b",
     "value": "15",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_d89a50a28b",
+    "enumeration_id": "_enumerations---enum_d89a50a28b",
     "value": "28",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_db169b4a86",
+    "enumeration_id": "_enumerations---enum_db169b4a86",
     "value": "100.5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_db169b4a86",
+    "enumeration_id": "_enumerations---enum_db169b4a86",
     "value": "150.75",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_db169b4a86",
+    "enumeration_id": "_enumerations---enum_db169b4a86",
     "value": "200.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_db169b4a86",
+    "enumeration_id": "_enumerations---enum_db169b4a86",
     "value": "250.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_db169b4a86",
+    "enumeration_id": "_enumerations---enum_db169b4a86",
     "value": "300.25",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_de545e0867",
+    "enumeration_id": "_enumerations---enum_de545e0867",
     "value": "Solar",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_de545e0867",
+    "enumeration_id": "_enumerations---enum_de545e0867",
     "value": "Wind",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e1151e6948",
+    "enumeration_id": "_enumerations---enum_e1151e6948",
     "value": "Lyon",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e1151e6948",
+    "enumeration_id": "_enumerations---enum_e1151e6948",
     "value": "Paris",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "10",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "11",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "12",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "13",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "14",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "15",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "16",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "17",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "18",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "19",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "20",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "3",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "4",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "6",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "7",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "8",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e168f98b9c",
+    "enumeration_id": "_enumerations---enum_e168f98b9c",
     "value": "9",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e1bb7570d1",
+    "enumeration_id": "_enumerations---enum_e1bb7570d1",
     "value": "2020-01-15",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e1bb7570d1",
+    "enumeration_id": "_enumerations---enum_e1bb7570d1",
     "value": "2021-03-20",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e1bb7570d1",
+    "enumeration_id": "_enumerations---enum_e1bb7570d1",
     "value": "2023-01-01",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "10",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "11",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "12",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "13",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "14",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "15",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "16",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "17",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "18",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "19",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "20",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "21",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "22",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "23",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "24",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "25",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "26",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "27",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "28",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "29",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "3",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "4",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "6",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "7",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "8",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6102166d6",
+    "enumeration_id": "_enumerations---enum_e6102166d6",
     "value": "9",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6d37e1198",
+    "enumeration_id": "_enumerations---enum_e6d37e1198",
     "value": "1010.8",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6d37e1198",
+    "enumeration_id": "_enumerations---enum_e6d37e1198",
     "value": "111.1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6d37e1198",
+    "enumeration_id": "_enumerations---enum_e6d37e1198",
     "value": "115.4",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6d37e1198",
+    "enumeration_id": "_enumerations---enum_e6d37e1198",
     "value": "119.5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6d37e1198",
+    "enumeration_id": "_enumerations---enum_e6d37e1198",
     "value": "124.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6d37e1198",
+    "enumeration_id": "_enumerations---enum_e6d37e1198",
     "value": "162.2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6d37e1198",
+    "enumeration_id": "_enumerations---enum_e6d37e1198",
     "value": "187.5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6d37e1198",
+    "enumeration_id": "_enumerations---enum_e6d37e1198",
     "value": "39.5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6d37e1198",
+    "enumeration_id": "_enumerations---enum_e6d37e1198",
     "value": "58.5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6d37e1198",
+    "enumeration_id": "_enumerations---enum_e6d37e1198",
     "value": "65.7",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6d37e1198",
+    "enumeration_id": "_enumerations---enum_e6d37e1198",
     "value": "71.5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6d37e1198",
+    "enumeration_id": "_enumerations---enum_e6d37e1198",
     "value": "81.4",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6d37e1198",
+    "enumeration_id": "_enumerations---enum_e6d37e1198",
     "value": "96.1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6dbaef17d",
+    "enumeration_id": "_enumerations---enum_e6dbaef17d",
     "value": "-1.4",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6dbaef17d",
+    "enumeration_id": "_enumerations---enum_e6dbaef17d",
     "value": "-1000.3",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6dbaef17d",
+    "enumeration_id": "_enumerations---enum_e6dbaef17d",
     "value": "1.1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6dbaef17d",
+    "enumeration_id": "_enumerations---enum_e6dbaef17d",
     "value": "1.2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e6dbaef17d",
+    "enumeration_id": "_enumerations---enum_e6dbaef17d",
     "value": "1000.3",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e728ada030",
+    "enumeration_id": "_enumerations---enum_e728ada030",
     "value": "12140526",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e728ada030",
+    "enumeration_id": "_enumerations---enum_e728ada030",
     "value": "2573180",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e728ada030",
+    "enumeration_id": "_enumerations---enum_e728ada030",
     "value": "2795301",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e728ada030",
+    "enumeration_id": "_enumerations---enum_e728ada030",
     "value": "3322757",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e728ada030",
+    "enumeration_id": "_enumerations---enum_e728ada030",
     "value": "3373835",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e728ada030",
+    "enumeration_id": "_enumerations---enum_e728ada030",
     "value": "344679",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e728ada030",
+    "enumeration_id": "_enumerations---enum_e728ada030",
     "value": "3832120",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e728ada030",
+    "enumeration_id": "_enumerations---enum_e728ada030",
     "value": "5094283",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e728ada030",
+    "enumeration_id": "_enumerations---enum_e728ada030",
     "value": "5518851",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e728ada030",
+    "enumeration_id": "_enumerations---enum_e728ada030",
     "value": "5924858",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e728ada030",
+    "enumeration_id": "_enumerations---enum_e728ada030",
     "value": "5962662",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e728ada030",
+    "enumeration_id": "_enumerations---enum_e728ada030",
     "value": "6010289",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_e728ada030",
+    "enumeration_id": "_enumerations---enum_e728ada030",
     "value": "8042936",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_ecdfc6dc16",
+    "enumeration_id": "_enumerations---enum_ecdfc6dc16",
     "value": "DGFiP",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_ecdfc6dc16",
+    "enumeration_id": "_enumerations---enum_ecdfc6dc16",
     "value": "INSEE",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_ed49b8ba30",
+    "enumeration_id": "_enumerations---enum_ed49b8ba30",
     "value": "finance",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_ed49b8ba30",
+    "enumeration_id": "_enumerations---enum_ed49b8ba30",
     "value": "rh",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "127",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "128",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "144",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "145",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "146",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "147",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "148",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "149",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "150",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "151",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "152",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "153",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "155",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "156",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "157",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "159",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "160",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "161",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "162",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "163",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "164",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "165",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "166",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "167",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "168",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "169",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "170",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "171",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "172",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "173",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "176",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "177",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "178",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "179",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "180",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "181",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "182",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "183",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "184",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "185",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "186",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "187",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "188",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "191",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "192",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "193",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "194",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "46",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "71",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "72",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "83",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_edd0a3feca",
+    "enumeration_id": "_enumerations---enum_edd0a3feca",
     "value": "85",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_eed9cfed19",
+    "enumeration_id": "_enumerations---enum_eed9cfed19",
     "value": "2019-06-01",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_eed9cfed19",
+    "enumeration_id": "_enumerations---enum_eed9cfed19",
     "value": "2020-01-15",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_eed9cfed19",
+    "enumeration_id": "_enumerations---enum_eed9cfed19",
     "value": "2021-03-20",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_ef3ca99c8b",
+    "enumeration_id": "_enumerations---enum_ef3ca99c8b",
     "value": "1",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_ef3ca99c8b",
+    "enumeration_id": "_enumerations---enum_ef3ca99c8b",
     "value": "2",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_ef3ca99c8b",
+    "enumeration_id": "_enumerations---enum_ef3ca99c8b",
     "value": "3",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_ef932f614f",
+    "enumeration_id": "_enumerations---enum_ef932f614f",
     "value": "contact@acme.com",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_ef932f614f",
+    "enumeration_id": "_enumerations---enum_ef932f614f",
     "value": "info@techstart.com",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f099626334",
+    "enumeration_id": "_enumerations---enum_f099626334",
     "value": "https://grandsplanssolar.ch",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f099626334",
+    "enumeration_id": "_enumerations---enum_f099626334",
     "value": "https://www.ekz.ch/de/ueber-ekz/unternehmen/engagement/felsenstrom.html",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f099626334",
+    "enumeration_id": "_enumerations---enum_f099626334",
     "value": "https://www.energia-alpina.ch/",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f099626334",
+    "enumeration_id": "_enumerations---enum_f099626334",
     "value": "https://www.engadin.solar",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f099626334",
+    "enumeration_id": "_enumerations---enum_f099626334",
     "value": "https://www.gondosolar.ch/",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f099626334",
+    "enumeration_id": "_enumerations---enum_f099626334",
     "value": "https://www.grengiols-solar.ch/de",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f099626334",
+    "enumeration_id": "_enumerations---enum_f099626334",
     "value": "https://www.jungfrau.ch/de-ch/unternehmen/jungfraubahnen/jungfraubahn-holding-ag/kraftwerk-jungfraubahn/",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f099626334",
+    "enumeration_id": "_enumerations---enum_f099626334",
     "value": "https://www.morgeten.ch",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f099626334",
+    "enumeration_id": "_enumerations---enum_f099626334",
     "value": "https://www.pv-mont-soleil.ch/",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f099626334",
+    "enumeration_id": "_enumerations---enum_f099626334",
     "value": "https://www.scuolsolar.ch/",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f487e9e0e3",
+    "enumeration_id": "_enumerations---enum_f487e9e0e3",
     "value": "3",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f487e9e0e3",
+    "enumeration_id": "_enumerations---enum_f487e9e0e3",
     "value": "4",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f487e9e0e3",
+    "enumeration_id": "_enumerations---enum_f487e9e0e3",
     "value": "5",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f487e9e0e3",
+    "enumeration_id": "_enumerations---enum_f487e9e0e3",
     "value": "6",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f487e9e0e3",
+    "enumeration_id": "_enumerations---enum_f487e9e0e3",
     "value": "8",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f7f5210676",
+    "enumeration_id": "_enumerations---enum_f7f5210676",
     "value": "12011",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f7f5210676",
+    "enumeration_id": "_enumerations---enum_f7f5210676",
     "value": "27208",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f7f5210676",
+    "enumeration_id": "_enumerations---enum_f7f5210676",
     "value": "29906",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f7f5210676",
+    "enumeration_id": "_enumerations---enum_f7f5210676",
     "value": "31400",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f7f5210676",
+    "enumeration_id": "_enumerations---enum_f7f5210676",
     "value": "31806",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f7f5210676",
+    "enumeration_id": "_enumerations---enum_f7f5210676",
     "value": "32082",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f7f5210676",
+    "enumeration_id": "_enumerations---enum_f7f5210676",
     "value": "39151",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f7f5210676",
+    "enumeration_id": "_enumerations---enum_f7f5210676",
     "value": "47784",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f7f5210676",
+    "enumeration_id": "_enumerations---enum_f7f5210676",
     "value": "57433",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f7f5210676",
+    "enumeration_id": "_enumerations---enum_f7f5210676",
     "value": "69711",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f7f5210676",
+    "enumeration_id": "_enumerations---enum_f7f5210676",
     "value": "72724",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f7f5210676",
+    "enumeration_id": "_enumerations---enum_f7f5210676",
     "value": "84061",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_f7f5210676",
+    "enumeration_id": "_enumerations---enum_f7f5210676",
     "value": "8722",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_faeb83c5f5",
+    "enumeration_id": "_enumerations---enum_faeb83c5f5",
     "value": "1.0",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_faeb83c5f5",
+    "enumeration_id": "_enumerations---enum_faeb83c5f5",
     "value": "Demo Corp",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_faf13cd03f",
+    "enumeration_id": "_enumerations---enum_faf13cd03f",
     "value": "formation",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_faf13cd03f",
+    "enumeration_id": "_enumerations---enum_faf13cd03f",
     "value": "materiel",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_faf13cd03f",
+    "enumeration_id": "_enumerations---enum_faf13cd03f",
     "value": "salaires",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_fb91005117",
+    "enumeration_id": "_enumerations---enum_fb91005117",
     "value": "25",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_fb91005117",
+    "enumeration_id": "_enumerations---enum_fb91005117",
     "value": "26",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_fb91005117",
+    "enumeration_id": "_enumerations---enum_fb91005117",
     "value": "27",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_fb91005117",
+    "enumeration_id": "_enumerations---enum_fb91005117",
     "value": "28",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_fb91005117",
+    "enumeration_id": "_enumerations---enum_fb91005117",
     "value": "29",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_fb91005117",
+    "enumeration_id": "_enumerations---enum_fb91005117",
     "value": "30",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_fb91005117",
+    "enumeration_id": "_enumerations---enum_fb91005117",
     "value": "31",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_fb91005117",
+    "enumeration_id": "_enumerations---enum_fb91005117",
     "value": "32",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_fb91005117",
+    "enumeration_id": "_enumerations---enum_fb91005117",
     "value": "33",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_fb91005117",
+    "enumeration_id": "_enumerations---enum_fb91005117",
     "value": "34",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_fb91005117",
+    "enumeration_id": "_enumerations---enum_fb91005117",
     "value": "35",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_fb91005117",
+    "enumeration_id": "_enumerations---enum_fb91005117",
     "value": "36",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_fb91005117",
+    "enumeration_id": "_enumerations---enum_fb91005117",
     "value": "37",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_fb91005117",
+    "enumeration_id": "_enumerations---enum_fb91005117",
     "value": "39",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_fb91005117",
+    "enumeration_id": "_enumerations---enum_fb91005117",
     "value": "40",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_fb91005117",
+    "enumeration_id": "_enumerations---enum_fb91005117",
     "value": "41",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_fb91005117",
+    "enumeration_id": "_enumerations---enum_fb91005117",
     "value": "42",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_fb91005117",
+    "enumeration_id": "_enumerations---enum_fb91005117",
     "value": "44",
     "description": null
   },
   {
-    "modality_id": "_modalities---mod_fb91005117",
+    "enumeration_id": "_enumerations---enum_fb91005117",
     "value": "45",
     "description": null
   }

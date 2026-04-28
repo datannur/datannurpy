@@ -17,7 +17,7 @@ Convient quand l'arborescence disque définit la structure du catalogue.
 `metadata/folder.csv` et `metadata/dataset.csv` définissent **toute** la structure (IDs, hiérarchie, noms). Les fichiers physiques ne sont là que pour :
 
 - variables découvertes par scan (schema),
-- stats descriptives, modalités, fréquences,
+- stats descriptives, énumérations, fréquences,
 - `data_size`, `last_update_timestamp`, `delivery_format`.
 
 Cas d'usage : exports CKAN/DCAT, inventaires SQL, YAML maintenu à la main, etc. — bref, dès qu'une source externe est autoritative.
@@ -83,7 +83,7 @@ Un user dont le CSV est dans `./metadata/` et les fichiers dans `./data/parquet/
 
 **Préserver l'invariant actuel** : la metadata s'applique *après* le scan (sinon le scan écraserait l'éditorial). Donc on n'inverse pas l'ordre.
 
-À la place, `add_folder` *peek* en lecture dans `catalog._loaded_metadata` — pattern déjà utilisé pour `_freq_hidden_ids` ([utils/modality.py L116](src/datannurpy/utils/modality.py#L116)).
+À la place, `add_folder` *peek* en lecture dans `catalog._loaded_metadata` — pattern déjà utilisé pour `_freq_hidden_ids` ([utils/enumeration.py L116](src/datannurpy/utils/enumeration.py#L116)).
 
 Helper à ajouter dans `add_metadata.py`, retournant un type minimal et stable (pas de leak pandas) :
 
@@ -130,7 +130,7 @@ Le défaut `create_folders=True` préserve le comportement actuel ; `on_unmatche
 ## Politique de merge (rappel, non modifiée)
 
 - **Metadata gagne** sur les champs éditoriaux : `name`, `description`, `tag_ids`, `owner_id`, `manager_id`, dates curées, etc.
-- **Scan gagne** sur les champs techniques : `data_size`, `last_update_timestamp`, `delivery_format`, `nb_row`, variables/stats/modalités.
+- **Scan gagne** sur les champs techniques : `data_size`, `last_update_timestamp`, `delivery_format`, `nb_row`, variables/stats/énumérations.
 
 C'est le comportement *de facto* aujourd'hui (le merge override tout scalaire non-vide, mais les CSV metadata ne contiennent pas les champs techniques). Convention implicite : ne pas mettre de champs techniques dans `dataset.csv`. Pas de doc utilisateur nécessaire.
 

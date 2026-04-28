@@ -30,10 +30,10 @@ def finalize(catalog: Catalog) -> None:
     for dataset in unseen_datasets:
         remove_dataset_cascade(catalog, dataset)
 
-    # 3. Remove unseen modalities
-    removed_modality_ids = catalog.modality.ids_where("_seen", "==", False)
-    if removed_modality_ids:
-        catalog.modality.remove_all(removed_modality_ids)
+    # 3. Remove unseen enumerations
+    removed_enumeration_ids = catalog.enumeration.ids_where("_seen", "==", False)
+    if removed_enumeration_ids:
+        catalog.enumeration.remove_all(removed_enumeration_ids)
 
     # 4. Remove unseen organizations
     catalog.organization.remove_where("_seen", "==", False)
@@ -50,9 +50,9 @@ def finalize(catalog: Catalog) -> None:
     # 7b. Remove unseen concepts
     catalog.concept.remove_where("_seen", "==", False)
 
-    # 8. Remove values of removed modalities
-    if removed_modality_ids:
-        catalog.value.remove_where("modality_id", "in", removed_modality_ids)
+    # 8. Remove values of removed enumerations
+    if removed_enumeration_ids:
+        catalog.value.remove_where("enumeration_id", "in", removed_enumeration_ids)
 
     # Mark as finalized
     catalog._finalized = True

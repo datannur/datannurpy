@@ -16,7 +16,7 @@ Catalog(app_path=None, metadata_path=None, depth="value", refresh=False, freq_th
 | metadata_path  | str \| Path \| list \| None       | Metadata source folder, database URI, or list of sources |
 | depth          | "dataset" \| "variable" \| "stat" \| "value" | Default scan depth (default: "value")              |
 | refresh        | bool                              | Force full rescan ignoring cache (default: False)  |
-| freq_threshold | int                               | Max distinct values for frequency/modality detection. Strings above this threshold get pattern frequencies instead |
+| freq_threshold | int                               | Max distinct values for frequency/enumeration detection. Strings above this threshold get pattern frequencies instead |
 | csv_encoding   | str \| None                       | Default CSV encoding (utf-8, cp1252, etc.)         |
 | sample_size    | int \| None                       | Default sample size for stats (default: 100_000)   |
 | csv_skip_copy      | bool                              | Skip UTF-8 temp copy for local CSV (default: False)|
@@ -27,8 +27,8 @@ Catalog(app_path=None, metadata_path=None, depth="value", refresh=False, freq_th
 | folder         | Table[Folder]                     | Folder table (`.all()`, `.count`, `.get_by(...)`)  |
 | dataset        | Table[Dataset]                    | Dataset table                                      |
 | variable       | Table[Variable]                   | Variable table                                     |
-| modality       | Table[Modality]                   | Modality table                                     |
-| value          | Table[Value]                      | Modality value table                               |
+| enumeration    | Table[Enumeration]                | Enumeration table                                  |
+| value          | Table[Value]                      | Enumeration value table                            |
 | frequency      | Table[Frequency]                  | Frequency table (computed)                         |
 | organization   | Table[Organization]               | Organization table |
 | tag            | Table[Tag]                        | Tag table                                          |

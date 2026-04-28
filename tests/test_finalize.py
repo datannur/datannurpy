@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from datannurpy import Catalog, Folder
-from datannurpy.schema import Doc, Modality, Organization, Tag, Value, Variable
+from datannurpy.schema import Doc, Enumeration, Organization, Tag, Value, Variable
 from datannurpy.utils.ids import build_value_id
 
 
@@ -178,87 +178,95 @@ class TestFinalizeUnseenDatasets:
         )
 
 
-class TestFinalizeUnseenModalities:
-    """Tests for removing unseen modalities."""
+class TestFinalizeUnseenEnumerations:
+    """Tests for removing unseen enumerations."""
 
-    def test_unseen_modality_is_removed(self, tmp_path: Path):
-        """Modalities with _seen=False should be removed."""
+    def test_unseen_enumeration_is_removed(self, tmp_path: Path):
+        """Enumerations with _seen=False should be removed."""
         app_dir = tmp_path
 
-        # Create catalog with modality
+        # Create catalog with enumeration
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        mod = Modality(id="old_mod", name="Old Modality")
-        mod._seen = True  # Mark as seen for export
-        catalog1.modality.add(mod)
+        enumeration = Enumeration(id="old_enum", name="Old Enumeration")
+        enumeration._seen = True  # Mark as seen for export
+        catalog1.enumeration.add(enumeration)
         catalog1.export_db()
 
         # Reload without marking as seen
         catalog2 = Catalog(app_path=app_dir, quiet=True)
-        # Modality loaded with _seen=False
+        # Enumeration loaded with _seen=False
 
         catalog2.finalize()
-        assert len(catalog2.modality.all()) == 0
+        assert len(catalog2.enumeration.all()) == 0
 
-    def test_seen_modality_is_kept(self, tmp_path: Path):
-        """Modalities with _seen=True should be kept."""
+    def test_seen_enumeration_is_kept(self, tmp_path: Path):
+        """Enumerations with _seen=True should be kept."""
         app_dir = tmp_path
 
         catalog = Catalog(app_path=app_dir, quiet=True)
-        mod = Modality(id="kept_mod", name="Kept Modality")
-        mod._seen = True
-        catalog.modality.add(mod)
+        enumeration = Enumeration(id="kept_enum", name="Kept Enumeration")
+        enumeration._seen = True
+        catalog.enumeration.add(enumeration)
 
         catalog.finalize()
-        assert len(catalog.modality.all()) == 1
+        assert len(catalog.enumeration.all()) == 1
 
-    def test_removed_modality_removes_values(self, tmp_path: Path):
-        """Values of removed modalities should also be removed."""
+    def test_removed_enumeration_removes_values(self, tmp_path: Path):
+        """Values of removed enumerations should also be removed."""
         app_dir = tmp_path
 
-        # Create catalog with modality and values
+        # Create catalog with enumeration and values
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        mod = Modality(id="old_mod", name="Old Modality")
-        mod._seen = True
-        catalog1.modality.add(mod)
+        enumeration = Enumeration(id="old_enum", name="Old Enumeration")
+        enumeration._seen = True
+        catalog1.enumeration.add(enumeration)
         catalog1.value.add(
-            Value(id=build_value_id("old_mod", "A"), modality_id="old_mod", value="A")
+            Value(
+                id=build_value_id("old_enum", "A"), enumeration_id="old_enum", value="A"
+            )
         )
         catalog1.value.add(
-            Value(id=build_value_id("old_mod", "B"), modality_id="old_mod", value="B")
+            Value(
+                id=build_value_id("old_enum", "B"), enumeration_id="old_enum", value="B"
+            )
         )
 
-        # Add another modality that will be kept
-        kept_mod = Modality(id="kept_mod", name="Kept")
-        kept_mod._seen = True
-        catalog1.modality.add(kept_mod)
+        # Add another enumeration that will be kept
+        kept_enumeration = Enumeration(id="kept_enum", name="Kept")
+        kept_enumeration._seen = True
+        catalog1.enumeration.add(kept_enumeration)
         catalog1.value.add(
-            Value(id=build_value_id("kept_mod", "X"), modality_id="kept_mod", value="X")
+            Value(
+                id=build_value_id("kept_enum", "X"),
+                enumeration_id="kept_enum",
+                value="X",
+            )
         )
         catalog1.export_db()
 
-        # Reload and mark only kept_mod as seen
+        # Reload and mark only kept_enum as seen
         catalog2 = Catalog(app_path=app_dir, quiet=True)
-        catalog2.modality.update("kept_mod", _seen=True)
+        catalog2.enumeration.update("kept_enum", _seen=True)
 
         catalog2.finalize()
 
-        assert len(catalog2.modality.all()) == 1
+        assert len(catalog2.enumeration.all()) == 1
         assert len(catalog2.value.all()) == 1
-        assert catalog2.value.all()[0].modality_id == "kept_mod"
+        assert catalog2.value.all()[0].enumeration_id == "kept_enum"
 
 
-class TestFinalizeModalitiesWithoutFolder:
-    """Tests for modalities without _modalities folder."""
+class TestFinalizeEnumerationsWithoutFolder:
+    """Tests for enumerations without _enumerations folder."""
 
-    def test_modality_marked_seen_without_modalities_folder(self, tmp_path: Path):
-        """Modalities should be marked seen even if _modalities folder doesn't exist."""
+    def test_enumeration_marked_seen_without_enumerations_folder(self, tmp_path: Path):
+        """Enumerations should be marked seen even if _enumerations folder doesn't exist."""
         app_dir = tmp_path
         data_dir = tmp_path / "data"
         data_dir.mkdir()
-        # CSV with categorical column that creates a modality
+        # CSV with categorical column that creates an enumeration
         (data_dir / "test.csv").write_text("status\nactive\ninactive\nactive\n")
 
-        # First scan - creates modality but we'll remove the _modalities folder
+        # First scan - creates an enumeration but we'll remove the _enumerations folder
         catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
         catalog1.export_db()
@@ -266,19 +274,19 @@ class TestFinalizeModalitiesWithoutFolder:
         # Reload and rescan
         catalog2 = Catalog(app_path=app_dir, quiet=True)
 
-        # Remove _modalities folder via the jsonjsdb API
-        from datannurpy.utils.ids import MODALITIES_FOLDER_ID
+        # Remove _enumerations folder via the jsonjsdb API
+        from datannurpy.utils.ids import ENUMERATIONS_FOLDER_ID
 
-        mod_folder = catalog2.folder.get(MODALITIES_FOLDER_ID)
-        if mod_folder:
-            catalog2.folder.remove(MODALITIES_FOLDER_ID)
+        enumeration_folder = catalog2.folder.get(ENUMERATIONS_FOLDER_ID)
+        if enumeration_folder:
+            catalog2.folder.remove(ENUMERATIONS_FOLDER_ID)
 
-        # Now rescan - should not crash even without _modalities folder
+        # Now rescan - should not crash even without _enumerations folder
         catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
         catalog2.finalize()
 
-        # Modalities should still be present
-        assert len(catalog2.modality.all()) >= 0  # May or may not have modalities
+        # Enumerations should still be present
+        assert len(catalog2.enumeration.all()) >= 0  # May or may not have enumerations
 
 
 class TestFinalizeUnseenOrganizations:
@@ -480,17 +488,17 @@ class TestFinalizeCalledByExport:
 
         # Create catalog with entity (no scan)
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        mod = Modality(id="old_mod", name="Old")
-        mod._seen = True
-        catalog1.modality.add(mod)
+        enumeration = Enumeration(id="old_enum", name="Old")
+        enumeration._seen = True
+        catalog1.enumeration.add(enumeration)
         catalog1.export_db()
 
         # Reload and export without scan - finalize should NOT run
         catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.export_db()
 
-        # Modality should still exist (no scan = no finalize cleanup)
-        assert len(catalog2.modality.all()) == 1
+        # Enumeration should still exist (no scan = no finalize cleanup)
+        assert len(catalog2.enumeration.all()) == 1
         assert catalog2._finalized is False
 
     def test_export_db_calls_finalize_after_scan(self, tmp_path: Path):
@@ -522,8 +530,8 @@ class TestFinalizeCalledByExport:
         assert len(catalog.folder.all()) == 0
         assert catalog._finalized is True
 
-    def test_finalize_missing_modality_reference(self, tmp_path: Path):
-        """mark_dataset_seen should handle missing modality gracefully."""
+    def test_finalize_missing_enumeration_reference(self, tmp_path: Path):
+        """mark_dataset_seen should handle missing enumeration gracefully."""
         from datannurpy.schema import Dataset, Variable
 
         app_dir = tmp_path
@@ -531,8 +539,11 @@ class TestFinalizeCalledByExport:
         catalog.dataset.add(Dataset(id="ds1", name="DS"))
         catalog.variable.add(
             Variable(
-                id="ds1---v1", name="v1", dataset_id="ds1", modality_ids=["nonexistent"]
+                id="ds1---v1",
+                name="v1",
+                dataset_id="ds1",
+                enumeration_ids=["nonexistent"],
             )
         )
-        catalog.modality_manager.mark_dataset_seen("ds1")
-        # Should not raise — modality simply not found
+        catalog.enumeration_manager.mark_dataset_seen("ds1")
+        # Should not raise — enumeration simply not found

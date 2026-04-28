@@ -31,7 +31,7 @@ Use `refresh: true` to force a full rescan.
 
 Changes between exports are automatically tracked in `evolution.json`:
 
-- **add**: new folder, dataset, variable, modality, etc.
+- **add**: new folder, dataset, variable, enumeration, etc.
 - **update**: modified field (shows old and new value)
 - **delete**: removed entity
 

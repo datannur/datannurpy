@@ -2,13 +2,13 @@
 
 from .ids import (
     ID_SEPARATOR,
-    MODALITIES_FOLDER_ID,
+    ENUMERATIONS_FOLDER_ID,
     build_dataset_id,
     build_dataset_id_name,
-    build_modality_name,
+    build_enumeration_name,
     build_variable_id,
     build_variable_ids,
-    compute_modality_hash,
+    compute_enumeration_hash,
     get_folder_id,
     make_id,
     sanitize_id,
@@ -25,22 +25,22 @@ from .log import (
     log_summary,
     log_warn,
 )
-from .modality import ModalityManager
+from .enumeration import EnumerationManager
 from .prefix import PrefixFolder, get_prefix_folders, get_table_prefix
 from .time import timestamp_to_iso
 
 __all__ = [
     # ids
     "ID_SEPARATOR",
-    "MODALITIES_FOLDER_ID",
+    "ENUMERATIONS_FOLDER_ID",
     # log
     "log_skip",
     "build_dataset_id",
     "build_dataset_id_name",
-    "build_modality_name",
+    "build_enumeration_name",
     "build_variable_id",
     "build_variable_ids",
-    "compute_modality_hash",
+    "compute_enumeration_hash",
     "get_folder_id",
     "make_id",
     "sanitize_id",
@@ -53,8 +53,8 @@ __all__ = [
     "log_start",
     "log_summary",
     "log_warn",
-    # modality
-    "ModalityManager",
+    # enumeration
+    "EnumerationManager",
     # prefix
     "PrefixFolder",
     "get_prefix_folders",

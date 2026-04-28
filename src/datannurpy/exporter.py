@@ -222,7 +222,7 @@ def export_db(
         "dataset": "folder",
         "variable": "dataset",
         "frequency": "variable",
-        "value": "modality",
+        "value": "enumeration",
     }
     catalog.save(
         path,

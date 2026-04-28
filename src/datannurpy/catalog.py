@@ -14,7 +14,7 @@ from .add_folder import add_folder
 from .exporter import export_app, export_db
 from .finalize import finalize
 from .schema import Config, DatannurDB
-from .utils import ModalityManager, configure_logging
+from .utils import EnumerationManager, configure_logging
 from .utils.ids import compute_runtime_ids
 from .utils.params import validate_params
 
@@ -114,21 +114,21 @@ class Catalog(DatannurDB):
         self._has_scanned = False
         self._finalized = False
 
-        self.modality_manager = ModalityManager(self)
+        self.enumeration_manager = EnumerationManager(self)
 
         if not self._loaded_from_db:
             return
 
         # Dataset-only mode: clear variable-level tables
         if depth == "dataset":
-            for t in [self.variable, self.modality, self.value, self.frequency]:
+            for t in [self.variable, self.enumeration, self.value, self.frequency]:
                 t._df = t._df.clear()
 
         # Add _seen runtime column to trackable tables
         for table in [
             self.folder,
             self.dataset,
-            self.modality,
+            self.enumeration,
             self.organization,
             self.tag,
             self.doc,
@@ -170,10 +170,12 @@ class Catalog(DatannurDB):
                         .alias("_match_path")
                     )
 
-        self.modality_manager.rebuild_index()
+        self.enumeration_manager.rebuild_index()
 
         # Compute runtime id columns
-        self.value._df = compute_runtime_ids(self.value._df, ["modality_id", "value"])
+        self.value._df = compute_runtime_ids(
+            self.value._df, ["enumeration_id", "value"]
+        )
         self.frequency._df = compute_runtime_ids(
             self.frequency._df, ["variable_id", "value"]
         )
@@ -184,7 +186,7 @@ class Catalog(DatannurDB):
             f"  folders={self.folder.count},\n"
             f"  datasets={self.dataset.count},\n"
             f"  variables={self.variable.count},\n"
-            f"  modalities={self.modality.count},\n"
+            f"  enumerations={self.enumeration.count},\n"
             f"  values={self.value.count},\n"
             f"  organizations={self.organization.count},\n"
             f"  tags={self.tag.count},\n"

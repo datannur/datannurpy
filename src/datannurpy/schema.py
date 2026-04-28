@@ -69,7 +69,7 @@ class Variable:
     id: str
     name: str
     dataset_id: str
-    modality_ids: list[str] = field(default_factory=list)
+    enumeration_ids: list[str] = field(default_factory=list)
     tag_ids: list[str] = field(default_factory=list)
     source_var_ids: list[str] = field(default_factory=list)
     fk_var_id: str | None = None
@@ -91,7 +91,7 @@ class Variable:
 
 
 @dataclass
-class Modality:
+class Enumeration:
     """A reusable set of categorical values."""
 
     id: str
@@ -105,10 +105,10 @@ class Modality:
 
 @dataclass
 class Value:
-    """A value within a modality."""
+    """A value within an enumeration."""
 
-    id: str = ""  # Computed at runtime from modality_id + value
-    modality_id: str = ""
+    id: str = ""  # Computed at runtime from enumeration_id + value
+    enumeration_id: str = ""
     value: str | None = None
     description: str | None = None
 
@@ -192,7 +192,7 @@ class DatannurDB(Jsonjsdb):
     folder: Table[Folder]
     dataset: Table[Dataset]
     variable: Table[Variable]
-    modality: Table[Modality]
+    enumeration: Table[Enumeration]
     value: Table[Value]
     frequency: Table[Frequency]
     organization: Table[Organization]
@@ -207,7 +207,7 @@ class DatannurDB(Jsonjsdb):
         self.folder._entity_type = Folder
         self.dataset._entity_type = Dataset
         self.variable._entity_type = Variable
-        self.modality._entity_type = Modality
+        self.enumeration._entity_type = Enumeration
         self.value._entity_type = Value
         self.frequency._entity_type = Frequency
         self.organization._entity_type = Organization
@@ -218,7 +218,7 @@ class DatannurDB(Jsonjsdb):
         # Set runtime fields (not persisted)
         self.folder.runtime_fields = {"_seen"}
         self.dataset.runtime_fields = {"_seen", "_match_path"}
-        self.modality.runtime_fields = {"_seen"}
+        self.enumeration.runtime_fields = {"_seen"}
         self.organization.runtime_fields = {"_seen"}
         self.tag.runtime_fields = {"_seen"}
         self.doc.runtime_fields = {"_seen"}

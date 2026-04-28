@@ -21,7 +21,7 @@ from .schema import (
     Dataset,
     Doc,
     Folder,
-    Modality,
+    Enumeration,
     Frequency,
     Organization,
     Tag,
@@ -44,7 +44,7 @@ ENTITY_CLASSES: dict[str, type] = {
     "folder": Folder,
     "dataset": Dataset,
     "variable": Variable,
-    "modality": Modality,
+    "enumeration": Enumeration,
     "value": Value,
     "frequency": Frequency,
     "organization": Organization,
@@ -57,7 +57,7 @@ ENTITY_CLASSES: dict[str, type] = {
 ENTITIES_WITHOUT_ID = {"value", "frequency"}
 
 # List fields that should be merged (union)
-LIST_FIELDS = {"tag_ids", "doc_ids", "modality_ids", "source_var_ids"}
+LIST_FIELDS = {"tag_ids", "doc_ids", "enumeration_ids", "source_var_ids"}
 
 # Policy tag IDs
 FREQ_HIDDEN_TAG = "policy---frequency-hidden"
@@ -76,7 +76,7 @@ _DATASET_ENTITIES = {
     "config",
 }
 _VARIABLE_ENTITIES = _DATASET_ENTITIES | {"variable"}
-_VALUE_ENTITIES = _VARIABLE_ENTITIES | {"modality", "value", "frequency"}
+_VALUE_ENTITIES = _VARIABLE_ENTITIES | {"enumeration", "value", "frequency"}
 DEPTH_ENTITIES: dict[str, set[str]] = {
     "dataset": _DATASET_ENTITIES,
     "variable": _VARIABLE_ENTITIES,
@@ -460,28 +460,31 @@ def _process_value_table(
     catalog: Catalog,
     rows: list[dict[Hashable, Any]],
 ) -> tuple[int, int]:
-    """Batch-process the value table (composite key: modality_id + value)."""
+    """Batch-process the value table (composite key: enumeration_id + value)."""
     existing_map: dict[str, Value] = {v.id: v for v in catalog.value.all()}
-    modality_ids: set[str] = (
-        set(catalog.modality.df["id"].to_list())
-        if (not catalog.modality.df.is_empty() and "id" in catalog.modality.df.columns)
+    enumeration_ids: set[str] = (
+        set(catalog.enumeration.df["id"].to_list())
+        if (
+            not catalog.enumeration.df.is_empty()
+            and "id" in catalog.enumeration.df.columns
+        )
         else set()
     )
 
     updated_by_id: dict[str, Value] = {}
     new_by_id: dict[str, Value] = {}
-    modalities_to_mark: set[str] = set()
+    enumerations_to_mark: set[str] = set()
 
     for row in rows:
         row_data = _convert_row_to_dict(row, Value)
-        modality_id = row_data.get("modality_id")
+        enumeration_id = row_data.get("enumeration_id")
         value_str = row_data.get("value")
-        if modality_id is None or value_str is None:
+        if enumeration_id is None or value_str is None:
             continue
 
-        modality_id = str(modality_id)
+        enumeration_id = str(enumeration_id)
         value_str = str(value_str)
-        value_id = build_value_id(modality_id, value_str)
+        value_id = build_value_id(enumeration_id, value_str)
         description = row_data.get("description")
 
         if value_id in existing_map:
@@ -495,12 +498,12 @@ def _process_value_table(
         else:
             new_by_id[value_id] = Value(
                 id=value_id,
-                modality_id=modality_id,
+                enumeration_id=enumeration_id,
                 value=value_str,
                 description=description,
             )
-            if modality_id in modality_ids:
-                modalities_to_mark.add(modality_id)
+            if enumeration_id in enumeration_ids:
+                enumerations_to_mark.add(enumeration_id)
 
     created = len(new_by_id)
     updated = len(updated_by_id)
@@ -510,8 +513,8 @@ def _process_value_table(
         catalog.value.add_all(list(updated_by_id.values()))
     if new_by_id:
         catalog.value.add_all(list(new_by_id.values()))
-    if modalities_to_mark:
-        catalog.modality.update_many(list(modalities_to_mark), _seen=True)
+    if enumerations_to_mark:
+        catalog.enumeration.update_many(list(enumerations_to_mark), _seen=True)
 
     return created, updated
 
@@ -570,7 +573,7 @@ def _get_catalog_table(catalog: Catalog, entity_name: str) -> Any | None:
         "folder": catalog.folder,
         "dataset": catalog.dataset,
         "variable": catalog.variable,
-        "modality": catalog.modality,
+        "enumeration": catalog.enumeration,
         "value": catalog.value,
         "frequency": catalog.frequency,
         "organization": catalog.organization,

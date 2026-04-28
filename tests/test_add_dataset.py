@@ -62,7 +62,7 @@ class TestAddDataset:
             folder=Folder(id="hr", name="HR Data"),
         )
 
-        assert len(catalog.folder.where("id", "!=", "_modalities")) == 1
+        assert len(catalog.folder.where("id", "!=", "_enumerations")) == 1
         assert catalog.folder.all()[0].id == "hr"
         assert catalog.dataset.all()[0].folder_id == "hr"
         assert catalog.dataset.all()[0].id == "hr---employees"
@@ -82,7 +82,7 @@ class TestAddDataset:
         catalog.add_dataset(CSV_DIR / "employees.csv", folder=folder)
         catalog.add_dataset(CSV_DIR / "regions_france.csv", folder=folder)
 
-        assert len(catalog.folder.where("id", "!=", "_modalities")) == 1
+        assert len(catalog.folder.where("id", "!=", "_enumerations")) == 1
         assert len(catalog.dataset.all()) == 2
 
     def test_add_dataset_with_metadata(self):
@@ -263,8 +263,8 @@ class TestAddDatasetDepth:
         # Schema mode doesn't read data, so nb_row is None
         assert ds.nb_row is None
         assert len(catalog.variable.all()) == 9
-        # Schema mode skips modalities
-        assert len(catalog.modality.all()) == 0
+        # Schema mode skips enumerations
+        assert len(catalog.enumeration.all()) == 0
 
     def test_add_dataset_dataset_depth_delta(self):
         """depth=dataset should create dataset without scanning Delta."""
@@ -286,10 +286,10 @@ class TestAddDatasetDepth:
         ds = catalog.dataset.all()[0]
         assert ds.nb_row is not None
         assert len(catalog.variable.all()) > 0
-        assert len(catalog.modality.all()) == 0
+        assert len(catalog.enumeration.all()) == 0
 
     def test_add_dataset_stat_file(self):
-        """depth=stat should compute stats but skip modalities."""
+        """depth=stat should compute stats but skip enumerations."""
         catalog = Catalog(freq_threshold=10)
         catalog.add_dataset(CSV_DIR / "employees.csv", depth="stat")
 
@@ -299,12 +299,12 @@ class TestAddDatasetDepth:
         assert len(catalog.variable.all()) > 0
         # Stats computed
         assert any(v.nb_distinct is not None for v in catalog.variable.all())
-        # No modalities
-        assert len(catalog.modality.all()) == 0
+        # No enumerations
+        assert len(catalog.enumeration.all()) == 0
         assert catalog.frequency.is_empty
 
     def test_add_dataset_stat_delta(self):
-        """depth=stat should compute Delta stats but skip modalities."""
+        """depth=stat should compute Delta stats but skip enumerations."""
         catalog = Catalog(freq_threshold=10)
         catalog.add_dataset(DATA_DIR / "test_delta", depth="stat")
 
@@ -312,7 +312,7 @@ class TestAddDatasetDepth:
         ds = catalog.dataset.all()[0]
         assert ds.nb_row is not None
         assert len(catalog.variable.all()) > 0
-        assert len(catalog.modality.all()) == 0
+        assert len(catalog.enumeration.all()) == 0
 
     def test_add_dataset_inherits_catalog_depth(self):
         """add_dataset should use Catalog.depth when not overridden."""

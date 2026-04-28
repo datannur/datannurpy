@@ -13,7 +13,7 @@ import pytest
 
 from datannurpy import Catalog, Folder
 from datannurpy.errors import ConfigError
-from datannurpy.schema import Frequency, Value, Variable
+from datannurpy.schema import Enumeration, Frequency, Value, Variable
 from datannurpy.utils.ids import build_frequency_id, build_value_id
 from datannurpy.add_metadata import (
     DEPTH_ENTITIES,
@@ -63,7 +63,7 @@ class TestGetRequiredFields:
         """Value has no required fields (all have defaults, id is computed)."""
         required = _get_required_fields(Value)
         assert "id" not in required  # id is a runtime field
-        assert "modality_id" not in required  # has default ""
+        assert "enumeration_id" not in required  # has default ""
 
 
 class TestIsDatabaseConnection:
@@ -284,7 +284,7 @@ class TestGetCatalogTable:
         assert _get_catalog_table(catalog, "folder") is catalog.folder
         assert _get_catalog_table(catalog, "dataset") is catalog.dataset
         assert _get_catalog_table(catalog, "variable") is catalog.variable
-        assert _get_catalog_table(catalog, "modality") is catalog.modality
+        assert _get_catalog_table(catalog, "enumeration") is catalog.enumeration
         assert _get_catalog_table(catalog, "value") is catalog.value
         assert _get_catalog_table(catalog, "frequency") is catalog.frequency
         assert _get_catalog_table(catalog, "organization") is catalog.organization
@@ -556,7 +556,7 @@ class TestValidateEntityTable:
     def test_skip_validation_for_value_entity(self):
         """Value entity uses composite key, no id validation."""
         catalog = Catalog()
-        df = pd.DataFrame({"modality_id": ["m1"], "value": ["a"]})
+        df = pd.DataFrame({"enumeration_id": ["m1"], "value": ["a"]})
 
         errors = _validate_entity_table(catalog, "value", df, "value.csv")
         assert errors == []
@@ -633,7 +633,7 @@ class TestProcessEntityTable:
         catalog = Catalog()
         df = pd.DataFrame(
             {
-                "modality_id": ["m1"],
+                "enumeration_id": ["m1"],
                 "value": ["a"],
                 "description": ["Value A"],
             }
@@ -644,18 +644,18 @@ class TestProcessEntityTable:
         assert created == 1
         assert updated == 0
         assert len(catalog.value.all()) == 1
-        assert catalog.value.all()[0].modality_id == "m1"
+        assert catalog.value.all()[0].enumeration_id == "m1"
 
     def test_update_value_entity(self):
         """Should update existing Value entities."""
         catalog = Catalog()
         catalog.value.add(
-            Value(id=build_value_id("m1", "a"), modality_id="m1", value="a")
+            Value(id=build_value_id("m1", "a"), enumeration_id="m1", value="a")
         )
 
         df = pd.DataFrame(
             {
-                "modality_id": ["m1"],
+                "enumeration_id": ["m1"],
                 "value": ["a"],
                 "description": ["Updated"],
             }
@@ -668,11 +668,11 @@ class TestProcessEntityTable:
         assert catalog.value.all()[0].description == "Updated"
 
     def test_skip_value_without_required_fields(self):
-        """Should skip Value without modality_id or value."""
+        """Should skip Value without enumeration_id or value."""
         catalog = Catalog()
         df = pd.DataFrame(
             {
-                "modality_id": ["m1", None],
+                "enumeration_id": ["m1", None],
                 "value": [None, "a"],
             }
         )
@@ -769,10 +769,15 @@ class TestProcessEntityTable:
         catalog = Catalog()
         value_id = build_value_id("m1", "a")
         catalog.value.add(
-            Value(id=value_id, modality_id="m1", value="a", description="kept")
+            Value(
+                id=value_id,
+                enumeration_id="m1",
+                value="a",
+                description="kept",
+            )
         )
 
-        df = pd.DataFrame({"modality_id": ["m1"], "value": ["a"]})
+        df = pd.DataFrame({"enumeration_id": ["m1"], "value": ["a"]})
 
         created, updated = _process_entity_table(catalog, "value", df)
 
@@ -805,7 +810,7 @@ class TestProcessEntityTable:
         catalog = Catalog()
         df = pd.DataFrame(
             {
-                "modality_id": ["m1", "m1", "m2", "m2"],
+                "enumeration_id": ["m1", "m1", "m2", "m2"],
                 "value": ["a", "a", "b", "b"],
                 # First pair: later row overrides (None → "Second").
                 # Second pair: later row has no description, keeps first.
@@ -970,9 +975,9 @@ class TestAddMetadataIntegration:
         (tmp_path / "folder.csv").write_text("id,name\nf1,Folder\n")
         (tmp_path / "dataset.csv").write_text("id,name\nd1,Dataset\n")
         (tmp_path / "variable.csv").write_text("id,name,dataset_id\nv1,Var,d1\n")
-        (tmp_path / "modality.csv").write_text("id,name,type\nm1,Mod,string\n")
+        (tmp_path / "enumeration.csv").write_text("id,name,type\nm1,Mod,string\n")
         (tmp_path / "value.csv").write_text(
-            "modality_id,value,description\nm1,a,Val A\n"
+            "enumeration_id,value,description\nm1,a,Val A\n"
         )
         (tmp_path / "organization.csv").write_text("id,name\ni1,Org\n")
         (tmp_path / "tag.csv").write_text("id,name\nt1,Tag\n")
@@ -984,7 +989,7 @@ class TestAddMetadataIntegration:
         assert len(catalog.folder.all()) == 1
         assert len(catalog.dataset.all()) == 1
         assert len(catalog.variable.all()) == 1
-        assert len(catalog.modality.all()) == 1
+        assert len(catalog.enumeration.all()) == 1
         assert len(catalog.value.all()) == 1
         assert len(catalog.organization.all()) == 1
         assert len(catalog.tag.all()) == 1
@@ -1074,16 +1079,14 @@ class TestEdgeCases:
 
     def test_value_update_with_description(self, tmp_path: Path):
         """Updating existing value with description should apply it."""
-        from datannurpy.schema import Modality
-
         (tmp_path / "value.csv").write_text(
-            "modality_id,value,description\nm1,A,Updated desc\n"
+            "enumeration_id,value,description\nm1,A,Updated desc\n"
         )
 
         catalog = Catalog()
-        catalog.modality.add(Modality(id="m1", name="Mod"))
+        catalog.enumeration.add(Enumeration(id="m1", name="Mod"))
         catalog.value.add(
-            Value(id=build_value_id("m1", "A"), modality_id="m1", value="A")
+            Value(id=build_value_id("m1", "A"), enumeration_id="m1", value="A")
         )
 
         add_metadata(catalog, tmp_path, quiet=True)
@@ -1092,16 +1095,14 @@ class TestEdgeCases:
 
     def test_value_update_without_description(self, tmp_path: Path):
         """Updating existing value without description should keep None."""
-        from datannurpy.schema import Modality
-
-        (tmp_path / "value.csv").write_text("modality_id,value\nm1,A\n")
+        (tmp_path / "value.csv").write_text("enumeration_id,value\nm1,A\n")
 
         catalog = Catalog()
-        catalog.modality.add(Modality(id="m1", name="Mod"))
+        catalog.enumeration.add(Enumeration(id="m1", name="Mod"))
         catalog.value.add(
             Value(
                 id=build_value_id("m1", "A"),
-                modality_id="m1",
+                enumeration_id="m1",
                 value="A",
                 description="Old",
             )
@@ -1111,26 +1112,24 @@ class TestEdgeCases:
         val = catalog.value.all()[0]
         assert val.description == "Old"
 
-    def test_value_create_marks_parent_modality_seen(self, tmp_path: Path):
-        """Creating new value should mark parent modality as seen."""
-        from datannurpy.schema import Modality
-
+    def test_value_create_marks_parent_enumeration_seen(self, tmp_path: Path):
+        """Creating new value should mark parent enumeration as seen."""
         (tmp_path / "value.csv").write_text(
-            "modality_id,value,description\nm1,B,New val\n"
+            "enumeration_id,value,description\nm1,B,New val\n"
         )
 
         catalog = Catalog()
-        # Add existing modality with _seen=False
-        catalog.modality.add(Modality(id="m1", name="Mod", _seen=False))
+        # Add existing enumeration with _seen=False
+        catalog.enumeration.add(Enumeration(id="m1", name="Mod", _seen=False))
 
         add_metadata(catalog, tmp_path, quiet=True)
 
         # New value should be created
         assert len(catalog.value.all()) == 1
-        # Parent modality should be marked as seen
-        mod = catalog.modality.get("m1")
-        assert mod is not None
-        assert mod._seen is True
+        # Parent enumeration should be marked as seen
+        enumeration = catalog.enumeration.get("m1")
+        assert enumeration is not None
+        assert enumeration._seen is True
 
     def test_frequency_create_from_csv(self, tmp_path: Path):
         """Should create frequency entries from CSV."""
@@ -1353,8 +1352,8 @@ class TestFrequencyHiddenPolicy:
         assert name_var is not None
         assert color_var is not None
 
-        # name: no modality, no frequency rows
-        assert not name_var.modality_ids
+        # name: no enumeration, no frequency rows
+        assert not name_var.enumeration_ids
         frequency_rows = [
             f
             for f in catalog.frequency.all()
@@ -1362,8 +1361,8 @@ class TestFrequencyHiddenPolicy:
         ]
         assert frequency_rows == []
 
-        # color: has modality and frequency rows (not hidden)
-        assert color_var.modality_ids
+        # color: has enumeration and frequency rows (not hidden)
+        assert color_var.enumeration_ids
         color_frequencies = [
             f
             for f in catalog.frequency.all()
@@ -1432,7 +1431,7 @@ class TestFrequencyHiddenPolicy:
         for col in ("name", "color"):
             var = catalog.variable.get(f"src---data_csv---{col}")
             assert var is not None
-            assert not var.modality_ids
+            assert not var.enumeration_ids
             assert [f for f in catalog.frequency.all() if f.variable_id == var.id] == []
 
         # age is not hidden — should have frequency rows
