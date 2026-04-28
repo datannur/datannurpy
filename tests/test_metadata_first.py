@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
 from datannurpy import Catalog, Folder
@@ -380,6 +381,28 @@ class TestResolveMatchPathEdgeCases:
 
 class TestHelperUnits:
     """Direct unit tests for internal helpers covering NaN/None branches."""
+
+    def test_build_dataset_match_paths_by_id_filters_invalid_rows(self):
+        from datannurpy.add_metadata import _build_dataset_match_paths_by_id
+
+        sources = [
+            {"folder": (pd.DataFrame([{"id": "f"}]), "folder.csv")},
+            {"dataset": (pd.DataFrame([{"id": "x"}]), "dataset.csv")},
+            {
+                "dataset": (
+                    pd.DataFrame(
+                        [
+                            {"id": "ok", "_match_path": "/tmp/data.csv"},
+                            {"id": "missing_path", "_match_path": None},
+                            {"id": None, "_match_path": "/tmp/other.csv"},
+                        ]
+                    ),
+                    "dataset.csv",
+                )
+            },
+        ]
+
+        assert _build_dataset_match_paths_by_id(sources) == {"ok": "/tmp/data.csv"}
 
     def test_resolve_match_path_none(self, tmp_path: Path):
         from datannurpy.add_metadata import _resolve_match_path

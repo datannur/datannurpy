@@ -137,15 +137,38 @@ class Catalog(DatannurDB):
             if "_seen" in table.runtime_fields and not table.is_empty:
                 table._df = table._df.with_columns(pl.lit(False).alias("_seen"))
 
-        # Restore _match_path from data_path (runtime field, not persisted).
-        # data_path is the right default match key for filesystem-first and
-        # database datasets (where it's already absolute / a stable URI).
-        # For metadata-first datasets where data_path is a relative string
-        # or URL, load_metadata re-resolves _match_path from the CSV source.
-        if not self.dataset.is_empty and "data_path" in self.dataset._df.columns:
-            self.dataset._df = self.dataset._df.with_columns(
-                pl.col("data_path").alias("_match_path")
-            )
+        # Restore _match_path (runtime field, not persisted).
+        # data_path is the default match key, then metadata-loaded dataset.csv
+        # rows override it with their resolved absolute scan path before any
+        # incremental discovery runs.
+        if not self.dataset.is_empty:
+            if "data_path" in self.dataset._df.columns:
+                self.dataset._df = self.dataset._df.with_columns(
+                    pl.col("data_path").alias("_match_path")
+                )
+            else:
+                self.dataset._df = self.dataset._df.with_columns(
+                    pl.lit(None, dtype=pl.String).alias("_match_path")
+                )
+
+            if metadata_path is not None and "id" in self.dataset._df.columns:
+                from .add_metadata import _build_dataset_match_paths_by_id
+
+                metadata_match_paths = _build_dataset_match_paths_by_id(
+                    self._loaded_metadata
+                )
+                if metadata_match_paths:
+                    self.dataset._df = self.dataset._df.with_columns(
+                        pl.col("id")
+                        .map_elements(
+                            lambda dataset_id: metadata_match_paths.get(
+                                str(dataset_id)
+                            ),
+                            return_dtype=pl.String,
+                        )
+                        .fill_null(pl.col("_match_path"))
+                        .alias("_match_path")
+                    )
 
         self.modality_manager.rebuild_index()
 

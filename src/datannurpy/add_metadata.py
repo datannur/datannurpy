@@ -672,6 +672,26 @@ def _build_dataset_match_index(
     return index
 
 
+def _build_dataset_match_paths_by_id(
+    sources: list[dict[str, tuple[pd.DataFrame, str]]] | None,
+) -> dict[str, str]:
+    """Build {dataset_id: abs_match_path} from pre-loaded metadata sources."""
+    match_paths: dict[str, str] = {}
+    for source in sources or []:
+        entry = source.get("dataset")
+        if entry is None:
+            continue
+        df = entry[0]
+        if "_match_path" not in df.columns or "id" not in df.columns:
+            continue
+        for record in df.to_dict(orient="records"):
+            mp = _optional_str(record.get("_match_path"))
+            row_id = _optional_str(record.get("id"))
+            if mp is not None and row_id is not None:
+                match_paths[row_id] = mp
+    return match_paths
+
+
 def _optional_str(value: Any) -> str | None:
     """Coerce a value to str, returning None for None/NaN/empty."""
     import pandas as pd

@@ -40,6 +40,36 @@ class TestIncrementalScanFiles:
         ds = catalog2.dataset.all()[0]
         assert getattr(ds, "_seen", False) is True
 
+    def test_unchanged_file_with_dataset_metadata_is_skipped(self, tmp_path: Path):
+        """dataset.csv metadata should not break incremental matching on reload."""
+        app_dir = tmp_path / "catalog"
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        csv_file = data_dir / "test.csv"
+        csv_file.write_text("a,b\n1,2\n3,4\n")
+
+        meta_dir = tmp_path / "metadata"
+        meta_dir.mkdir()
+        (meta_dir / "dataset.csv").write_text(
+            "id,name,folder_id,data_path\nsrc---test_csv,Test,src,../data/test.csv\n"
+        )
+
+        catalog1 = Catalog(app_path=app_dir, metadata_path=meta_dir, quiet=True)
+        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.export_db()
+
+        catalog2 = Catalog(app_path=app_dir, metadata_path=meta_dir, quiet=True)
+        ds_before = catalog2.dataset.get_by("id", "src---test_csv")
+        assert ds_before is not None
+        assert ds_before._match_path == str(csv_file)
+
+        catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
+
+        assert len(catalog2.dataset.all()) == 1
+        ds_after = catalog2.dataset.get_by("id", "src---test_csv")
+        assert ds_after is not None
+        assert getattr(ds_after, "_seen", False) is True
+
     def test_modified_file_is_rescanned(self, tmp_path: Path):
         """Modified file should be rescanned."""
         app_dir = tmp_path

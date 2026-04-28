@@ -81,6 +81,58 @@ class TestCatalogAppPath:
         assert len(catalog.dataset.all()) == 1
         assert catalog.dataset.all()[0].id == "ds1"
 
+    def test_app_path_reload_restores_match_path_from_metadata_without_data_path(
+        self, tmp_path: Path
+    ):
+        """Reload should restore _match_path from metadata even without data_path."""
+        app_dir = tmp_path / "app"
+        db_dir = app_dir / "data" / "db"
+        db_dir.mkdir(parents=True)
+        (db_dir / "__table__.json").write_text(json.dumps([{"name": "dataset"}]))
+        (db_dir / "dataset.json").write_text(
+            json.dumps([{"id": "src---x_csv", "name": "X", "folder_id": "src"}])
+        )
+
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        csv_file = data_dir / "x.csv"
+        csv_file.write_text("a\n1\n")
+
+        meta_dir = tmp_path / "meta"
+        meta_dir.mkdir()
+        (meta_dir / "dataset.csv").write_text(
+            "id,name,folder_id,data_path\nsrc---x_csv,X,src,../data/x.csv\n"
+        )
+
+        catalog = Catalog(app_path=app_dir, metadata_path=meta_dir, quiet=True)
+
+        dataset = catalog.dataset.get_by("id", "src---x_csv")
+        assert dataset is not None
+        assert dataset._match_path == str(csv_file)
+        assert len(catalog.dataset.all()) == 1
+
+    def test_app_path_reload_keeps_null_match_path_without_metadata_match(
+        self, tmp_path: Path
+    ):
+        """Reload should keep _match_path unset when metadata has no usable match."""
+        app_dir = tmp_path / "app"
+        db_dir = app_dir / "data" / "db"
+        db_dir.mkdir(parents=True)
+        (db_dir / "__table__.json").write_text(json.dumps([{"name": "dataset"}]))
+        (db_dir / "dataset.json").write_text(
+            json.dumps([{"id": "src---x_csv", "name": "X", "folder_id": "src"}])
+        )
+
+        meta_dir = tmp_path / "meta"
+        meta_dir.mkdir()
+        (meta_dir / "dataset.csv").write_text("id,name\nsrc---x_csv,X\n")
+
+        catalog = Catalog(app_path=app_dir, metadata_path=meta_dir, quiet=True)
+
+        dataset = catalog.dataset.get_by("id", "src---x_csv")
+        assert dataset is not None
+        assert dataset._match_path is None
+
     def test_app_path_nonexistent_creates_empty_catalog(self, tmp_path: Path):
         """Catalog with nonexistent app_path should create empty catalog."""
         catalog = Catalog(app_path=tmp_path / "nonexistent")
