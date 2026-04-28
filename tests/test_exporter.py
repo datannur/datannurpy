@@ -11,6 +11,7 @@ from datannurpy.errors import ConfigError
 from datannurpy.exporter import (
     _clean_copy_target,
     _normalize_copy_assets,
+    _resolve_copy_base_dir,
     _resolve_copy_source,
     _resolve_copy_target,
     _should_copy_asset,
@@ -120,6 +121,17 @@ class TestCopyAssetsHelpers:
         """Cleaning a missing target does nothing."""
         assert _clean_copy_target(tmp_path / "missing", set()) == 0
 
+    def test_resolve_copy_base_dir_accepts_explicit_path(self, tmp_path: Path):
+        """Explicit base_dir values are resolved to absolute paths."""
+        assert _resolve_copy_base_dir(tmp_path) == tmp_path.resolve()
+
+    def test_resolve_copy_base_dir_defaults_to_cwd(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        """Missing base_dir values default to the current working directory."""
+        monkeypatch.chdir(tmp_path)
+        assert _resolve_copy_base_dir(None) == tmp_path.resolve()
+
 
 class TestCopyAssets:
     """Test copy_assets execution."""
@@ -139,8 +151,8 @@ class TestCopyAssets:
         stale.write_text("old")
 
         copy_assets(
-            [{"from": "assets", "to": "data/doc", "include": "*.pdf", "clean": True}],
             export_dir,
+            [{"from": "assets", "to": "data/doc", "include": "*.pdf", "clean": True}],
             base_dir=tmp_path,
             quiet=True,
         )
@@ -161,8 +173,8 @@ class TestCopyAssets:
 
         export_dir = tmp_path / "export"
         copy_assets(
-            [{"from": "assets", "to": "data/assets"}],
             export_dir,
+            [{"from": "assets", "to": "data/assets"}],
             base_dir=tmp_path,
             quiet=True,
         )
@@ -173,8 +185,8 @@ class TestCopyAssets:
             destination, (destination.stat().st_atime, destination.stat().st_mtime + 10)
         )
         copy_assets(
-            [{"from": "assets", "to": "data/assets"}],
             export_dir,
+            [{"from": "assets", "to": "data/assets"}],
             base_dir=tmp_path,
             quiet=True,
         )
@@ -183,8 +195,8 @@ class TestCopyAssets:
 
         source_file.write_text("new-data")
         copy_assets(
-            [{"from": "assets", "to": "data/assets"}],
             export_dir,
+            [{"from": "assets", "to": "data/assets"}],
             base_dir=tmp_path,
             quiet=True,
         )
@@ -197,8 +209,8 @@ class TestCopyAssets:
         export_dir = tmp_path / "export"
 
         copy_assets(
-            [{"from": "guide.md", "to": "data/doc"}],
             export_dir,
+            [{"from": "guide.md", "to": "data/doc"}],
             base_dir=tmp_path,
             quiet=True,
         )
@@ -214,8 +226,8 @@ class TestCopyAssets:
         export_dir = tmp_path / "export"
 
         copy_assets(
-            [{"from": "guide.md", "to": "data/doc", "include": "*.pdf"}],
             export_dir,
+            [{"from": "guide.md", "to": "data/doc", "include": "*.pdf"}],
             base_dir=tmp_path,
             quiet=True,
         )
@@ -233,8 +245,8 @@ class TestCopyAssets:
         (destination / "old.txt").write_text("old")
 
         copy_assets(
-            [{"from": "guide.md", "to": "data/doc"}],
             tmp_path / "export",
+            [{"from": "guide.md", "to": "data/doc"}],
             base_dir=tmp_path,
             quiet=True,
         )
@@ -254,8 +266,8 @@ class TestCopyAssets:
 
         with pytest.raises(ConfigError, match="destination parent is not a directory"):
             copy_assets(
-                [{"from": "assets", "to": "data/doc"}],
                 export_dir,
+                [{"from": "assets", "to": "data/doc"}],
                 base_dir=tmp_path,
                 quiet=True,
             )
@@ -273,8 +285,8 @@ class TestCopyAssets:
 
         with pytest.raises(ConfigError, match="destination parent is not a directory"):
             copy_assets(
-                [{"from": "guide.md", "to": "data/doc"}],
                 export_dir,
+                [{"from": "guide.md", "to": "data/doc"}],
                 base_dir=tmp_path,
                 quiet=True,
             )
@@ -288,10 +300,25 @@ class TestCopyAssets:
         (source / "guide.txt").write_text("guide")
 
         copy_assets(
-            [{"from": "assets", "to": "data/doc"}],
             tmp_path / "export",
+            [{"from": "assets", "to": "data/doc"}],
             base_dir=tmp_path,
             quiet=False,
         )
 
         assert "copy_assets: assets -> data/doc" in capsys.readouterr().err
+
+    def test_run_copy_assets_accepts_single_rule_mapping(self, tmp_path: Path):
+        """The public API accepts a single rule mapping."""
+        source = tmp_path / "assets"
+        source.mkdir()
+        (source / "guide.txt").write_text("guide")
+
+        copy_assets(
+            tmp_path / "export",
+            {"from": "assets", "to": "data/doc"},
+            base_dir=tmp_path,
+            quiet=True,
+        )
+
+        assert (tmp_path / "export" / "data" / "doc" / "guide.txt").exists()

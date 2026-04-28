@@ -1,5 +1,9 @@
 # datannurpy
 
+# unreleased
+
+- add: public `copy_assets()` helper and matching `copy_assets` / `base_dir` parameters on `export_db()` and `export_app()`
+
 ## 0.21.0 (2026-04-27)
 
 - add: `copy_assets` export option — copy local files or directories into the exported catalog with optional `include` filters and `clean` cleanup

@@ -13,7 +13,6 @@ from dotenv import load_dotenv
 
 from ..catalog import Catalog
 from ..errors import ConfigError
-from ..exporter import copy_assets as export_copy_assets
 from ..schema import Folder
 
 VALID_TYPES = {"folder", "dataset", "database"}
@@ -232,19 +231,22 @@ def run_config(path: str | Path) -> Catalog:
             catalog.add_database(uri, **item)
 
     # Export: app_path implies app export, output_dir implies db-only export
-    export_dir: Path | None = None
     if output_dir:
-        catalog.export_db(output_dir, track_evolution=track_evolution)
-        export_dir = Path(output_dir)
-    elif catalog.app_path is not None:
-        catalog.export_app(open_browser=open_browser, track_evolution=track_evolution)
-        export_dir = Path(catalog.app_path)
-
-    if copy_assets is not None and export_dir is not None:
-        quiet = catalog_params.get("quiet", False)
-        export_copy_assets(
-            copy_assets, export_dir, base_dir=base_dir, quiet=bool(quiet)
+        catalog.export_db(
+            output_dir,
+            track_evolution=track_evolution,
+            copy_assets=copy_assets,
+            base_dir=base_dir,
         )
+    elif catalog.app_path is not None:
+        catalog.export_app(
+            open_browser=open_browser,
+            track_evolution=track_evolution,
+            copy_assets=copy_assets,
+            base_dir=base_dir,
+        )
+
+    export_dir = Path(output_dir) if output_dir else catalog.app_path
 
     if post_export and export_dir is not None:
         quiet = catalog_params.get("quiet", False)

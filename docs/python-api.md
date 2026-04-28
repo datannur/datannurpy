@@ -1,9 +1,5 @@
 # Python API
 
-
-
-All YAML features are also available programmatically via the Python API.
-
 ### `Catalog`
 
 ```python
@@ -179,13 +175,15 @@ catalog.add_database(
 ### `Catalog.export_db()`
 
 ```python
-catalog.export_db(output_dir=None, track_evolution=True, quiet=None)
+catalog.export_db(output_dir=None, track_evolution=True, copy_assets=None, base_dir=None, quiet=None)
 ```
 
 | Parameter       | Type             | Default | Description                                |
 | --------------- | ---------------- | ------- | ------------------------------------------ |
 | output_dir      | str \| Path \| None | None    | Output directory (uses app_path if None)   |
 | track_evolution | bool             | True    | Track changes between exports              |
+| copy_assets     | dict \| list[dict] \| None | None    | Copy extra local files/directories into the export using the same rules as `copy_assets()` |
+| base_dir        | str \| Path \| None | None    | Base directory for relative `copy_assets.from` paths (defaults to current working directory) |
 | quiet           | bool \| None     | None    | Override catalog quiet setting             |
 
 Exports JSON metadata files. Calls `finalize()` automatically when data has been scanned.
@@ -201,7 +199,7 @@ Removes entities no longer seen during scan. Called automatically by `export_db(
 ### `Catalog.export_app()`
 
 ```python
-catalog.export_app(output_dir=None, open_browser=False, track_evolution=True, quiet=None)
+catalog.export_app(output_dir=None, open_browser=False, track_evolution=True, copy_assets=None, base_dir=None, quiet=None)
 ```
 
 | Parameter       | Type                | Default | Description                                |
@@ -209,9 +207,30 @@ catalog.export_app(output_dir=None, open_browser=False, track_evolution=True, qu
 | output_dir      | str \| Path \| None | None    | Output directory (uses app_path if None)   |
 | open_browser    | bool                | False   | Open app in browser after export           |
 | track_evolution | bool                | True    | Track changes between exports              |
+| copy_assets     | dict \| list[dict] \| None | None    | Copy extra local files/directories into the exported app using the same rules as `copy_assets()` |
+| base_dir        | str \| Path \| None | None    | Base directory for relative `copy_assets.from` paths (defaults to current working directory) |
 | quiet           | bool \| None        | None    | Override catalog quiet setting             |
 
 Exports complete standalone datannur app with data. Uses `app_path` by default if set at init.
+
+### `copy_assets()`
+
+```python
+from datannurpy import copy_assets
+
+copy_assets(output_dir, rules, base_dir=None, quiet=False)
+```
+
+| Parameter  | Type                          | Default | Description |
+| ---------- | ----------------------------- | ------- | ----------- |
+| output_dir | str \| Path                    | required | Export directory to populate |
+| rules      | dict \| list[dict]             | required | Copy rules using the same shape as YAML `copy_assets` |
+| base_dir   | str \| Path \| None           | None    | Base directory for relative `from` paths (defaults to current working directory) |
+| quiet      | bool                           | False   | Suppress copy progress logging |
+
+Each rule accepts `from`, `to`, optional `include`, and optional `clean`.
+
+`Catalog.export_db()` and `Catalog.export_app()` also accept `copy_assets=` and `base_dir=` as convenience wrappers around this helper.
 
 ### `Folder`
 
