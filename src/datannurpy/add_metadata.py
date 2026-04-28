@@ -682,16 +682,14 @@ def _build_dataset_match_paths_by_id(
     match_paths: dict[str, str] = {}
     for source in sources or []:
         entry = source.get("dataset")
-        if entry is None:
-            continue
-        df = entry[0]
-        if "_match_path" not in df.columns or "id" not in df.columns:
-            continue
-        for record in df.to_dict(orient="records"):
-            mp = _optional_str(record.get("_match_path"))
-            row_id = _optional_str(record.get("id"))
-            if mp is not None and row_id is not None:
-                match_paths[row_id] = mp
+        if entry is not None:
+            df = entry[0]
+            if "_match_path" in df.columns and "id" in df.columns:
+                for record in df.to_dict(orient="records"):
+                    mp = _optional_str(record.get("_match_path"))
+                    row_id = _optional_str(record.get("id"))
+                    if mp is not None and row_id is not None:
+                        match_paths[row_id] = mp
     return match_paths
 
 
