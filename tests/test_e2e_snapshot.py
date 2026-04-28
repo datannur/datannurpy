@@ -34,7 +34,7 @@ SNAPSHOT_FILES = [
     "value.json",
     "organization.json",
     "tag.json",
-    "freq.json",
+    "frequency.json",
 ]
 
 
@@ -69,7 +69,7 @@ def sort_by_id(data: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Sort list of dicts by 'id' or composite key for stable comparison."""
 
     def sort_key(x: dict[str, Any]) -> tuple[str, ...]:
-        # For freq.json: sort by variable_id + value
+        # For frequency.json: sort by variable_id + value
         if "variable_id" in x and "value" in x:
             return (x.get("variable_id", ""), str(x.get("value", "")))
         # For value.json: sort by modality_id + value

@@ -301,7 +301,7 @@ class TestAddDatasetDepth:
         assert any(v.nb_distinct is not None for v in catalog.variable.all())
         # No modalities
         assert len(catalog.modality.all()) == 0
-        assert catalog.freq.is_empty
+        assert catalog.frequency.is_empty
 
     def test_add_dataset_stat_delta(self):
         """depth=stat should compute Delta stats but skip modalities."""

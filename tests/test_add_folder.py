@@ -751,7 +751,7 @@ class TestDepthParameter:
             assert ds.nb_row is None
 
     def test_depth_stat_computes_stats_without_modalities(self, tmp_path: Path):
-        """depth='stat' should compute stats but skip modalities and freq."""
+        """depth='stat' should compute stats but skip modalities and frequency."""
         (tmp_path / "data.csv").write_text("a,b\nfoo,1\nbar,2\nbaz,3\n")
 
         catalog = Catalog(freq_threshold=10)
@@ -768,9 +768,9 @@ class TestDepthParameter:
         assert vars_by_name["b"].nb_distinct is not None
         assert vars_by_name["b"].min is not None
 
-        # No modalities or freq tables
+        # No modalities or frequency tables
         assert len(catalog.modality.all()) == 0
-        assert catalog.freq.is_empty
+        assert catalog.frequency.is_empty
 
     def test_folder_scan_persists_effective_sample_size(self, tmp_path: Path):
         """add_folder should store effective sample_size for sampled file scans."""

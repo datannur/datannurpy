@@ -114,13 +114,13 @@ class Value:
 
 
 @dataclass
-class Freq:
+class Frequency:
     """Frequency count for a variable value."""
 
     id: str = ""  # Computed at runtime from variable_id + value
     variable_id: str = ""
     value: str | None = None
-    freq: int = 0
+    frequency: int = 0
 
 
 @dataclass
@@ -194,7 +194,7 @@ class DatannurDB(Jsonjsdb):
     variable: Table[Variable]
     modality: Table[Modality]
     value: Table[Value]
-    freq: Table[Freq]
+    frequency: Table[Frequency]
     organization: Table[Organization]
     tag: Table[Tag]
     doc: Table[Doc]
@@ -209,7 +209,7 @@ class DatannurDB(Jsonjsdb):
         self.variable._entity_type = Variable
         self.modality._entity_type = Modality
         self.value._entity_type = Value
-        self.freq._entity_type = Freq
+        self.frequency._entity_type = Frequency
         self.organization._entity_type = Organization
         self.tag._entity_type = Tag
         self.doc._entity_type = Doc
@@ -224,4 +224,4 @@ class DatannurDB(Jsonjsdb):
         self.doc.runtime_fields = {"_seen"}
         self.concept.runtime_fields = {"_seen"}
         self.value.runtime_fields = {"id"}
-        self.freq.runtime_fields = {"id"}
+        self.frequency.runtime_fields = {"id"}

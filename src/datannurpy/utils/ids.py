@@ -88,8 +88,8 @@ def build_value_id(modality_id: str, value: str | None) -> str:
     return make_id(modality_id, _hash_value(value))
 
 
-def build_freq_id(variable_id: str, value: str | None) -> str:
-    """Build freq ID from variable and value."""
+def build_frequency_id(variable_id: str, value: str | None) -> str:
+    """Build frequency ID from variable and value."""
     return make_id(variable_id, _hash_value(value))
 
 

@@ -21,8 +21,8 @@ from .schema import (
     Dataset,
     Doc,
     Folder,
-    Freq,
     Modality,
+    Frequency,
     Organization,
     Tag,
     Value,
@@ -30,7 +30,7 @@ from .schema import (
 )
 from .scanner import read_csv, read_excel, read_statistical
 from .utils import log_done, log_error, log_section, log_warn
-from .utils.ids import build_freq_id, build_value_id
+from .utils.ids import build_frequency_id, build_value_id
 from .utils.params import validate_params
 from .errors import ConfigError
 
@@ -46,7 +46,7 @@ ENTITY_CLASSES: dict[str, type] = {
     "variable": Variable,
     "modality": Modality,
     "value": Value,
-    "freq": Freq,
+    "frequency": Frequency,
     "organization": Organization,
     "tag": Tag,
     "doc": Doc,
@@ -54,13 +54,13 @@ ENTITY_CLASSES: dict[str, type] = {
 }
 
 # Entities without required id (use composite key)
-ENTITIES_WITHOUT_ID = {"value", "freq"}
+ENTITIES_WITHOUT_ID = {"value", "frequency"}
 
 # List fields that should be merged (union)
 LIST_FIELDS = {"tag_ids", "doc_ids", "modality_ids", "source_var_ids"}
 
 # Policy tag IDs
-FREQ_HIDDEN_TAG = "policy---freq-hidden"
+FREQ_HIDDEN_TAG = "policy---frequency-hidden"
 
 # Supported file extensions for metadata
 SUPPORTED_EXTENSIONS = {".csv", ".xlsx", ".xls", ".json", ".sas7bdat"}
@@ -76,7 +76,7 @@ _DATASET_ENTITIES = {
     "config",
 }
 _VARIABLE_ENTITIES = _DATASET_ENTITIES | {"variable"}
-_VALUE_ENTITIES = _VARIABLE_ENTITIES | {"modality", "value", "freq"}
+_VALUE_ENTITIES = _VARIABLE_ENTITIES | {"modality", "value", "frequency"}
 DEPTH_ENTITIES: dict[str, set[str]] = {
     "dataset": _DATASET_ENTITIES,
     "variable": _VARIABLE_ENTITIES,
@@ -395,8 +395,8 @@ def _process_entity_table(
 
     if entity_name == "value":
         return _process_value_table(catalog, rows)
-    if entity_name == "freq":
-        return _process_freq_table(catalog, rows)
+    if entity_name == "frequency":
+        return _process_frequency_table(catalog, rows)
     return _process_standard_table(catalog, entity_name, rows)
 
 
@@ -516,18 +516,18 @@ def _process_value_table(
     return created, updated
 
 
-def _process_freq_table(
+def _process_frequency_table(
     catalog: Catalog,
     rows: list[dict[Hashable, Any]],
 ) -> tuple[int, int]:
-    """Batch-process the freq table (composite key: variable_id + value)."""
-    existing_map: dict[str, Freq] = {f.id: f for f in catalog.freq.all()}
+    """Batch-process the frequency table (composite key: variable_id + value)."""
+    existing_map: dict[str, Frequency] = {f.id: f for f in catalog.frequency.all()}
 
-    updated_by_id: dict[str, Freq] = {}
-    new_by_id: dict[str, Freq] = {}
+    updated_by_id: dict[str, Frequency] = {}
+    new_by_id: dict[str, Frequency] = {}
 
     for row in rows:
-        row_data = _convert_row_to_dict(row, Freq)
+        row_data = _convert_row_to_dict(row, Frequency)
         variable_id = row_data.get("variable_id")
         value_str = row_data.get("value")
         if variable_id is None or value_str is None:
@@ -535,31 +535,31 @@ def _process_freq_table(
 
         variable_id = str(variable_id)
         value_str = str(value_str)
-        freq_id = build_freq_id(variable_id, value_str)
-        freq_count = int(row_data.get("freq", 0))
+        freq_id = build_frequency_id(variable_id, value_str)
+        freq_count = int(row_data.get("frequency", 0))
 
         if freq_id in existing_map:
             target = existing_map[freq_id]
-            target.freq = freq_count
+            target.frequency = freq_count
             updated_by_id[freq_id] = target
         elif freq_id in new_by_id:
-            new_by_id[freq_id].freq = freq_count
+            new_by_id[freq_id].frequency = freq_count
         else:
-            new_by_id[freq_id] = Freq(
+            new_by_id[freq_id] = Frequency(
                 id=freq_id,
                 variable_id=variable_id,
                 value=value_str,
-                freq=freq_count,
+                frequency=freq_count,
             )
 
     created = len(new_by_id)
     updated = len(updated_by_id)
 
     if updated_by_id:
-        catalog.freq.remove_all(list(updated_by_id.keys()))
-        catalog.freq.add_all(list(updated_by_id.values()))
+        catalog.frequency.remove_all(list(updated_by_id.keys()))
+        catalog.frequency.add_all(list(updated_by_id.values()))
     if new_by_id:
-        catalog.freq.add_all(list(new_by_id.values()))
+        catalog.frequency.add_all(list(new_by_id.values()))
 
     return created, updated
 
@@ -572,7 +572,7 @@ def _get_catalog_table(catalog: Catalog, entity_name: str) -> Any | None:
         "variable": catalog.variable,
         "modality": catalog.modality,
         "value": catalog.value,
-        "freq": catalog.freq,
+        "frequency": catalog.frequency,
         "organization": catalog.organization,
         "tag": catalog.tag,
         "doc": catalog.doc,
@@ -602,7 +602,7 @@ def _load_tables(
 def _extract_freq_hidden_ids(
     tables: dict[str, tuple[pd.DataFrame, str]],
 ) -> set[str]:
-    """Extract variable IDs tagged with policy---freq-hidden."""
+    """Extract variable IDs tagged with policy---frequency-hidden."""
     if "variable" not in tables:
         return set()
     df, _ = tables["variable"]

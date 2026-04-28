@@ -282,14 +282,14 @@ class TestCatalogDepth:
     """Test Catalog depth parameter."""
 
     def test_depth_dataset_clears_variable_tables_on_load(self, tmp_path: Path):
-        """Loading with depth='dataset' should clear variable/modality/value/freq."""
+        """Loading with depth='dataset' should clear variable/modality/value/frequency."""
         app_dir = tmp_path / "app"
         data_dir = tmp_path / "data"
         data_dir.mkdir()
-        # Create CSV with repeated values to ensure freq and modalities are created
+        # Create CSV with repeated values to ensure frequency and modalities are created
         (data_dir / "test.csv").write_text("a,b\n1,x\n2,x\n3,x\n")
 
-        # First run: full scan with low freq_threshold to create freq entries
+        # First run: full scan with low freq_threshold to create frequency entries
         catalog1 = Catalog(app_path=app_dir, depth="value", freq_threshold=2)
         catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
         catalog1.export_db()
@@ -298,7 +298,7 @@ class TestCatalogDepth:
         assert len(catalog1.variable.all()) > 0
         assert len(catalog1.modality.all()) > 0
         assert len(catalog1.value.all()) > 0
-        assert len(catalog1.freq.all()) > 0
+        assert len(catalog1.frequency.all()) > 0
 
         # Second run: load with dataset mode
         catalog2 = Catalog(app_path=app_dir, depth="dataset")
@@ -307,7 +307,7 @@ class TestCatalogDepth:
         assert len(catalog2.variable.all()) == 0
         assert len(catalog2.modality.all()) == 0
         assert len(catalog2.value.all()) == 0
-        assert len(catalog2.freq.all()) == 0
+        assert len(catalog2.frequency.all()) == 0
 
         # But folders and datasets should still be loaded
         assert len(catalog2.folder.all()) > 0
@@ -321,7 +321,7 @@ class TestCatalogDepth:
         assert len(catalog.variable.all()) == 0
         assert len(catalog.modality.all()) == 0
         assert len(catalog.value.all()) == 0
-        assert len(catalog.freq.all()) == 0
+        assert len(catalog.frequency.all()) == 0
 
 
 class TestAppConfig:

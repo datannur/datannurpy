@@ -1,5 +1,15 @@
 [
   {
+    "modality_id": "_modalities---mod_029a67f9a3",
+    "value": "finance,rh",
+    "description": null
+  },
+  {
+    "modality_id": "_modalities---mod_029a67f9a3",
+    "value": "rh,policy---frequency-hidden",
+    "description": null
+  },
+  {
     "modality_id": "_modalities---mod_06d1e3109c",
     "value": "1583-01-01",
     "description": null
@@ -4472,16 +4482,6 @@
   {
     "modality_id": "_modalities---mod_db169b4a86",
     "value": "300.25",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_dd17cc26b6",
-    "value": "finance,rh",
-    "description": null
-  },
-  {
-    "modality_id": "_modalities---mod_dd17cc26b6",
-    "value": "rh,policy---freq-hidden",
     "description": null
   },
   {

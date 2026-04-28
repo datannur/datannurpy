@@ -57,13 +57,13 @@ Policy tags let you manually control scan behavior for specific variables. Like 
 
 | Tag                      | Effect                                                         |
 | ------------------------ | -------------------------------------------------------------- |
-| `policy---freq-hidden`   | Suppress all frequency and modality data (stats remain visible) |
+| `policy---frequency-hidden`   | Suppress all frequency and modality data (stats remain visible) |
 
 Assign the tag in your `variable.csv` metadata:
 
 ```csv
 id,tag_ids
-source---employees_csv---first_name,"policy---freq-hidden"
+source---employees_csv---first_name,"policy---frequency-hidden"
 ```
 
 This is useful for sensitive columns that auto-tagging does not flag (e.g. first names, internal IDs, business codes).

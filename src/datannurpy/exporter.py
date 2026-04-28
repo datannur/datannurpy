@@ -221,7 +221,7 @@ def export_db(
     parent_relations = {
         "dataset": "folder",
         "variable": "dataset",
-        "freq": "variable",
+        "frequency": "variable",
         "value": "modality",
     }
     catalog.save(

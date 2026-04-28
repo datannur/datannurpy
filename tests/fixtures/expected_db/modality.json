@@ -1,5 +1,12 @@
 [
   {
+    "id": "_modalities---mod_029a67f9a3",
+    "folder_id": "_modalities",
+    "name": "finance,rh, rh,policy---...",
+    "description": null,
+    "type": null
+  },
+  {
     "id": "_modalities---mod_06d1e3109c",
     "folder_id": "_modalities",
     "name": "1583-01-01, 1880-05-06, 1960-01-01... (+1)",
@@ -731,13 +738,6 @@
     "id": "_modalities---mod_db169b4a86",
     "folder_id": "_modalities",
     "name": "100.5, 150.75, 200.0... (+2)",
-    "description": null,
-    "type": null
-  },
-  {
-    "id": "_modalities---mod_dd17cc26b6",
-    "folder_id": "_modalities",
-    "name": "finance,rh, rh,policy---...",
     "description": null,
     "type": null
   },

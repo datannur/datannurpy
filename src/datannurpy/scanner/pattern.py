@@ -86,12 +86,12 @@ def compute_pattern_freqs(
         non_null = table.filter(table[col].notnull())
         pattern_expr = _build_pattern_expr(non_null[col])
         patterned = non_null.select(pattern_expr.name("pattern"))
-        grouped = patterned.group_by("pattern").agg(freq=patterned.count())
-        order_key: Any = ibis.desc("freq")
+        grouped = patterned.group_by("pattern").agg(frequency=patterned.count())
+        order_key: Any = ibis.desc("frequency")
         top = grouped.order_by(order_key).limit(top_n).to_pyarrow()
 
         top_rows = top.to_pylist()
-        top_freqs = [r["freq"] for r in top_rows]
+        top_freqs = [r["frequency"] for r in top_rows]
         string_classes[col] = _classify_string(top_freqs, total)
 
         freq_tables.append(
@@ -99,7 +99,7 @@ def compute_pattern_freqs(
                 {
                     "variable_id": pa.array([col] * len(top_rows), type=pa.string()),
                     "value": top.column("pattern"),
-                    "freq": top.column("freq"),
+                    "frequency": top.column("frequency"),
                 }
             )
         )

@@ -121,7 +121,7 @@ class Catalog(DatannurDB):
 
         # Dataset-only mode: clear variable-level tables
         if depth == "dataset":
-            for t in [self.variable, self.modality, self.value, self.freq]:
+            for t in [self.variable, self.modality, self.value, self.frequency]:
                 t._df = t._df.clear()
 
         # Add _seen runtime column to trackable tables
@@ -174,7 +174,9 @@ class Catalog(DatannurDB):
 
         # Compute runtime id columns
         self.value._df = compute_runtime_ids(self.value._df, ["modality_id", "value"])
-        self.freq._df = compute_runtime_ids(self.freq._df, ["variable_id", "value"])
+        self.frequency._df = compute_runtime_ids(
+            self.frequency._df, ["variable_id", "value"]
+        )
 
     def __repr__(self) -> str:
         return (

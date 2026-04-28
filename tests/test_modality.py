@@ -85,8 +85,8 @@ class TestModalityName:
 class TestModalityGeneration:
     """Test modality auto-generation in Catalog."""
 
-    def test_modality_created_from_freq(self, tmp_path: Path):
-        """Modality should be created for freq-eligible columns."""
+    def test_modality_created_from_frequency(self, tmp_path: Path):
+        """Modality should be created for frequency-eligible columns."""
         (tmp_path / "data.csv").write_text("color\nred\nblue\nred\n")
 
         catalog = Catalog()
@@ -107,7 +107,7 @@ class TestModalityGeneration:
 
     def test_modalities_folder_not_created_when_empty(self, tmp_path: Path):
         """_modalities folder should not be created if no modalities."""
-        # Many distinct values = no freq = no modality
+        # Many distinct values = no frequency rows = no modality
         (tmp_path / "data.csv").write_text(
             "id\n" + "\n".join(str(i) for i in range(200))
         )
@@ -351,11 +351,11 @@ class TestModalityIncremental:
         assert result == mod_id
 
 
-class TestStoreFreqTable:
-    """Test store_freq_table method."""
+class TestStoreFrequencyTable:
+    """Test frequency table storage."""
 
-    def test_empty_freq_table(self):
-        """store_freq_table with empty table should not add any freqs."""
+    def test_empty_frequency_table(self):
+        """Empty frequency table should not add any frequencies."""
         import pyarrow as pa
 
         catalog = Catalog(quiet=True)
@@ -363,14 +363,14 @@ class TestStoreFreqTable:
             {
                 "variable_id": pa.array([], type=pa.string()),
                 "value": pa.array([], type=pa.string()),
-                "freq": pa.array([], type=pa.int64()),
+                "frequency": pa.array([], type=pa.int64()),
             }
         )
         catalog.modality_manager.store_freq_table(empty_table, {})
-        assert len(catalog.freq.all()) == 0
+        assert len(catalog.frequency.all()) == 0
 
-    def test_freq_hash_based_ids_no_collision(self):
-        """Freq values with similar sanitized forms get distinct hash-based IDs."""
+    def test_frequency_hash_based_ids_no_collision(self):
+        """Frequency values with similar sanitized forms get distinct hash-based IDs."""
         import pyarrow as pa
 
         catalog = Catalog(quiet=False)
@@ -379,8 +379,8 @@ class TestStoreFreqTable:
             {
                 "variable_id": ["var1", "var1"],
                 "value": [".idle", "_idle"],
-                "freq": [5, 3],
+                "frequency": [5, 3],
             }
         )
         catalog.modality_manager.store_freq_table(table, {"var1": "v1"})
-        assert len(catalog.freq.all()) == 2
+        assert len(catalog.frequency.all()) == 2

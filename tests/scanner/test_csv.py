@@ -151,7 +151,7 @@ class TestSampling:
         csv_file = tmp_path / "header_only.csv"
         csv_file.write_text("a,b,c\n")
 
-        variables, nb_row, actual_sample, freq = scan_csv(
+        variables, nb_row, actual_sample, frequency = scan_csv(
             csv_file, dataset_id="test", infer_stats=True
         )
         assert nb_row == 0
@@ -294,13 +294,13 @@ class TestScanCsvErrorPath:
         csv_file = tmp_path / "empty.csv"
         csv_file.write_text("")
 
-        variables, nb_row, sample, freq = scan_csv(
+        variables, nb_row, sample, frequency = scan_csv(
             csv_file, dataset_id="test", infer_stats=True
         )
         assert variables == []
         assert nb_row == 0
         assert sample is None
-        assert freq is None
+        assert frequency is None
 
     def test_scan_csv_warns_on_connect_error(self, tmp_path: Path, monkeypatch):
         """scan_csv should return empty result when DuckDB connection fails."""
@@ -319,7 +319,7 @@ class TestScanCsvErrorPath:
 
         monkeypatch.setattr(csv_mod, "_csv_source", _broken_source)
 
-        variables, nb_row, sample, freq = scan_csv(
+        variables, nb_row, sample, frequency = scan_csv(
             csv_file, dataset_id="test", infer_stats=True, quiet=True
         )
         assert variables == []

@@ -65,7 +65,7 @@ def remove_dataset_cascade(self: Catalog, dataset: Dataset) -> None:
     if var_ids:
         self.variable.remove_all(var_ids)
         # Remove frequencies for these variables
-        self.freq.remove_where("variable_id", "in", var_ids)
+        self.frequency.remove_where("variable_id", "in", var_ids)
 
     # Remove dataset
     self.dataset.remove(dataset.id)

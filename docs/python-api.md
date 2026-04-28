@@ -29,7 +29,7 @@ Catalog(app_path=None, metadata_path=None, depth="value", refresh=False, freq_th
 | variable       | Table[Variable]                   | Variable table                                     |
 | modality       | Table[Modality]                   | Modality table                                     |
 | value          | Table[Value]                      | Modality value table                               |
-| freq           | Table[Freq]                       | Frequency table (computed)                         |
+| frequency      | Table[Frequency]                  | Frequency table (computed)                         |
 | organization   | Table[Organization]               | Organization table |
 | tag            | Table[Tag]                        | Tag table                                          |
 | doc            | Table[Doc]                        | Document table                                     |

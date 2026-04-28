@@ -91,7 +91,7 @@
     "description": "User-defined scan policies"
   },
   {
-    "id": "policy---freq-hidden",
+    "id": "policy---frequency-hidden",
     "parent_id": "policy",
     "doc_ids": "",
     "name": "Frequencies hidden",

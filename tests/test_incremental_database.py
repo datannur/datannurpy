@@ -609,7 +609,7 @@ class TestDepthParameterDatabase:
 
         # No modalities
         assert len(catalog.modality.all()) == 0
-        assert catalog.freq.is_empty
+        assert catalog.frequency.is_empty
 
     def test_depth_dataset_incremental_skips_unchanged(self, sample_db: Path):
         """depth='dataset' second run marks existing datasets as seen."""

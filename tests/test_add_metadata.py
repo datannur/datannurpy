@@ -13,8 +13,8 @@ import pytest
 
 from datannurpy import Catalog, Folder
 from datannurpy.errors import ConfigError
-from datannurpy.schema import Freq, Value, Variable
-from datannurpy.utils.ids import build_freq_id, build_value_id
+from datannurpy.schema import Frequency, Value, Variable
+from datannurpy.utils.ids import build_frequency_id, build_value_id
 from datannurpy.add_metadata import (
     DEPTH_ENTITIES,
     FREQ_HIDDEN_TAG,
@@ -286,7 +286,7 @@ class TestGetCatalogTable:
         assert _get_catalog_table(catalog, "variable") is catalog.variable
         assert _get_catalog_table(catalog, "modality") is catalog.modality
         assert _get_catalog_table(catalog, "value") is catalog.value
-        assert _get_catalog_table(catalog, "freq") is catalog.freq
+        assert _get_catalog_table(catalog, "frequency") is catalog.frequency
         assert _get_catalog_table(catalog, "organization") is catalog.organization
         assert _get_catalog_table(catalog, "tag") is catalog.tag
         assert _get_catalog_table(catalog, "doc") is catalog.doc
@@ -561,12 +561,12 @@ class TestValidateEntityTable:
         errors = _validate_entity_table(catalog, "value", df, "value.csv")
         assert errors == []
 
-    def test_skip_validation_for_freq_entity(self):
-        """Freq entity uses composite key, no id validation."""
+    def test_skip_validation_for_frequency_entity(self):
+        """Frequency entity uses composite key, no id validation."""
         catalog = Catalog()
-        df = pd.DataFrame({"variable_id": ["v1"], "value": ["a"], "freq": [5]})
+        df = pd.DataFrame({"variable_id": ["v1"], "value": ["a"], "frequency": [5]})
 
-        errors = _validate_entity_table(catalog, "freq", df, "freq.csv")
+        errors = _validate_entity_table(catalog, "frequency", df, "frequency.csv")
         assert errors == []
 
 
@@ -708,58 +708,60 @@ class TestProcessEntityTable:
         created, _ = _process_entity_table(catalog, "folder", df)
         assert created == 1  # Only f1 created
 
-    def test_create_freq_entity(self):
-        """Should create Freq entities with composite key."""
+    def test_create_frequency_entity(self):
+        """Should create Frequency entities with composite key."""
         catalog = Catalog()
         df = pd.DataFrame(
             {
                 "variable_id": ["v1"],
                 "value": ["a"],
-                "freq": [5],
+                "frequency": [5],
             }
         )
 
-        created, updated = _process_entity_table(catalog, "freq", df)
+        created, updated = _process_entity_table(catalog, "frequency", df)
 
         assert created == 1
         assert updated == 0
-        assert len(catalog.freq.all()) == 1
-        assert catalog.freq.all()[0].variable_id == "v1"
-        assert catalog.freq.all()[0].value == "a"
-        assert catalog.freq.all()[0].freq == 5
+        assert len(catalog.frequency.all()) == 1
+        assert catalog.frequency.all()[0].variable_id == "v1"
+        assert catalog.frequency.all()[0].value == "a"
+        assert catalog.frequency.all()[0].frequency == 5
 
-    def test_update_freq_entity(self):
-        """Should update existing Freq entities."""
+    def test_update_frequency_entity(self):
+        """Should update existing Frequency entities."""
         catalog = Catalog()
-        freq_id = build_freq_id("v1", "a")
-        catalog.freq.add(Freq(id=freq_id, variable_id="v1", value="a", freq=3))
+        frequency_id = build_frequency_id("v1", "a")
+        catalog.frequency.add(
+            Frequency(id=frequency_id, variable_id="v1", value="a", frequency=3)
+        )
 
         df = pd.DataFrame(
             {
                 "variable_id": ["v1"],
                 "value": ["a"],
-                "freq": [10],
+                "frequency": [10],
             }
         )
 
-        created, updated = _process_entity_table(catalog, "freq", df)
+        created, updated = _process_entity_table(catalog, "frequency", df)
 
         assert created == 0
         assert updated == 1
-        assert catalog.freq.all()[0].freq == 10
+        assert catalog.frequency.all()[0].frequency == 10
 
-    def test_skip_freq_without_required_fields(self):
-        """Should skip Freq without variable_id or value."""
+    def test_skip_frequency_without_required_fields(self):
+        """Should skip Frequency without variable_id or value."""
         catalog = Catalog()
         df = pd.DataFrame(
             {
                 "variable_id": ["v1", None],
                 "value": [None, "a"],
-                "freq": [5, 5],
+                "frequency": [5, 5],
             }
         )
 
-        created, updated = _process_entity_table(catalog, "freq", df)
+        created, updated = _process_entity_table(catalog, "frequency", df)
         assert created == 0  # Both skipped
 
     def test_update_value_without_description(self):
@@ -819,22 +821,22 @@ class TestProcessEntityTable:
         assert by_id[build_value_id("m1", "a")].description == "Second"
         assert by_id[build_value_id("m2", "b")].description == "First"
 
-    def test_duplicate_composite_key_in_same_csv_freq(self):
-        """Duplicate composite key for a new Freq in same CSV should be merged."""
+    def test_duplicate_composite_key_in_same_csv_frequency(self):
+        """Duplicate composite key for a new Frequency in same CSV should be merged."""
         catalog = Catalog()
         df = pd.DataFrame(
             {
                 "variable_id": ["v1", "v1"],
                 "value": ["a", "a"],
-                "freq": [1, 7],
+                "frequency": [1, 7],
             }
         )
 
-        created, updated = _process_entity_table(catalog, "freq", df)
+        created, updated = _process_entity_table(catalog, "frequency", df)
 
         assert created == 1
         assert updated == 0
-        assert catalog.freq.all()[0].freq == 7
+        assert catalog.frequency.all()[0].frequency == 7
 
 
 class TestUnknownEntityType:
@@ -1130,31 +1132,35 @@ class TestEdgeCases:
         assert mod is not None
         assert mod._seen is True
 
-    def test_freq_create_from_csv(self, tmp_path: Path):
-        """Should create freq entries from CSV."""
-        (tmp_path / "freq.csv").write_text(
-            "variable_id,value,freq\nv1,red,10\nv1,blue,5\n"
+    def test_frequency_create_from_csv(self, tmp_path: Path):
+        """Should create frequency entries from CSV."""
+        (tmp_path / "frequency.csv").write_text(
+            "variable_id,value,frequency\nv1,red,10\nv1,blue,5\n"
         )
 
         catalog = Catalog()
         add_metadata(catalog, tmp_path, quiet=True)
 
-        assert len(catalog.freq.all()) == 2
-        freqs = {f.value: f.freq for f in catalog.freq.all()}
-        assert freqs["red"] == 10
-        assert freqs["blue"] == 5
+        assert len(catalog.frequency.all()) == 2
+        frequencies = {f.value: f.frequency for f in catalog.frequency.all()}
+        assert frequencies["red"] == 10
+        assert frequencies["blue"] == 5
 
-    def test_freq_update_from_csv(self, tmp_path: Path):
-        """Should update existing freq from CSV."""
-        freq_id = build_freq_id("v1", "red")
+    def test_frequency_update_from_csv(self, tmp_path: Path):
+        """Should update existing frequency from CSV."""
+        frequency_id = build_frequency_id("v1", "red")
         catalog = Catalog()
-        catalog.freq.add(Freq(id=freq_id, variable_id="v1", value="red", freq=3))
+        catalog.frequency.add(
+            Frequency(id=frequency_id, variable_id="v1", value="red", frequency=3)
+        )
 
-        (tmp_path / "freq.csv").write_text("variable_id,value,freq\nv1,red,20\n")
+        (tmp_path / "frequency.csv").write_text(
+            "variable_id,value,frequency\nv1,red,20\n"
+        )
         add_metadata(catalog, tmp_path, quiet=True)
 
-        assert len(catalog.freq.all()) == 1
-        assert catalog.freq.all()[0].freq == 20
+        assert len(catalog.frequency.all()) == 1
+        assert catalog.frequency.all()[0].frequency == 20
 
 
 class TestEnsureMetadataApplied:
@@ -1254,7 +1260,7 @@ class TestLoadMetadata:
         assert catalog._freq_hidden_ids == set()
 
     def test_extracts_freq_hidden_ids(self, tmp_path: Path):
-        """Should extract variable IDs with policy---freq-hidden tag."""
+        """Should extract variable IDs with policy---frequency-hidden tag."""
         (tmp_path / "variable.csv").write_text(
             "id,name,dataset_id,tag_ids\n"
             f'd---v1,v1,d,"{FREQ_HIDDEN_TAG}"\n'
@@ -1263,8 +1269,8 @@ class TestLoadMetadata:
         catalog = Catalog(metadata_path=tmp_path, quiet=True)
         assert catalog._freq_hidden_ids == {"d---v1"}
 
-    def test_freq_hidden_with_multiple_tags(self, tmp_path: Path):
-        """Should detect freq-hidden even with other tags."""
+    def test_frequency_hidden_with_multiple_tags(self, tmp_path: Path):
+        """Should detect frequency-hidden even with other tags."""
         (tmp_path / "variable.csv").write_text(
             f'id,name,dataset_id,tag_ids\nd---v1,v1,d,"rh,{FREQ_HIDDEN_TAG},finance"\n'
         )
@@ -1314,8 +1320,8 @@ class TestLoadMetadata:
         assert len(catalog.folder.all()) == 1
 
 
-class TestFreqHiddenPolicy:
-    """Tests for policy---freq-hidden during scan and export."""
+class TestFrequencyHiddenPolicy:
+    """Tests for policy---frequency-hidden during scan and export."""
 
     def _make_csv(self, path: Path) -> Path:
         """Create a CSV with two low-cardinality columns."""
@@ -1324,7 +1330,7 @@ class TestFreqHiddenPolicy:
         return csv_path
 
     def _make_metadata(self, path: Path, folder_id: str) -> Path:
-        """Create metadata tagging 'name' column as freq-hidden."""
+        """Create metadata tagging 'name' column as frequency-hidden."""
         meta = path / "meta"
         meta.mkdir()
         (meta / "variable.csv").write_text(
@@ -1334,8 +1340,8 @@ class TestFreqHiddenPolicy:
         )
         return meta
 
-    def test_hidden_var_has_no_freq(self, tmp_path: Path):
-        """Freq-hidden variable should have no freq rows."""
+    def test_hidden_var_has_no_frequency(self, tmp_path: Path):
+        """Frequency-hidden variable should have no frequency rows."""
         self._make_csv(tmp_path)
         meta = self._make_metadata(tmp_path, "src")
         catalog = Catalog(metadata_path=meta, quiet=True)
@@ -1347,22 +1353,26 @@ class TestFreqHiddenPolicy:
         assert name_var is not None
         assert color_var is not None
 
-        # name: no modality, no freq
+        # name: no modality, no frequency rows
         assert not name_var.modality_ids
-        freq_rows = [
-            f for f in catalog.freq.all() if f.variable_id == "src---data_csv---name"
+        frequency_rows = [
+            f
+            for f in catalog.frequency.all()
+            if f.variable_id == "src---data_csv---name"
         ]
-        assert freq_rows == []
+        assert frequency_rows == []
 
-        # color: has modality and freq (not hidden)
+        # color: has modality and frequency rows (not hidden)
         assert color_var.modality_ids
-        color_freqs = [
-            f for f in catalog.freq.all() if f.variable_id == "src---data_csv---color"
+        color_frequencies = [
+            f
+            for f in catalog.frequency.all()
+            if f.variable_id == "src---data_csv---color"
         ]
-        assert len(color_freqs) > 0
+        assert len(color_frequencies) > 0
 
     def test_hidden_var_keeps_stats(self, tmp_path: Path):
-        """Freq-hidden variable should still have stats."""
+        """Frequency-hidden variable should still have stats."""
         self._make_csv(tmp_path)
         meta = self._make_metadata(tmp_path, "src")
         catalog = Catalog(metadata_path=meta, quiet=True)
@@ -1392,14 +1402,16 @@ class TestFreqHiddenPolicy:
 
         name_var = catalog.variable.get("src---data_csv---name")
         assert name_var is not None
-        # name should have freq (not hidden)
-        freq_rows = [
-            f for f in catalog.freq.all() if f.variable_id == "src---data_csv---name"
+        # name should have frequency rows (not hidden)
+        frequency_rows = [
+            f
+            for f in catalog.frequency.all()
+            if f.variable_id == "src---data_csv---name"
         ]
-        assert len(freq_rows) > 0
+        assert len(frequency_rows) > 0
 
     def test_multiple_hidden_variables(self, tmp_path: Path):
-        """Multiple variables tagged freq-hidden should all be suppressed."""
+        """Multiple variables tagged frequency-hidden should all be suppressed."""
         csv_path = tmp_path / "data.csv"
         csv_path.write_text("name,color,age\nAlice,red,30\nBob,blue,25\nAlice,red,30\n")
         meta = tmp_path / "meta"
@@ -1421,13 +1433,15 @@ class TestFreqHiddenPolicy:
             var = catalog.variable.get(f"src---data_csv---{col}")
             assert var is not None
             assert not var.modality_ids
-            assert [f for f in catalog.freq.all() if f.variable_id == var.id] == []
+            assert [f for f in catalog.frequency.all() if f.variable_id == var.id] == []
 
-        # age is not hidden — should have freq
+        # age is not hidden — should have frequency rows
         age_var = catalog.variable.get("src---data_csv---age")
         assert age_var is not None
-        age_freqs = [f for f in catalog.freq.all() if f.variable_id == age_var.id]
-        assert len(age_freqs) > 0
+        age_frequencies = [
+            f for f in catalog.frequency.all() if f.variable_id == age_var.id
+        ]
+        assert len(age_frequencies) > 0
 
 
 class TestConceptEntity:
@@ -1570,8 +1584,8 @@ class TestMetadataPathList:
         assert var is not None
         assert set(var.tag_ids) == {"base_tag", "overlay_tag"}
 
-    def test_list_unions_freq_hidden_ids(self, tmp_path: Path):
-        """freq-hidden ids are unioned across all sources."""
+    def test_list_unions_frequency_hidden_ids(self, tmp_path: Path):
+        """frequency-hidden ids are unioned across all sources."""
         base = tmp_path / "base"
         base.mkdir()
         (base / "variable.csv").write_text(

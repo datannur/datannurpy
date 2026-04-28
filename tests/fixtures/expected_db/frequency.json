@@ -2,6841 +2,6841 @@
   {
     "variable_id": "company---config---key",
     "value": "company_name",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---config---key",
     "value": "version",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---config---value",
     "value": "1.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---config---value",
     "value": "Demo Corp",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_departments---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_departments---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_departments---id",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_departments---location",
     "value": "Lyon",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_departments---location",
     "value": "Paris",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "company---hr---hr_departments---name",
     "value": "Engineering",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_departments---name",
     "value": "HR",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_departments---name",
     "value": "Sales",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_employees---department_id",
     "value": "1",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "company---hr---hr_employees---department_id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_employees---email",
     "value": "alice@company.com",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_employees---email",
     "value": "bob@company.com",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_employees---email",
     "value": "claire@company.com",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_employees---hire_date",
     "value": "2019-06-01",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_employees---hire_date",
     "value": "2020-01-15",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_employees---hire_date",
     "value": "2021-03-20",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_employees---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_employees---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_employees---id",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_employees---name",
     "value": "Alice Martin",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_employees---name",
     "value": "Bob Dupont",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_employees---name",
     "value": "Claire Durand",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_salaries---amount",
     "value": "48000.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_salaries---amount",
     "value": "55000.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_salaries---amount",
     "value": "60000.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_salaries---effective_date",
     "value": "2020-01-15",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_salaries---effective_date",
     "value": "2021-03-20",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_salaries---effective_date",
     "value": "2023-01-01",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_salaries---employee_id",
     "value": "1",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "company---hr---hr_salaries---employee_id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_salaries---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_salaries---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_salaries---id",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---inventory---inventory_products---category",
     "value": "Electronics",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "company---inventory---inventory_products---id",
     "value": "101",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---inventory---inventory_products---id",
     "value": "102",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---inventory---inventory_products---name",
     "value": "Gadget Plus",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---inventory---inventory_products---name",
     "value": "Widget Pro",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---inventory---inventory_products---price",
     "value": "149.99",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---inventory---inventory_products---price",
     "value": "99.99",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---inventory---inventory_products---sku",
     "value": "GADGET-002",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---inventory---inventory_products---sku",
     "value": "WIDGET-001",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---inventory---inventory_warehouses---capacity",
     "value": "10000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---inventory---inventory_warehouses---capacity",
     "value": "5000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---inventory---inventory_warehouses---city",
     "value": "Lyon",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---inventory---inventory_warehouses---city",
     "value": "Paris",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---inventory---inventory_warehouses---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---inventory---inventory_warehouses---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---inventory---inventory_warehouses---name",
     "value": "Lyon Depot",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---inventory---inventory_warehouses---name",
     "value": "Paris Central",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_customers---country",
     "value": "Belgium",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_customers---country",
     "value": "France",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_customers---email",
     "value": "contact@acme.com",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_customers---email",
     "value": "info@techstart.com",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_customers---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_customers---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_customers---name",
     "value": "Acme Corp",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_customers---name",
     "value": "TechStart",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_headers---customer_id",
     "value": "1",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_headers---customer_id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_headers---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_headers---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_headers---id",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_headers---order_date",
     "value": "2024-01-10",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_headers---order_date",
     "value": "2024-02-15",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_headers---order_date",
     "value": "2024-03-01",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_headers---status",
     "value": "completed",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_headers---status",
     "value": "pending",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_items---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_items---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_items---id",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_items---order_id",
     "value": "1",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_items---order_id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_items---product_id",
     "value": "101",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_items---product_id",
     "value": "102",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_items---quantity",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_items---quantity",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_items---quantity",
     "value": "5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_items---unit_price",
     "value": "149.99",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_items---unit_price",
     "value": "99.99",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_returns---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_returns---order_item_id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_returns---reason",
     "value": "Defective",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "company---sales---sales_order---sales_order_returns---return_date",
     "value": "2024-01-25",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---CYL",
     "value": "3",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "data---cars_sas7bdat---CYL",
     "value": "4",
-    "freq": 199
+    "frequency": 199
   },
   {
     "variable_id": "data---cars_sas7bdat---CYL",
     "value": "5",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---CYL",
     "value": "6",
-    "freq": 83
+    "frequency": 83
   },
   {
     "variable_id": "data---cars_sas7bdat---CYL",
     "value": "8",
-    "freq": 103
+    "frequency": 103
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "101.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "104.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "105.0",
-    "freq": 7
+    "frequency": 7
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "107.0",
-    "freq": 5
+    "frequency": 5
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "108.0",
-    "freq": 5
+    "frequency": 5
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "110.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "111.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "112.0",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "113.0",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "114.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "115.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "116.0",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "119.0",
-    "freq": 6
+    "frequency": 6
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "120.0",
-    "freq": 9
+    "frequency": 9
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "121.0",
-    "freq": 11
+    "frequency": 11
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "122.0",
-    "freq": 7
+    "frequency": 7
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "130.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "131.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "134.0",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "135.0",
-    "freq": 5
+    "frequency": 5
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "140.0",
-    "freq": 15
+    "frequency": 15
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "141.0",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "144.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "145.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "146.0",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "151.0",
-    "freq": 9
+    "frequency": 9
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "155.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "156.0",
-    "freq": 6
+    "frequency": 6
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "163.0",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "168.0",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "171.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "173.0",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "181.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "183.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "198.0",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "199.0",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "200.0",
-    "freq": 7
+    "frequency": 7
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "225.0",
-    "freq": 13
+    "frequency": 13
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "231.0",
-    "freq": 8
+    "frequency": 8
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "232.0",
-    "freq": 11
+    "frequency": 11
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "250.0",
-    "freq": 17
+    "frequency": 17
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "258.0",
-    "freq": 5
+    "frequency": 5
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "260.0",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "262.0",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "267.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "302.0",
-    "freq": 11
+    "frequency": 11
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "304.0",
-    "freq": 7
+    "frequency": 7
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "305.0",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "307.0",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "318.0",
-    "freq": 17
+    "frequency": 17
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "340.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "350.0",
-    "freq": 18
+    "frequency": 18
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "351.0",
-    "freq": 8
+    "frequency": 8
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "360.0",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "383.0",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "390.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "400.0",
-    "freq": 13
+    "frequency": 13
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "429.0",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "440.0",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "454.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "455.0",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "68.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "70.0",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "71.0",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "72.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "76.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "78.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "79.0",
-    "freq": 6
+    "frequency": 6
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "80.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "81.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "83.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "85.0",
-    "freq": 7
+    "frequency": 7
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "86.0",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "88.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "89.0",
-    "freq": 5
+    "frequency": 5
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "90.0",
-    "freq": 8
+    "frequency": 8
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "91.0",
-    "freq": 12
+    "frequency": 12
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "96.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "97.0",
-    "freq": 21
+    "frequency": 21
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "97.5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
     "value": "98.0",
-    "freq": 17
+    "frequency": 17
   },
   {
     "variable_id": "data---csv---employees_csv---age",
     "value": "25",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---age",
     "value": "26",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---age",
     "value": "27",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---age",
     "value": "28",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---age",
     "value": "29",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---age",
     "value": "30",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---age",
     "value": "31",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---age",
     "value": "32",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---age",
     "value": "33",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---age",
     "value": "34",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---age",
     "value": "35",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---age",
     "value": "36",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---age",
     "value": "37",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---age",
     "value": "39",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---age",
     "value": "40",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---age",
     "value": "41",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---age",
     "value": "42",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---age",
     "value": "44",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---age",
     "value": "45",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2018-07-30",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2018-12-11",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2019-05-17",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2019-09-05",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2019-11-08",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2020-03-22",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2020-04-29",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2020-08-21",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2020-11-12",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2020-12-03",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2021-04-18",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2021-06-10",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2021-09-06",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2021-10-25",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2022-01-15",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2022-03-14",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2022-08-14",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2023-01-09",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2023-02-28",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---date_embauche",
     "value": "2023-05-22",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---departement",
     "value": "Finance",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---csv---employees_csv---departement",
     "value": "IT",
-    "freq": 6
+    "frequency": 6
   },
   {
     "variable_id": "data---csv---employees_csv---departement",
     "value": "Marketing",
-    "freq": 5
+    "frequency": 5
   },
   {
     "variable_id": "data---csv---employees_csv---departement",
     "value": "RH",
-    "freq": 5
+    "frequency": 5
   },
   {
     "variable_id": "data---csv---employees_csv---est_manager",
     "value": "0",
-    "freq": 13
+    "frequency": 13
   },
   {
     "variable_id": "data---csv---employees_csv---est_manager",
     "value": "1",
-    "freq": 7
+    "frequency": 7
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "10",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "11",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "12",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "13",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "14",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "15",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "16",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "17",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "18",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "19",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "20",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "4",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "6",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "7",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "8",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---id",
     "value": "9",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Anne",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Claire",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Céline",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Emma",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "François",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Isabelle",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Jean",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Julie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Julien",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Laura",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Luc",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Marc",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Marie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Nicolas",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Paul",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Pierre",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Sophie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Sylvie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---prenom",
     "value": "Thomas",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "41000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "42000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "43000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "45000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "46000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "47000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "48000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "49000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "50000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "51000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "52000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "54000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "55000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "56000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "58000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "61000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "62000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "65000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "68000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---salaire",
     "value": "72000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---employees_csv---ville",
     "value": "Lyon",
-    "freq": 5
+    "frequency": 5
   },
   {
     "variable_id": "data---csv---employees_csv---ville",
     "value": "Marseille",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "data---csv---employees_csv---ville",
     "value": "Paris",
-    "freq": 6
+    "frequency": 6
   },
   {
     "variable_id": "data---csv---employees_csv---ville",
     "value": "Toulouse",
-    "freq": 5
+    "frequency": 5
   },
   {
     "variable_id": "data---csv---legacy_encoding_csv---d_partement",
     "value": "Alsace…",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---legacy_encoding_csv---d_partement",
     "value": "Côte d'Or",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---legacy_encoding_csv---d_partement",
     "value": "Rhône-Alpes",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---legacy_encoding_csv---d_partement",
     "value": "Île-de-France",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---legacy_encoding_csv---nom",
     "value": "Dupré",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---legacy_encoding_csv---nom",
     "value": "Léger",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---legacy_encoding_csv---nom",
     "value": "Müller",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---legacy_encoding_csv---nom",
     "value": "Çelik",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---legacy_encoding_csv---pr_nom",
     "value": "André",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---legacy_encoding_csv---pr_nom",
     "value": "François",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---legacy_encoding_csv---pr_nom",
     "value": "José",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---legacy_encoding_csv---pr_nom",
     "value": "Sœur",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---legacy_encoding_csv---salaire",
     "value": "38000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---legacy_encoding_csv---salaire",
     "value": "45000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---legacy_encoding_csv---salaire",
     "value": "50€",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---legacy_encoding_csv---salaire",
     "value": "52000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---densite_pop",
     "value": "1010.8",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---densite_pop",
     "value": "111.1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---densite_pop",
     "value": "115.4",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---densite_pop",
     "value": "119.5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---densite_pop",
     "value": "124.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---densite_pop",
     "value": "162.2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---densite_pop",
     "value": "187.5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---densite_pop",
     "value": "39.5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---densite_pop",
     "value": "58.5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---densite_pop",
     "value": "65.7",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---densite_pop",
     "value": "71.5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---densite_pop",
     "value": "81.4",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---densite_pop",
     "value": "96.1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---nb_entreprises",
     "value": "1456789",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---nb_entreprises",
     "value": "223456",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---nb_entreprises",
     "value": "234567",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---nb_entreprises",
     "value": "289234",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---nb_entreprises",
     "value": "334567",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---nb_entreprises",
     "value": "34567",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---nb_entreprises",
     "value": "378901",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---nb_entreprises",
     "value": "445678",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---nb_entreprises",
     "value": "456123",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---nb_entreprises",
     "value": "456789",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---nb_entreprises",
     "value": "523456",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---nb_entreprises",
     "value": "567234",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---nb_entreprises",
     "value": "845123",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---pib_milliards_euros",
     "value": "104.2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---pib_milliards_euros",
     "value": "125.4",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---pib_milliards_euros",
     "value": "159.7",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---pib_milliards_euros",
     "value": "168.9",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---pib_milliards_euros",
     "value": "172.1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---pib_milliards_euros",
     "value": "179.2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---pib_milliards_euros",
     "value": "189.3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---pib_milliards_euros",
     "value": "289.4",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---pib_milliards_euros",
     "value": "69.8",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---pib_milliards_euros",
     "value": "71.9",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---pib_milliards_euros",
     "value": "765.8",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---pib_milliards_euros",
     "value": "8.9",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---pib_milliards_euros",
     "value": "91.8",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---population",
     "value": "12140526",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---population",
     "value": "2573180",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---population",
     "value": "2795301",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---population",
     "value": "3322757",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---population",
     "value": "3373835",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---population",
     "value": "344679",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---population",
     "value": "3832120",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---population",
     "value": "5094283",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---population",
     "value": "5518851",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---population",
     "value": "5924858",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---population",
     "value": "5962662",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---population",
     "value": "6010289",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---population",
     "value": "8042936",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---region",
     "value": "Auvergne-Rhône-Alpes",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---region",
     "value": "Bourgogne-Franche-Comté",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---region",
     "value": "Bretagne",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---region",
     "value": "Centre-Val de Loire",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---region",
     "value": "Corse",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---region",
     "value": "Grand Est",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---region",
     "value": "Hauts-de-France",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---region",
     "value": "Normandie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---region",
     "value": "Nouvelle-Aquitaine",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---region",
     "value": "Occitanie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---region",
     "value": "Pays de la Loire",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---region",
     "value": "Provence-Alpes-Côte d'Azur",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---region",
     "value": "Île-de-France",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---superficie_km2",
     "value": "12011",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---superficie_km2",
     "value": "27208",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---superficie_km2",
     "value": "29906",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---superficie_km2",
     "value": "31400",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---superficie_km2",
     "value": "31806",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---superficie_km2",
     "value": "32082",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---superficie_km2",
     "value": "39151",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---superficie_km2",
     "value": "47784",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---superficie_km2",
     "value": "57433",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---superficie_km2",
     "value": "69711",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---superficie_km2",
     "value": "72724",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---superficie_km2",
     "value": "84061",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---superficie_km2",
     "value": "8722",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---taux_chomage",
     "value": "6.2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---taux_chomage",
     "value": "6.8",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---taux_chomage",
     "value": "6.9",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---taux_chomage",
     "value": "7.1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---taux_chomage",
     "value": "7.2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---taux_chomage",
     "value": "7.4",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---taux_chomage",
     "value": "7.5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---taux_chomage",
     "value": "7.8",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---taux_chomage",
     "value": "8.1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---taux_chomage",
     "value": "8.3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---taux_chomage",
     "value": "8.7",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---taux_chomage",
     "value": "8.9",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---csv---regions_france_csv---taux_chomage",
     "value": "9.2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---dtime",
     "value": "1583-01-01 00:00:00",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---dtime",
     "value": "1880-05-06 10:10:10",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---dtime",
     "value": "1960-01-01 00:00:00",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---dtime",
     "value": "2018-05-06 10:10:10",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---mychar",
     "value": "a",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---mychar",
     "value": "b",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---mychar",
     "value": "c",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---mychar",
     "value": "d",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---mychar",
     "value": "e",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---mydate",
     "value": "1583-01-01",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---mydate",
     "value": "1880-05-06",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---mydate",
     "value": "1960-01-01",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---mydate",
     "value": "2018-05-06",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---mylabl",
     "value": "1",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---datatypes_spss_sav---mylabl",
     "value": "2",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "data---datatypes_spss_sav---mynum",
     "value": "-1.4",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---mynum",
     "value": "-1000.3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---mynum",
     "value": "1.1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---mynum",
     "value": "1.2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---mynum",
     "value": "1000.3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---myord",
     "value": "1",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---datatypes_spss_sav---myord",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---myord",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---mytime",
     "value": "00:00:00",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---mytime",
     "value": "10:10:10",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---mytime",
     "value": "16:10:10",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_spss_sav---mytime",
     "value": "23:10:10",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---dtime",
     "value": "1583-01-01 00:00:00",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---dtime",
     "value": "1880-05-06 10:10:10",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---dtime",
     "value": "1960-01-01 00:00:00",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---dtime",
     "value": "2018-05-06 10:10:10",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---mychar",
     "value": "a",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---mychar",
     "value": "b",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---mychar",
     "value": "c",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---mychar",
     "value": "d",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---mychar",
     "value": "e",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---mydate",
     "value": "1583-01-01",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---mydate",
     "value": "1880-05-06",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---mydate",
     "value": "1960-01-01",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---mydate",
     "value": "2018-05-06",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---mylabl",
     "value": "1",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---datatypes_stata_dta---mylabl",
     "value": "2",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "data---datatypes_stata_dta---mynum",
     "value": "-1.4",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---mynum",
     "value": "-1000.3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---mynum",
     "value": "1.1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---mynum",
     "value": "1.2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---mynum",
     "value": "1000.3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---myord",
     "value": "1",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---datatypes_stata_dta---myord",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---myord",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---mytime",
     "value": "00:00:00",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---mytime",
     "value": "10:10:10",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---mytime",
     "value": "16:10:10",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---datatypes_stata_dta---mytime",
     "value": "23:10:10",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---amount",
     "value": "100.5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---amount",
     "value": "150.75",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---amount",
     "value": "200.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---amount",
     "value": "250.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---amount",
     "value": "300.25",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---city",
     "value": "Berlin",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---city",
     "value": "London",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---city",
     "value": "Madrid",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---city",
     "value": "Paris",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---city",
     "value": "Rome",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---id",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---id",
     "value": "4",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---id",
     "value": "5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---name",
     "value": "Alice",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---name",
     "value": "Bob",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---name",
     "value": "Charlie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---name",
     "value": "Diana",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---name",
     "value": "Eve",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---metadata---organization_csv---description",
     "value": "Direction générale des Finances publiques",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---metadata---organization_csv---description",
     "value": "Institut national de la statistique et des études économiques",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---metadata---organization_csv---email",
     "value": "contact@insee.fr",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---metadata---organization_csv---id",
     "value": "dgfip",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---metadata---organization_csv---id",
     "value": "insee",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---metadata---organization_csv---name",
     "value": "DGFiP",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---metadata---organization_csv---name",
     "value": "INSEE",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---metadata---tag_csv---description",
     "value": "Données financières",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---metadata---tag_csv---description",
     "value": "Ressources humaines",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---metadata---tag_csv---id",
     "value": "finance",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---metadata---tag_csv---id",
     "value": "rh",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---metadata---tag_csv---name",
     "value": "Finance",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---metadata---tag_csv---name",
     "value": "RH",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---metadata---variable_csv---dataset_id",
     "value": "data---csv---employees_csv",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---metadata---variable_csv---description",
     "value": "Nom de famille de l'employé",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---metadata---variable_csv---description",
     "value": "Salaire mensuel brut en euros",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "data---metadata---variable_csv---id",
     "value": "data---csv---employees_csv---nom",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---metadata---variable_csv---id",
     "value": "data---csv---employees_csv---salaire",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---metadata---variable_csv---id",
     "value": "data---csv---employees_csv---salaire2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---metadata---variable_csv---tag_ids",
     "value": "finance,rh",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "data---metadata---variable_csv---tag_ids",
-    "value": "rh,policy---freq-hidden",
-    "freq": 1
+    "value": "rh,policy---frequency-hidden",
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "25.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "26.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "27.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "28.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "29.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "30.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "31.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "32.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "33.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "34.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "35.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "36.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "37.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "39.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "40.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "41.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "42.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "44.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
     "value": "45.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "10",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "11",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "12",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "13",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "14",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "15",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "16",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "17",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "18",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "19",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "20",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "4",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "6",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "7",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "8",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---id",
     "value": "9",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "Andre",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "Bernard",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "Bertrand",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "Blanc",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "David",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "Dupont",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "Durand",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "Faure",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "Garnier",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "Girard",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "Leroy",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "Martin",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "Mercier",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "Michel",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "Moreau",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "Petit",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "Richard",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "Robert",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "Roux",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---nom",
     "value": "Simon",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "Anne",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "Claire",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "Céline",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "Emma",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "François",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "Isabelle",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "Jean",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "Julie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "Julien",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "Laura",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "Luc",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "Marc",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "Marie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "Nicolas",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "Paul",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "Pierre",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "Sophie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "Sylvie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---prenom",
     "value": "Thomas",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
     "value": "25.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
     "value": "26.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
     "value": "27.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
     "value": "28.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
     "value": "29.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
     "value": "30.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
     "value": "31.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
     "value": "32.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
     "value": "33.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
     "value": "34.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
     "value": "35.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
     "value": "36.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
     "value": "37.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
     "value": "39.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
     "value": "40.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
     "value": "41.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
     "value": "42.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
     "value": "44.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
     "value": "45.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2018-07-30",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2018-12-11",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2019-05-17",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2019-09-05",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2019-11-08",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2020-03-22",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2020-04-29",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2020-08-21",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2020-11-12",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2020-12-03",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2021-04-18",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2021-06-10",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2021-09-06",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2021-10-25",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2022-01-15",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2022-03-14",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2022-08-14",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2023-01-09",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2023-02-28",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---date_embauche",
     "value": "2023-05-22",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---departement",
     "value": "Finance",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---departement",
     "value": "IT",
-    "freq": 6
+    "frequency": 6
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---departement",
     "value": "Marketing",
-    "freq": 5
+    "frequency": 5
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---departement",
     "value": "RH",
-    "freq": 5
+    "frequency": 5
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---est_manager",
     "value": "0",
-    "freq": 13
+    "frequency": 13
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---est_manager",
     "value": "1",
-    "freq": 7
+    "frequency": 7
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "10",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "11",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "12",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "13",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "14",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "15",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "16",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "17",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "18",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "19",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "20",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "4",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "6",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "7",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "8",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---id",
     "value": "9",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "Andre",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "Bernard",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "Bertrand",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "Blanc",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "David",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "Dupont",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "Durand",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "Faure",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "Garnier",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "Girard",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "Leroy",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "Martin",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "Mercier",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "Michel",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "Moreau",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "Petit",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "Richard",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "Robert",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "Roux",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---nom",
     "value": "Simon",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "Anne",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "Claire",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "Céline",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "Emma",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "François",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "Isabelle",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "Jean",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "Julie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "Julien",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "Laura",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "Luc",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "Marc",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "Marie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "Nicolas",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "Paul",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "Pierre",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "Sophie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "Sylvie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---prenom",
     "value": "Thomas",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "41000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "42000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "43000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "45000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "46000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "47000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "48000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "49000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "50000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "51000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "52000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "54000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "55000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "56000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "58000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "61000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "62000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "65000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "68000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---salaire",
     "value": "72000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---ville",
     "value": "Lyon",
-    "freq": 5
+    "frequency": 5
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---ville",
     "value": "Marseille",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---ville",
     "value": "Paris",
-    "freq": 6
+    "frequency": 6
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---ville",
     "value": "Toulouse",
-    "freq": 5
+    "frequency": 5
   },
   {
     "variable_id": "data---test_delta---age",
     "value": "25",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_delta---age",
     "value": "30",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_delta---age",
     "value": "35",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_delta---age",
     "value": "40",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_delta---age",
     "value": "45",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_delta---age",
     "value": "50",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_delta---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_delta---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_delta---id",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_delta---id",
     "value": "4",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_delta---id",
     "value": "5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_delta---id",
     "value": "6",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_delta---name",
     "value": "Alice",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_delta---name",
     "value": "Bob",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_delta---name",
     "value": "Charlie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_delta---name",
     "value": "David",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_delta---name",
     "value": "Eve",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_delta---name",
     "value": "Frank",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_parquet---age",
     "value": "25",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_parquet---age",
     "value": "30",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_parquet---age",
     "value": "35",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_parquet---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_parquet---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_parquet---id",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_parquet---name",
     "value": "Alice",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_parquet---name",
     "value": "Bob",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_parquet---name",
     "value": "Charlie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_partitioned---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_partitioned---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_partitioned---id",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_partitioned---id",
     "value": "4",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_partitioned---id",
     "value": "5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_partitioned---id",
     "value": "6",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_partitioned---name",
     "value": "Alice",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_partitioned---name",
     "value": "Bob",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_partitioned---name",
     "value": "Charlie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_partitioned---name",
     "value": "David",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_partitioned---name",
     "value": "Eve",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_partitioned---name",
     "value": "Frank",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_partitioned---region",
     "value": "EU",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---test_partitioned---region",
     "value": "US",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---test_partitioned---year",
     "value": "2023",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---test_partitioned---year",
     "value": "2024",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "data---test_pq---age",
     "value": "25",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_pq---age",
     "value": "30",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_pq---age",
     "value": "35",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_pq---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_pq---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_pq---id",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_pq---name",
     "value": "Alice",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_pq---name",
     "value": "Bob",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_pq---name",
     "value": "Charlie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_with_metadata_parquet---age",
     "value": "25",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_with_metadata_parquet---age",
     "value": "30",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_with_metadata_parquet---age",
     "value": "35",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_with_metadata_parquet---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_with_metadata_parquet---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_with_metadata_parquet---id",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_with_metadata_parquet---name",
     "value": "Alice",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_with_metadata_parquet---name",
     "value": "Bob",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---test_with_metadata_parquet---name",
     "value": "Charlie",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---mixed---budget_---PERIOD---_csv---categorie",
     "value": "infra",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---mixed---budget_---PERIOD---_csv---categorie",
     "value": "rh",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "data---timeseries---mixed---budget_---PERIOD---_csv---montant",
     "value": "15000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---mixed---budget_---PERIOD---_csv---montant",
     "value": "52000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---mixed---budget_---PERIOD---_csv---montant",
     "value": "6000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---mixed---budget_---PERIOD---_csv---poste",
     "value": "formation",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---mixed---budget_---PERIOD---_csv---poste",
     "value": "materiel",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---mixed---budget_---PERIOD---_csv---poste",
     "value": "salaires",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---mixed---census_---PERIOD---_csv---commune",
     "value": "Lyon",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---mixed---census_---PERIOD---_csv---commune",
     "value": "Marseille",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---mixed---census_---PERIOD---_csv---commune",
     "value": "Paris",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---mixed---census_---PERIOD---_csv---population",
     "value": "2150000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---mixed---census_---PERIOD---_csv---population",
     "value": "525000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---mixed---census_---PERIOD---_csv---population",
     "value": "872000",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---mixed---census_---PERIOD---_csv---superficie",
     "value": "105",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---mixed---census_---PERIOD---_csv---superficie",
     "value": "241",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---mixed---census_---PERIOD---_csv---superficie",
     "value": "48",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---humidite",
     "value": "60",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---humidite",
     "value": "65",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---humidite",
     "value": "68",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---jour",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---jour",
     "value": "15",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---jour",
     "value": "28",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---temperature",
     "value": "11.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---temperature",
     "value": "7.1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---temperature",
     "value": "9.3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---marge",
     "value": "290",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---marge",
     "value": "320",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---marge",
     "value": "340",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---mois",
     "value": "fevrier",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---mois",
     "value": "janvier",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---mois",
     "value": "mars",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---region",
     "value": "est",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---region",
     "value": "nord",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---region",
     "value": "sud",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---ventes",
     "value": "1450",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---ventes",
     "value": "1600",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---ventes",
     "value": "1700",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---email",
     "value": "alice@mail.com",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---email",
     "value": "bob@mail.com",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---email",
     "value": "claire@mail.com",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---id",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---nom",
     "value": "Alice",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---nom",
     "value": "Bob",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---nom",
     "value": "Claire",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---age",
     "value": "29",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---age",
     "value": "31",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---age",
     "value": "42",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---id",
     "value": "7",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---id",
     "value": "8",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---id",
     "value": "9",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---nom",
     "value": "Gaelle",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---nom",
     "value": "Hugo",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---nom",
     "value": "Isabelle",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---ville",
     "value": "Bordeaux",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---ville",
     "value": "Lille",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "data---timeseries---yearly---enquete_---PERIOD---_csv---ville",
     "value": "Strasbourg",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---EnergySourceCatalogue---DE",
     "value": "Solar",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---EnergySourceCatalogue---DE",
     "value": "Wind",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---EnergySourceCatalogue---EN",
     "value": "Solar",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---EnergySourceCatalogue---EN",
     "value": "Wind",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---EnergySourceCatalogue---EnergySource_ID",
     "value": "es1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---EnergySourceCatalogue---EnergySource_ID",
     "value": "es2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---EnergySourceCatalogue---FR",
     "value": "Eolien",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---EnergySourceCatalogue---FR",
     "value": "Solaire",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---EnergySourceCatalogue---IT",
     "value": "Eolico",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---EnergySourceCatalogue---IT",
     "value": "Solare",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---EnergySourceCatalogue---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---EnergySourceCatalogue---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Cantons",
     "value": "BE",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "photovoltaik---Project---Cantons",
     "value": "BE ",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Cantons",
     "value": "GR",
-    "freq": 9
+    "frequency": 9
   },
   {
     "variable_id": "photovoltaik---Project---Cantons",
     "value": "SG",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Cantons",
     "value": "TI",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---Project---Cantons",
     "value": "UR",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Cantons",
     "value": "VS",
-    "freq": 11
+    "frequency": 11
   },
   {
     "variable_id": "photovoltaik---Project---Cantons",
     "value": "Valais",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "1250",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "1650",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "1693",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "1705",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "1768",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "1894",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "1962",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "1988",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "2003",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "2014",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "2029",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "2071",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "2127",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "2156",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "2189",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "2190",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "2240",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "2272",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "2342",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "2382",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "2425",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "2444",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "2481",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "2591",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "2718",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "2800",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "2897",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "3142",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Elevation",
     "value": "454",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---EnergySource",
     "value": "es1",
-    "freq": 29
+    "frequency": 29
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Airolo",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Amden",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Anniviers",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Davos",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Disentis/Mustér",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Gampel-Bratsch",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Grengiols",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Hérémence",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Klosters",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Laax",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Lenk und Adelboden",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Lütschental",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Mezzovico-Vira",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Naters",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Obergoms",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Oberwil im Simmental",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Poschiavo",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Saas-Grund",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Saint-Imier",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Samedan",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Scuol",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Spiringen",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Termen und Ried-Brig",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Tujetsch",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Törbel/ Embd/ Stalden",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Visperterminen",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Zermatt",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---Municipalities",
     "value": "Zwischbergen",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "APV Sidenplangg AG (in Gründung), c/o EWA‑energieUri AG",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "Axpo Solutions AG",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "Azienda Comunale di Airolo e Azienda Multiservizi di Bellinzona5.5555",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "Bernina Solar AG",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "EnAlpin AG",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "EnBAG AG",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "Energia Alpina SA",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "Energia Solara Engiandinaisa SA",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "FMV SA",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "Felsenstrom AG",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "Genossenschaft Lenk Bergbahnen",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "Gondosolar c/o E.E.S",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "Grands Plans Solar SA",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "Grengiols Solar c/o FMV SA",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "Jungfraubahn AG",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "Madrisa Solar AG",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "MontSol SA",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "Morgeten Solar AG",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "NalpSolar AG",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "Ovra Solara Magriel SA (in Gründung), handelnd durch Axpo Solutions AG",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "Prafleuri Solaire SA",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "Projektträgerschaft PVA Hohsaas c/o FMV SA",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "S'ROK AG",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "ScuolSolar c/o Engadiner KraftwerkeAG",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "Swisspower AG",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectManagement",
     "value": "Weisse Arena Bergbahnen AG",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "APV Sidenplangg",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Alpine Photovoltaik-Anlage Hintisberg",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Alpines Solarprojekt \"Morgeten\"",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Belalp Solar",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Bernina Solar AG",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Centrale photovoltaïque en cohabitation du Grand Chasseral",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Gibidum Solar",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Gletschersolar Matterhorn",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Hohsaas",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Impianto fotovoltaico alpino Pontino",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Madrisa Solar",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "NalpSolar",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "PV Alpin Parsenn",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "PV Anlage Grengiols Solar",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "PVA Gries",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "PVA Rosswald Solar",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "PVA Z Opmisch Hubil Gampel-Bratsch",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Parc solaire de Prafleuri",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Parc solaire des Grands Plans",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Parco Solare Alpino Duragno",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Photovoltaik-Grossanlage \"Felsenstrom\"",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Projekt Gondosolar",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "ScuolSolar",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "SedrunSolar",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Solara Magriel ",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Solaranlage Hanenmoosbärgli",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Solarfeld Mäsweide",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Solarkraftwerk Samedan",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectName",
     "value": "Vorab",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
     "value": "https://grandsplanssolar.ch",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
     "value": "https://www.ekz.ch/de/ueber-ekz/unternehmen/engagement/felsenstrom.html",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
     "value": "https://www.energia-alpina.ch/",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
     "value": "https://www.engadin.solar",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
     "value": "https://www.gondosolar.ch/",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
     "value": "https://www.grengiols-solar.ch/de",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
     "value": "https://www.jungfrau.ch/de-ch/unternehmen/jungfraubahnen/jungfraubahn-holding-ag/kraftwerk-jungfraubahn/",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
     "value": "https://www.morgeten.ch",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
     "value": "https://www.pv-mont-soleil.ch/",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---ProjectWeb",
     "value": "https://www.scuolsolar.ch/",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "10",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "11",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "12",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "13",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "14",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "15",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "16",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "17",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "18",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "19",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "20",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "21",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "22",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "23",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "24",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "25",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "26",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "27",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "28",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "29",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "4",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "6",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "7",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "8",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---id",
     "value": "9",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "10",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "15",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "18",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "19",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "27",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "28",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "29",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "32",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "42",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "43",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "44",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "45",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "46",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "47",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "48",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "49",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "50",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "51",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "52",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "53",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "54",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "55",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "56",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "7",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---Project---xtf_id",
     "value": "9",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "10.69",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "11.2",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "11.38",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "11.45",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "11.46",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "12.0",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "12.1",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "12.2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "12.4",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "12.6",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "12.62",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "12.9",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "13.8",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "14.3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "14.43",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "14.6",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "148.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "15.3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "16.9",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "18.25",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "18.8",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "18.83",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "19.1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "19.5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "22.1",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "28.6",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "31.0",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "44.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "45.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
     "value": "48.13",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2023-10-30",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2023-11-06",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2023-11-08",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2024-01-03",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2024-01-04",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2024-01-09",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2024-01-22",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2024-02-09",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2024-05-07",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2024-05-28",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2024-06-03",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2024-06-07",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2024-06-12",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2024-06-14",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2024-06-21",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2024-07-01",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2024-08-15",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2024-09-05",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2024-09-06",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2024-10-04",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2024-10-11",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2024-10-18",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-01-20",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-01-24",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-02-20",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-02-28",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-03-13",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-03-21",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-03-28",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-04-04",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-04-18",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-04-30",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-06-12",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-08-22",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-08-26",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-08-29",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-09-24",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-10-01",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-10-17",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-10-20",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-11-04",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-11-07",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-11-14",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-11-24",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-12-04",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-12-12",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Date",
     "value": "2025-12-18",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---NumberOfPlants",
     "value": "0",
-    "freq": 42
+    "frequency": 42
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "10.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "10.12",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "10.5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "10.8",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "12.6",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "12.9",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "14.5",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "15.9",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "18.4",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "19.2",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "28.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "32.7",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "33.6",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "6.2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "6.3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "7.53",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "7.7",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "8.04",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "8.07",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "8.3",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "8.47",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "8.62",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "8.64",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "8.8",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "9.0",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "9.2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "9.39",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "9.93",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
     "value": "92.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1247",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1279",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1297",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1324",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1343",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1345",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1346",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1390",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1393",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1415",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1430",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1432",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1435",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1446",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1448",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1453",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1458",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1481",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1521",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1522",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1554",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1565",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1568",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1607",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1609",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1617",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1622",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1636",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1663",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1794",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "1968",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
     "value": "2081",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "505",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "527",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "533",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "539",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "541",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "562",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "567",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "571",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "572",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "587",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "600",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "613",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "615",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "631",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "632",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "637",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "638",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "646",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "667",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "673",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "677",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "696",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "714",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "716",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "745",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "751",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "761",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "873",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
     "value": "903",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Status",
     "value": "st11",
-    "freq": 29
+    "frequency": 29
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Status",
     "value": "st12",
-    "freq": 13
+    "frequency": 13
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Status",
     "value": "st13",
-    "freq": 7
+    "frequency": 7
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Status",
     "value": "st14",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "12.8",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "14.4",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "20.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "21.41",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "22.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "4.08",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "4.4",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "4.57",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "4.6",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "4.75",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "4.87",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "4.9",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "5.274",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "5.335",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "5.36",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "5.4",
-    "freq": 3
+    "frequency": 3
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "5.5",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "5.6",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "5.66",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "6.13",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "6.3",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "6.72",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "64.0",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "7.2",
-    "freq": 4
+    "frequency": 4
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "7.56",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "7.8246",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "8.6",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "8.602",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "8.733",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "8.92",
-    "freq": 2
+    "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
     "value": "9.165",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "10",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "11",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "12",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "13",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "14",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "15",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "16",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "17",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "18",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "19",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "20",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "21",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "22",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "23",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "24",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "25",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "26",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "27",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "28",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "29",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "30",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "31",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "32",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "33",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "34",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "35",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "36",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "37",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "38",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "39",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "4",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "40",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "41",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "42",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "43",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "44",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "45",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "46",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "47",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "48",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "49",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "50",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "51",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "52",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "53",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "6",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "7",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "8",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---id",
     "value": "9",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "127",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "128",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "144",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "145",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "146",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "147",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "148",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "149",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "150",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "151",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "152",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "153",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "155",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "156",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "157",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "159",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "160",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "161",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "162",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "163",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "164",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "165",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "166",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "167",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "168",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "169",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "170",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "171",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "172",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "173",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "176",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "177",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "178",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "179",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "180",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "181",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "182",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "183",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "184",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "185",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "186",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "187",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "188",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "191",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "192",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "193",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "194",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "46",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "71",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "72",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "83",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---xtf_id",
     "value": "85",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---DE",
     "value": "Betrieb nach 3 Jahren",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---DE",
     "value": "abgewiesen",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---DE",
     "value": "erstinstanzlich bewilligt",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---DE",
     "value": "rechtskräftig bewilligt",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---DE",
     "value": "teilweise in Betrieb",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---DE",
     "value": "vollständig in Betrieb",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---DE",
     "value": "zurückgezogen",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---DE",
     "value": "öffentlich aufgelegt",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---EN",
     "value": "full commissioning",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---EN",
     "value": "granting of the first-instance authorisation",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---EN",
     "value": "legally authorised",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---EN",
     "value": "operation after 3 years",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---EN",
     "value": "partial commissioning",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---EN",
     "value": "public circulation",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---EN",
     "value": "rejected",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---EN",
     "value": "withdrawn",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---FR",
     "value": "entrée en force de l'autorisation",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---FR",
     "value": "exploitation après 3 ans",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---FR",
     "value": "mise en service complète",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---FR",
     "value": "mise en service partielle",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---FR",
     "value": "mise à l'enquête publique",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---FR",
     "value": "octroi de l'autorisation de première instance",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---FR",
     "value": "refusé",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---FR",
     "value": "retiré",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---IT",
     "value": "concessione dell'autorizzazione di prima istanza",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---IT",
     "value": "deposito pubblico della domanda",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---IT",
     "value": "messa in esercizio completa",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---IT",
     "value": "messa in esercizio parziale",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---IT",
     "value": "operatività dopo 3 anni",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---IT",
     "value": "passaggio in giudicato dell'autorizzazione",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---IT",
     "value": "rifiutato",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---IT",
     "value": "ritirato",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---Status_ID",
     "value": "st11",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---Status_ID",
     "value": "st12",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---Status_ID",
     "value": "st13",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---Status_ID",
     "value": "st14",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---Status_ID",
     "value": "st15",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---Status_ID",
     "value": "st16",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---Status_ID",
     "value": "st17",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---Status_ID",
     "value": "st18",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---id",
     "value": "1",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---id",
     "value": "2",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---id",
     "value": "3",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---id",
     "value": "4",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---id",
     "value": "5",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---id",
     "value": "6",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---id",
     "value": "7",
-    "freq": 1
+    "frequency": 1
   },
   {
     "variable_id": "photovoltaik---StatusCatalogue---id",
     "value": "8",
-    "freq": 1
+    "frequency": 1
   }
 ]

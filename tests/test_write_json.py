@@ -20,30 +20,30 @@ def _make_employees_catalog() -> Catalog:
     return catalog
 
 
-class TestFreq:
+class TestFrequency:
     """Test frequency computation."""
 
-    def test_freq_default_enabled(self, tmp_path: Path):
-        """Catalog should compute freq by default (threshold=100)."""
+    def test_frequency_default_enabled(self, tmp_path: Path):
+        """Catalog should compute frequencies by default (threshold=100)."""
         (tmp_path / "data.csv").write_text("color\nred\nblue\nred\n")
 
         catalog = Catalog()
         catalog.add_folder(tmp_path)
         catalog.export_db(tmp_path / "output")
 
-        assert (tmp_path / "output" / "freq.json").exists()
+        assert (tmp_path / "output" / "frequency.json").exists()
 
-    def test_freq_disabled(self, tmp_path: Path):
-        """Catalog(freq_threshold=0) should not compute freq."""
+    def test_frequency_disabled(self, tmp_path: Path):
+        """Catalog(freq_threshold=0) should not compute frequencies."""
         (tmp_path / "data.csv").write_text("color\nred\nblue\n")
 
         catalog = Catalog(freq_threshold=0)
         catalog.add_folder(tmp_path)
         catalog.export_db(tmp_path / "output")
 
-        assert not (tmp_path / "output" / "freq.json").exists()
+        assert not (tmp_path / "output" / "frequency.json").exists()
 
-    def test_freq_threshold(self, tmp_path: Path):
+    def test_frequency_threshold(self, tmp_path: Path):
         """freq_threshold should filter columns by nb_distinct."""
         (tmp_path / "data.csv").write_text("a,b\n1,x\n2,y\n3,z\n")
 
@@ -51,33 +51,33 @@ class TestFreq:
         catalog.add_folder(tmp_path)
         catalog.export_db(tmp_path / "output")
 
-        # Column a (integer, 3 distinct > threshold 2): no freq
-        # Column b (string, 3 distinct > threshold 2): pattern freq
-        assert (tmp_path / "output" / "freq.json").exists()
-        with open(tmp_path / "output" / "freq.json") as f:
+        # Column a (integer, 3 distinct > threshold 2): no frequency rows
+        # Column b (string, 3 distinct > threshold 2): pattern frequencies
+        assert (tmp_path / "output" / "frequency.json").exists()
+        with open(tmp_path / "output" / "frequency.json") as f:
             data = json.load(f)
-        # Only string column b should have pattern freq entries
+        # Only string column b should have pattern frequency entries
         var_ids = {d["variable_id"] for d in data}
         assert all("b" in vid for vid in var_ids)
 
-    def test_freq_content(self, tmp_path: Path):
-        """freq.json should contain value counts."""
+    def test_frequency_content(self, tmp_path: Path):
+        """frequency.json should contain value counts."""
         (tmp_path / "data.csv").write_text("color\nred\nred\nblue\n")
 
         catalog = Catalog()
         catalog.add_folder(tmp_path)
         catalog.export_db(tmp_path / "output")
 
-        with open(tmp_path / "output" / "freq.json") as f:
+        with open(tmp_path / "output" / "frequency.json") as f:
             data = json.load(f)
 
-        values = {d["value"]: d["freq"] for d in data}
+        values = {d["value"]: d["frequency"] for d in data}
         assert values["red"] == 2
         assert values["blue"] == 1
 
-    def test_freq_multiple_files(self, tmp_path: Path):
-        """freq should work with multiple files (union of lazy tables)."""
-        # Create two separate CSV files with freq-eligible columns
+    def test_frequency_multiple_files(self, tmp_path: Path):
+        """Frequency export should work with multiple files (union of lazy tables)."""
+        # Create two separate CSV files with frequency-eligible columns
         (tmp_path / "file1.csv").write_text("status\nactive\nactive\ninactive\n")
         (tmp_path / "file2.csv").write_text("status\npending\npending\nactive\n")
 
@@ -86,12 +86,12 @@ class TestFreq:
         catalog.export_db(tmp_path / "output")
 
         # Should not raise CatalogException about missing table
-        assert (tmp_path / "output" / "freq.json").exists()
+        assert (tmp_path / "output" / "frequency.json").exists()
 
-        with open(tmp_path / "output" / "freq.json") as f:
+        with open(tmp_path / "output" / "frequency.json") as f:
             data = json.load(f)
 
-        # Should have freq data from both files
+        # Should have frequency data from both files
         assert len(data) > 0
 
 
@@ -331,12 +331,12 @@ class TestDatasetIncrementalFields:
 class TestSerializationEdgeCases:
     """Test edge cases in catalog export serialization."""
 
-    def test_export_empty_freq_tables(self, tmp_path: Path):
-        """export_db with empty freq table should not create freq.json."""
+    def test_export_empty_frequency_tables(self, tmp_path: Path):
+        """export_db with empty frequency table should not create frequency.json."""
         catalog = Catalog()
-        # No freq entries added
+        # No frequency entries added
         catalog.export_db(tmp_path)
-        assert not (tmp_path / "freq.json").exists()
+        assert not (tmp_path / "frequency.json").exists()
 
 
 class TestEvolutionTracking:

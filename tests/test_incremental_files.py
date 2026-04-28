@@ -248,13 +248,13 @@ class TestRemoveDatasetCascade:
         csv_file.write_text("color\nred\nblue\nred\n")
         catalog.add_dataset(csv_file)
 
-        assert len(catalog.freq.all()) > 0
+        assert len(catalog.frequency.all()) > 0
 
         # Remove dataset cascade
         remove_dataset_cascade(catalog, catalog.dataset.all()[0])
 
-        # Freq table should be empty
-        assert len(catalog.freq.all()) == 0
+        # Frequency table should be empty
+        assert len(catalog.frequency.all()) == 0
 
 
 class TestLastUpdateTimestamp:
@@ -391,7 +391,7 @@ class TestRemoveDatasetCascadeWithMultipleDatasets:
         catalog.add_dataset(csv2)
 
         assert len(catalog.dataset.all()) == 2
-        total_before = len(catalog.freq.all())
+        total_before = len(catalog.frequency.all())
         assert total_before > 0
 
         # Remove first dataset
@@ -399,12 +399,12 @@ class TestRemoveDatasetCascadeWithMultipleDatasets:
 
         # Should still have second dataset's frequencies
         assert len(catalog.dataset.all()) == 1
-        total_after = len(catalog.freq.all())
+        total_after = len(catalog.frequency.all())
         assert total_after > 0
         assert total_after < total_before
 
     def test_removes_all_frequencies_when_single_dataset(self, tmp_path: Path):
-        """remove_dataset_cascade drops freq table when all rows are removed."""
+        """remove_dataset_cascade drops the frequency table when all rows are removed."""
         catalog = Catalog(quiet=True)
 
         # Create a single CSV with frequencies
@@ -414,16 +414,16 @@ class TestRemoveDatasetCascadeWithMultipleDatasets:
         catalog.add_dataset(csv1)
 
         assert len(catalog.dataset.all()) == 1
-        assert len(catalog.freq.all()) > 0
+        assert len(catalog.frequency.all()) > 0
 
         # Remove the only dataset
         remove_dataset_cascade(catalog, catalog.dataset.all()[0])
 
         # All frequencies should be removed
         assert len(catalog.dataset.all()) == 0
-        assert len(catalog.freq.all()) == 0
+        assert len(catalog.frequency.all()) == 0
 
-    def test_removes_dataset_without_freq_tables(self, tmp_path: Path):
+    def test_removes_dataset_without_frequency_tables(self, tmp_path: Path):
         """remove_dataset_cascade handles dataset without frequencies."""
         from datannurpy.schema import Dataset
 
@@ -435,7 +435,7 @@ class TestRemoveDatasetCascadeWithMultipleDatasets:
         catalog.dataset.add(ds)
 
         assert len(catalog.dataset.all()) == 1
-        assert len(catalog.freq.all()) == 0
+        assert len(catalog.frequency.all()) == 0
 
         # Remove it
         remove_dataset_cascade(catalog, ds)
