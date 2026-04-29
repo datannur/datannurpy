@@ -236,6 +236,30 @@ class TestGroupTimeSeries:
         assert len(series) == 0
         assert len(singles) == 2
 
+    def test_group_year_not_confused_with_constant_two_digit_token(
+        self,
+        tmp_path: Path,
+    ):
+        """A constant token like _22_ must not collide with year 2022."""
+        files = [
+            (tmp_path / "dataset_2020_segment_22_suffix.csv", 1000),
+            (tmp_path / "dataset_2021_segment_22_suffix.csv", 2000),
+            (tmp_path / "dataset_2022_segment_22_suffix.csv", 3000),
+            (tmp_path / "dataset_2023_segment_22_suffix.csv", 4000),
+            (tmp_path / "dataset_2024_segment_22_suffix.csv", 5000),
+        ]
+        series, singles = group_time_series(files, tmp_path)
+
+        assert len(series) == 1
+        assert len(singles) == 0
+        assert [period for period, _ in series[0].files] == [
+            "2020",
+            "2021",
+            "2022",
+            "2023",
+            "2024",
+        ]
+
 
 class TestGroupLevelPeriodDetection:
     """Test group-level period detection (constant vs variable positions)."""
@@ -341,7 +365,7 @@ class TestGroupLevelPeriodDetection:
 
         matches = _extract_period_from_segment("old_2024_08")
         assert len(matches) == 1
-        original, info = matches[0]
+        _, original, info = matches[0]
         assert original == "2024_08"
         assert info.year == 2024
         assert info.sub_period == 8
@@ -352,8 +376,8 @@ class TestGroupLevelPeriodDetection:
 
         matches = _extract_period_from_segment("rapport_2024Q1")
         assert len(matches) == 1
-        assert matches[0][1].year == 2024
-        assert matches[0][1].sub_period == 13
+        assert matches[0][2].year == 2024
+        assert matches[0][2].sub_period == 13
 
     def test_subgroup_singles_become_singles(self, tmp_path: Path):
         """Sub-groups with only 1 file become singles."""

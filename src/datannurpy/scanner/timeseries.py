@@ -60,12 +60,14 @@ class PeriodInfo:
         return str(self.year)
 
 
-def _extract_period_from_segment(segment: str) -> list[tuple[str, PeriodInfo]]:
+def _extract_period_from_segment(
+    segment: str,
+) -> list[tuple[tuple[int, int], str, PeriodInfo]]:
     """Extract all period matches from a path segment.
 
     Returns only the most specific match for each segment position.
     """
-    matches: list[tuple[str, PeriodInfo]] = []
+    matches: list[tuple[tuple[int, int], str, PeriodInfo]] = []
     matched_ranges: list[tuple[int, int]] = []
 
     def _overlaps(start: int, end: int) -> bool:
@@ -109,12 +111,10 @@ def _extract_period_from_segment(segment: str) -> list[tuple[str, PeriodInfo]]:
                 year = match.group(1)
                 info = PeriodInfo(int(year), 0, 0, original)
 
-            matches.append((original, info))
+            matches.append(((start, end), original, info))
             matched_ranges.append((start, end))
 
-    # Sort by string position so matches[i] corresponds to the i-th placeholder
-    matches = [m for _, m in sorted(zip(matched_ranges, matches))]
-    return matches
+    return sorted(matches, key=lambda match: match[0][0])
 
 
 def _combine_periods(periods: list[PeriodInfo]) -> PeriodInfo | None:
@@ -165,23 +165,16 @@ def _extract_file_info(
 
         # Build normalized segment (replace from end to preserve indices)
         normalized_segment = segment
-        sorted_matches = sorted(
-            matches,
-            key=lambda m: segment.find(m[0]),
-            reverse=True,
-        )
-        for original, _ in sorted_matches:
-            idx = normalized_segment.find(original)
-            assert idx >= 0
+        for (start, end), _, _ in sorted(matches, key=lambda m: m[0][0], reverse=True):
             normalized_segment = (
-                normalized_segment[:idx]
+                normalized_segment[:start]
                 + PERIOD_PLACEHOLDER
-                + normalized_segment[idx + len(original) :]
+                + normalized_segment[end:]
             )
         normalized_parts.append(normalized_segment)
 
         # Collect period positions (in order)
-        for _, info in matches:
+        for _, _, info in matches:
             positions.append(info)
 
     return "/".join(normalized_parts), positions
@@ -479,13 +472,8 @@ def group_table_time_series(
 
         # Build normalized name (replace temporal parts with placeholder)
         normalized = name
-        for original, _ in sorted(matches, key=lambda m: name.find(m[0]), reverse=True):
-            idx = normalized.find(original)
-            normalized = (
-                normalized[:idx]
-                + PERIOD_PLACEHOLDER
-                + normalized[idx + len(original) :]
-            )
+        for (start, end), _, _ in sorted(matches, key=lambda m: m[0][0], reverse=True):
+            normalized = normalized[:start] + PERIOD_PLACEHOLDER + normalized[end:]
 
         # Skip if entire name is consumed by temporal pattern (e.g. "t1", "t2")
         base = normalized.replace(PERIOD_PLACEHOLDER, "").strip("_- ")
@@ -493,7 +481,7 @@ def group_table_time_series(
             no_period.append(name)
             continue
 
-        raw_groups[normalized].append((name, [info for _, info in matches]))
+        raw_groups[normalized].append((name, [info for _, _, info in matches]))
 
     series: list[TableSeriesGroup] = []
     singles: list[str] = list(no_period)
