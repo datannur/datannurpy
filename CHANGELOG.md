@@ -3,6 +3,7 @@
 # unreleased
 
 - add: public `copy_assets()` helper and matching `copy_assets` / `base_dir` parameters on `export_db()` and `export_app()`
+- fix: `add_folder(depth="dataset")` now logs each processed dataset and unchanged skip, aligned with other depth modes
 
 ## 0.21.0 (2026-04-27)
 

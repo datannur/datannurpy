@@ -272,9 +272,11 @@ def add_folder(
             existing = catalog.dataset.get_by("_match_path", str(info.path))
             assert existing is not None
             catalog.dataset.update(existing.id, _seen=True)
+            log_skip(info.path.name, q)
 
         # Create or update modified datasets
         for info in plan.to_scan:
+            t0 = log_start(info.path.name, q)
             data_path_str = str(info.path)
             existing = catalog.dataset.get_by("_match_path", data_path_str)
             if existing:
@@ -291,6 +293,7 @@ def add_folder(
                     data_size=data_size,
                     _seen=True,
                 )
+                log_done(info.path.name, q, t0)
                 continue
 
             # Metadata-first peek: reuse pre-loaded id/folder_id if available.
@@ -343,6 +346,7 @@ def add_folder(
                 _match_path=data_path_str,
             )
             catalog.dataset.add(dataset)
+            log_done(dataset_name, q, t0)
 
         datasets_added = catalog.dataset.count - datasets_before
         log_summary(datasets_added, 0, q, start_time)

@@ -238,6 +238,24 @@ class TestMetadataFirstStructureOnly:
         )
         assert len(catalog.dataset.all()) == 0
 
+    def test_structure_only_logs_per_dataset(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        """depth=dataset logs processed and skipped datasets."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        _write_csv(data_dir, "x.csv")
+
+        catalog = Catalog(quiet=False)
+
+        catalog.add_folder(data_dir, Folder(id="src", name="Src"), depth="dataset")
+        first = capsys.readouterr()
+        assert "x.csv" in first.err
+
+        catalog.add_folder(data_dir, Folder(id="src", name="Src"), depth="dataset")
+        second = capsys.readouterr()
+        assert "x.csv (unchanged)" in second.err
+
 
 class TestMetadataFirstTimeSeries:
     """Coverage for time series scan path with metadata-first."""
