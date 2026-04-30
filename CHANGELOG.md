@@ -3,6 +3,7 @@
 ## 0.22.2 (2026-04-30)
 
 - fix: non-tabular and malformed CSVs are now skipped cleanly as untreatable (pre-flight check, `strict_mode=false` retry, targeted DuckDB catch) instead of crashing or being mislabeled as empty
+- fix: CSV scanner recognizes common missing-value strings (`NA`, `N/A`, `NULL`, `NaN`, …) as NULL so a stray `NA` no longer breaks numeric type inference
 - fix: GeoParquet fallback now triggers on any unparseable CRS (e.g. `OGC:CRS84`, `EPSG:4326`), not only projjson — detection is based on the file's `b"geo"` schema metadata
 - change: GeoParquet CRS fallback message demoted from warning to debug — only printed when `verbose=True` (still recorded in `log_file`)
 - add: `log_debug()` helper in `datannurpy.utils`

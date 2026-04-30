@@ -39,6 +39,12 @@ _CSV_HEADER_DELIMITERS = ",;\t|"
 # 64 KB covers ~1000 columns with long names (e.g. survey/clinical exports).
 _CSV_HEADER_SAMPLE_BYTES = 64 * 1024
 
+# Strings DuckDB should treat as NULL before type inference. Covers R
+# ("NA"), pandas ("NaN"), Excel ("#N/A") and SQL ("NULL") conventions so a
+# stray missing value far in the file does not invalidate a numeric column
+# typed from the first 20 000-row sample.
+_CSV_NULL_STRINGS = ["", "NA", "N/A", "n/a", "#N/A", "NULL", "null", "NaN", "nan"]
+
 
 def _deduplicate_columns(names: list[str]) -> list[str]:
     """Suffix duplicate column names as DuckDB does (`name`, `name_1`, `name_2`, …)."""
@@ -163,7 +169,7 @@ def read_csv(
         with _csv_source(file_path, csv_encoding, csv_skip_copy=False) as csv_path:
             con = ibis.duckdb.connect()
             try:
-                table = con.read_csv(str(csv_path))
+                table = con.read_csv(str(csv_path), nullstr=_CSV_NULL_STRINGS)
                 result = table.to_pyarrow()
             finally:
                 con.disconnect()
@@ -224,11 +230,15 @@ def scan_csv(
                 # with strict_mode=False before giving up.
                 strict_mode = True
                 try:
-                    table = con.read_csv(str(csv_path))
+                    table = con.read_csv(str(csv_path), nullstr=_CSV_NULL_STRINGS)
                     row_count = int(table.count().to_pyarrow().as_py())
                 except _duckdb.InvalidInputException:
                     try:
-                        table = con.read_csv(str(csv_path), strict_mode=False)
+                        table = con.read_csv(
+                            str(csv_path),
+                            nullstr=_CSV_NULL_STRINGS,
+                            strict_mode=False,
+                        )
                         row_count = int(table.count().to_pyarrow().as_py())
                         strict_mode = False
                     except _duckdb.InvalidInputException as exc:
@@ -252,8 +262,10 @@ def scan_csv(
                 if sample_size is not None and row_count > sample_size and infer_stats:
                     safe_path = str(csv_path).replace("'", "''")
                     strict_arg = "" if strict_mode else ", strict_mode=false"
+                    nullstr_arg = ", ".join(f"'{s}'" for s in _CSV_NULL_STRINGS)
                     cursor: Any = con.raw_sql(
-                        f"SELECT * FROM read_csv('{safe_path}'{strict_arg}) "
+                        f"SELECT * FROM read_csv('{safe_path}', "
+                        f"nullstr=[{nullstr_arg}]{strict_arg}) "
                         f"USING SAMPLE reservoir({sample_size} ROWS)"
                     )
                     sample_arrow = cursor.fetch_arrow_table()
