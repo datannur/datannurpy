@@ -26,6 +26,8 @@ export default defineConfig({
   themeConfig: {
     logo: "/logo.png",
 
+    outline: "deep",
+
     nav: [
       { text: "Website", link: "https://datannur.com" },
       { text: "Demo", link: "https://dev.datannur.com/" },
@@ -36,7 +38,6 @@ export default defineConfig({
       { text: "Getting Started", link: "/" },
       { text: "Scanning files", link: "/scanning-files" },
       { text: "Scanning databases", link: "/scanning-databases" },
-      { text: "Remote storage", link: "/remote-storage" },
       { text: "Metadata & configuration", link: "/metadata" },
       { text: "Output & exports", link: "/output" },
       { text: "Python API", link: "/python-api" },
