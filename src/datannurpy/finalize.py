@@ -78,14 +78,18 @@ def remove_dataset_cascade(self: Catalog, dataset: Dataset) -> None:
 def _collect_referenced_tag_ids(catalog: Catalog) -> set[str]:
     """Collect all tag IDs referenced by any entity."""
     referenced: set[str] = set()
-    for entity in catalog.variable.all():
-        referenced.update(entity.tag_ids)
-    for entity in catalog.dataset.all():
-        referenced.update(entity.tag_ids)
-    for entity in catalog.folder.all():
-        referenced.update(entity.tag_ids)
-    for entity in catalog.organization.all():
-        referenced.update(entity.tag_ids)
+    for table in (
+        catalog.variable,
+        catalog.dataset,
+        catalog.folder,
+        catalog.organization,
+    ):
+        df = table.df
+        if df.is_empty() or "tag_ids" not in df.columns:
+            continue
+        for tag_list in df["tag_ids"].drop_nulls().to_list():
+            if tag_list:
+                referenced.update(tag_list)
     return referenced
 
 
