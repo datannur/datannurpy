@@ -10,10 +10,12 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import duckdb as _duckdb
 import ibis
 import pyarrow as pa
 
-from ..utils import log_error
+from ..utils import log_error, log_warn
+from .excel import is_valid_tabular_dataset
 from .filesystem import ensure_local_utf8
 from .utils import build_variables
 
@@ -37,6 +39,12 @@ _CSV_HEADER_DELIMITERS = ",;\t|"
 # 64 KB covers ~1000 columns with long names (e.g. survey/clinical exports).
 _CSV_HEADER_SAMPLE_BYTES = 64 * 1024
 
+# Strings DuckDB should treat as NULL before type inference. Covers R
+# ("NA"), pandas ("NaN"), Excel ("#N/A") and SQL ("NULL") conventions so a
+# stray missing value far in the file does not invalidate a numeric column
+# typed from the first 20 000-row sample.
+_CSV_NULL_STRINGS = ["", "NA", "N/A", "n/a", "#N/A", "NULL", "null", "NaN", "nan"]
+
 
 def _deduplicate_columns(names: list[str]) -> list[str]:
     """Suffix duplicate column names as DuckDB does (`name`, `name_1`, `name_2`, …)."""
@@ -52,8 +60,8 @@ def _deduplicate_columns(names: list[str]) -> list[str]:
     return out
 
 
-def _read_csv_header(sample: bytes, csv_encoding: str | None = None) -> list[str]:
-    """Parse column names from a CSV header sample (raw bytes, may span multiple lines)."""
+def _decode_csv_sample(sample: bytes, csv_encoding: str | None) -> str:
+    """Decode a CSV byte sample to text: UTF-8 with cp1252 fallback, BOM stripped, LF-normalized."""
     try:
         text = sample.decode("utf-8")
     except UnicodeDecodeError:
@@ -63,10 +71,13 @@ def _read_csv_header(sample: bytes, csv_encoding: str | None = None) -> list[str
         text = text[1:]
     # Normalize line endings: stdlib csv only accepts \n or \r\n, but some files
     # (Mac Classic, legacy SDMX exports) use bare \r as line terminator.
-    text = text.replace("\r\n", "\n").replace("\r", "\n")
-    text = text.lstrip("\n")
+    return text.replace("\r\n", "\n").replace("\r", "\n").lstrip("\n")
+
+
+def _csv_reader_from_text(text: str) -> Any:
+    """Build a csv.reader with sniffed dialect, or None if text is blank."""
     if not text.strip():
-        return []
+        return None
     # Sniff dialect on a reasonable sample, restricted to common delimiters so
     # commas inside quoted header fields don't fool the sniffer when the real
     # separator is ';' (FR/DE/IT locales).
@@ -74,11 +85,18 @@ def _read_csv_header(sample: bytes, csv_encoding: str | None = None) -> list[str
         dialect = csv.Sniffer().sniff(text, delimiters=_CSV_HEADER_DELIMITERS)
     except csv.Error:
         dialect = None  # type: ignore[assignment]
-    reader = (
+    return (
         csv.reader(io.StringIO(text), dialect)
         if dialect
         else csv.reader(io.StringIO(text))
     )
+
+
+def _read_csv_header(sample: bytes, csv_encoding: str | None = None) -> list[str]:
+    """Parse column names from a CSV header sample (raw bytes, may span multiple lines)."""
+    reader = _csv_reader_from_text(_decode_csv_sample(sample, csv_encoding))
+    if reader is None:
+        return []
     row = next(reader, [])
     return _deduplicate_columns([c for c in row if c.strip()])
 
@@ -113,6 +131,29 @@ def _csv_source(
         tmp_dir.rmdir()
 
 
+def _read_preview_rows_csv(path: Path, *, n: int = 10) -> list[tuple[object, ...]]:
+    """Read first n rows of a UTF-8 CSV file (auto-detects delimiter)."""
+    with open(path, "rb") as fb:
+        sample = fb.read(_CSV_HEADER_SAMPLE_BYTES)
+    reader = _csv_reader_from_text(_decode_csv_sample(sample, None))
+    if reader is None:
+        return []
+    rows: list[tuple[object, ...]] = []
+    for row in reader:
+        # Treat trailing empty fields as missing cells (None) for width checks
+        cells = tuple(c if c != "" else None for c in row)
+        rows.append(cells)
+        if len(rows) >= n:
+            break
+    return rows
+
+
+def _short_csv_error(exc: BaseException) -> str:
+    """Return a one-line summary of a DuckDB CSV parse error."""
+    msg = str(exc).split("\n", 1)[0]
+    return msg.removeprefix("Invalid Input Error: ").strip()
+
+
 def read_csv(
     path: str | Path,
     *,
@@ -128,7 +169,7 @@ def read_csv(
         with _csv_source(file_path, csv_encoding, csv_skip_copy=False) as csv_path:
             con = ibis.duckdb.connect()
             try:
-                table = con.read_csv(str(csv_path))
+                table = con.read_csv(str(csv_path), nullstr=_CSV_NULL_STRINGS)
                 result = table.to_pyarrow()
             finally:
                 con.disconnect()
@@ -155,7 +196,7 @@ def scan_csv(
     sample_size: int | None = None,
     csv_skip_copy: bool = False,
     quiet: bool = False,
-) -> tuple[list[Variable], int, int | None, pa.Table | None]:
+) -> tuple[list[Variable], int | None, int | None, pa.Table | None]:
     """Scan a CSV file and return (variables, row_count, actual_sample_size, freq_table)."""
     file_path = Path(path)
 
@@ -164,10 +205,49 @@ def scan_csv(
 
     try:
         with _csv_source(file_path, csv_encoding, csv_skip_copy) as csv_path:
+            # Pre-flight: structural check on first rows so non-tabular CSVs
+            # (footers like "Ende/Fin/Fino", multi-line headers, irregular
+            # widths from exported pivots) are flagged cleanly instead of
+            # surfacing a DuckDB strict-mode traceback.
+            try:
+                preview = _read_preview_rows_csv(csv_path)
+            except Exception:
+                preview = []
+            if preview:
+                valid, reason = is_valid_tabular_dataset(preview)
+                if not valid:
+                    log_warn(
+                        f"{file_path.name}: not a valid tabular dataset "
+                        f"({reason}); skipped as untreatable",
+                        quiet,
+                    )
+                    return [], None, None, None
+
             con = ibis.duckdb.connect()
             try:
-                table = con.read_csv(str(csv_path))
-                row_count = int(table.count().to_pyarrow().as_py())
+                # DuckDB's CSV sniffer in strict mode occasionally rejects
+                # files that are nonetheless RFC 4180-compliant. Retry once
+                # with strict_mode=False before giving up.
+                strict_mode = True
+                try:
+                    table = con.read_csv(str(csv_path), nullstr=_CSV_NULL_STRINGS)
+                    row_count = int(table.count().to_pyarrow().as_py())
+                except _duckdb.InvalidInputException:
+                    try:
+                        table = con.read_csv(
+                            str(csv_path),
+                            nullstr=_CSV_NULL_STRINGS,
+                            strict_mode=False,
+                        )
+                        row_count = int(table.count().to_pyarrow().as_py())
+                        strict_mode = False
+                    except _duckdb.InvalidInputException as exc:
+                        log_warn(
+                            f"{file_path.name}: unscannable CSV "
+                            f"({_short_csv_error(exc)}); skipped as untreatable",
+                            quiet,
+                        )
+                        return [], None, None, None
 
                 if row_count == 0:
                     variables, freq_table = build_variables(
@@ -181,8 +261,11 @@ def scan_csv(
                 actual_sample_size: int | None = None
                 if sample_size is not None and row_count > sample_size and infer_stats:
                     safe_path = str(csv_path).replace("'", "''")
+                    strict_arg = "" if strict_mode else ", strict_mode=false"
+                    nullstr_arg = ", ".join(f"'{s}'" for s in _CSV_NULL_STRINGS)
                     cursor: Any = con.raw_sql(
-                        f"SELECT * FROM read_csv('{safe_path}') "
+                        f"SELECT * FROM read_csv('{safe_path}', "
+                        f"nullstr=[{nullstr_arg}]{strict_arg}) "
                         f"USING SAMPLE reservoir({sample_size} ROWS)"
                     )
                     sample_arrow = cursor.fetch_arrow_table()

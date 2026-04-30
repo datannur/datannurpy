@@ -4,6 +4,7 @@ import time
 
 from datannurpy.utils.log import (
     configure_logging,
+    log_debug,
     log_done,
     log_error,
     log_folder,
@@ -172,3 +173,27 @@ def test_configure_logging_defaults(capsys):
     err = capsys.readouterr().err
     assert "✗ f.csv" in err
     assert "Traceback" not in err
+
+
+def test_log_debug_silent_without_verbose(capsys, tmp_path):
+    """log_debug is silent on stderr without verbose, but still written to log file."""
+    log_path = tmp_path / "debug.log"
+    configure_logging(verbose=False, log_file=log_path)
+    try:
+        log_debug("hidden detail", quiet=False)
+    finally:
+        configure_logging()
+
+    assert capsys.readouterr().err == ""
+    assert "· hidden detail" in log_path.read_text()
+
+
+def test_log_debug_visible_with_verbose(capsys):
+    """log_debug prints to stderr when verbose is enabled."""
+    configure_logging(verbose=True)
+    try:
+        log_debug("shown detail", quiet=False)
+    finally:
+        configure_logging(verbose=False)
+
+    assert "· shown detail" in capsys.readouterr().err

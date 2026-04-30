@@ -472,7 +472,11 @@ def add_folder(
         # Log result
         if schema_only:
             log_done(f"{info.path.name} ({len(result.variables)} vars)", q, t0)
-        elif result.nb_row and result.nb_row > 0:
+        elif result.nb_row is None:
+            # Scanner already emitted a warning explaining why the file
+            # could not be scanned (untreatable, malformed, etc.).
+            pass
+        elif result.nb_row > 0:
             log_done(
                 f"{info.path.name} ({result.nb_row:,} rows, {len(result.variables)} vars)",
                 q,

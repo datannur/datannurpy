@@ -16,7 +16,7 @@ from .csv import scan_csv
 from .excel import (
     _MAX_PREVIEW_ROWS as _EXCEL_PREVIEW_ROWS,
     _read_preview_rows,
-    is_valid_excel_dataset,
+    is_valid_tabular_dataset,
     scan_excel,
 )
 from .parquet import scan_parquet
@@ -301,7 +301,7 @@ def _scan_excel_schema_stream(
     with fs.open(str(path), "rb") as f:
         rows = _read_preview_rows(f)
 
-    valid, _reason = is_valid_excel_dataset(rows)
+    valid, _reason = is_valid_tabular_dataset(rows)
     if not valid:
         return ScanResult(variables=[], nb_row=None)
 
@@ -466,7 +466,7 @@ def _scan_schema_only_local(
 
         if suffix != ".xls":
             rows = _read_preview_rows(file_path)
-            valid, _reason = is_valid_excel_dataset(rows)
+            valid, _reason = is_valid_tabular_dataset(rows)
             if not valid:
                 return ScanResult(variables=[], nb_row=None)
             headers = [str(c) for c in rows[0] if c is not None]
@@ -477,7 +477,7 @@ def _scan_schema_only_local(
             df = pd.read_excel(file_path, nrows=_EXCEL_PREVIEW_ROWS, engine=engine)
             header_row = tuple(df.columns)
             data_rows = [tuple(row) for row in df.itertuples(index=False)]
-            valid, _reason = is_valid_excel_dataset([header_row, *data_rows])
+            valid, _reason = is_valid_tabular_dataset([header_row, *data_rows])
             if not valid:
                 return ScanResult(variables=[], nb_row=None)
             headers = [str(c) for c in df.columns if str(c).strip() != ""]

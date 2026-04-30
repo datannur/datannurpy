@@ -276,6 +276,9 @@ def add_dataset(
     var_count = len(result.variables)
     if schema_only:
         log_done(f"{path_name} ({var_count} vars)", q, start_time)
+    elif dataset.nb_row is None:
+        # Scanner already emitted a warning explaining the failure.
+        pass
     else:
         log_done(
             f"{path_name} ({dataset.nb_row:,} rows, {var_count} vars)",

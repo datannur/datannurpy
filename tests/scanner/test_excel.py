@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 
 from datannurpy import Catalog
-from datannurpy.scanner.excel import is_valid_excel_dataset
+from datannurpy.scanner.excel import is_valid_tabular_dataset
 
 
 def _write_xlsx(path: Path, rows: list[list[object]]) -> None:
@@ -23,51 +23,51 @@ def _write_xlsx(path: Path, rows: list[list[object]]) -> None:
 
 
 class TestIsValidExcelDataset:
-    """Tests for is_valid_excel_dataset()."""
+    """Tests for is_valid_tabular_dataset()."""
 
     def test_valid_dataset(self):
         rows = [("id", "name", "age"), (1, "Alice", 30), (2, "Bob", 25)]
-        valid, reason = is_valid_excel_dataset(rows)
+        valid, reason = is_valid_tabular_dataset(rows)
         assert valid
         assert reason == ""
 
     def test_empty_rows(self):
-        valid, reason = is_valid_excel_dataset([])
+        valid, reason = is_valid_tabular_dataset([])
         assert not valid
         assert reason == "empty sheet"
 
     def test_empty_header(self):
-        valid, reason = is_valid_excel_dataset([()])
+        valid, reason = is_valid_tabular_dataset([()])
         assert not valid
         assert reason == "empty header row"
 
     def test_does_not_start_at_a1(self):
         rows = [(None, None, "Code", "Name")]
-        valid, reason = is_valid_excel_dataset(rows)
+        valid, reason = is_valid_tabular_dataset(rows)
         assert not valid
         assert reason == "header does not start at column A"
 
     def test_none_gap_in_header(self):
         rows = [("Code", None, "Name", "Salary")]
-        valid, reason = is_valid_excel_dataset(rows)
+        valid, reason = is_valid_tabular_dataset(rows)
         assert not valid
         assert reason == "empty cells in header row"
 
     def test_duplicate_column_names(self):
         rows = [("Total", "Count", "Total")]
-        valid, reason = is_valid_excel_dataset(rows)
+        valid, reason = is_valid_tabular_dataset(rows)
         assert not valid
         assert reason == "duplicate column names"
 
     def test_non_text_header_numbers(self):
         rows = [(2023, 2024, 2025), (100, 200, 150)]
-        valid, reason = is_valid_excel_dataset(rows)
+        valid, reason = is_valid_tabular_dataset(rows)
         assert not valid
         assert reason == "non-text values in header row"
 
     def test_non_text_header_mixed(self):
         rows = [("Code", 42, "Name")]
-        valid, reason = is_valid_excel_dataset(rows)
+        valid, reason = is_valid_tabular_dataset(rows)
         assert not valid
         assert reason == "non-text values in header row"
 
@@ -76,7 +76,7 @@ class TestIsValidExcelDataset:
             ("Rapport",),
             ("Code", "Nom", "Dept", "Salaire"),
         ]
-        valid, reason = is_valid_excel_dataset(rows)
+        valid, reason = is_valid_tabular_dataset(rows)
         assert not valid
         assert reason == "data wider than header row"
 
@@ -86,7 +86,7 @@ class TestIsValidExcelDataset:
             (1, "Alice", 5000),
             (2, "Bob", 4500),
         ]
-        valid, reason = is_valid_excel_dataset(rows)
+        valid, reason = is_valid_tabular_dataset(rows)
         assert valid
 
     def test_data_narrower_ok(self):
@@ -95,7 +95,7 @@ class TestIsValidExcelDataset:
             (1, "Alice", None),
             (2, None, None),
         ]
-        valid, reason = is_valid_excel_dataset(rows)
+        valid, reason = is_valid_tabular_dataset(rows)
         assert valid
 
     def test_data_row_all_none_ignored(self):
@@ -104,7 +104,7 @@ class TestIsValidExcelDataset:
             (None, None),
             (1, "Alice"),
         ]
-        valid, reason = is_valid_excel_dataset(rows)
+        valid, reason = is_valid_tabular_dataset(rows)
         assert valid
 
     def test_empty_tuple_row_ignored(self):
@@ -113,7 +113,7 @@ class TestIsValidExcelDataset:
             (),
             (1, "Alice"),
         ]
-        valid, reason = is_valid_excel_dataset(rows)
+        valid, reason = is_valid_tabular_dataset(rows)
         assert valid
 
     def test_title_then_wider_data(self):
@@ -123,24 +123,24 @@ class TestIsValidExcelDataset:
             ("Code", "Nom", "Salaire"),
             (101, "Ventes", 5000),
         ]
-        valid, reason = is_valid_excel_dataset(rows)
+        valid, reason = is_valid_tabular_dataset(rows)
         assert not valid
         assert reason == "data wider than header row"
 
     def test_merged_cells_produce_none(self):
         """Merged cells in openpyxl read-only produce None → detected."""
         rows = [("Total", None, "Total", None)]
-        valid, reason = is_valid_excel_dataset(rows)
+        valid, reason = is_valid_tabular_dataset(rows)
         assert not valid
 
     def test_single_column_dataset(self):
         rows = [("id",), (1,), (2,)]
-        valid, reason = is_valid_excel_dataset(rows)
+        valid, reason = is_valid_tabular_dataset(rows)
         assert valid
 
     def test_header_only_no_data(self):
         rows = [("id", "name", "salary")]
-        valid, reason = is_valid_excel_dataset(rows)
+        valid, reason = is_valid_tabular_dataset(rows)
         assert valid
 
 
@@ -162,7 +162,7 @@ class TestScanExcelValidation:
         catalog.add_folder(tmp_path, quiet=False)
 
         captured = capsys.readouterr()
-        assert "skipped (not a raw dataset" in captured.err
+        assert "not a valid tabular dataset" in captured.err
         assert len(catalog.variable.all()) == 0
 
     def test_xlsx_with_numeric_header_skipped(self, tmp_path: Path, capsys):
@@ -179,7 +179,7 @@ class TestScanExcelValidation:
         catalog.add_folder(tmp_path, quiet=False)
 
         captured = capsys.readouterr()
-        assert "skipped (not a raw dataset" in captured.err
+        assert "not a valid tabular dataset" in captured.err
         assert len(catalog.variable.all()) == 0
 
     def test_xlsx_with_duplicate_headers_skipped(self, tmp_path: Path, capsys):
@@ -196,7 +196,7 @@ class TestScanExcelValidation:
         catalog.add_folder(tmp_path, quiet=False)
 
         captured = capsys.readouterr()
-        assert "skipped (not a raw dataset" in captured.err
+        assert "not a valid tabular dataset" in captured.err
         assert len(catalog.variable.all()) == 0
 
     def test_xlsx_valid_dataset_scanned(self, tmp_path: Path):
@@ -225,7 +225,7 @@ class TestScanExcelValidation:
         catalog.add_folder(tmp_path, quiet=False)
 
         captured = capsys.readouterr()
-        assert "skipped (not a raw dataset" in captured.err
+        assert "not a valid tabular dataset" in captured.err
         assert len(catalog.variable.all()) == 0
 
     def test_schema_mode_xlsx_invalid_skipped(self, tmp_path: Path):
@@ -287,7 +287,7 @@ class TestScanExcelValidation:
             xls_path, dataset_id="test---pivot_xls"
         )
         assert vars_ == []
-        assert count == 0
+        assert count is None
         assert frequency is None
 
     def test_xls_empty_sheet(self, tmp_path: Path, monkeypatch):
