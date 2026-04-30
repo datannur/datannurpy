@@ -175,6 +175,11 @@ def get_mtime_iso(path: PurePath, fs: FileSystem | None = None) -> str:
     return dt_obj.strftime("%Y/%m/%d")
 
 
+def mtime_iso_from_timestamp(ts: int) -> str:
+    """Format a Unix mtime timestamp as YYYY/MM/DD (UTC)."""
+    return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y/%m/%d")
+
+
 def get_mtime_timestamp(path: PurePath, fs: FileSystem | None = None) -> int:
     """Get file modification time as Unix timestamp (seconds)."""
     if fs is not None:

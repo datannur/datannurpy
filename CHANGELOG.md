@@ -19,6 +19,7 @@
 - perf: orphan-tag detection reads `tag_ids` directly from polars columns instead of instantiating one dataclass per row
 - perf: `add_database` introspection re-applies cached metadata across all unchanged tables in a single batch instead of per-table
 - perf: enumeration assignment from frequencies looks up column names in O(1) instead of scanning the variable mapping for each variable
+- perf: derive the dataset `last_update_date` ISO string from the already-collected mtime timestamp instead of issuing a second `stat`/`fs.info` call per file
 - fix: `include`/`exclude` passed as a bare string (e.g. `include="*.csv"`) no longer iterates over characters and scans each file multiple times
 
 ## 0.21.0 (2026-04-27)

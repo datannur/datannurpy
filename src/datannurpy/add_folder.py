@@ -34,7 +34,11 @@ from .scanner.timeseries import (
     compute_variable_periods,
     get_series_folder_parts,
 )
-from .scanner.utils import get_data_size, get_dir_data_size, get_mtime_iso
+from .scanner.utils import (
+    get_data_size,
+    get_dir_data_size,
+    mtime_iso_from_timestamp,
+)
 from .scanner.parquet.discovery import (
     is_delta_table,
     is_hive_partitioned,
@@ -291,7 +295,7 @@ def add_folder(
                 )
                 catalog.dataset.update(
                     existing.id,
-                    last_update_date=get_mtime_iso(info.path, fs=fs),
+                    last_update_date=mtime_iso_from_timestamp(info.mtime),
                     last_update_timestamp=info.mtime,
                     data_size=data_size,
                     _seen=True,
@@ -338,7 +342,7 @@ def add_folder(
                 name=dataset_name,
                 folder_id=folder_id,
                 data_path=data_path_str,
-                last_update_date=get_mtime_iso(info.path, fs=fs),
+                last_update_date=mtime_iso_from_timestamp(info.mtime),
                 last_update_timestamp=info.mtime,
                 delivery_format=info.format,
                 nb_resources=nb_resources,
@@ -460,7 +464,7 @@ def add_folder(
             name=result.name or dataset_name,
             folder_id=folder_id,
             data_path=data_path_str,
-            last_update_date=get_mtime_iso(info.path, fs=fs),
+            last_update_date=mtime_iso_from_timestamp(info.mtime),
             last_update_timestamp=info.mtime,
             delivery_format=info.format,
             description=result.description,
@@ -592,7 +596,7 @@ def _scan_time_series(
         name=result.name or dataset_name,
         folder_id=folder_id,
         data_path=str(last_path),
-        last_update_date=get_mtime_iso(last_path, fs=fs),
+        last_update_date=mtime_iso_from_timestamp(info.mtime),
         last_update_timestamp=info.mtime,
         delivery_format=info.format,
         description=result.description,
