@@ -52,17 +52,29 @@ class EnumerationManager:
 
     def mark_dataset_seen(self, dataset_id: str) -> None:
         """Mark all enumerations referenced by a dataset's variables as seen."""
-        dataset_vars = self._catalog.variable.having.dataset(dataset_id)
-        referenced_enumeration_ids: set[str] = set()
-        for var in dataset_vars:
-            referenced_enumeration_ids.update(var.enumeration_ids)
+        self.mark_datasets_seen([dataset_id])
 
-        if not referenced_enumeration_ids:
+    def mark_datasets_seen(self, dataset_ids: list[str]) -> None:
+        """Mark all enumerations referenced by these datasets' variables as seen."""
+        if not dataset_ids:
+            return
+        df = self._catalog.variable.df
+        if df.is_empty() or "dataset_id" not in df.columns:
             return
 
-        self._catalog.enumeration.update_many(
-            list(referenced_enumeration_ids), _seen=True
+        referenced: set[str] = set()
+        exploded = (
+            df.filter(pl.col("dataset_id").is_in(dataset_ids))
+            .select(pl.col("enumeration_ids").explode())
+            .drop_nulls()
         )
+        if not exploded.is_empty():
+            referenced.update(exploded["enumeration_ids"].to_list())
+
+        if not referenced:
+            return
+
+        self._catalog.enumeration.update_many(list(referenced), _seen=True)
         self.ensure_enumerations_folder()
 
     def get_or_create(self, values: set[str]) -> str:

@@ -547,3 +547,9 @@ class TestFinalizeCalledByExport:
         )
         catalog.enumeration_manager.mark_dataset_seen("ds1")
         # Should not raise — enumeration simply not found
+
+    def test_mark_datasets_seen_empty_variable_table(self, tmp_path: Path):
+        """mark_datasets_seen is a no-op when no variables exist."""
+        catalog = Catalog(app_path=tmp_path, quiet=True)
+        catalog.enumeration_manager.mark_datasets_seen(["ds1"])
+        catalog.enumeration_manager.mark_datasets_seen([])

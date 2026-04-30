@@ -13,6 +13,7 @@
 - add: warning when scanning a remote source with more rows than the materialization cap (suggests configuring `sample_size`)
 - perf: pattern frequency analysis is now fully vectorized in PyArrow (~1.2× faster, removes the per-backend `\p{L}` probe and the SQL group-by round-trip)
 - perf: batch `_seen=True` updates with `update_many` instead of per-row `update` (O(M×N) → O(N) on large catalogs)
+- perf: batch `mark_datasets_seen` for skipped datasets (single polars filter + single folder rebuild)
 
 ## 0.21.0 (2026-04-27)
 

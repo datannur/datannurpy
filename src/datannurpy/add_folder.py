@@ -365,10 +365,10 @@ def add_folder(
         existing = catalog.dataset.get_by("_match_path", str(info.path))
         assert existing is not None  # compute_scan_plan guarantees this
         skip_seen_ids.append(existing.id)
-        catalog.enumeration_manager.mark_dataset_seen(existing.id)
         log_skip(info.path.name, q)
     if skip_seen_ids:
         catalog.dataset.update_many(skip_seen_ids, _seen=True)
+        catalog.enumeration_manager.mark_datasets_seen(skip_seen_ids)
 
     # Process datasets to scan
     schema_only = resolved_depth == "variable"

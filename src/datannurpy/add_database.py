@@ -482,7 +482,6 @@ def _add_database_impl(
 
                 if not do_refresh and data_unchanged:
                     seen_ids.append(existing_dataset.id)
-                    catalog.enumeration_manager.mark_dataset_seen(existing_dataset.id)
                     meta = schema_meta[table_name]
                     update_cached_metadata(
                         catalog,
@@ -575,6 +574,7 @@ def _add_database_impl(
 
         if seen_ids:
             catalog.dataset.update_many(seen_ids, _seen=True)
+            catalog.enumeration_manager.mark_datasets_seen(seen_ids)
 
         # Process time series groups
         for group in series_groups:
