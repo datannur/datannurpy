@@ -424,6 +424,58 @@ class TestBuildVariables:
         # column "a" has 2 distinct values, column "b" has 2 distinct values
         assert freq.num_rows == 4
 
+    def test_materialization_falls_back_through_pandas_for_decimals(self):
+        """Remote materialization should survive Decimal columns when Arrow export fails."""
+        from decimal import Decimal
+        from unittest.mock import patch
+
+        import pandas as pd
+        import pyarrow as pa
+
+        con = ibis.duckdb.connect()
+        try:
+            con.raw_sql(
+                "CREATE OR REPLACE TABLE remote_decimal AS "
+                "SELECT * FROM (VALUES "
+                "(CAST(100 AS DECIMAL(10,0)), 'a'), "
+                "(CAST(200 AS DECIMAL(10,0)), 'b'), "
+                "(CAST(NULL AS DECIMAL(10,0)), 'a')) AS t(amount, kind)"
+            )
+            table = con.table("remote_decimal")
+            orig_to_pyarrow = type(table).to_pyarrow
+            orig_execute = type(table).execute
+            execute_calls = 0
+
+            def patched_to_pyarrow(self_expr, **kw):  # type: ignore[no-untyped-def]
+                if tuple(self_expr.schema().names) == ("amount", "kind"):
+                    raise pa.ArrowInvalid("Could not convert Decimal('100')")
+                return orig_to_pyarrow(self_expr, **kw)
+
+            def patched_execute(self_expr, **kw):  # type: ignore[no-untyped-def]
+                nonlocal execute_calls
+                if tuple(self_expr.schema().names) == ("amount", "kind"):
+                    execute_calls += 1
+                    return pd.DataFrame(
+                        {
+                            "amount": [Decimal("100"), Decimal("200"), None],
+                            "kind": ["a", "b", "a"],
+                        }
+                    )
+                return orig_execute(self_expr, **kw)
+
+            with patch.object(type(table), "to_pyarrow", patched_to_pyarrow):
+                with patch.object(type(table), "execute", patched_execute):
+                    variables, freq = build_variables(
+                        table, nb_rows=3, dataset_id="test", freq_threshold=10
+                    )
+
+            assert execute_calls >= 1
+            assert freq is not None
+            assert freq.num_rows == 4
+            assert {v.name for v in variables} == {"amount", "kind"}
+        finally:
+            con.disconnect()
+
     def test_skips_materialization_above_threshold(self, monkeypatch):
         """Tables larger than the materialization threshold are left untouched."""
         from datannurpy.scanner import utils as scanner_utils

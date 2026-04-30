@@ -37,6 +37,19 @@ def _round6(val: Any) -> float | None:
     return round(float(val), 6)
 
 
+def _table_to_arrow(table: ibis.Table) -> pa.Table:
+    """Convert an Ibis table to Arrow, falling back through pandas when needed."""
+    import pyarrow as pa
+
+    try:
+        return table.to_pyarrow()
+    except Exception:
+        result = table.execute()
+        if isinstance(result, pa.Table):
+            return result
+        return pa.Table.from_pandas(result, preserve_index=False)
+
+
 # Maximum row count above which a remote/file-backed table is *not*
 # materialized into memory before per-column value-level passes (autotag,
 # frequency, pattern). Below this threshold materialization avoids re-scanning
@@ -632,7 +645,7 @@ def build_variables(
         )
         if is_remote and nb_rows <= _MATERIALIZE_MAX_ROWS:
             try:
-                table = ibis.memtable(table.to_pyarrow())
+                table = ibis.memtable(_table_to_arrow(table))
             except Exception:  # pragma: no cover - fall back to remote table
                 pass
         elif is_remote:
@@ -681,7 +694,7 @@ def build_variables(
             import pyarrow.compute as pc
             import pyarrow.types as pat
 
-            arrow_buf = table.select(eligible_cols).to_pyarrow()
+            arrow_buf = _table_to_arrow(table.select(eligible_cols))
             parts: list[pa.Table] = []
             for col in eligible_cols:
                 arr = arrow_buf.column(col).combine_chunks().drop_null()

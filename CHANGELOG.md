@@ -1,26 +1,19 @@
 # datannurpy
 
-# unreleased
+## 0.22.0 (2026-04-30)
 
-- add: public `copy_assets()` helper and matching `copy_assets` / `base_dir` parameters on `export_db()` and `export_app()`
-- fix: folder discovery no longer aborts on unreadable subdirectories (typically SFTP with restrictive ACLs); the offending path is logged and skipped, the rest of the scan continues
-- fix: `add_folder(depth="dataset")` now logs each processed dataset and unchanged skip, aligned with other depth modes
-- fix: time series detection no longer crashes or drops entries when a 4-digit year contains a constant 2-digit token elsewhere in the same file name
-- fix: mixed time series granularities with the same base name are now split into separate yearly, quarterly, monthly, or daily groups instead of being merged
-- fix: time series detection now recognizes compact `YYYYMMDD` dates in file paths and table names
-- fix: `depth: value` no longer re-scans the source file once per column on wide datasets — the file/DB-backed table is materialized into an Arrow buffer (capped at 1M rows) before the autotag, frequency, and pattern passes
-- perf: frequency value counts now use PyArrow directly (~27× faster on wide datasets); float values drop the trailing `.0` and timestamp/time values drop trailing zero sub-seconds
-- add: warning when scanning a remote source with more rows than the materialization cap (suggests configuring `sample_size`)
-- perf: pattern frequency analysis is now fully vectorized in PyArrow (~1.2× faster, removes the per-backend `\p{L}` probe and the SQL group-by round-trip)
-- perf: batch `_seen=True` updates with `update_many` instead of per-row `update` (O(M×N) → O(N) on large catalogs)
-- perf: batch `mark_datasets_seen` for skipped datasets (single polars filter + single folder rebuild)
-- perf: incremental scan indexes datasets by `_match_path` once per scan
-- perf: `finalize` removes unseen datasets in a single batch instead of per-dataset cascade
-- perf: orphan-tag detection reads `tag_ids` directly from polars columns instead of instantiating one dataclass per row
-- perf: `add_database` introspection re-applies cached metadata across all unchanged tables in a single batch instead of per-table
-- perf: enumeration assignment from frequencies looks up column names in O(1) instead of scanning the variable mapping for each variable
-- perf: derive the dataset `last_update_date` ISO string from the already-collected mtime timestamp instead of issuing a second `stat`/`fs.info` call per file
-- fix: `include`/`exclude` passed as a bare string (e.g. `include="*.csv"`) no longer iterates over characters and scans each file multiple times
+- add: public `copy_assets()` helper and `copy_assets` / `base_dir` parameters on `export_db()` / `export_app()`
+- add: warning when a remote scan exceeds the materialization cap (suggests `sample_size`)
+- fix: folder discovery skips unreadable subdirectories (e.g. SFTP ACLs) instead of aborting
+- fix: `add_folder(depth="dataset")` logs each dataset like other depth modes
+- fix: time series detection — recognizes compact `YYYYMMDD`, handles 4-digit years sharing a constant 2-digit token, and splits mixed yearly/quarterly/monthly/daily granularities
+- fix: `include`/`exclude` as a bare string no longer iterates character-by-character
+- perf: `depth: value` materializes the source once (≤1M rows) and shares it across autotag, frequency, and pattern passes
+- perf: frequency value counts via PyArrow (~27× on wide datasets); cleaner float/timestamp formatting
+- perf: pattern frequency fully vectorized in PyArrow (~1.2×)
+- perf: incremental scan batched — `_seen` updates, `mark_datasets_seen`, `_match_path` index, `finalize` cascade, orphan-tag detection, and `last_update_date` from cached mtime
+- perf: `add_database` re-applies cached metadata for unchanged tables in one batch
+- perf: enumeration assignment from frequencies looks up columns in O(1)
 
 ## 0.21.0 (2026-04-27)
 
