@@ -420,7 +420,7 @@ class TestParquetSampling:
 
         monkeypatch.setattr(parquet_core, "_build_with_sampling", boom)
 
-        catalog = Catalog()
+        catalog = Catalog(verbose=True)
         catalog.add_dataset(path, quiet=False)
 
         # Restore so subsequent tests aren't affected (monkeypatch handles it too)
@@ -448,6 +448,61 @@ class TestParquetSampling:
         monkeypatch.setattr(parquet_core, "_build_with_sampling", boom)
 
         with pytest.raises(KeyError, match="something else"):
+            parquet_core.scan_simple(path, dataset_id="test")
+
+    def test_geoparquet_short_crs_fallback(self, tmp_path: Path, monkeypatch, capsys):
+        """scan_simple should fall back when KeyError is a short CRS but file has geo metadata."""
+        from datannurpy.scanner.parquet import core as parquet_core
+
+        # Write a parquet that carries GeoParquet schema metadata (b"geo")
+        schema = pa.schema(
+            [pa.field("id", pa.int64()), pa.field("val", pa.int64())],
+            metadata={b"geo": b'{"version":"1.0.0"}'},
+        )
+        table = pa.table({"id": [1, 2, 3], "val": [10, 20, 30]}, schema=schema)
+        path = tmp_path / "geo_short.parquet"
+        pq.write_table(table, path)
+
+        def boom(*args, **kwargs):
+            raise KeyError("OGC:CRS84")
+
+        monkeypatch.setattr(parquet_core, "_build_with_sampling", boom)
+
+        catalog = Catalog(verbose=True)
+        catalog.add_dataset(path, quiet=False)
+
+        captured = capsys.readouterr()
+        assert "GeoParquet" in captured.err
+        assert "OGC:CRS84" in captured.err
+        ds = catalog.dataset.all()[0]
+        assert ds.nb_row == 3
+
+    def test_scan_simple_keyerror_parquetfile_unreadable(
+        self, tmp_path: Path, monkeypatch
+    ):
+        """scan_simple swallows ParquetFile errors and re-raises if no geo/projjson hint."""
+        from datannurpy.scanner.parquet import core as parquet_core
+
+        table = pa.table({"id": [1]})
+        path = tmp_path / "plain.parquet"
+        pq.write_table(table, path)
+
+        original_pf = parquet_core.pq.ParquetFile
+        call_count = {"n": 0}
+
+        def fail_pf_after_first(p):
+            call_count["n"] += 1
+            if call_count["n"] == 1:
+                return original_pf(p)
+            raise RuntimeError("cannot read")
+
+        def boom(*args, **kwargs):
+            raise KeyError("OGC:CRS84")
+
+        monkeypatch.setattr(parquet_core, "_build_with_sampling", boom)
+        monkeypatch.setattr(parquet_core.pq, "ParquetFile", fail_pf_after_first)
+
+        with pytest.raises(KeyError, match="OGC:CRS84"):
             parquet_core.scan_simple(path, dataset_id="test")
 
     def test_iceberg_sampling(self):

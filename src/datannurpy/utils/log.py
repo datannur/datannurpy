@@ -60,6 +60,13 @@ def log_warn(msg: str, quiet: bool) -> None:
     _write_log(f"  ⚠ {msg}")
 
 
+def log_debug(msg: str, quiet: bool) -> None:
+    """Log a debug message (only printed when verbose; always written to log file)."""
+    if not quiet and _verbose:
+        print(f"\r  · {msg}", file=sys.stderr)
+    _write_log(f"  · {msg}")
+
+
 def log_skip(msg: str, quiet: bool) -> None:
     """Log a skipped item (unchanged, no rescan needed)."""
     if not quiet:

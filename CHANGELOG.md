@@ -1,5 +1,11 @@
 # datannurpy
 
+## 0.22.2 (2026-04-30)
+
+- fix: GeoParquet fallback now triggers on any unparseable CRS (e.g. `OGC:CRS84`, `EPSG:4326`), not only projjson — detection is based on the file's `b"geo"` schema metadata
+- change: GeoParquet CRS fallback message demoted from warning to debug — only printed when `verbose=True` (still recorded in `log_file`)
+- add: `log_debug()` helper in `datannurpy.utils`
+
 ## 0.22.1 (2026-04-30)
 
 - fix: GeoParquet files with a projjson CRS no longer crash the scan — `scan_simple` falls back to a PyArrow read when DuckDB/Ibis cannot parse the `GEOMETRY('<projjson>')` type

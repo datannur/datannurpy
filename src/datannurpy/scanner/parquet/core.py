@@ -11,7 +11,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from ...schema import Variable
-from ...utils import log_error, log_warn
+from ...utils import log_debug, log_error, log_warn
 from ..utils import build_variables
 from .discovery import DatasetType, ParquetDatasetInfo
 
@@ -134,15 +134,21 @@ def scan_simple(
                 table_name=table_name,
             )
         except KeyError as exc:
-            # DuckDB exposes GeoParquet geometry as GEOMETRY('<projjson>'),
-            # which Ibis 12.x cannot parse (KeyError in _from_sqlglot_GEOMETRY).
-            # Fall back to a pure PyArrow read; sampling is disabled in this
-            # path because the table is materialised in memory.
-            if "projjson.schema.json" not in str(exc):
+            # DuckDB exposes GeoParquet geometry as GEOMETRY('<crs>') where
+            # <crs> may be a full projjson string, a short form like
+            # 'OGC:CRS84', or an EPSG code. Ibis 12.x only knows POINT,
+            # POLYGON, etc. and raises KeyError on anything else. Trigger
+            # the fallback whenever the file actually carries GeoParquet
+            # metadata, regardless of the exact CRS string.
+            try:
+                pq_meta = pq.ParquetFile(path).schema_arrow.metadata or {}
+            except Exception:
+                pq_meta = {}
+            if b"geo" not in pq_meta and "projjson.schema.json" not in str(exc):
                 raise
-            log_warn(
-                f"{path}: DuckDB/Ibis could not parse GeoParquet CRS metadata; "
-                "falling back to PyArrow scan",
+            log_debug(
+                f"{path}: DuckDB/Ibis could not parse GeoParquet CRS metadata "
+                f"({exc}); falling back to PyArrow scan",
                 quiet,
             )
             arrow_table = pq.read_table(path)
