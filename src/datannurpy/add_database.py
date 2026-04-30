@@ -53,6 +53,7 @@ from .scanner.database import (
 
 from .scanner.db_introspect import TableMetadata, introspect_schema
 from .scanner.timeseries import (
+    _build_series_dataset_id_with_suffix,
     PERIOD_PLACEHOLDER,
     TableSeriesGroup,
     build_series_dataset_name,
@@ -628,7 +629,11 @@ def _scan_table_series(
     normalized = group.normalized_name
 
     dataset_name = build_series_dataset_name(normalized, periods)
-    dataset_id = make_id(folder_id, sanitize_id(normalized))
+    dataset_id = _build_series_dataset_id_with_suffix(
+        normalized,
+        folder_id,
+        group.id_suffix,
+    )
     data_path = build_table_data_path(backend_name, db_name, schema_name, last_table)
 
     # Remove existing dataset if present

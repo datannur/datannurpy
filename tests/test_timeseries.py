@@ -7,6 +7,7 @@ from pathlib import Path
 from datannurpy import Catalog, Folder
 from datannurpy.scanner.timeseries import (
     PERIOD_PLACEHOLDER,
+    build_series_dataset_id,
     build_series_dataset_name,
     compute_variable_periods,
     extract_period,
@@ -236,6 +237,18 @@ class TestGroupTimeSeries:
         assert len(series) == 0
         assert len(singles) == 2
 
+    def test_same_bucket_without_year_becomes_singles(self, tmp_path: Path):
+        """Two no-year file candidates in the same bucket must remain singles."""
+        files = [
+            (tmp_path / "data_11.csv", 1000),
+            (tmp_path / "data_12.csv", 2000),
+        ]
+
+        series, singles = group_time_series(files, tmp_path)
+
+        assert series == []
+        assert [path.name for path, _ in singles] == ["data_11.csv", "data_12.csv"]
+
     def test_group_year_not_confused_with_constant_two_digit_token(
         self,
         tmp_path: Path,
@@ -258,6 +271,31 @@ class TestGroupTimeSeries:
             "2022",
             "2023",
             "2024",
+        ]
+
+    def test_mixed_yearly_and_quarterly_files_split_by_granularity(
+        self,
+        tmp_path: Path,
+    ):
+        """Yearly and quarterly files with the same base name must not merge."""
+        files = [
+            (tmp_path / "data_2021.csv", 1000),
+            (tmp_path / "data_2021Q1.csv", 2000),
+            (tmp_path / "data_2021Q2.csv", 3000),
+            (tmp_path / "data_2022.csv", 4000),
+        ]
+
+        series, singles = group_time_series(files, tmp_path)
+
+        assert len(series) == 2
+        assert len(singles) == 0
+        assert sorted([period for period, _ in group.files] for group in series) == [
+            ["2021", "2022"],
+            ["2021Q1", "2021Q2"],
+        ]
+        assert sorted(group.id_suffix or "" for group in series) == [
+            "quarterly",
+            "yearly",
         ]
 
 
@@ -485,9 +523,52 @@ class TestBuildSeriesDatasetName:
         name = build_series_dataset_name(normalized, ["2020", "2021"])
         assert name == "enquete"
 
+    def test_build_series_dataset_id_keeps_regular_ids_stable(self):
+        """Regular series IDs should keep the historical normalized-path form."""
+        normalized = f"data_{PERIOD_PLACEHOLDER}.csv"
+        assert (
+            build_series_dataset_id(normalized, "root")
+            == "root---data_---PERIOD---_csv"
+        )
+
+    def test_dataset_id_suffix_covers_series_and_daily_cases(self):
+        """The internal series suffix helper should cover empty and daily cases."""
+        from datannurpy.scanner.timeseries import _series_id_suffix
+
+        assert _series_id_suffix([]) == "series"
+        assert _series_id_suffix(["2024/03/15", "2024/03/16"]) == "daily"
+
+    def test_series_id_suffix_helper_covers_month_and_quarter(self):
+        """The internal series suffix helper should cover month and quarter cases."""
+        from datannurpy.scanner.timeseries import _series_id_suffix
+
+        assert _series_id_suffix(["2024/03", "2024/04"]) == "monthly"
+        assert _series_id_suffix(["2024Q1", "2024Q2"]) == "quarterly"
+
 
 class TestAddFolderTimeSeries:
     """Integration tests for add_folder with time series."""
+
+    def test_mixed_granularities_create_distinct_datasets(self, tmp_path: Path):
+        """Yearly and quarterly files with the same base name must create two datasets."""
+        for name in (
+            "data_2021.csv",
+            "data_2021Q1.csv",
+            "data_2021Q2.csv",
+            "data_2022.csv",
+        ):
+            (tmp_path / name).write_text("id,value\n1,10\n")
+
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(tmp_path, Folder(id="root", name="Root"), quiet=True)
+
+        datasets = sorted(catalog.dataset.all(), key=lambda dataset: dataset.name or "")
+        assert len(datasets) == 2
+        assert len({dataset.id for dataset in datasets}) == 2
+        assert [dataset.name for dataset in datasets] == [
+            "data_[YYYY]",
+            "data_[YYYY]Q[N]",
+        ]
 
     def test_yearly_series_creates_single_dataset(self):
         """Yearly series creates one dataset instead of multiple."""
@@ -643,6 +724,25 @@ class TestAddFolderTimeSeries:
 
 class TestPeriodEdgeCases:
     """Edge case tests for period extraction and sorting."""
+
+    def test_period_granularity_signature_distinguishes_all_supported_kinds(self):
+        """Granularity signatures must distinguish year, quarter, month, date, and no-year placeholders."""
+        from datannurpy.scanner.timeseries import (
+            PeriodInfo,
+            _period_granularity_signature,
+        )
+
+        signature = _period_granularity_signature(
+            [
+                PeriodInfo(2024, 0, 0, "2024"),
+                PeriodInfo(2024, 13, 0, "2024Q1"),
+                PeriodInfo(2024, 3, 0, "2024/03"),
+                PeriodInfo(2024, 3, 15, "2024/03/15"),
+                PeriodInfo(0, 0, 0, "QX"),
+            ]
+        )
+
+        assert signature == (1, 2, 3, 4, 0)
 
     def test_period_sort_key_with_period_info(self):
         """period_sort_key works with PeriodInfo objects."""
@@ -946,8 +1046,17 @@ class TestGroupTableTimeSeries:
         assert series == []
         assert sorted(singles) == sorted(tables)
 
+    def test_same_bucket_without_year_tables_become_singles(self):
+        """Two no-year table candidates in the same bucket must remain singles."""
+        tables = ["stats_11", "stats_12"]
+
+        series, singles = group_table_time_series(tables)
+
+        assert series == []
+        assert singles == ["stats_11", "stats_12"]
+
     def test_constant_prefix_digit_not_treated_as_period(self):
-        """Constant digits in prefix (e.g. '03' in 'PREFIX03') must not be period components."""
+        """Constant digits in prefix must not hide a mixed-granularity split."""
         tables = [
             "PREFIX03_DATA2010",
             "PREFIX03_DATA2014",
@@ -956,11 +1065,12 @@ class TestGroupTableTimeSeries:
         ]
         series, singles = group_table_time_series(tables)
         assert len(series) == 1
-        assert len(singles) == 0
+        assert singles == ["PREFIX03_DATA201607"]
         # '03' is constant across all tables → must NOT be a period placeholder
         assert "PREFIX03_DATA" in series[0].normalized_name
-        # Only the varying year/month part should be the period
+        # Only the varying yearly part should be the period in the grouped series
         assert series[0].normalized_name.count(PERIOD_PLACEHOLDER) == 1
+        assert [p for p, _ in series[0].tables] == ["2010", "2014", "2017"]
 
     def test_position_order_matches_placeholders(self):
         """Period positions list must align with placeholder order in normalized name."""
@@ -974,6 +1084,23 @@ class TestGroupTableTimeSeries:
         # The varying part is the year, not '03'
         periods = [p for p, _ in series[0].tables]
         assert periods == ["2010", "2014", "2017"]
+
+    def test_mixed_yearly_and_quarterly_tables_split_by_granularity(self):
+        """Yearly and quarterly tables with the same base name must not merge."""
+        tables = ["data_2021", "data_2021Q1", "data_2021Q2", "data_2022"]
+
+        series, singles = group_table_time_series(tables)
+
+        assert len(series) == 2
+        assert len(singles) == 0
+        assert sorted([period for period, _ in group.tables] for group in series) == [
+            ["2021", "2022"],
+            ["2021Q1", "2021Q2"],
+        ]
+        assert sorted(group.id_suffix or "" for group in series) == [
+            "quarterly",
+            "yearly",
+        ]
 
     def test_refine_subgroup_with_single_table_becomes_single(self):
         """When _refine_group sub-groups and one group has <2 tables, it becomes a single."""

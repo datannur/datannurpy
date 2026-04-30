@@ -29,7 +29,7 @@ from .schema import Dataset, Folder
 from .scanner.discovery import DatasetInfo, compute_scan_plan, discover_datasets
 from .scanner.filesystem import FileSystem, is_remote_url
 from .scanner.timeseries import (
-    build_series_dataset_id,
+    _build_series_dataset_id_with_suffix,
     build_series_dataset_name,
     compute_variable_periods,
     get_series_folder_parts,
@@ -311,7 +311,11 @@ def add_folder(
                 nb_resources = len(info.series_files)
                 start_date = periods[0]
                 end_date = periods[-1]
-                fallback_id = build_series_dataset_id(normalized, prefix)
+                fallback_id = _build_series_dataset_id_with_suffix(
+                    normalized,
+                    prefix,
+                    info.series_id_suffix,
+                )
                 fallback_folder_id = _build_series_folder_id(normalized, prefix)
             else:
                 fallback_id, dataset_name = build_dataset_id_name(
@@ -515,7 +519,11 @@ def _scan_time_series(
 
     # Build dataset ID using normalized path
     normalized = info.series_normalized_path
-    fallback_id = build_series_dataset_id(normalized, prefix)
+    fallback_id = _build_series_dataset_id_with_suffix(
+        normalized,
+        prefix,
+        info.series_id_suffix,
+    )
     # Build dataset name from normalized path
     dataset_name = build_series_dataset_name(normalized, periods)
 

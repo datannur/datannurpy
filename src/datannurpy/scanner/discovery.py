@@ -25,6 +25,7 @@ class DatasetInfo:
     mtime: int
     series_files: list[tuple[str, PurePath]] | None = None  # [(period, path), ...]
     series_normalized_path: str | None = None  # Refined normalized path from group
+    series_id_suffix: str | None = None
 
 
 @dataclass
@@ -152,6 +153,7 @@ def _apply_time_series_grouping(
                     mtime=group.max_mtime,
                     series_files=group.files,
                     series_normalized_path=group.normalized_path,
+                    series_id_suffix=group.id_suffix,
                 )
             )
 

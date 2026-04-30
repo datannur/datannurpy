@@ -5,6 +5,7 @@
 - add: public `copy_assets()` helper and matching `copy_assets` / `base_dir` parameters on `export_db()` and `export_app()`
 - fix: `add_folder(depth="dataset")` now logs each processed dataset and unchanged skip, aligned with other depth modes
 - fix: time series detection no longer crashes or drops entries when a 4-digit year contains a constant 2-digit token elsewhere in the same file name
+- fix: mixed time series granularities with the same base name are now split into separate yearly, quarterly, monthly, or daily groups instead of being merged
 
 ## 0.21.0 (2026-04-27)
 
