@@ -177,6 +177,15 @@ class TestFinalizeUnseenDatasets:
             == 0
         )
 
+    def test_unseen_dataset_without_variables(self, tmp_path: Path):
+        """Cascade should remove the dataset even when it has no variables."""
+        from datannurpy.schema import Dataset
+
+        catalog = Catalog(app_path=tmp_path, quiet=True)
+        catalog.dataset.add(Dataset(id="ds1", name="DS", _seen=False))
+        catalog.finalize()
+        assert catalog.dataset.get("ds1") is None
+
 
 class TestFinalizeUnseenEnumerations:
     """Tests for removing unseen enumerations."""

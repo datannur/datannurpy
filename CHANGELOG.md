@@ -15,6 +15,7 @@
 - perf: batch `_seen=True` updates with `update_many` instead of per-row `update` (O(M×N) → O(N) on large catalogs)
 - perf: batch `mark_datasets_seen` for skipped datasets (single polars filter + single folder rebuild)
 - perf: incremental scan indexes datasets by `_match_path` once per scan
+- perf: `finalize` removes unseen datasets in a single batch instead of per-dataset cascade
 - fix: `include`/`exclude` passed as a bare string (e.g. `include="*.csv"`) no longer iterates over characters and scans each file multiple times
 
 ## 0.21.0 (2026-04-27)
