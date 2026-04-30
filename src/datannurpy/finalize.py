@@ -85,11 +85,10 @@ def _collect_referenced_tag_ids(catalog: Catalog) -> set[str]:
         catalog.organization,
     ):
         df = table.df
-        if df.is_empty() or "tag_ids" not in df.columns:
-            continue
-        for tag_list in df["tag_ids"].drop_nulls().to_list():
-            if tag_list:
-                referenced.update(tag_list)
+        if not df.is_empty() and "tag_ids" in df.columns:
+            for tag_list in df["tag_ids"].drop_nulls().to_list():
+                if tag_list:
+                    referenced.update(tag_list)
     return referenced
 
 
