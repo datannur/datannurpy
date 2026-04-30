@@ -112,27 +112,50 @@ def scan_simple(
     quiet: bool = False,
 ) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
     """Scan a simple Parquet file."""
-    _ = quiet  # unused but kept for API consistency
     # Extract metadata
     metadata = extract_parquet_metadata(path)
 
     # Scan with Ibis
     con = ibis.duckdb.connect()
     try:
-        table = con.read_parquet(path)
-        row_count = int(table.count().to_pyarrow().as_py())
-        table_name = table.get_name()
+        try:
+            table = con.read_parquet(path)
+            row_count = int(table.count().to_pyarrow().as_py())
+            table_name = table.get_name()
 
-        variables, actual_sample_size, freq_table = _build_with_sampling(
-            con,
-            table,
-            row_count=row_count,
-            dataset_id=dataset_id,
-            infer_stats=infer_stats,
-            freq_threshold=freq_threshold,
-            sample_size=sample_size,
-            table_name=table_name,
-        )
+            variables, actual_sample_size, freq_table = _build_with_sampling(
+                con,
+                table,
+                row_count=row_count,
+                dataset_id=dataset_id,
+                infer_stats=infer_stats,
+                freq_threshold=freq_threshold,
+                sample_size=sample_size,
+                table_name=table_name,
+            )
+        except KeyError as exc:
+            # DuckDB exposes GeoParquet geometry as GEOMETRY('<projjson>'),
+            # which Ibis 12.x cannot parse (KeyError in _from_sqlglot_GEOMETRY).
+            # Fall back to a pure PyArrow read; sampling is disabled in this
+            # path because the table is materialised in memory.
+            if "projjson.schema.json" not in str(exc):
+                raise
+            log_warn(
+                f"{path}: DuckDB/Ibis could not parse GeoParquet CRS metadata; "
+                "falling back to PyArrow scan",
+                quiet,
+            )
+            arrow_table = pq.read_table(path)
+            row_count = arrow_table.num_rows
+            table = ibis.memtable(arrow_table)
+            variables, freq_table = build_variables(
+                table,
+                nb_rows=row_count,
+                dataset_id=dataset_id,
+                infer_stats=infer_stats,
+                freq_threshold=freq_threshold,
+            )
+            actual_sample_size = None
 
         apply_column_descriptions(variables, metadata.column_descriptions)
         metadata.sample_size = actual_sample_size

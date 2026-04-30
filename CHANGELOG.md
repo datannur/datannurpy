@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.22.1 (2026-04-30)
+
+- fix: GeoParquet files with a projjson CRS no longer crash the scan — `scan_simple` falls back to a PyArrow read when DuckDB/Ibis cannot parse the `GEOMETRY('<projjson>')` type
+- fix: autotag content types `md5`, `sha1`, `sha256`, `sha512` are now registered in the tag tree (previously detected but unattached)
+
 ## 0.22.0 (2026-04-30)
 
 - change: `export_db` / `export_app` omit columns that are entirely null/empty from the exported JSON files

@@ -53,6 +53,20 @@ _AUTO_TREE: list[tuple[str, str, str, str | None]] = [
     ),
     ("auto---argon2", "Argon2", "Argon2 password hashes", "auto---security"),
     ("auto---jwt", "JWT", "JSON Web Tokens", "auto---security"),
+    ("auto---md5", "MD5", "MD5 hex hashes (32 hex chars)", "auto---security"),
+    ("auto---sha1", "SHA-1", "SHA-1 hex hashes (40 hex chars)", "auto---security"),
+    (
+        "auto---sha256",
+        "SHA-256",
+        "SHA-256 hex hashes (64 hex chars)",
+        "auto---security",
+    ),
+    (
+        "auto---sha512",
+        "SHA-512",
+        "SHA-512 hex hashes (128 hex chars)",
+        "auto---security",
+    ),
     (
         "auto---secret",
         "Secret",

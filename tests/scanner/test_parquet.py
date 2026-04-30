@@ -401,6 +401,55 @@ class TestParquetSampling:
         _, _, _, metadata = scan_parquet(path, dataset_id="test")
         assert metadata.description == "My dataset"
 
+    def test_geoparquet_projjson_fallback(self, tmp_path: Path, monkeypatch, capsys):
+        """scan_simple should fall back to PyArrow when Ibis fails on GeoParquet CRS."""
+        from datannurpy.scanner.parquet import core as parquet_core
+
+        table = pa.table({"id": [1, 2, 3], "val": [10, 20, 30]})
+        path = tmp_path / "geo.parquet"
+        pq.write_table(table, path)
+
+        original = parquet_core._build_with_sampling
+        calls: list[int] = []
+
+        def boom(*args, **kwargs):
+            calls.append(1)
+            raise KeyError(
+                '{"$schema":"https://proj.org/schemas/v0.7/projjson.schema.json"}'
+            )
+
+        monkeypatch.setattr(parquet_core, "_build_with_sampling", boom)
+
+        catalog = Catalog()
+        catalog.add_dataset(path, quiet=False)
+
+        # Restore so subsequent tests aren't affected (monkeypatch handles it too)
+        _ = original
+        captured = capsys.readouterr()
+        assert "GeoParquet" in captured.err
+        assert calls  # the broken path was attempted
+        ds = catalog.dataset.all()[0]
+        assert ds.nb_row == 3
+        assert {v.name for v in catalog.variable.all()} == {"id", "val"}
+
+    def test_scan_simple_keyerror_not_projjson_reraises(
+        self, tmp_path: Path, monkeypatch
+    ):
+        """scan_simple should re-raise KeyError unrelated to GeoParquet CRS."""
+        from datannurpy.scanner.parquet import core as parquet_core
+
+        table = pa.table({"id": [1]})
+        path = tmp_path / "ok.parquet"
+        pq.write_table(table, path)
+
+        def boom(*args, **kwargs):
+            raise KeyError("something else")
+
+        monkeypatch.setattr(parquet_core, "_build_with_sampling", boom)
+
+        with pytest.raises(KeyError, match="something else"):
+            parquet_core.scan_simple(path, dataset_id="test")
+
     def test_iceberg_sampling(self):
         """scan_iceberg should support sampling on Iceberg tables."""
         from datannurpy.scanner.parquet.core import scan_iceberg
