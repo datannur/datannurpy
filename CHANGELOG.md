@@ -2,6 +2,7 @@
 
 ## 0.22.2 (2026-04-30)
 
+- fix: non-tabular and malformed CSVs are now skipped cleanly as untreatable (shared `is_valid_tabular_dataset` pre-flight + targeted DuckDB catch) instead of surfacing a traceback or being mislabeled as empty
 - fix: GeoParquet fallback now triggers on any unparseable CRS (e.g. `OGC:CRS84`, `EPSG:4326`), not only projjson — detection is based on the file's `b"geo"` schema metadata
 - change: GeoParquet CRS fallback message demoted from warning to debug — only printed when `verbose=True` (still recorded in `log_file`)
 - add: `log_debug()` helper in `datannurpy.utils`

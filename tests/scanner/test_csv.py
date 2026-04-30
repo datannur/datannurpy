@@ -158,6 +158,110 @@ class TestSampling:
         assert actual_sample is None
         assert len(variables) == 3
 
+    def test_scan_csv_preflight_rejects_title_row(self, tmp_path: Path, capsys):
+        """CSV starting with a title row (not a header) is flagged as untreatable."""
+        from datannurpy.scanner.csv import scan_csv
+
+        csv_file = tmp_path / "report.csv"
+        csv_file.write_text(
+            "Annual report 2024\nCode,Name,Salary\n101,Alice,5000\n102,Bob,6000\n"
+        )
+
+        variables, nb_row, actual_sample, frequency = scan_csv(
+            csv_file, dataset_id="test", quiet=False
+        )
+
+        captured = capsys.readouterr()
+        assert "not a valid tabular dataset" in captured.err
+        assert "skipped as untreatable" in captured.err
+        assert variables == []
+        assert nb_row is None
+        assert actual_sample is None
+        assert frequency is None
+
+    def test_scan_csv_malformed_caught(self, tmp_path: Path, monkeypatch, capsys):
+        """Malformed CSV that DuckDB rejects is reported cleanly (no traceback)."""
+        import duckdb
+
+        from datannurpy.scanner import csv as csv_mod
+
+        csv_file = tmp_path / "trailing.csv"
+        csv_file.write_text("a,b,c\n1,2,3\n")
+
+        original_connect = csv_mod.ibis.duckdb.connect
+
+        class _Wrap:
+            def __init__(self, real):
+                self._real = real
+
+            def read_csv(self, *a, **kw):
+                raise duckdb.InvalidInputException(
+                    "Invalid Input Error: CSV Error on Line: 38606\n"
+                    "Expected Number of Columns: 264 Found: 1"
+                )
+
+            def __getattr__(self, name):
+                return getattr(self._real, name)
+
+        def fake_connect(*a, **kw):
+            return _Wrap(original_connect(*a, **kw))
+
+        monkeypatch.setattr(csv_mod.ibis.duckdb, "connect", fake_connect)
+
+        variables, nb_row, actual_sample, frequency = csv_mod.scan_csv(
+            csv_file, dataset_id="test", quiet=False
+        )
+
+        captured = capsys.readouterr()
+        assert "malformed CSV" in captured.err
+        assert "skipped as untreatable" in captured.err
+        assert "Traceback" not in captured.err
+        assert variables == []
+        assert nb_row is None
+        assert actual_sample is None
+        assert frequency is None
+
+    def test_read_preview_rows_csv_non_utf8(self, tmp_path: Path):
+        """_read_preview_rows_csv falls back to cp1252 on non-utf8 bytes."""
+        from datannurpy.scanner.csv import _read_preview_rows_csv
+
+        csv_file = tmp_path / "latin.csv"
+        csv_file.write_bytes("a,b\nfoo,caf\xe9\n".encode("cp1252"))
+
+        rows = _read_preview_rows_csv(csv_file)
+        assert rows[0] == ("a", "b")
+        assert rows[1][0] == "foo"
+
+    def test_read_preview_rows_csv_bom_and_blank(self, tmp_path: Path):
+        """BOM is stripped; blank file returns []."""
+        from datannurpy.scanner.csv import _read_preview_rows_csv
+
+        bom = tmp_path / "bom.csv"
+        bom.write_bytes(b"\xef\xbb\xbfa,b\n1,2\n")
+        rows = _read_preview_rows_csv(bom)
+        assert rows[0] == ("a", "b")
+
+        blank = tmp_path / "blank.csv"
+        blank.write_text("\n   \n")
+        assert _read_preview_rows_csv(blank) == []
+
+    def test_scan_csv_preflight_unreadable(self, tmp_path: Path, monkeypatch, capsys):
+        """Preview reader failures fall back to the DuckDB scan path."""
+        from datannurpy.scanner import csv as csv_mod
+
+        csv_file = tmp_path / "ok.csv"
+        csv_file.write_text("a,b\n1,2\n3,4\n")
+
+        def boom(*args, **kwargs):
+            raise RuntimeError("boom")
+
+        monkeypatch.setattr(csv_mod, "_read_preview_rows_csv", boom)
+        variables, nb_row, _, _ = csv_mod.scan_csv(
+            csv_file, dataset_id="test", quiet=False
+        )
+        assert nb_row == 2
+        assert {v.name for v in variables} == {"a", "b"}
+
 
 class TestEnsureLocalUtf8:
     """Test ensure_local_utf8 edge cases."""

@@ -22,8 +22,8 @@ _MIDNIGHT = dt_time(0, 0)
 _MAX_PREVIEW_ROWS = 10
 
 
-def is_valid_excel_dataset(rows: Sequence[tuple[object, ...]]) -> tuple[bool, str]:
-    """Check if first rows look like a raw dataset (not a report/pivot)."""
+def is_valid_tabular_dataset(rows: Sequence[tuple[object, ...]]) -> tuple[bool, str]:
+    """Check if first rows look like a raw tabular dataset (xlsx or csv)."""
     if not rows:
         return False, "empty sheet"
 
@@ -115,7 +115,7 @@ def scan_excel(
     infer_stats: bool = True,
     freq_threshold: int | None = None,
     quiet: bool = False,
-) -> tuple[list[Variable], int, pa.Table | None]:
+) -> tuple[list[Variable], int | None, pa.Table | None]:
     """Scan an Excel file and return (variables, row_count, freq_table)."""
     file_path = Path(path)
     suffix = file_path.suffix.lower()
@@ -126,11 +126,15 @@ def scan_excel(
             rows = _read_preview_rows(file_path)
         except Exception as e:
             log_error(file_path.name, e, quiet)
-            return [], 0, None
-        valid, reason = is_valid_excel_dataset(rows)
+            return [], None, None
+        valid, reason = is_valid_tabular_dataset(rows)
         if not valid:
-            log_warn(f"{file_path.name}: skipped (not a raw dataset — {reason})", quiet)
-            return [], 0, None
+            log_warn(
+                f"{file_path.name}: not a valid tabular dataset ({reason}); "
+                "skipped as untreatable",
+                quiet,
+            )
+            return [], None, None
 
     df = read_excel(path, sheet_name=sheet_name, quiet=quiet)
     if df is None:
@@ -142,10 +146,14 @@ def scan_excel(
         data_rows = [
             tuple(row) for row in df.head(_MAX_PREVIEW_ROWS).itertuples(index=False)
         ]
-        valid, reason = is_valid_excel_dataset([header_row, *data_rows])
+        valid, reason = is_valid_tabular_dataset([header_row, *data_rows])
         if not valid:
-            log_warn(f"{file_path.name}: skipped (not a raw dataset — {reason})", quiet)
-            return [], 0, None
+            log_warn(
+                f"{file_path.name}: not a valid tabular dataset ({reason}); "
+                "skipped as untreatable",
+                quiet,
+            )
+            return [], None, None
 
     # Pandas reads Excel dates as datetime64 even for date-only cells.
     # Detect columns where all values are at midnight and convert to date.

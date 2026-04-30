@@ -10,10 +10,12 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import duckdb as _duckdb
 import ibis
 import pyarrow as pa
 
-from ..utils import log_error
+from ..utils import log_error, log_warn
+from .excel import is_valid_tabular_dataset
 from .filesystem import ensure_local_utf8
 from .utils import build_variables
 
@@ -52,8 +54,8 @@ def _deduplicate_columns(names: list[str]) -> list[str]:
     return out
 
 
-def _read_csv_header(sample: bytes, csv_encoding: str | None = None) -> list[str]:
-    """Parse column names from a CSV header sample (raw bytes, may span multiple lines)."""
+def _decode_csv_sample(sample: bytes, csv_encoding: str | None) -> str:
+    """Decode a CSV byte sample to text: UTF-8 with cp1252 fallback, BOM stripped, LF-normalized."""
     try:
         text = sample.decode("utf-8")
     except UnicodeDecodeError:
@@ -63,10 +65,13 @@ def _read_csv_header(sample: bytes, csv_encoding: str | None = None) -> list[str
         text = text[1:]
     # Normalize line endings: stdlib csv only accepts \n or \r\n, but some files
     # (Mac Classic, legacy SDMX exports) use bare \r as line terminator.
-    text = text.replace("\r\n", "\n").replace("\r", "\n")
-    text = text.lstrip("\n")
+    return text.replace("\r\n", "\n").replace("\r", "\n").lstrip("\n")
+
+
+def _csv_reader_from_text(text: str) -> Any:
+    """Build a csv.reader with sniffed dialect, or None if text is blank."""
     if not text.strip():
-        return []
+        return None
     # Sniff dialect on a reasonable sample, restricted to common delimiters so
     # commas inside quoted header fields don't fool the sniffer when the real
     # separator is ';' (FR/DE/IT locales).
@@ -74,11 +79,18 @@ def _read_csv_header(sample: bytes, csv_encoding: str | None = None) -> list[str
         dialect = csv.Sniffer().sniff(text, delimiters=_CSV_HEADER_DELIMITERS)
     except csv.Error:
         dialect = None  # type: ignore[assignment]
-    reader = (
+    return (
         csv.reader(io.StringIO(text), dialect)
         if dialect
         else csv.reader(io.StringIO(text))
     )
+
+
+def _read_csv_header(sample: bytes, csv_encoding: str | None = None) -> list[str]:
+    """Parse column names from a CSV header sample (raw bytes, may span multiple lines)."""
+    reader = _csv_reader_from_text(_decode_csv_sample(sample, csv_encoding))
+    if reader is None:
+        return []
     row = next(reader, [])
     return _deduplicate_columns([c for c in row if c.strip()])
 
@@ -111,6 +123,29 @@ def _csv_source(
     finally:
         tmp_path.unlink(missing_ok=True)
         tmp_dir.rmdir()
+
+
+def _read_preview_rows_csv(path: Path, *, n: int = 10) -> list[tuple[object, ...]]:
+    """Read first n rows of a UTF-8 CSV file (auto-detects delimiter)."""
+    with open(path, "rb") as fb:
+        sample = fb.read(_CSV_HEADER_SAMPLE_BYTES)
+    reader = _csv_reader_from_text(_decode_csv_sample(sample, None))
+    if reader is None:
+        return []
+    rows: list[tuple[object, ...]] = []
+    for row in reader:
+        # Treat trailing empty fields as missing cells (None) for width checks
+        cells = tuple(c if c != "" else None for c in row)
+        rows.append(cells)
+        if len(rows) >= n:
+            break
+    return rows
+
+
+def _short_csv_error(exc: BaseException) -> str:
+    """Return a one-line summary of a DuckDB CSV parse error."""
+    msg = str(exc).split("\n", 1)[0]
+    return msg.removeprefix("Invalid Input Error: ").strip()
 
 
 def read_csv(
@@ -155,7 +190,7 @@ def scan_csv(
     sample_size: int | None = None,
     csv_skip_copy: bool = False,
     quiet: bool = False,
-) -> tuple[list[Variable], int, int | None, pa.Table | None]:
+) -> tuple[list[Variable], int | None, int | None, pa.Table | None]:
     """Scan a CSV file and return (variables, row_count, actual_sample_size, freq_table)."""
     file_path = Path(path)
 
@@ -164,10 +199,36 @@ def scan_csv(
 
     try:
         with _csv_source(file_path, csv_encoding, csv_skip_copy) as csv_path:
+            # Pre-flight: structural check on first rows so non-tabular CSVs
+            # (footers like "Ende/Fin/Fino", multi-line headers, irregular
+            # widths from exported pivots) are flagged cleanly instead of
+            # surfacing a DuckDB strict-mode traceback.
+            try:
+                preview = _read_preview_rows_csv(csv_path)
+            except Exception:
+                preview = []
+            if preview:
+                valid, reason = is_valid_tabular_dataset(preview)
+                if not valid:
+                    log_warn(
+                        f"{file_path.name}: not a valid tabular dataset "
+                        f"({reason}); skipped as untreatable",
+                        quiet,
+                    )
+                    return [], None, None, None
+
             con = ibis.duckdb.connect()
             try:
-                table = con.read_csv(str(csv_path))
-                row_count = int(table.count().to_pyarrow().as_py())
+                try:
+                    table = con.read_csv(str(csv_path))
+                    row_count = int(table.count().to_pyarrow().as_py())
+                except _duckdb.InvalidInputException as exc:
+                    log_warn(
+                        f"{file_path.name}: malformed CSV "
+                        f"({_short_csv_error(exc)}); skipped as untreatable",
+                        quiet,
+                    )
+                    return [], None, None, None
 
                 if row_count == 0:
                     variables, freq_table = build_variables(
