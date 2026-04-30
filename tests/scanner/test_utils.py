@@ -601,3 +601,38 @@ class TestPatternFrequencyIntegration:
         pw_freqs = [r for r in freq_table.to_pylist() if r["variable_id"] == "password"]
         for row in pw_freqs:
             assert not row["value"].startswith("$2a$")
+
+
+class TestFindFilesNormalization:
+    """find_files should normalize str patterns and deduplicate matches."""
+
+    def test_include_as_string_does_not_iterate_chars(self, tmp_path):
+        from pathlib import Path as _Path
+
+        from datannurpy.scanner.utils import find_files
+
+        (tmp_path / "data.csv").write_text("a,b\n1,2\n")
+        # Passing a bare str (not a list) used to iterate over chars and
+        # produce duplicates; it should now be treated as a single pattern.
+        result = find_files(tmp_path, "*.csv", None, recursive=True)
+        assert [_Path(p).name for p in result] == ["data.csv"]
+
+    def test_exclude_as_string(self, tmp_path):
+        from pathlib import Path as _Path
+
+        from datannurpy.scanner.utils import find_files
+
+        (tmp_path / "keep.csv").write_text("a\n1\n")
+        (tmp_path / "drop.csv").write_text("a\n1\n")
+        result = find_files(tmp_path, ["*.csv"], "drop.csv", recursive=True)
+        assert [_Path(p).name for p in result] == ["keep.csv"]
+
+    def test_overlapping_patterns_are_deduplicated(self, tmp_path):
+        from pathlib import Path as _Path
+
+        from datannurpy.scanner.utils import find_files
+
+        (tmp_path / "data.csv").write_text("a\n1\n")
+        # Both patterns match the same file; result should contain it once.
+        result = find_files(tmp_path, ["*.csv", "data.*"], None, recursive=True)
+        assert [_Path(p).name for p in result] == ["data.csv"]

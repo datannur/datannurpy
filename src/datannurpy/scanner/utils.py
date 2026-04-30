@@ -219,6 +219,11 @@ def find_files(
     fs: FileSystem | None = None,
 ) -> list[PurePath]:
     """Find files matching include/exclude patterns."""
+    # Normalize str → [str] to avoid iterating over characters
+    if isinstance(include, str):
+        include = [include]
+    if isinstance(exclude, str):
+        exclude = [exclude]
     # Use FileSystem if provided, otherwise use pathlib directly
     if fs is not None:
         return _find_files_with_fs(fs, root, include, exclude, recursive)
@@ -250,6 +255,8 @@ def find_files(
                 candidates.extend(safe_glob_local(root, f"**/{pat}"))
             else:
                 candidates.extend(safe_glob_local(root, pat))
+        # Deduplicate while preserving order (a file may match multiple patterns)
+        candidates = list(dict.fromkeys(candidates))
 
     candidates = [f for f in candidates if f.is_file()]
 

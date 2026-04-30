@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import PurePath
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from .parquet import discover_parquet_datasets
 from .timeseries import group_time_series
@@ -34,6 +34,7 @@ class ScanPlan:
 
     to_scan: list[DatasetInfo]
     to_skip: list[DatasetInfo]
+    existing_by_path: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -179,11 +180,15 @@ def compute_scan_plan(
     to_scan: list[DatasetInfo] = []
     to_skip: list[DatasetInfo] = []
 
+    existing_by_path: dict[str, Any] = {
+        ds._match_path: ds for ds in catalog.dataset.all() if ds._match_path
+    }
+
     for info in datasets:
-        existing = catalog.dataset.get_by("_match_path", str(info.path))
+        existing = existing_by_path.get(str(info.path))
         if existing is None or refresh or existing.last_update_timestamp != info.mtime:
             to_scan.append(info)
         else:
             to_skip.append(info)
 
-    return ScanPlan(to_scan=to_scan, to_skip=to_skip)
+    return ScanPlan(to_scan=to_scan, to_skip=to_skip, existing_by_path=existing_by_path)

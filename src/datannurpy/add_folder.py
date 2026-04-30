@@ -270,7 +270,7 @@ def add_folder(
         # Skip unchanged datasets
         skip_seen_ids: list[str] = []
         for info in plan.to_skip:
-            existing = catalog.dataset.get_by("_match_path", str(info.path))
+            existing = plan.existing_by_path.get(str(info.path))
             assert existing is not None
             skip_seen_ids.append(existing.id)
             log_skip(info.path.name, q)
@@ -281,7 +281,7 @@ def add_folder(
         for info in plan.to_scan:
             t0 = log_start(info.path.name, q)
             data_path_str = str(info.path)
-            existing = catalog.dataset.get_by("_match_path", data_path_str)
+            existing = plan.existing_by_path.get(data_path_str)
             if existing:
                 # Update metadata for modified dataset
                 data_size = (
@@ -362,7 +362,7 @@ def add_folder(
     # Handle skipped datasets (mark as seen)
     skip_seen_ids: list[str] = []
     for info in plan.to_skip:
-        existing = catalog.dataset.get_by("_match_path", str(info.path))
+        existing = plan.existing_by_path.get(str(info.path))
         assert existing is not None  # compute_scan_plan guarantees this
         skip_seen_ids.append(existing.id)
         log_skip(info.path.name, q)
@@ -450,7 +450,7 @@ def add_folder(
             continue
 
         # Remove old dataset only after successful scan
-        existing = catalog.dataset.get_by("_match_path", data_path_str)
+        existing = plan.existing_by_path.get(data_path_str)
         if existing:
             remove_dataset_cascade(catalog, existing)
 

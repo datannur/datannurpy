@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path, PurePosixPath
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 import ibis
@@ -367,6 +367,9 @@ def _add_database_impl(
                 )
 
         seen_ids: list[str] = []
+        existing_by_path: dict[str, Any] = {
+            ds._match_path: ds for ds in catalog.dataset.all() if ds._match_path
+        }
         for table_name in tables:
             if table_name in series_table_names:
                 continue
@@ -378,7 +381,7 @@ def _add_database_impl(
             )
 
             # Check if table exists in cache
-            existing_dataset = catalog.dataset.get_by("_match_path", table_data_path)
+            existing_dataset = existing_by_path.get(table_data_path)
 
             # Structure/Variable mode: no signature, no row count, no incremental check
             if resolved_depth not in ("stat", "value"):
