@@ -145,10 +145,11 @@ class EnumerationManager:
         new_values: list[Value] = []
         existing_seen_ids: set[str] = set()
 
+        id_to_old_col = {v: k for k, v in var_id_mapping.items()}
         for var in variables:
             if var.is_pattern:
                 continue
-            old_col_name = next(k for k, v in var_id_mapping.items() if v == var.id)
+            old_col_name = id_to_old_col[var.id]
             values = freq_by_var.get(old_col_name)
             if not values:
                 continue
