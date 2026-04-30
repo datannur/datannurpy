@@ -1,5412 +1,4330 @@
 [
   {
     "enumeration_id": "_enumerations---enum_029a67f9a3",
-    "value": "finance,rh",
-    "description": null
+    "value": "finance,rh"
   },
   {
     "enumeration_id": "_enumerations---enum_029a67f9a3",
-    "value": "rh,policy---frequency-hidden",
-    "description": null
+    "value": "rh,policy---frequency-hidden"
   },
   {
     "enumeration_id": "_enumerations---enum_06d1e3109c",
-    "value": "1583-01-01",
-    "description": null
+    "value": "1583-01-01"
   },
   {
     "enumeration_id": "_enumerations---enum_06d1e3109c",
-    "value": "1880-05-06",
-    "description": null
+    "value": "1880-05-06"
   },
   {
     "enumeration_id": "_enumerations---enum_06d1e3109c",
-    "value": "1960-01-01",
-    "description": null
+    "value": "1960-01-01"
   },
   {
     "enumeration_id": "_enumerations---enum_06d1e3109c",
-    "value": "2018-05-06",
-    "description": null
+    "value": "2018-05-06"
   },
   {
     "enumeration_id": "_enumerations---enum_0712b1b367",
-    "value": "Engineering",
-    "description": null
+    "value": "Engineering"
   },
   {
     "enumeration_id": "_enumerations---enum_0712b1b367",
-    "value": "HR",
-    "description": null
+    "value": "HR"
   },
   {
     "enumeration_id": "_enumerations---enum_0712b1b367",
-    "value": "Sales",
-    "description": null
+    "value": "Sales"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "505",
-    "description": null
+    "value": "505"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "527",
-    "description": null
+    "value": "527"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "533",
-    "description": null
+    "value": "533"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "539",
-    "description": null
+    "value": "539"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "541",
-    "description": null
+    "value": "541"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "562",
-    "description": null
+    "value": "562"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "567",
-    "description": null
+    "value": "567"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "571",
-    "description": null
+    "value": "571"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "572",
-    "description": null
+    "value": "572"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "587",
-    "description": null
+    "value": "587"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "600",
-    "description": null
+    "value": "600"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "613",
-    "description": null
+    "value": "613"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "615",
-    "description": null
+    "value": "615"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "631",
-    "description": null
+    "value": "631"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "632",
-    "description": null
+    "value": "632"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "637",
-    "description": null
+    "value": "637"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "638",
-    "description": null
+    "value": "638"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "646",
-    "description": null
+    "value": "646"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "667",
-    "description": null
+    "value": "667"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "673",
-    "description": null
+    "value": "673"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "677",
-    "description": null
+    "value": "677"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "696",
-    "description": null
+    "value": "696"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "714",
-    "description": null
+    "value": "714"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "716",
-    "description": null
+    "value": "716"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "745",
-    "description": null
+    "value": "745"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "751",
-    "description": null
+    "value": "751"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "761",
-    "description": null
+    "value": "761"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "873",
-    "description": null
+    "value": "873"
   },
   {
     "enumeration_id": "_enumerations---enum_0aff41590a",
-    "value": "903",
-    "description": null
+    "value": "903"
   },
   {
     "enumeration_id": "_enumerations---enum_0b3bf09e4d",
-    "value": "1450",
-    "description": null
+    "value": "1450"
   },
   {
     "enumeration_id": "_enumerations---enum_0b3bf09e4d",
-    "value": "1600",
-    "description": null
+    "value": "1600"
   },
   {
     "enumeration_id": "_enumerations---enum_0b3bf09e4d",
-    "value": "1700",
-    "description": null
+    "value": "1700"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "101",
-    "description": null
+    "value": "101"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "104",
-    "description": null
+    "value": "104"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "105",
-    "description": null
+    "value": "105"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "107",
-    "description": null
+    "value": "107"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "108",
-    "description": null
+    "value": "108"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "110",
-    "description": null
+    "value": "110"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "111",
-    "description": null
+    "value": "111"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "112",
-    "description": null
+    "value": "112"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "113",
-    "description": null
+    "value": "113"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "114",
-    "description": null
+    "value": "114"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "115",
-    "description": null
+    "value": "115"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "116",
-    "description": null
+    "value": "116"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "119",
-    "description": null
+    "value": "119"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "120",
-    "description": null
+    "value": "120"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "121",
-    "description": null
+    "value": "121"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "122",
-    "description": null
+    "value": "122"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "130",
-    "description": null
+    "value": "130"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "131",
-    "description": null
+    "value": "131"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "134",
-    "description": null
+    "value": "134"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "135",
-    "description": null
+    "value": "135"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "140",
-    "description": null
+    "value": "140"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "141",
-    "description": null
+    "value": "141"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "144",
-    "description": null
+    "value": "144"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "145",
-    "description": null
+    "value": "145"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "146",
-    "description": null
+    "value": "146"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "151",
-    "description": null
+    "value": "151"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "155",
-    "description": null
+    "value": "155"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "156",
-    "description": null
+    "value": "156"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "163",
-    "description": null
+    "value": "163"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "168",
-    "description": null
+    "value": "168"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "171",
-    "description": null
+    "value": "171"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "173",
-    "description": null
+    "value": "173"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "181",
-    "description": null
+    "value": "181"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "183",
-    "description": null
+    "value": "183"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "198",
-    "description": null
+    "value": "198"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "199",
-    "description": null
+    "value": "199"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "200",
-    "description": null
+    "value": "200"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "225",
-    "description": null
+    "value": "225"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "231",
-    "description": null
+    "value": "231"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "232",
-    "description": null
+    "value": "232"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "250",
-    "description": null
+    "value": "250"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "258",
-    "description": null
+    "value": "258"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "260",
-    "description": null
+    "value": "260"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "262",
-    "description": null
+    "value": "262"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "267",
-    "description": null
+    "value": "267"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "302",
-    "description": null
+    "value": "302"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "304",
-    "description": null
+    "value": "304"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "305",
-    "description": null
+    "value": "305"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "307",
-    "description": null
+    "value": "307"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "318",
-    "description": null
+    "value": "318"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "340",
-    "description": null
+    "value": "340"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "350",
-    "description": null
+    "value": "350"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "351",
-    "description": null
+    "value": "351"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "360",
-    "description": null
+    "value": "360"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "383",
-    "description": null
+    "value": "383"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "390",
-    "description": null
+    "value": "390"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "400",
-    "description": null
+    "value": "400"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "429",
-    "description": null
+    "value": "429"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "440",
-    "description": null
+    "value": "440"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "454",
-    "description": null
+    "value": "454"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "455",
-    "description": null
+    "value": "455"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "68",
-    "description": null
+    "value": "68"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "70",
-    "description": null
+    "value": "70"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "71",
-    "description": null
+    "value": "71"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "72",
-    "description": null
+    "value": "72"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "76",
-    "description": null
+    "value": "76"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "78",
-    "description": null
+    "value": "78"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "79",
-    "description": null
+    "value": "79"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "80",
-    "description": null
+    "value": "80"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "81",
-    "description": null
+    "value": "81"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "83",
-    "description": null
+    "value": "83"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "85",
-    "description": null
+    "value": "85"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "86",
-    "description": null
+    "value": "86"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "88",
-    "description": null
+    "value": "88"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "89",
-    "description": null
+    "value": "89"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "90",
-    "description": null
+    "value": "90"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "91",
-    "description": null
+    "value": "91"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "96",
-    "description": null
+    "value": "96"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "97",
-    "description": null
+    "value": "97"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "97.5",
-    "description": null
+    "value": "97.5"
   },
   {
     "enumeration_id": "_enumerations---enum_0c8ef62031",
-    "value": "98",
-    "description": null
+    "value": "98"
   },
   {
     "enumeration_id": "_enumerations---enum_0d98aec329",
-    "value": "Alsace…",
-    "description": null
+    "value": "Alsace…"
   },
   {
     "enumeration_id": "_enumerations---enum_0d98aec329",
-    "value": "Côte d'Or",
-    "description": null
+    "value": "Côte d'Or"
   },
   {
     "enumeration_id": "_enumerations---enum_0d98aec329",
-    "value": "Rhône-Alpes",
-    "description": null
+    "value": "Rhône-Alpes"
   },
   {
     "enumeration_id": "_enumerations---enum_0d98aec329",
-    "value": "Île-de-France",
-    "description": null
+    "value": "Île-de-France"
   },
   {
     "enumeration_id": "_enumerations---enum_11b1cdf31f",
-    "value": "est",
-    "description": null
+    "value": "est"
   },
   {
     "enumeration_id": "_enumerations---enum_11b1cdf31f",
-    "value": "nord",
-    "description": null
+    "value": "nord"
   },
   {
     "enumeration_id": "_enumerations---enum_11b1cdf31f",
-    "value": "sud",
-    "description": null
+    "value": "sud"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "10.69",
-    "description": null
+    "value": "10.69"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "11.2",
-    "description": null
+    "value": "11.2"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "11.38",
-    "description": null
+    "value": "11.38"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "11.45",
-    "description": null
+    "value": "11.45"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "11.46",
-    "description": null
+    "value": "11.46"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "12",
-    "description": null
+    "value": "12"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "12.1",
-    "description": null
+    "value": "12.1"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "12.2",
-    "description": null
+    "value": "12.2"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "12.4",
-    "description": null
+    "value": "12.4"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "12.6",
-    "description": null
+    "value": "12.6"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "12.62",
-    "description": null
+    "value": "12.62"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "12.9",
-    "description": null
+    "value": "12.9"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "13.8",
-    "description": null
+    "value": "13.8"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "14.3",
-    "description": null
+    "value": "14.3"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "14.43",
-    "description": null
+    "value": "14.43"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "14.6",
-    "description": null
+    "value": "14.6"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "148",
-    "description": null
+    "value": "148"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "15.3",
-    "description": null
+    "value": "15.3"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "16.9",
-    "description": null
+    "value": "16.9"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "18.25",
-    "description": null
+    "value": "18.25"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "18.8",
-    "description": null
+    "value": "18.8"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "18.83",
-    "description": null
+    "value": "18.83"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "19.1",
-    "description": null
+    "value": "19.1"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "19.5",
-    "description": null
+    "value": "19.5"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "22.1",
-    "description": null
+    "value": "22.1"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "28.6",
-    "description": null
+    "value": "28.6"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "31",
-    "description": null
+    "value": "31"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "44",
-    "description": null
+    "value": "44"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "45",
-    "description": null
+    "value": "45"
   },
   {
     "enumeration_id": "_enumerations---enum_1251ca08bb",
-    "value": "48.13",
-    "description": null
+    "value": "48.13"
   },
   {
     "enumeration_id": "_enumerations---enum_186dce4adb",
-    "value": "Lyon Depot",
-    "description": null
+    "value": "Lyon Depot"
   },
   {
     "enumeration_id": "_enumerations---enum_186dce4adb",
-    "value": "Paris Central",
-    "description": null
+    "value": "Paris Central"
   },
   {
     "enumeration_id": "_enumerations---enum_18a1b0c317",
-    "value": "BE",
-    "description": null
+    "value": "BE"
   },
   {
     "enumeration_id": "_enumerations---enum_18a1b0c317",
-    "value": "BE ",
-    "description": null
+    "value": "BE "
   },
   {
     "enumeration_id": "_enumerations---enum_18a1b0c317",
-    "value": "GR",
-    "description": null
+    "value": "GR"
   },
   {
     "enumeration_id": "_enumerations---enum_18a1b0c317",
-    "value": "SG",
-    "description": null
+    "value": "SG"
   },
   {
     "enumeration_id": "_enumerations---enum_18a1b0c317",
-    "value": "TI",
-    "description": null
+    "value": "TI"
   },
   {
     "enumeration_id": "_enumerations---enum_18a1b0c317",
-    "value": "UR",
-    "description": null
+    "value": "UR"
   },
   {
     "enumeration_id": "_enumerations---enum_18a1b0c317",
-    "value": "VS",
-    "description": null
+    "value": "VS"
   },
   {
     "enumeration_id": "_enumerations---enum_18a1b0c317",
-    "value": "Valais",
-    "description": null
+    "value": "Valais"
   },
   {
     "enumeration_id": "_enumerations---enum_18cda72a94",
-    "value": "25",
-    "description": null
+    "value": "25"
   },
   {
     "enumeration_id": "_enumerations---enum_18cda72a94",
-    "value": "30",
-    "description": null
+    "value": "30"
   },
   {
     "enumeration_id": "_enumerations---enum_18cda72a94",
-    "value": "35",
-    "description": null
+    "value": "35"
   },
   {
     "enumeration_id": "_enumerations---enum_18cda72a94",
-    "value": "40",
-    "description": null
+    "value": "40"
   },
   {
     "enumeration_id": "_enumerations---enum_18cda72a94",
-    "value": "45",
-    "description": null
+    "value": "45"
   },
   {
     "enumeration_id": "_enumerations---enum_18cda72a94",
-    "value": "50",
-    "description": null
+    "value": "50"
   },
   {
     "enumeration_id": "_enumerations---enum_1bf03e385e",
-    "value": "1",
-    "description": null
+    "value": "1"
   },
   {
     "enumeration_id": "_enumerations---enum_1bf03e385e",
-    "value": "2",
-    "description": null
+    "value": "2"
   },
   {
     "enumeration_id": "_enumerations---enum_1bf03e385e",
-    "value": "3",
-    "description": null
+    "value": "3"
   },
   {
     "enumeration_id": "_enumerations---enum_1bf03e385e",
-    "value": "4",
-    "description": null
+    "value": "4"
   },
   {
     "enumeration_id": "_enumerations---enum_1bf03e385e",
-    "value": "5",
-    "description": null
+    "value": "5"
   },
   {
     "enumeration_id": "_enumerations---enum_1bf03e385e",
-    "value": "6",
-    "description": null
+    "value": "6"
   },
   {
     "enumeration_id": "_enumerations---enum_1bf03e385e",
-    "value": "7",
-    "description": null
+    "value": "7"
   },
   {
     "enumeration_id": "_enumerations---enum_1bf03e385e",
-    "value": "8",
-    "description": null
+    "value": "8"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "41000",
-    "description": null
+    "value": "41000"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "42000",
-    "description": null
+    "value": "42000"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "43000",
-    "description": null
+    "value": "43000"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "45000",
-    "description": null
+    "value": "45000"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "46000",
-    "description": null
+    "value": "46000"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "47000",
-    "description": null
+    "value": "47000"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "48000",
-    "description": null
+    "value": "48000"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "49000",
-    "description": null
+    "value": "49000"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "50000",
-    "description": null
+    "value": "50000"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "51000",
-    "description": null
+    "value": "51000"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "52000",
-    "description": null
+    "value": "52000"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "54000",
-    "description": null
+    "value": "54000"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "55000",
-    "description": null
+    "value": "55000"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "56000",
-    "description": null
+    "value": "56000"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "58000",
-    "description": null
+    "value": "58000"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "61000",
-    "description": null
+    "value": "61000"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "62000",
-    "description": null
+    "value": "62000"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "65000",
-    "description": null
+    "value": "65000"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "68000",
-    "description": null
+    "value": "68000"
   },
   {
     "enumeration_id": "_enumerations---enum_1d39ff883d",
-    "value": "72000",
-    "description": null
+    "value": "72000"
   },
   {
     "enumeration_id": "_enumerations---enum_209e6cf0ea",
-    "value": "es1",
-    "description": null
+    "value": "es1"
   },
   {
     "enumeration_id": "_enumerations---enum_209e6cf0ea",
-    "value": "es2",
-    "description": null
+    "value": "es2"
   },
   {
     "enumeration_id": "_enumerations---enum_25465bed0b",
-    "value": "0",
-    "description": null
+    "value": "0"
   },
   {
     "enumeration_id": "_enumerations---enum_2dc8eb7aad",
-    "value": "Eolien",
-    "description": null
+    "value": "Eolien"
   },
   {
     "enumeration_id": "_enumerations---enum_2dc8eb7aad",
-    "value": "Solaire",
-    "description": null
+    "value": "Solaire"
   },
   {
     "enumeration_id": "_enumerations---enum_2e497825fa",
-    "value": "105",
-    "description": null
+    "value": "105"
   },
   {
     "enumeration_id": "_enumerations---enum_2e497825fa",
-    "value": "241",
-    "description": null
+    "value": "241"
   },
   {
     "enumeration_id": "_enumerations---enum_2e497825fa",
-    "value": "48",
-    "description": null
+    "value": "48"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "1",
-    "description": null
+    "value": "1"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "10",
-    "description": null
+    "value": "10"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "15",
-    "description": null
+    "value": "15"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "18",
-    "description": null
+    "value": "18"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "19",
-    "description": null
+    "value": "19"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "2",
-    "description": null
+    "value": "2"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "27",
-    "description": null
+    "value": "27"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "28",
-    "description": null
+    "value": "28"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "29",
-    "description": null
+    "value": "29"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "3",
-    "description": null
+    "value": "3"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "32",
-    "description": null
+    "value": "32"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "42",
-    "description": null
+    "value": "42"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "43",
-    "description": null
+    "value": "43"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "44",
-    "description": null
+    "value": "44"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "45",
-    "description": null
+    "value": "45"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "46",
-    "description": null
+    "value": "46"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "47",
-    "description": null
+    "value": "47"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "48",
-    "description": null
+    "value": "48"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "49",
-    "description": null
+    "value": "49"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "5",
-    "description": null
+    "value": "5"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "50",
-    "description": null
+    "value": "50"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "51",
-    "description": null
+    "value": "51"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "52",
-    "description": null
+    "value": "52"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "53",
-    "description": null
+    "value": "53"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "54",
-    "description": null
+    "value": "54"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "55",
-    "description": null
+    "value": "55"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "56",
-    "description": null
+    "value": "56"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "7",
-    "description": null
+    "value": "7"
   },
   {
     "enumeration_id": "_enumerations---enum_31d8f08e11",
-    "value": "9",
-    "description": null
+    "value": "9"
   },
   {
     "enumeration_id": "_enumerations---enum_32d8c4d0c0",
-    "value": "Acme Corp",
-    "description": null
+    "value": "Acme Corp"
   },
   {
     "enumeration_id": "_enumerations---enum_32d8c4d0c0",
-    "value": "TechStart",
-    "description": null
+    "value": "TechStart"
   },
   {
     "enumeration_id": "_enumerations---enum_3515a63dfa",
-    "value": "Direction générale des Finances publiques",
-    "description": null
+    "value": "Direction générale des Finances publiques"
   },
   {
     "enumeration_id": "_enumerations---enum_3515a63dfa",
-    "value": "Institut national de la statistique et des études économiques",
-    "description": null
+    "value": "Institut national de la statistique et des études économiques"
   },
   {
     "enumeration_id": "_enumerations---enum_36192d4ee6",
-    "value": "es1",
-    "description": null
+    "value": "es1"
   },
   {
     "enumeration_id": "_enumerations---enum_36ee647ea7",
-    "value": "Belgium",
-    "description": null
+    "value": "Belgium"
   },
   {
     "enumeration_id": "_enumerations---enum_36ee647ea7",
-    "value": "France",
-    "description": null
+    "value": "France"
   },
   {
     "enumeration_id": "_enumerations---enum_377b0126b2",
-    "value": "Berlin",
-    "description": null
+    "value": "Berlin"
   },
   {
     "enumeration_id": "_enumerations---enum_377b0126b2",
-    "value": "London",
-    "description": null
+    "value": "London"
   },
   {
     "enumeration_id": "_enumerations---enum_377b0126b2",
-    "value": "Madrid",
-    "description": null
+    "value": "Madrid"
   },
   {
     "enumeration_id": "_enumerations---enum_377b0126b2",
-    "value": "Paris",
-    "description": null
+    "value": "Paris"
   },
   {
     "enumeration_id": "_enumerations---enum_377b0126b2",
-    "value": "Rome",
-    "description": null
+    "value": "Rome"
   },
   {
     "enumeration_id": "_enumerations---enum_3890764482",
-    "value": "Finance",
-    "description": null
+    "value": "Finance"
   },
   {
     "enumeration_id": "_enumerations---enum_3890764482",
-    "value": "IT",
-    "description": null
+    "value": "IT"
   },
   {
     "enumeration_id": "_enumerations---enum_3890764482",
-    "value": "Marketing",
-    "description": null
+    "value": "Marketing"
   },
   {
     "enumeration_id": "_enumerations---enum_3890764482",
-    "value": "RH",
-    "description": null
+    "value": "RH"
   },
   {
     "enumeration_id": "_enumerations---enum_3eee4f2a23",
-    "value": "company_name",
-    "description": null
+    "value": "company_name"
   },
   {
     "enumeration_id": "_enumerations---enum_3eee4f2a23",
-    "value": "version",
-    "description": null
+    "value": "version"
   },
   {
     "enumeration_id": "_enumerations---enum_4082c9af55",
-    "value": "alice@mail.com",
-    "description": null
+    "value": "alice@mail.com"
   },
   {
     "enumeration_id": "_enumerations---enum_4082c9af55",
-    "value": "bob@mail.com",
-    "description": null
+    "value": "bob@mail.com"
   },
   {
     "enumeration_id": "_enumerations---enum_4082c9af55",
-    "value": "claire@mail.com",
-    "description": null
+    "value": "claire@mail.com"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "1250",
-    "description": null
+    "value": "1250"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "1650",
-    "description": null
+    "value": "1650"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "1693",
-    "description": null
+    "value": "1693"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "1705",
-    "description": null
+    "value": "1705"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "1768",
-    "description": null
+    "value": "1768"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "1894",
-    "description": null
+    "value": "1894"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "1962",
-    "description": null
+    "value": "1962"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "1988",
-    "description": null
+    "value": "1988"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "2003",
-    "description": null
+    "value": "2003"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "2014",
-    "description": null
+    "value": "2014"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "2029",
-    "description": null
+    "value": "2029"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "2071",
-    "description": null
+    "value": "2071"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "2127",
-    "description": null
+    "value": "2127"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "2156",
-    "description": null
+    "value": "2156"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "2189",
-    "description": null
+    "value": "2189"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "2190",
-    "description": null
+    "value": "2190"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "2240",
-    "description": null
+    "value": "2240"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "2272",
-    "description": null
+    "value": "2272"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "2342",
-    "description": null
+    "value": "2342"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "2382",
-    "description": null
+    "value": "2382"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "2425",
-    "description": null
+    "value": "2425"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "2444",
-    "description": null
+    "value": "2444"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "2481",
-    "description": null
+    "value": "2481"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "2591",
-    "description": null
+    "value": "2591"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "2718",
-    "description": null
+    "value": "2718"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "2800",
-    "description": null
+    "value": "2800"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "2897",
-    "description": null
+    "value": "2897"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "3142",
-    "description": null
+    "value": "3142"
   },
   {
     "enumeration_id": "_enumerations---enum_408c5f41d6",
-    "value": "454",
-    "description": null
+    "value": "454"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2023-10-30",
-    "description": null
+    "value": "2023-10-30"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2023-11-06",
-    "description": null
+    "value": "2023-11-06"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2023-11-08",
-    "description": null
+    "value": "2023-11-08"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2024-01-03",
-    "description": null
+    "value": "2024-01-03"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2024-01-04",
-    "description": null
+    "value": "2024-01-04"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2024-01-09",
-    "description": null
+    "value": "2024-01-09"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2024-01-22",
-    "description": null
+    "value": "2024-01-22"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2024-02-09",
-    "description": null
+    "value": "2024-02-09"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2024-05-07",
-    "description": null
+    "value": "2024-05-07"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2024-05-28",
-    "description": null
+    "value": "2024-05-28"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2024-06-03",
-    "description": null
+    "value": "2024-06-03"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2024-06-07",
-    "description": null
+    "value": "2024-06-07"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2024-06-12",
-    "description": null
+    "value": "2024-06-12"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2024-06-14",
-    "description": null
+    "value": "2024-06-14"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2024-06-21",
-    "description": null
+    "value": "2024-06-21"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2024-07-01",
-    "description": null
+    "value": "2024-07-01"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2024-08-15",
-    "description": null
+    "value": "2024-08-15"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2024-09-05",
-    "description": null
+    "value": "2024-09-05"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2024-09-06",
-    "description": null
+    "value": "2024-09-06"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2024-10-04",
-    "description": null
+    "value": "2024-10-04"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2024-10-11",
-    "description": null
+    "value": "2024-10-11"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2024-10-18",
-    "description": null
+    "value": "2024-10-18"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-01-20",
-    "description": null
+    "value": "2025-01-20"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-01-24",
-    "description": null
+    "value": "2025-01-24"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-02-20",
-    "description": null
+    "value": "2025-02-20"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-02-28",
-    "description": null
+    "value": "2025-02-28"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-03-13",
-    "description": null
+    "value": "2025-03-13"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-03-21",
-    "description": null
+    "value": "2025-03-21"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-03-28",
-    "description": null
+    "value": "2025-03-28"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-04-04",
-    "description": null
+    "value": "2025-04-04"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-04-18",
-    "description": null
+    "value": "2025-04-18"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-04-30",
-    "description": null
+    "value": "2025-04-30"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-06-12",
-    "description": null
+    "value": "2025-06-12"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-08-22",
-    "description": null
+    "value": "2025-08-22"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-08-26",
-    "description": null
+    "value": "2025-08-26"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-08-29",
-    "description": null
+    "value": "2025-08-29"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-09-24",
-    "description": null
+    "value": "2025-09-24"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-10-01",
-    "description": null
+    "value": "2025-10-01"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-10-17",
-    "description": null
+    "value": "2025-10-17"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-10-20",
-    "description": null
+    "value": "2025-10-20"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-11-04",
-    "description": null
+    "value": "2025-11-04"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-11-07",
-    "description": null
+    "value": "2025-11-07"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-11-14",
-    "description": null
+    "value": "2025-11-14"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-11-24",
-    "description": null
+    "value": "2025-11-24"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-12-04",
-    "description": null
+    "value": "2025-12-04"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-12-12",
-    "description": null
+    "value": "2025-12-12"
   },
   {
     "enumeration_id": "_enumerations---enum_42d79e60af",
-    "value": "2025-12-18",
-    "description": null
+    "value": "2025-12-18"
   },
   {
     "enumeration_id": "_enumerations---enum_433535a949",
-    "value": "Lyon",
-    "description": null
+    "value": "Lyon"
   },
   {
     "enumeration_id": "_enumerations---enum_433535a949",
-    "value": "Marseille",
-    "description": null
+    "value": "Marseille"
   },
   {
     "enumeration_id": "_enumerations---enum_433535a949",
-    "value": "Paris",
-    "description": null
+    "value": "Paris"
   },
   {
     "enumeration_id": "_enumerations---enum_433535a949",
-    "value": "Toulouse",
-    "description": null
+    "value": "Toulouse"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "Andre",
-    "description": null
+    "value": "Andre"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "Bernard",
-    "description": null
+    "value": "Bernard"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "Bertrand",
-    "description": null
+    "value": "Bertrand"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "Blanc",
-    "description": null
+    "value": "Blanc"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "David",
-    "description": null
+    "value": "David"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "Dupont",
-    "description": null
+    "value": "Dupont"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "Durand",
-    "description": null
+    "value": "Durand"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "Faure",
-    "description": null
+    "value": "Faure"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "Garnier",
-    "description": null
+    "value": "Garnier"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "Girard",
-    "description": null
+    "value": "Girard"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "Leroy",
-    "description": null
+    "value": "Leroy"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "Martin",
-    "description": null
+    "value": "Martin"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "Mercier",
-    "description": null
+    "value": "Mercier"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "Michel",
-    "description": null
+    "value": "Michel"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "Moreau",
-    "description": null
+    "value": "Moreau"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "Petit",
-    "description": null
+    "value": "Petit"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "Richard",
-    "description": null
+    "value": "Richard"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "Robert",
-    "description": null
+    "value": "Robert"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "Roux",
-    "description": null
+    "value": "Roux"
   },
   {
     "enumeration_id": "_enumerations---enum_4aa562f5c5",
-    "value": "Simon",
-    "description": null
+    "value": "Simon"
   },
   {
     "enumeration_id": "_enumerations---enum_4d8a15e3cc",
-    "value": "1",
-    "description": null
+    "value": "1"
   },
   {
     "enumeration_id": "_enumerations---enum_4e4aadcc2b",
-    "value": "1456789",
-    "description": null
+    "value": "1456789"
   },
   {
     "enumeration_id": "_enumerations---enum_4e4aadcc2b",
-    "value": "223456",
-    "description": null
+    "value": "223456"
   },
   {
     "enumeration_id": "_enumerations---enum_4e4aadcc2b",
-    "value": "234567",
-    "description": null
+    "value": "234567"
   },
   {
     "enumeration_id": "_enumerations---enum_4e4aadcc2b",
-    "value": "289234",
-    "description": null
+    "value": "289234"
   },
   {
     "enumeration_id": "_enumerations---enum_4e4aadcc2b",
-    "value": "334567",
-    "description": null
+    "value": "334567"
   },
   {
     "enumeration_id": "_enumerations---enum_4e4aadcc2b",
-    "value": "34567",
-    "description": null
+    "value": "34567"
   },
   {
     "enumeration_id": "_enumerations---enum_4e4aadcc2b",
-    "value": "378901",
-    "description": null
+    "value": "378901"
   },
   {
     "enumeration_id": "_enumerations---enum_4e4aadcc2b",
-    "value": "445678",
-    "description": null
+    "value": "445678"
   },
   {
     "enumeration_id": "_enumerations---enum_4e4aadcc2b",
-    "value": "456123",
-    "description": null
+    "value": "456123"
   },
   {
     "enumeration_id": "_enumerations---enum_4e4aadcc2b",
-    "value": "456789",
-    "description": null
+    "value": "456789"
   },
   {
     "enumeration_id": "_enumerations---enum_4e4aadcc2b",
-    "value": "523456",
-    "description": null
+    "value": "523456"
   },
   {
     "enumeration_id": "_enumerations---enum_4e4aadcc2b",
-    "value": "567234",
-    "description": null
+    "value": "567234"
   },
   {
     "enumeration_id": "_enumerations---enum_4e4aadcc2b",
-    "value": "845123",
-    "description": null
+    "value": "845123"
   },
   {
     "enumeration_id": "_enumerations---enum_50424576d6",
-    "value": "fevrier",
-    "description": null
+    "value": "fevrier"
   },
   {
     "enumeration_id": "_enumerations---enum_50424576d6",
-    "value": "janvier",
-    "description": null
+    "value": "janvier"
   },
   {
     "enumeration_id": "_enumerations---enum_50424576d6",
-    "value": "mars",
-    "description": null
+    "value": "mars"
   },
   {
     "enumeration_id": "_enumerations---enum_51e321b770",
-    "value": "149.99",
-    "description": null
+    "value": "149.99"
   },
   {
     "enumeration_id": "_enumerations---enum_51e321b770",
-    "value": "99.99",
-    "description": null
+    "value": "99.99"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "10",
-    "description": null
+    "value": "10"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "10.12",
-    "description": null
+    "value": "10.12"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "10.5",
-    "description": null
+    "value": "10.5"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "10.8",
-    "description": null
+    "value": "10.8"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "12.6",
-    "description": null
+    "value": "12.6"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "12.9",
-    "description": null
+    "value": "12.9"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "14.5",
-    "description": null
+    "value": "14.5"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "15.9",
-    "description": null
+    "value": "15.9"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "18.4",
-    "description": null
+    "value": "18.4"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "19.2",
-    "description": null
+    "value": "19.2"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "28",
-    "description": null
+    "value": "28"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "32.7",
-    "description": null
+    "value": "32.7"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "33.6",
-    "description": null
+    "value": "33.6"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "6.2",
-    "description": null
+    "value": "6.2"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "6.3",
-    "description": null
+    "value": "6.3"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "7.53",
-    "description": null
+    "value": "7.53"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "7.7",
-    "description": null
+    "value": "7.7"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "8.04",
-    "description": null
+    "value": "8.04"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "8.07",
-    "description": null
+    "value": "8.07"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "8.3",
-    "description": null
+    "value": "8.3"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "8.47",
-    "description": null
+    "value": "8.47"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "8.62",
-    "description": null
+    "value": "8.62"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "8.64",
-    "description": null
+    "value": "8.64"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "8.8",
-    "description": null
+    "value": "8.8"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "9",
-    "description": null
+    "value": "9"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "9.2",
-    "description": null
+    "value": "9.2"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "9.39",
-    "description": null
+    "value": "9.39"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "9.93",
-    "description": null
+    "value": "9.93"
   },
   {
     "enumeration_id": "_enumerations---enum_5570efff37",
-    "value": "92",
-    "description": null
+    "value": "92"
   },
   {
     "enumeration_id": "_enumerations---enum_5cbe3d324b",
-    "value": "entrée en force de l'autorisation",
-    "description": null
+    "value": "entrée en force de l'autorisation"
   },
   {
     "enumeration_id": "_enumerations---enum_5cbe3d324b",
-    "value": "exploitation après 3 ans",
-    "description": null
+    "value": "exploitation après 3 ans"
   },
   {
     "enumeration_id": "_enumerations---enum_5cbe3d324b",
-    "value": "mise en service complète",
-    "description": null
+    "value": "mise en service complète"
   },
   {
     "enumeration_id": "_enumerations---enum_5cbe3d324b",
-    "value": "mise en service partielle",
-    "description": null
+    "value": "mise en service partielle"
   },
   {
     "enumeration_id": "_enumerations---enum_5cbe3d324b",
-    "value": "mise à l'enquête publique",
-    "description": null
+    "value": "mise à l'enquête publique"
   },
   {
     "enumeration_id": "_enumerations---enum_5cbe3d324b",
-    "value": "octroi de l'autorisation de première instance",
-    "description": null
+    "value": "octroi de l'autorisation de première instance"
   },
   {
     "enumeration_id": "_enumerations---enum_5cbe3d324b",
-    "value": "refusé",
-    "description": null
+    "value": "refusé"
   },
   {
     "enumeration_id": "_enumerations---enum_5cbe3d324b",
-    "value": "retiré",
-    "description": null
+    "value": "retiré"
   },
   {
     "enumeration_id": "_enumerations---enum_5dc1df8b13",
-    "value": "GADGET-002",
-    "description": null
+    "value": "GADGET-002"
   },
   {
     "enumeration_id": "_enumerations---enum_5dc1df8b13",
-    "value": "WIDGET-001",
-    "description": null
+    "value": "WIDGET-001"
   },
   {
     "enumeration_id": "_enumerations---enum_5e1931a693",
-    "value": "Auvergne-Rhône-Alpes",
-    "description": null
+    "value": "Auvergne-Rhône-Alpes"
   },
   {
     "enumeration_id": "_enumerations---enum_5e1931a693",
-    "value": "Bourgogne-Franche-Comté",
-    "description": null
+    "value": "Bourgogne-Franche-Comté"
   },
   {
     "enumeration_id": "_enumerations---enum_5e1931a693",
-    "value": "Bretagne",
-    "description": null
+    "value": "Bretagne"
   },
   {
     "enumeration_id": "_enumerations---enum_5e1931a693",
-    "value": "Centre-Val de Loire",
-    "description": null
+    "value": "Centre-Val de Loire"
   },
   {
     "enumeration_id": "_enumerations---enum_5e1931a693",
-    "value": "Corse",
-    "description": null
+    "value": "Corse"
   },
   {
     "enumeration_id": "_enumerations---enum_5e1931a693",
-    "value": "Grand Est",
-    "description": null
+    "value": "Grand Est"
   },
   {
     "enumeration_id": "_enumerations---enum_5e1931a693",
-    "value": "Hauts-de-France",
-    "description": null
+    "value": "Hauts-de-France"
   },
   {
     "enumeration_id": "_enumerations---enum_5e1931a693",
-    "value": "Normandie",
-    "description": null
+    "value": "Normandie"
   },
   {
     "enumeration_id": "_enumerations---enum_5e1931a693",
-    "value": "Nouvelle-Aquitaine",
-    "description": null
+    "value": "Nouvelle-Aquitaine"
   },
   {
     "enumeration_id": "_enumerations---enum_5e1931a693",
-    "value": "Occitanie",
-    "description": null
+    "value": "Occitanie"
   },
   {
     "enumeration_id": "_enumerations---enum_5e1931a693",
-    "value": "Pays de la Loire",
-    "description": null
+    "value": "Pays de la Loire"
   },
   {
     "enumeration_id": "_enumerations---enum_5e1931a693",
-    "value": "Provence-Alpes-Côte d'Azur",
-    "description": null
+    "value": "Provence-Alpes-Côte d'Azur"
   },
   {
     "enumeration_id": "_enumerations---enum_5e1931a693",
-    "value": "Île-de-France",
-    "description": null
+    "value": "Île-de-France"
   },
   {
     "enumeration_id": "_enumerations---enum_6188567694",
-    "value": "2023",
-    "description": null
+    "value": "2023"
   },
   {
     "enumeration_id": "_enumerations---enum_6188567694",
-    "value": "2024",
-    "description": null
+    "value": "2024"
   },
   {
     "enumeration_id": "_enumerations---enum_61a859a3a1",
-    "value": "Electronics",
-    "description": null
+    "value": "Electronics"
   },
   {
     "enumeration_id": "_enumerations---enum_63eb5b6e11",
-    "value": "data---csv---employees_csv---nom",
-    "description": null
+    "value": "data---csv---employees_csv---nom"
   },
   {
     "enumeration_id": "_enumerations---enum_63eb5b6e11",
-    "value": "data---csv---employees_csv---salaire",
-    "description": null
+    "value": "data---csv---employees_csv---salaire"
   },
   {
     "enumeration_id": "_enumerations---enum_63eb5b6e11",
-    "value": "data---csv---employees_csv---salaire2",
-    "description": null
+    "value": "data---csv---employees_csv---salaire2"
   },
   {
     "enumeration_id": "_enumerations---enum_649d7c0cd5",
-    "value": "st11",
-    "description": null
+    "value": "st11"
   },
   {
     "enumeration_id": "_enumerations---enum_649d7c0cd5",
-    "value": "st12",
-    "description": null
+    "value": "st12"
   },
   {
     "enumeration_id": "_enumerations---enum_649d7c0cd5",
-    "value": "st13",
-    "description": null
+    "value": "st13"
   },
   {
     "enumeration_id": "_enumerations---enum_649d7c0cd5",
-    "value": "st14",
-    "description": null
+    "value": "st14"
   },
   {
     "enumeration_id": "_enumerations---enum_64cf737ed5",
-    "value": "38000",
-    "description": null
+    "value": "38000"
   },
   {
     "enumeration_id": "_enumerations---enum_64cf737ed5",
-    "value": "45000",
-    "description": null
+    "value": "45000"
   },
   {
     "enumeration_id": "_enumerations---enum_64cf737ed5",
-    "value": "50€",
-    "description": null
+    "value": "50€"
   },
   {
     "enumeration_id": "_enumerations---enum_64cf737ed5",
-    "value": "52000",
-    "description": null
+    "value": "52000"
   },
   {
     "enumeration_id": "_enumerations---enum_68ee6ca832",
-    "value": "101",
-    "description": null
+    "value": "101"
   },
   {
     "enumeration_id": "_enumerations---enum_68ee6ca832",
-    "value": "102",
-    "description": null
+    "value": "102"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Airolo",
-    "description": null
+    "value": "Airolo"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Amden",
-    "description": null
+    "value": "Amden"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Anniviers",
-    "description": null
+    "value": "Anniviers"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Davos",
-    "description": null
+    "value": "Davos"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Disentis/Mustér",
-    "description": null
+    "value": "Disentis/Mustér"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Gampel-Bratsch",
-    "description": null
+    "value": "Gampel-Bratsch"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Grengiols",
-    "description": null
+    "value": "Grengiols"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Hérémence",
-    "description": null
+    "value": "Hérémence"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Klosters",
-    "description": null
+    "value": "Klosters"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Laax",
-    "description": null
+    "value": "Laax"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Lenk und Adelboden",
-    "description": null
+    "value": "Lenk und Adelboden"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Lütschental",
-    "description": null
+    "value": "Lütschental"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Mezzovico-Vira",
-    "description": null
+    "value": "Mezzovico-Vira"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Naters",
-    "description": null
+    "value": "Naters"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Obergoms",
-    "description": null
+    "value": "Obergoms"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Oberwil im Simmental",
-    "description": null
+    "value": "Oberwil im Simmental"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Poschiavo",
-    "description": null
+    "value": "Poschiavo"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Saas-Grund",
-    "description": null
+    "value": "Saas-Grund"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Saint-Imier",
-    "description": null
+    "value": "Saint-Imier"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Samedan",
-    "description": null
+    "value": "Samedan"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Scuol",
-    "description": null
+    "value": "Scuol"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Spiringen",
-    "description": null
+    "value": "Spiringen"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Termen und Ried-Brig",
-    "description": null
+    "value": "Termen und Ried-Brig"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Tujetsch",
-    "description": null
+    "value": "Tujetsch"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Törbel/ Embd/ Stalden",
-    "description": null
+    "value": "Törbel/ Embd/ Stalden"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Visperterminen",
-    "description": null
+    "value": "Visperterminen"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Zermatt",
-    "description": null
+    "value": "Zermatt"
   },
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
-    "value": "Zwischbergen",
-    "description": null
+    "value": "Zwischbergen"
   },
   {
     "enumeration_id": "_enumerations---enum_69987225ba",
-    "value": "Betrieb nach 3 Jahren",
-    "description": null
+    "value": "Betrieb nach 3 Jahren"
   },
   {
     "enumeration_id": "_enumerations---enum_69987225ba",
-    "value": "abgewiesen",
-    "description": null
+    "value": "abgewiesen"
   },
   {
     "enumeration_id": "_enumerations---enum_69987225ba",
-    "value": "erstinstanzlich bewilligt",
-    "description": null
+    "value": "erstinstanzlich bewilligt"
   },
   {
     "enumeration_id": "_enumerations---enum_69987225ba",
-    "value": "rechtskräftig bewilligt",
-    "description": null
+    "value": "rechtskräftig bewilligt"
   },
   {
     "enumeration_id": "_enumerations---enum_69987225ba",
-    "value": "teilweise in Betrieb",
-    "description": null
+    "value": "teilweise in Betrieb"
   },
   {
     "enumeration_id": "_enumerations---enum_69987225ba",
-    "value": "vollständig in Betrieb",
-    "description": null
+    "value": "vollständig in Betrieb"
   },
   {
     "enumeration_id": "_enumerations---enum_69987225ba",
-    "value": "zurückgezogen",
-    "description": null
+    "value": "zurückgezogen"
   },
   {
     "enumeration_id": "_enumerations---enum_69987225ba",
-    "value": "öffentlich aufgelegt",
-    "description": null
+    "value": "öffentlich aufgelegt"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "APV Sidenplangg AG (in Gründung), c/o EWA‑energieUri AG",
-    "description": null
+    "value": "APV Sidenplangg AG (in Gründung), c/o EWA‑energieUri AG"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "Axpo Solutions AG",
-    "description": null
+    "value": "Axpo Solutions AG"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "Azienda Comunale di Airolo e Azienda Multiservizi di Bellinzona5.5555",
-    "description": null
+    "value": "Azienda Comunale di Airolo e Azienda Multiservizi di Bellinzona5.5555"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "Bernina Solar AG",
-    "description": null
+    "value": "Bernina Solar AG"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "EnAlpin AG",
-    "description": null
+    "value": "EnAlpin AG"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "EnBAG AG",
-    "description": null
+    "value": "EnBAG AG"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "Energia Alpina SA",
-    "description": null
+    "value": "Energia Alpina SA"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "Energia Solara Engiandinaisa SA",
-    "description": null
+    "value": "Energia Solara Engiandinaisa SA"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "FMV SA",
-    "description": null
+    "value": "FMV SA"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "Felsenstrom AG",
-    "description": null
+    "value": "Felsenstrom AG"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "Genossenschaft Lenk Bergbahnen",
-    "description": null
+    "value": "Genossenschaft Lenk Bergbahnen"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "Gondosolar c/o E.E.S",
-    "description": null
+    "value": "Gondosolar c/o E.E.S"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "Grands Plans Solar SA",
-    "description": null
+    "value": "Grands Plans Solar SA"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "Grengiols Solar c/o FMV SA",
-    "description": null
+    "value": "Grengiols Solar c/o FMV SA"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "Jungfraubahn AG",
-    "description": null
+    "value": "Jungfraubahn AG"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "Madrisa Solar AG",
-    "description": null
+    "value": "Madrisa Solar AG"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "MontSol SA",
-    "description": null
+    "value": "MontSol SA"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "Morgeten Solar AG",
-    "description": null
+    "value": "Morgeten Solar AG"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "NalpSolar AG",
-    "description": null
+    "value": "NalpSolar AG"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "Ovra Solara Magriel SA (in Gründung), handelnd durch Axpo Solutions AG",
-    "description": null
+    "value": "Ovra Solara Magriel SA (in Gründung), handelnd durch Axpo Solutions AG"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "Prafleuri Solaire SA",
-    "description": null
+    "value": "Prafleuri Solaire SA"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "Projektträgerschaft PVA Hohsaas c/o FMV SA",
-    "description": null
+    "value": "Projektträgerschaft PVA Hohsaas c/o FMV SA"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "S'ROK AG",
-    "description": null
+    "value": "S'ROK AG"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "ScuolSolar c/o Engadiner KraftwerkeAG",
-    "description": null
+    "value": "ScuolSolar c/o Engadiner KraftwerkeAG"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "Swisspower AG",
-    "description": null
+    "value": "Swisspower AG"
   },
   {
     "enumeration_id": "_enumerations---enum_6a1d1f89e0",
-    "value": "Weisse Arena Bergbahnen AG",
-    "description": null
+    "value": "Weisse Arena Bergbahnen AG"
   },
   {
     "enumeration_id": "_enumerations---enum_6adc02e862",
-    "value": "Defective",
-    "description": null
+    "value": "Defective"
   },
   {
     "enumeration_id": "_enumerations---enum_6bc4c3e856",
-    "value": "0",
-    "description": null
+    "value": "0"
   },
   {
     "enumeration_id": "_enumerations---enum_6bc4c3e856",
-    "value": "1",
-    "description": null
+    "value": "1"
   },
   {
     "enumeration_id": "_enumerations---enum_6bd28bfeff",
-    "value": "Gaelle",
-    "description": null
+    "value": "Gaelle"
   },
   {
     "enumeration_id": "_enumerations---enum_6bd28bfeff",
-    "value": "Hugo",
-    "description": null
+    "value": "Hugo"
   },
   {
     "enumeration_id": "_enumerations---enum_6bd28bfeff",
-    "value": "Isabelle",
-    "description": null
+    "value": "Isabelle"
   },
   {
     "enumeration_id": "_enumerations---enum_6e1c74353a",
-    "value": "Alice",
-    "description": null
+    "value": "Alice"
   },
   {
     "enumeration_id": "_enumerations---enum_6e1c74353a",
-    "value": "Bob",
-    "description": null
+    "value": "Bob"
   },
   {
     "enumeration_id": "_enumerations---enum_6e1c74353a",
-    "value": "Charlie",
-    "description": null
+    "value": "Charlie"
   },
   {
     "enumeration_id": "_enumerations---enum_6e1c74353a",
-    "value": "David",
-    "description": null
+    "value": "David"
   },
   {
     "enumeration_id": "_enumerations---enum_6e1c74353a",
-    "value": "Eve",
-    "description": null
+    "value": "Eve"
   },
   {
     "enumeration_id": "_enumerations---enum_6e1c74353a",
-    "value": "Frank",
-    "description": null
+    "value": "Frank"
   },
   {
     "enumeration_id": "_enumerations---enum_6ecad2a9fb",
-    "value": "60",
-    "description": null
+    "value": "60"
   },
   {
     "enumeration_id": "_enumerations---enum_6ecad2a9fb",
-    "value": "65",
-    "description": null
+    "value": "65"
   },
   {
     "enumeration_id": "_enumerations---enum_6ecad2a9fb",
-    "value": "68",
-    "description": null
+    "value": "68"
   },
   {
     "enumeration_id": "_enumerations---enum_6fb4b7bd75",
-    "value": "Dupré",
-    "description": null
+    "value": "Dupré"
   },
   {
     "enumeration_id": "_enumerations---enum_6fb4b7bd75",
-    "value": "Léger",
-    "description": null
+    "value": "Léger"
   },
   {
     "enumeration_id": "_enumerations---enum_6fb4b7bd75",
-    "value": "Müller",
-    "description": null
+    "value": "Müller"
   },
   {
     "enumeration_id": "_enumerations---enum_6fb4b7bd75",
-    "value": "Çelik",
-    "description": null
+    "value": "Çelik"
   },
   {
     "enumeration_id": "_enumerations---enum_71409fff3c",
-    "value": "1",
-    "description": null
+    "value": "1"
   },
   {
     "enumeration_id": "_enumerations---enum_71409fff3c",
-    "value": "2",
-    "description": null
+    "value": "2"
   },
   {
     "enumeration_id": "_enumerations---enum_71409fff3c",
-    "value": "5",
-    "description": null
+    "value": "5"
   },
   {
     "enumeration_id": "_enumerations---enum_730f7b7bab",
-    "value": "1",
-    "description": null
+    "value": "1"
   },
   {
     "enumeration_id": "_enumerations---enum_730f7b7bab",
-    "value": "2",
-    "description": null
+    "value": "2"
   },
   {
     "enumeration_id": "_enumerations---enum_730f7b7bab",
-    "value": "3",
-    "description": null
+    "value": "3"
   },
   {
     "enumeration_id": "_enumerations---enum_730f7b7bab",
-    "value": "4",
-    "description": null
+    "value": "4"
   },
   {
     "enumeration_id": "_enumerations---enum_730f7b7bab",
-    "value": "5",
-    "description": null
+    "value": "5"
   },
   {
     "enumeration_id": "_enumerations---enum_730f7b7bab",
-    "value": "6",
-    "description": null
+    "value": "6"
   },
   {
     "enumeration_id": "_enumerations---enum_73d75aa99b",
-    "value": "André",
-    "description": null
+    "value": "André"
   },
   {
     "enumeration_id": "_enumerations---enum_73d75aa99b",
-    "value": "François",
-    "description": null
+    "value": "François"
   },
   {
     "enumeration_id": "_enumerations---enum_73d75aa99b",
-    "value": "José",
-    "description": null
+    "value": "José"
   },
   {
     "enumeration_id": "_enumerations---enum_73d75aa99b",
-    "value": "Sœur",
-    "description": null
+    "value": "Sœur"
   },
   {
     "enumeration_id": "_enumerations---enum_741f0d5c51",
-    "value": "dgfip",
-    "description": null
+    "value": "dgfip"
   },
   {
     "enumeration_id": "_enumerations---enum_741f0d5c51",
-    "value": "insee",
-    "description": null
+    "value": "insee"
   },
   {
     "enumeration_id": "_enumerations---enum_748614813d",
-    "value": "29",
-    "description": null
+    "value": "29"
   },
   {
     "enumeration_id": "_enumerations---enum_748614813d",
-    "value": "31",
-    "description": null
+    "value": "31"
   },
   {
     "enumeration_id": "_enumerations---enum_748614813d",
-    "value": "42",
-    "description": null
+    "value": "42"
   },
   {
     "enumeration_id": "_enumerations---enum_7973835a5d",
-    "value": "10000",
-    "description": null
+    "value": "10000"
   },
   {
     "enumeration_id": "_enumerations---enum_7973835a5d",
-    "value": "5000",
-    "description": null
+    "value": "5000"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "APV Sidenplangg",
-    "description": null
+    "value": "APV Sidenplangg"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Alpine Photovoltaik-Anlage Hintisberg",
-    "description": null
+    "value": "Alpine Photovoltaik-Anlage Hintisberg"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Alpines Solarprojekt \"Morgeten\"",
-    "description": null
+    "value": "Alpines Solarprojekt \"Morgeten\""
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Belalp Solar",
-    "description": null
+    "value": "Belalp Solar"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Bernina Solar AG",
-    "description": null
+    "value": "Bernina Solar AG"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Centrale photovoltaïque en cohabitation du Grand Chasseral",
-    "description": null
+    "value": "Centrale photovoltaïque en cohabitation du Grand Chasseral"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Gibidum Solar",
-    "description": null
+    "value": "Gibidum Solar"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Gletschersolar Matterhorn",
-    "description": null
+    "value": "Gletschersolar Matterhorn"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Hohsaas",
-    "description": null
+    "value": "Hohsaas"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Impianto fotovoltaico alpino Pontino",
-    "description": null
+    "value": "Impianto fotovoltaico alpino Pontino"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Madrisa Solar",
-    "description": null
+    "value": "Madrisa Solar"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "NalpSolar",
-    "description": null
+    "value": "NalpSolar"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "PV Alpin Parsenn",
-    "description": null
+    "value": "PV Alpin Parsenn"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "PV Anlage Grengiols Solar",
-    "description": null
+    "value": "PV Anlage Grengiols Solar"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "PVA Gries",
-    "description": null
+    "value": "PVA Gries"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "PVA Rosswald Solar",
-    "description": null
+    "value": "PVA Rosswald Solar"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "PVA Z Opmisch Hubil Gampel-Bratsch",
-    "description": null
+    "value": "PVA Z Opmisch Hubil Gampel-Bratsch"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Parc solaire de Prafleuri",
-    "description": null
+    "value": "Parc solaire de Prafleuri"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Parc solaire des Grands Plans",
-    "description": null
+    "value": "Parc solaire des Grands Plans"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Parco Solare Alpino Duragno",
-    "description": null
+    "value": "Parco Solare Alpino Duragno"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Photovoltaik-Grossanlage \"Felsenstrom\"",
-    "description": null
+    "value": "Photovoltaik-Grossanlage \"Felsenstrom\""
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Projekt Gondosolar",
-    "description": null
+    "value": "Projekt Gondosolar"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "ScuolSolar",
-    "description": null
+    "value": "ScuolSolar"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "SedrunSolar",
-    "description": null
+    "value": "SedrunSolar"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Solara Magriel ",
-    "description": null
+    "value": "Solara Magriel "
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Solaranlage Hanenmoosbärgli",
-    "description": null
+    "value": "Solaranlage Hanenmoosbärgli"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Solarfeld Mäsweide",
-    "description": null
+    "value": "Solarfeld Mäsweide"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Solarkraftwerk Samedan",
-    "description": null
+    "value": "Solarkraftwerk Samedan"
   },
   {
     "enumeration_id": "_enumerations---enum_7a1f654122",
-    "value": "Vorab",
-    "description": null
+    "value": "Vorab"
   },
   {
     "enumeration_id": "_enumerations---enum_802a13bf34",
-    "value": "data---csv---employees_csv",
-    "description": null
+    "value": "data---csv---employees_csv"
   },
   {
     "enumeration_id": "_enumerations---enum_81fce7934e",
-    "value": "Lyon",
-    "description": null
+    "value": "Lyon"
   },
   {
     "enumeration_id": "_enumerations---enum_81fce7934e",
-    "value": "Marseille",
-    "description": null
+    "value": "Marseille"
   },
   {
     "enumeration_id": "_enumerations---enum_81fce7934e",
-    "value": "Paris",
-    "description": null
+    "value": "Paris"
   },
   {
     "enumeration_id": "_enumerations---enum_87f94b760f",
-    "value": "25",
-    "description": null
+    "value": "25"
   },
   {
     "enumeration_id": "_enumerations---enum_87f94b760f",
-    "value": "30",
-    "description": null
+    "value": "30"
   },
   {
     "enumeration_id": "_enumerations---enum_87f94b760f",
-    "value": "35",
-    "description": null
+    "value": "35"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "1",
-    "description": null
+    "value": "1"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "10",
-    "description": null
+    "value": "10"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "11",
-    "description": null
+    "value": "11"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "12",
-    "description": null
+    "value": "12"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "13",
-    "description": null
+    "value": "13"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "14",
-    "description": null
+    "value": "14"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "15",
-    "description": null
+    "value": "15"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "16",
-    "description": null
+    "value": "16"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "17",
-    "description": null
+    "value": "17"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "18",
-    "description": null
+    "value": "18"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "19",
-    "description": null
+    "value": "19"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "2",
-    "description": null
+    "value": "2"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "20",
-    "description": null
+    "value": "20"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "21",
-    "description": null
+    "value": "21"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "22",
-    "description": null
+    "value": "22"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "23",
-    "description": null
+    "value": "23"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "24",
-    "description": null
+    "value": "24"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "25",
-    "description": null
+    "value": "25"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "26",
-    "description": null
+    "value": "26"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "27",
-    "description": null
+    "value": "27"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "28",
-    "description": null
+    "value": "28"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "29",
-    "description": null
+    "value": "29"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "3",
-    "description": null
+    "value": "3"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "30",
-    "description": null
+    "value": "30"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "31",
-    "description": null
+    "value": "31"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "32",
-    "description": null
+    "value": "32"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "33",
-    "description": null
+    "value": "33"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "34",
-    "description": null
+    "value": "34"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "35",
-    "description": null
+    "value": "35"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "36",
-    "description": null
+    "value": "36"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "37",
-    "description": null
+    "value": "37"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "38",
-    "description": null
+    "value": "38"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "39",
-    "description": null
+    "value": "39"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "4",
-    "description": null
+    "value": "4"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "40",
-    "description": null
+    "value": "40"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "41",
-    "description": null
+    "value": "41"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "42",
-    "description": null
+    "value": "42"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "43",
-    "description": null
+    "value": "43"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "44",
-    "description": null
+    "value": "44"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "45",
-    "description": null
+    "value": "45"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "46",
-    "description": null
+    "value": "46"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "47",
-    "description": null
+    "value": "47"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "48",
-    "description": null
+    "value": "48"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "49",
-    "description": null
+    "value": "49"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "5",
-    "description": null
+    "value": "5"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "50",
-    "description": null
+    "value": "50"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "51",
-    "description": null
+    "value": "51"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "52",
-    "description": null
+    "value": "52"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "53",
-    "description": null
+    "value": "53"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "6",
-    "description": null
+    "value": "6"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "7",
-    "description": null
+    "value": "7"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "8",
-    "description": null
+    "value": "8"
   },
   {
     "enumeration_id": "_enumerations---enum_89d629b09d",
-    "value": "9",
-    "description": null
+    "value": "9"
   },
   {
     "enumeration_id": "_enumerations---enum_8bcead3a0b",
-    "value": "Alice",
-    "description": null
+    "value": "Alice"
   },
   {
     "enumeration_id": "_enumerations---enum_8bcead3a0b",
-    "value": "Bob",
-    "description": null
+    "value": "Bob"
   },
   {
     "enumeration_id": "_enumerations---enum_8bcead3a0b",
-    "value": "Charlie",
-    "description": null
+    "value": "Charlie"
   },
   {
     "enumeration_id": "_enumerations---enum_8ce13384a7",
-    "value": "11",
-    "description": null
+    "value": "11"
   },
   {
     "enumeration_id": "_enumerations---enum_8ce13384a7",
-    "value": "7.1",
-    "description": null
+    "value": "7.1"
   },
   {
     "enumeration_id": "_enumerations---enum_8ce13384a7",
-    "value": "9.3",
-    "description": null
+    "value": "9.3"
   },
   {
     "enumeration_id": "_enumerations---enum_8e4901402e",
-    "value": "2150000",
-    "description": null
+    "value": "2150000"
   },
   {
     "enumeration_id": "_enumerations---enum_8e4901402e",
-    "value": "525000",
-    "description": null
+    "value": "525000"
   },
   {
     "enumeration_id": "_enumerations---enum_8e4901402e",
-    "value": "872000",
-    "description": null
+    "value": "872000"
   },
   {
     "enumeration_id": "_enumerations---enum_9164b880af",
-    "value": "Alice Martin",
-    "description": null
+    "value": "Alice Martin"
   },
   {
     "enumeration_id": "_enumerations---enum_9164b880af",
-    "value": "Bob Dupont",
-    "description": null
+    "value": "Bob Dupont"
   },
   {
     "enumeration_id": "_enumerations---enum_9164b880af",
-    "value": "Claire Durand",
-    "description": null
+    "value": "Claire Durand"
   },
   {
     "enumeration_id": "_enumerations---enum_9434755384",
-    "value": "full commissioning",
-    "description": null
+    "value": "full commissioning"
   },
   {
     "enumeration_id": "_enumerations---enum_9434755384",
-    "value": "granting of the first-instance authorisation",
-    "description": null
+    "value": "granting of the first-instance authorisation"
   },
   {
     "enumeration_id": "_enumerations---enum_9434755384",
-    "value": "legally authorised",
-    "description": null
+    "value": "legally authorised"
   },
   {
     "enumeration_id": "_enumerations---enum_9434755384",
-    "value": "operation after 3 years",
-    "description": null
+    "value": "operation after 3 years"
   },
   {
     "enumeration_id": "_enumerations---enum_9434755384",
-    "value": "partial commissioning",
-    "description": null
+    "value": "partial commissioning"
   },
   {
     "enumeration_id": "_enumerations---enum_9434755384",
-    "value": "public circulation",
-    "description": null
+    "value": "public circulation"
   },
   {
     "enumeration_id": "_enumerations---enum_9434755384",
-    "value": "rejected",
-    "description": null
+    "value": "rejected"
   },
   {
     "enumeration_id": "_enumerations---enum_9434755384",
-    "value": "withdrawn",
-    "description": null
+    "value": "withdrawn"
   },
   {
     "enumeration_id": "_enumerations---enum_945de5144a",
-    "value": "2024-01-25",
-    "description": null
+    "value": "2024-01-25"
   },
   {
     "enumeration_id": "_enumerations---enum_979ac80ce0",
-    "value": "completed",
-    "description": null
+    "value": "completed"
   },
   {
     "enumeration_id": "_enumerations---enum_979ac80ce0",
-    "value": "pending",
-    "description": null
+    "value": "pending"
   },
   {
     "enumeration_id": "_enumerations---enum_97cd29cff3",
-    "value": "Eolico",
-    "description": null
+    "value": "Eolico"
   },
   {
     "enumeration_id": "_enumerations---enum_97cd29cff3",
-    "value": "Solare",
-    "description": null
+    "value": "Solare"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2018-07-30",
-    "description": null
+    "value": "2018-07-30"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2018-12-11",
-    "description": null
+    "value": "2018-12-11"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2019-05-17",
-    "description": null
+    "value": "2019-05-17"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2019-09-05",
-    "description": null
+    "value": "2019-09-05"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2019-11-08",
-    "description": null
+    "value": "2019-11-08"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2020-03-22",
-    "description": null
+    "value": "2020-03-22"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2020-04-29",
-    "description": null
+    "value": "2020-04-29"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2020-08-21",
-    "description": null
+    "value": "2020-08-21"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2020-11-12",
-    "description": null
+    "value": "2020-11-12"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2020-12-03",
-    "description": null
+    "value": "2020-12-03"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2021-04-18",
-    "description": null
+    "value": "2021-04-18"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2021-06-10",
-    "description": null
+    "value": "2021-06-10"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2021-09-06",
-    "description": null
+    "value": "2021-09-06"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2021-10-25",
-    "description": null
+    "value": "2021-10-25"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2022-01-15",
-    "description": null
+    "value": "2022-01-15"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2022-03-14",
-    "description": null
+    "value": "2022-03-14"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2022-08-14",
-    "description": null
+    "value": "2022-08-14"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2023-01-09",
-    "description": null
+    "value": "2023-01-09"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2023-02-28",
-    "description": null
+    "value": "2023-02-28"
   },
   {
     "enumeration_id": "_enumerations---enum_9897c16df0",
-    "value": "2023-05-22",
-    "description": null
+    "value": "2023-05-22"
   },
   {
     "enumeration_id": "_enumerations---enum_9a0e339ece",
-    "value": "104.2",
-    "description": null
+    "value": "104.2"
   },
   {
     "enumeration_id": "_enumerations---enum_9a0e339ece",
-    "value": "125.4",
-    "description": null
+    "value": "125.4"
   },
   {
     "enumeration_id": "_enumerations---enum_9a0e339ece",
-    "value": "159.7",
-    "description": null
+    "value": "159.7"
   },
   {
     "enumeration_id": "_enumerations---enum_9a0e339ece",
-    "value": "168.9",
-    "description": null
+    "value": "168.9"
   },
   {
     "enumeration_id": "_enumerations---enum_9a0e339ece",
-    "value": "172.1",
-    "description": null
+    "value": "172.1"
   },
   {
     "enumeration_id": "_enumerations---enum_9a0e339ece",
-    "value": "179.2",
-    "description": null
+    "value": "179.2"
   },
   {
     "enumeration_id": "_enumerations---enum_9a0e339ece",
-    "value": "189.3",
-    "description": null
+    "value": "189.3"
   },
   {
     "enumeration_id": "_enumerations---enum_9a0e339ece",
-    "value": "289.4",
-    "description": null
+    "value": "289.4"
   },
   {
     "enumeration_id": "_enumerations---enum_9a0e339ece",
-    "value": "69.8",
-    "description": null
+    "value": "69.8"
   },
   {
     "enumeration_id": "_enumerations---enum_9a0e339ece",
-    "value": "71.9",
-    "description": null
+    "value": "71.9"
   },
   {
     "enumeration_id": "_enumerations---enum_9a0e339ece",
-    "value": "765.8",
-    "description": null
+    "value": "765.8"
   },
   {
     "enumeration_id": "_enumerations---enum_9a0e339ece",
-    "value": "8.9",
-    "description": null
+    "value": "8.9"
   },
   {
     "enumeration_id": "_enumerations---enum_9a0e339ece",
-    "value": "91.8",
-    "description": null
+    "value": "91.8"
   },
   {
     "enumeration_id": "_enumerations---enum_9b5b9b2291",
-    "value": "6.2",
-    "description": null
+    "value": "6.2"
   },
   {
     "enumeration_id": "_enumerations---enum_9b5b9b2291",
-    "value": "6.8",
-    "description": null
+    "value": "6.8"
   },
   {
     "enumeration_id": "_enumerations---enum_9b5b9b2291",
-    "value": "6.9",
-    "description": null
+    "value": "6.9"
   },
   {
     "enumeration_id": "_enumerations---enum_9b5b9b2291",
-    "value": "7.1",
-    "description": null
+    "value": "7.1"
   },
   {
     "enumeration_id": "_enumerations---enum_9b5b9b2291",
-    "value": "7.2",
-    "description": null
+    "value": "7.2"
   },
   {
     "enumeration_id": "_enumerations---enum_9b5b9b2291",
-    "value": "7.4",
-    "description": null
+    "value": "7.4"
   },
   {
     "enumeration_id": "_enumerations---enum_9b5b9b2291",
-    "value": "7.5",
-    "description": null
+    "value": "7.5"
   },
   {
     "enumeration_id": "_enumerations---enum_9b5b9b2291",
-    "value": "7.8",
-    "description": null
+    "value": "7.8"
   },
   {
     "enumeration_id": "_enumerations---enum_9b5b9b2291",
-    "value": "8.1",
-    "description": null
+    "value": "8.1"
   },
   {
     "enumeration_id": "_enumerations---enum_9b5b9b2291",
-    "value": "8.3",
-    "description": null
+    "value": "8.3"
   },
   {
     "enumeration_id": "_enumerations---enum_9b5b9b2291",
-    "value": "8.7",
-    "description": null
+    "value": "8.7"
   },
   {
     "enumeration_id": "_enumerations---enum_9b5b9b2291",
-    "value": "8.9",
-    "description": null
+    "value": "8.9"
   },
   {
     "enumeration_id": "_enumerations---enum_9b5b9b2291",
-    "value": "9.2",
-    "description": null
+    "value": "9.2"
   },
   {
     "enumeration_id": "_enumerations---enum_9da81bde5f",
-    "value": "EU",
-    "description": null
+    "value": "EU"
   },
   {
     "enumeration_id": "_enumerations---enum_9da81bde5f",
-    "value": "US",
-    "description": null
+    "value": "US"
   },
   {
     "enumeration_id": "_enumerations---enum_9e6f60966a",
-    "value": "100.5",
-    "description": null
+    "value": "100.5"
   },
   {
     "enumeration_id": "_enumerations---enum_9e6f60966a",
-    "value": "150.75",
-    "description": null
+    "value": "150.75"
   },
   {
     "enumeration_id": "_enumerations---enum_9e6f60966a",
-    "value": "200",
-    "description": null
+    "value": "200"
   },
   {
     "enumeration_id": "_enumerations---enum_9e6f60966a",
-    "value": "250",
-    "description": null
+    "value": "250"
   },
   {
     "enumeration_id": "_enumerations---enum_9e6f60966a",
-    "value": "300.25",
-    "description": null
+    "value": "300.25"
   },
   {
     "enumeration_id": "_enumerations---enum_9ff855e637",
-    "value": "1583-01-01 00:00:00",
-    "description": null
+    "value": "1583-01-01 00:00:00"
   },
   {
     "enumeration_id": "_enumerations---enum_9ff855e637",
-    "value": "1880-05-06 10:10:10",
-    "description": null
+    "value": "1880-05-06 10:10:10"
   },
   {
     "enumeration_id": "_enumerations---enum_9ff855e637",
-    "value": "1960-01-01 00:00:00",
-    "description": null
+    "value": "1960-01-01 00:00:00"
   },
   {
     "enumeration_id": "_enumerations---enum_9ff855e637",
-    "value": "2018-05-06 10:10:10",
-    "description": null
+    "value": "2018-05-06 10:10:10"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1247",
-    "description": null
+    "value": "1247"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1279",
-    "description": null
+    "value": "1279"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1297",
-    "description": null
+    "value": "1297"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1324",
-    "description": null
+    "value": "1324"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1343",
-    "description": null
+    "value": "1343"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1345",
-    "description": null
+    "value": "1345"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1346",
-    "description": null
+    "value": "1346"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1390",
-    "description": null
+    "value": "1390"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1393",
-    "description": null
+    "value": "1393"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1415",
-    "description": null
+    "value": "1415"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1430",
-    "description": null
+    "value": "1430"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1432",
-    "description": null
+    "value": "1432"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1435",
-    "description": null
+    "value": "1435"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1446",
-    "description": null
+    "value": "1446"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1448",
-    "description": null
+    "value": "1448"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1453",
-    "description": null
+    "value": "1453"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1458",
-    "description": null
+    "value": "1458"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1481",
-    "description": null
+    "value": "1481"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1521",
-    "description": null
+    "value": "1521"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1522",
-    "description": null
+    "value": "1522"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1554",
-    "description": null
+    "value": "1554"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1565",
-    "description": null
+    "value": "1565"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1568",
-    "description": null
+    "value": "1568"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1607",
-    "description": null
+    "value": "1607"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1609",
-    "description": null
+    "value": "1609"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1617",
-    "description": null
+    "value": "1617"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1622",
-    "description": null
+    "value": "1622"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1636",
-    "description": null
+    "value": "1636"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1663",
-    "description": null
+    "value": "1663"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1794",
-    "description": null
+    "value": "1794"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "1968",
-    "description": null
+    "value": "1968"
   },
   {
     "enumeration_id": "_enumerations---enum_a0ddf6b2aa",
-    "value": "2081",
-    "description": null
+    "value": "2081"
   },
   {
     "enumeration_id": "_enumerations---enum_a4750880c6",
-    "value": "a",
-    "description": null
+    "value": "a"
   },
   {
     "enumeration_id": "_enumerations---enum_a4750880c6",
-    "value": "b",
-    "description": null
+    "value": "b"
   },
   {
     "enumeration_id": "_enumerations---enum_a4750880c6",
-    "value": "c",
-    "description": null
+    "value": "c"
   },
   {
     "enumeration_id": "_enumerations---enum_a4750880c6",
-    "value": "d",
-    "description": null
+    "value": "d"
   },
   {
     "enumeration_id": "_enumerations---enum_a4750880c6",
-    "value": "e",
-    "description": null
+    "value": "e"
   },
   {
     "enumeration_id": "_enumerations---enum_a6091cf7c5",
-    "value": "290",
-    "description": null
+    "value": "290"
   },
   {
     "enumeration_id": "_enumerations---enum_a6091cf7c5",
-    "value": "320",
-    "description": null
+    "value": "320"
   },
   {
     "enumeration_id": "_enumerations---enum_a6091cf7c5",
-    "value": "340",
-    "description": null
+    "value": "340"
   },
   {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
-    "value": "Anne",
-    "description": null
+    "value": "Anne"
   },
   {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
-    "value": "Claire",
-    "description": null
+    "value": "Claire"
   },
   {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
-    "value": "Céline",
-    "description": null
+    "value": "Céline"
   },
   {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
-    "value": "Emma",
-    "description": null
+    "value": "Emma"
   },
   {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
-    "value": "François",
-    "description": null
+    "value": "François"
   },
   {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
-    "value": "Isabelle",
-    "description": null
+    "value": "Isabelle"
   },
   {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
-    "value": "Jean",
-    "description": null
+    "value": "Jean"
   },
   {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
-    "value": "Julie",
-    "description": null
+    "value": "Julie"
   },
   {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
-    "value": "Julien",
-    "description": null
+    "value": "Julien"
   },
   {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
-    "value": "Laura",
-    "description": null
+    "value": "Laura"
   },
   {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
-    "value": "Luc",
-    "description": null
+    "value": "Luc"
   },
   {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
-    "value": "Marc",
-    "description": null
+    "value": "Marc"
   },
   {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
-    "value": "Marie",
-    "description": null
+    "value": "Marie"
   },
   {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
-    "value": "Nicolas",
-    "description": null
+    "value": "Nicolas"
   },
   {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
-    "value": "Paul",
-    "description": null
+    "value": "Paul"
   },
   {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
-    "value": "Pierre",
-    "description": null
+    "value": "Pierre"
   },
   {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
-    "value": "Sophie",
-    "description": null
+    "value": "Sophie"
   },
   {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
-    "value": "Sylvie",
-    "description": null
+    "value": "Sylvie"
   },
   {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
-    "value": "Thomas",
-    "description": null
+    "value": "Thomas"
   },
   {
     "enumeration_id": "_enumerations---enum_a666ee0ac9",
-    "value": "Données financières",
-    "description": null
+    "value": "Données financières"
   },
   {
     "enumeration_id": "_enumerations---enum_a666ee0ac9",
-    "value": "Ressources humaines",
-    "description": null
+    "value": "Ressources humaines"
   },
   {
     "enumeration_id": "_enumerations---enum_aabc56e083",
-    "value": "st11",
-    "description": null
+    "value": "st11"
   },
   {
     "enumeration_id": "_enumerations---enum_aabc56e083",
-    "value": "st12",
-    "description": null
+    "value": "st12"
   },
   {
     "enumeration_id": "_enumerations---enum_aabc56e083",
-    "value": "st13",
-    "description": null
+    "value": "st13"
   },
   {
     "enumeration_id": "_enumerations---enum_aabc56e083",
-    "value": "st14",
-    "description": null
+    "value": "st14"
   },
   {
     "enumeration_id": "_enumerations---enum_aabc56e083",
-    "value": "st15",
-    "description": null
+    "value": "st15"
   },
   {
     "enumeration_id": "_enumerations---enum_aabc56e083",
-    "value": "st16",
-    "description": null
+    "value": "st16"
   },
   {
     "enumeration_id": "_enumerations---enum_aabc56e083",
-    "value": "st17",
-    "description": null
+    "value": "st17"
   },
   {
     "enumeration_id": "_enumerations---enum_aabc56e083",
-    "value": "st18",
-    "description": null
+    "value": "st18"
   },
   {
     "enumeration_id": "_enumerations---enum_ac565f22a4",
-    "value": "Bordeaux",
-    "description": null
+    "value": "Bordeaux"
   },
   {
     "enumeration_id": "_enumerations---enum_ac565f22a4",
-    "value": "Lille",
-    "description": null
+    "value": "Lille"
   },
   {
     "enumeration_id": "_enumerations---enum_ac565f22a4",
-    "value": "Strasbourg",
-    "description": null
+    "value": "Strasbourg"
   },
   {
     "enumeration_id": "_enumerations---enum_ae6d5a38cc",
-    "value": "contact@insee.fr",
-    "description": null
+    "value": "contact@insee.fr"
   },
   {
     "enumeration_id": "_enumerations---enum_b2fef6eb8f",
-    "value": "1",
-    "description": null
+    "value": "1"
   },
   {
     "enumeration_id": "_enumerations---enum_b2fef6eb8f",
-    "value": "2",
-    "description": null
+    "value": "2"
   },
   {
     "enumeration_id": "_enumerations---enum_b71b2cc283",
-    "value": "00:00:00",
-    "description": null
+    "value": "00:00:00"
   },
   {
     "enumeration_id": "_enumerations---enum_b71b2cc283",
-    "value": "10:10:10",
-    "description": null
+    "value": "10:10:10"
   },
   {
     "enumeration_id": "_enumerations---enum_b71b2cc283",
-    "value": "16:10:10",
-    "description": null
+    "value": "16:10:10"
   },
   {
     "enumeration_id": "_enumerations---enum_b71b2cc283",
-    "value": "23:10:10",
-    "description": null
+    "value": "23:10:10"
   },
   {
     "enumeration_id": "_enumerations---enum_b974ffb0d5",
-    "value": "Alice",
-    "description": null
+    "value": "Alice"
   },
   {
     "enumeration_id": "_enumerations---enum_b974ffb0d5",
-    "value": "Bob",
-    "description": null
+    "value": "Bob"
   },
   {
     "enumeration_id": "_enumerations---enum_b974ffb0d5",
-    "value": "Claire",
-    "description": null
+    "value": "Claire"
   },
   {
     "enumeration_id": "_enumerations---enum_bda75bc83c",
-    "value": "Finance",
-    "description": null
+    "value": "Finance"
   },
   {
     "enumeration_id": "_enumerations---enum_bda75bc83c",
-    "value": "RH",
-    "description": null
+    "value": "RH"
   },
   {
     "enumeration_id": "_enumerations---enum_c0a038d9c2",
-    "value": "7",
-    "description": null
+    "value": "7"
   },
   {
     "enumeration_id": "_enumerations---enum_c0a038d9c2",
-    "value": "8",
-    "description": null
+    "value": "8"
   },
   {
     "enumeration_id": "_enumerations---enum_c0a038d9c2",
-    "value": "9",
-    "description": null
+    "value": "9"
   },
   {
     "enumeration_id": "_enumerations---enum_c0e1a30973",
-    "value": "1",
-    "description": null
+    "value": "1"
   },
   {
     "enumeration_id": "_enumerations---enum_c0e1a30973",
-    "value": "2",
-    "description": null
+    "value": "2"
   },
   {
     "enumeration_id": "_enumerations---enum_c0e1a30973",
-    "value": "3",
-    "description": null
+    "value": "3"
   },
   {
     "enumeration_id": "_enumerations---enum_c0e1a30973",
-    "value": "4",
-    "description": null
+    "value": "4"
   },
   {
     "enumeration_id": "_enumerations---enum_c0e1a30973",
-    "value": "5",
-    "description": null
+    "value": "5"
   },
   {
     "enumeration_id": "_enumerations---enum_c60568ab09",
-    "value": "infra",
-    "description": null
+    "value": "infra"
   },
   {
     "enumeration_id": "_enumerations---enum_c60568ab09",
-    "value": "rh",
-    "description": null
+    "value": "rh"
   },
   {
     "enumeration_id": "_enumerations---enum_c83ffa1257",
-    "value": "Alice",
-    "description": null
+    "value": "Alice"
   },
   {
     "enumeration_id": "_enumerations---enum_c83ffa1257",
-    "value": "Bob",
-    "description": null
+    "value": "Bob"
   },
   {
     "enumeration_id": "_enumerations---enum_c83ffa1257",
-    "value": "Charlie",
-    "description": null
+    "value": "Charlie"
   },
   {
     "enumeration_id": "_enumerations---enum_c83ffa1257",
-    "value": "Diana",
-    "description": null
+    "value": "Diana"
   },
   {
     "enumeration_id": "_enumerations---enum_c83ffa1257",
-    "value": "Eve",
-    "description": null
+    "value": "Eve"
   },
   {
     "enumeration_id": "_enumerations---enum_c8ab539531",
-    "value": "2024-01-10",
-    "description": null
+    "value": "2024-01-10"
   },
   {
     "enumeration_id": "_enumerations---enum_c8ab539531",
-    "value": "2024-02-15",
-    "description": null
+    "value": "2024-02-15"
   },
   {
     "enumeration_id": "_enumerations---enum_c8ab539531",
-    "value": "2024-03-01",
-    "description": null
+    "value": "2024-03-01"
   },
   {
     "enumeration_id": "_enumerations---enum_cbc487e7ce",
-    "value": "Nom de famille de l'employé",
-    "description": null
+    "value": "Nom de famille de l'employé"
   },
   {
     "enumeration_id": "_enumerations---enum_cbc487e7ce",
-    "value": "Salaire mensuel brut en euros",
-    "description": null
+    "value": "Salaire mensuel brut en euros"
   },
   {
     "enumeration_id": "_enumerations---enum_ccaef67ab9",
-    "value": "alice@company.com",
-    "description": null
+    "value": "alice@company.com"
   },
   {
     "enumeration_id": "_enumerations---enum_ccaef67ab9",
-    "value": "bob@company.com",
-    "description": null
+    "value": "bob@company.com"
   },
   {
     "enumeration_id": "_enumerations---enum_ccaef67ab9",
-    "value": "claire@company.com",
-    "description": null
+    "value": "claire@company.com"
   },
   {
     "enumeration_id": "_enumerations---enum_cd314db7df",
-    "value": "2",
-    "description": null
+    "value": "2"
   },
   {
     "enumeration_id": "_enumerations---enum_cdae6051e3",
-    "value": "concessione dell'autorizzazione di prima istanza",
-    "description": null
+    "value": "concessione dell'autorizzazione di prima istanza"
   },
   {
     "enumeration_id": "_enumerations---enum_cdae6051e3",
-    "value": "deposito pubblico della domanda",
-    "description": null
+    "value": "deposito pubblico della domanda"
   },
   {
     "enumeration_id": "_enumerations---enum_cdae6051e3",
-    "value": "messa in esercizio completa",
-    "description": null
+    "value": "messa in esercizio completa"
   },
   {
     "enumeration_id": "_enumerations---enum_cdae6051e3",
-    "value": "messa in esercizio parziale",
-    "description": null
+    "value": "messa in esercizio parziale"
   },
   {
     "enumeration_id": "_enumerations---enum_cdae6051e3",
-    "value": "operatività dopo 3 anni",
-    "description": null
+    "value": "operatività dopo 3 anni"
   },
   {
     "enumeration_id": "_enumerations---enum_cdae6051e3",
-    "value": "passaggio in giudicato dell'autorizzazione",
-    "description": null
+    "value": "passaggio in giudicato dell'autorizzazione"
   },
   {
     "enumeration_id": "_enumerations---enum_cdae6051e3",
-    "value": "rifiutato",
-    "description": null
+    "value": "rifiutato"
   },
   {
     "enumeration_id": "_enumerations---enum_cdae6051e3",
-    "value": "ritirato",
-    "description": null
+    "value": "ritirato"
   },
   {
     "enumeration_id": "_enumerations---enum_ceb2957b9e",
-    "value": "Gadget Plus",
-    "description": null
+    "value": "Gadget Plus"
   },
   {
     "enumeration_id": "_enumerations---enum_ceb2957b9e",
-    "value": "Widget Pro",
-    "description": null
+    "value": "Widget Pro"
   },
   {
     "enumeration_id": "_enumerations---enum_d22e930acb",
-    "value": "48000",
-    "description": null
+    "value": "48000"
   },
   {
     "enumeration_id": "_enumerations---enum_d22e930acb",
-    "value": "55000",
-    "description": null
+    "value": "55000"
   },
   {
     "enumeration_id": "_enumerations---enum_d22e930acb",
-    "value": "60000",
-    "description": null
+    "value": "60000"
   },
   {
     "enumeration_id": "_enumerations---enum_d7cb333b55",
-    "value": "15000",
-    "description": null
+    "value": "15000"
   },
   {
     "enumeration_id": "_enumerations---enum_d7cb333b55",
-    "value": "52000",
-    "description": null
+    "value": "52000"
   },
   {
     "enumeration_id": "_enumerations---enum_d7cb333b55",
-    "value": "6000",
-    "description": null
+    "value": "6000"
   },
   {
     "enumeration_id": "_enumerations---enum_d89a50a28b",
-    "value": "1",
-    "description": null
+    "value": "1"
   },
   {
     "enumeration_id": "_enumerations---enum_d89a50a28b",
-    "value": "15",
-    "description": null
+    "value": "15"
   },
   {
     "enumeration_id": "_enumerations---enum_d89a50a28b",
-    "value": "28",
-    "description": null
+    "value": "28"
   },
   {
     "enumeration_id": "_enumerations---enum_de545e0867",
-    "value": "Solar",
-    "description": null
+    "value": "Solar"
   },
   {
     "enumeration_id": "_enumerations---enum_de545e0867",
-    "value": "Wind",
-    "description": null
+    "value": "Wind"
   },
   {
     "enumeration_id": "_enumerations---enum_e1151e6948",
-    "value": "Lyon",
-    "description": null
+    "value": "Lyon"
   },
   {
     "enumeration_id": "_enumerations---enum_e1151e6948",
-    "value": "Paris",
-    "description": null
+    "value": "Paris"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "1",
-    "description": null
+    "value": "1"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "10",
-    "description": null
+    "value": "10"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "11",
-    "description": null
+    "value": "11"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "12",
-    "description": null
+    "value": "12"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "13",
-    "description": null
+    "value": "13"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "14",
-    "description": null
+    "value": "14"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "15",
-    "description": null
+    "value": "15"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "16",
-    "description": null
+    "value": "16"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "17",
-    "description": null
+    "value": "17"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "18",
-    "description": null
+    "value": "18"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "19",
-    "description": null
+    "value": "19"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "2",
-    "description": null
+    "value": "2"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "20",
-    "description": null
+    "value": "20"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "3",
-    "description": null
+    "value": "3"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "4",
-    "description": null
+    "value": "4"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "5",
-    "description": null
+    "value": "5"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "6",
-    "description": null
+    "value": "6"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "7",
-    "description": null
+    "value": "7"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "8",
-    "description": null
+    "value": "8"
   },
   {
     "enumeration_id": "_enumerations---enum_e168f98b9c",
-    "value": "9",
-    "description": null
+    "value": "9"
   },
   {
     "enumeration_id": "_enumerations---enum_e1bb7570d1",
-    "value": "2020-01-15",
-    "description": null
+    "value": "2020-01-15"
   },
   {
     "enumeration_id": "_enumerations---enum_e1bb7570d1",
-    "value": "2021-03-20",
-    "description": null
+    "value": "2021-03-20"
   },
   {
     "enumeration_id": "_enumerations---enum_e1bb7570d1",
-    "value": "2023-01-01",
-    "description": null
+    "value": "2023-01-01"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "1",
-    "description": null
+    "value": "1"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "10",
-    "description": null
+    "value": "10"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "11",
-    "description": null
+    "value": "11"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "12",
-    "description": null
+    "value": "12"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "13",
-    "description": null
+    "value": "13"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "14",
-    "description": null
+    "value": "14"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "15",
-    "description": null
+    "value": "15"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "16",
-    "description": null
+    "value": "16"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "17",
-    "description": null
+    "value": "17"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "18",
-    "description": null
+    "value": "18"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "19",
-    "description": null
+    "value": "19"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "2",
-    "description": null
+    "value": "2"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "20",
-    "description": null
+    "value": "20"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "21",
-    "description": null
+    "value": "21"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "22",
-    "description": null
+    "value": "22"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "23",
-    "description": null
+    "value": "23"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "24",
-    "description": null
+    "value": "24"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "25",
-    "description": null
+    "value": "25"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "26",
-    "description": null
+    "value": "26"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "27",
-    "description": null
+    "value": "27"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "28",
-    "description": null
+    "value": "28"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "29",
-    "description": null
+    "value": "29"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "3",
-    "description": null
+    "value": "3"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "4",
-    "description": null
+    "value": "4"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "5",
-    "description": null
+    "value": "5"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "6",
-    "description": null
+    "value": "6"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "7",
-    "description": null
+    "value": "7"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "8",
-    "description": null
+    "value": "8"
   },
   {
     "enumeration_id": "_enumerations---enum_e6102166d6",
-    "value": "9",
-    "description": null
+    "value": "9"
   },
   {
     "enumeration_id": "_enumerations---enum_e6dbaef17d",
-    "value": "-1.4",
-    "description": null
+    "value": "-1.4"
   },
   {
     "enumeration_id": "_enumerations---enum_e6dbaef17d",
-    "value": "-1000.3",
-    "description": null
+    "value": "-1000.3"
   },
   {
     "enumeration_id": "_enumerations---enum_e6dbaef17d",
-    "value": "1.1",
-    "description": null
+    "value": "1.1"
   },
   {
     "enumeration_id": "_enumerations---enum_e6dbaef17d",
-    "value": "1.2",
-    "description": null
+    "value": "1.2"
   },
   {
     "enumeration_id": "_enumerations---enum_e6dbaef17d",
-    "value": "1000.3",
-    "description": null
+    "value": "1000.3"
   },
   {
     "enumeration_id": "_enumerations---enum_e728ada030",
-    "value": "12140526",
-    "description": null
+    "value": "12140526"
   },
   {
     "enumeration_id": "_enumerations---enum_e728ada030",
-    "value": "2573180",
-    "description": null
+    "value": "2573180"
   },
   {
     "enumeration_id": "_enumerations---enum_e728ada030",
-    "value": "2795301",
-    "description": null
+    "value": "2795301"
   },
   {
     "enumeration_id": "_enumerations---enum_e728ada030",
-    "value": "3322757",
-    "description": null
+    "value": "3322757"
   },
   {
     "enumeration_id": "_enumerations---enum_e728ada030",
-    "value": "3373835",
-    "description": null
+    "value": "3373835"
   },
   {
     "enumeration_id": "_enumerations---enum_e728ada030",
-    "value": "344679",
-    "description": null
+    "value": "344679"
   },
   {
     "enumeration_id": "_enumerations---enum_e728ada030",
-    "value": "3832120",
-    "description": null
+    "value": "3832120"
   },
   {
     "enumeration_id": "_enumerations---enum_e728ada030",
-    "value": "5094283",
-    "description": null
+    "value": "5094283"
   },
   {
     "enumeration_id": "_enumerations---enum_e728ada030",
-    "value": "5518851",
-    "description": null
+    "value": "5518851"
   },
   {
     "enumeration_id": "_enumerations---enum_e728ada030",
-    "value": "5924858",
-    "description": null
+    "value": "5924858"
   },
   {
     "enumeration_id": "_enumerations---enum_e728ada030",
-    "value": "5962662",
-    "description": null
+    "value": "5962662"
   },
   {
     "enumeration_id": "_enumerations---enum_e728ada030",
-    "value": "6010289",
-    "description": null
+    "value": "6010289"
   },
   {
     "enumeration_id": "_enumerations---enum_e728ada030",
-    "value": "8042936",
-    "description": null
+    "value": "8042936"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "12.8",
-    "description": null
+    "value": "12.8"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "14.4",
-    "description": null
+    "value": "14.4"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "20",
-    "description": null
+    "value": "20"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "21.41",
-    "description": null
+    "value": "21.41"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "22",
-    "description": null
+    "value": "22"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "4.08",
-    "description": null
+    "value": "4.08"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "4.4",
-    "description": null
+    "value": "4.4"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "4.57",
-    "description": null
+    "value": "4.57"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "4.6",
-    "description": null
+    "value": "4.6"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "4.75",
-    "description": null
+    "value": "4.75"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "4.87",
-    "description": null
+    "value": "4.87"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "4.9",
-    "description": null
+    "value": "4.9"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "5.274",
-    "description": null
+    "value": "5.274"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "5.335",
-    "description": null
+    "value": "5.335"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "5.36",
-    "description": null
+    "value": "5.36"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "5.4",
-    "description": null
+    "value": "5.4"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "5.5",
-    "description": null
+    "value": "5.5"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "5.6",
-    "description": null
+    "value": "5.6"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "5.66",
-    "description": null
+    "value": "5.66"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "6.13",
-    "description": null
+    "value": "6.13"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "6.3",
-    "description": null
+    "value": "6.3"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "6.72",
-    "description": null
+    "value": "6.72"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "64",
-    "description": null
+    "value": "64"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "7.2",
-    "description": null
+    "value": "7.2"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "7.56",
-    "description": null
+    "value": "7.56"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "7.8246",
-    "description": null
+    "value": "7.8246"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "8.6",
-    "description": null
+    "value": "8.6"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "8.602",
-    "description": null
+    "value": "8.602"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "8.733",
-    "description": null
+    "value": "8.733"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "8.92",
-    "description": null
+    "value": "8.92"
   },
   {
     "enumeration_id": "_enumerations---enum_e90261b5fd",
-    "value": "9.165",
-    "description": null
+    "value": "9.165"
   },
   {
     "enumeration_id": "_enumerations---enum_e9fd39bf30",
-    "value": "1010.8",
-    "description": null
+    "value": "1010.8"
   },
   {
     "enumeration_id": "_enumerations---enum_e9fd39bf30",
-    "value": "111.1",
-    "description": null
+    "value": "111.1"
   },
   {
     "enumeration_id": "_enumerations---enum_e9fd39bf30",
-    "value": "115.4",
-    "description": null
+    "value": "115.4"
   },
   {
     "enumeration_id": "_enumerations---enum_e9fd39bf30",
-    "value": "119.5",
-    "description": null
+    "value": "119.5"
   },
   {
     "enumeration_id": "_enumerations---enum_e9fd39bf30",
-    "value": "124",
-    "description": null
+    "value": "124"
   },
   {
     "enumeration_id": "_enumerations---enum_e9fd39bf30",
-    "value": "162.2",
-    "description": null
+    "value": "162.2"
   },
   {
     "enumeration_id": "_enumerations---enum_e9fd39bf30",
-    "value": "187.5",
-    "description": null
+    "value": "187.5"
   },
   {
     "enumeration_id": "_enumerations---enum_e9fd39bf30",
-    "value": "39.5",
-    "description": null
+    "value": "39.5"
   },
   {
     "enumeration_id": "_enumerations---enum_e9fd39bf30",
-    "value": "58.5",
-    "description": null
+    "value": "58.5"
   },
   {
     "enumeration_id": "_enumerations---enum_e9fd39bf30",
-    "value": "65.7",
-    "description": null
+    "value": "65.7"
   },
   {
     "enumeration_id": "_enumerations---enum_e9fd39bf30",
-    "value": "71.5",
-    "description": null
+    "value": "71.5"
   },
   {
     "enumeration_id": "_enumerations---enum_e9fd39bf30",
-    "value": "81.4",
-    "description": null
+    "value": "81.4"
   },
   {
     "enumeration_id": "_enumerations---enum_e9fd39bf30",
-    "value": "96.1",
-    "description": null
+    "value": "96.1"
   },
   {
     "enumeration_id": "_enumerations---enum_ecdfc6dc16",
-    "value": "DGFiP",
-    "description": null
+    "value": "DGFiP"
   },
   {
     "enumeration_id": "_enumerations---enum_ecdfc6dc16",
-    "value": "INSEE",
-    "description": null
+    "value": "INSEE"
   },
   {
     "enumeration_id": "_enumerations---enum_ed49b8ba30",
-    "value": "finance",
-    "description": null
+    "value": "finance"
   },
   {
     "enumeration_id": "_enumerations---enum_ed49b8ba30",
-    "value": "rh",
-    "description": null
+    "value": "rh"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "1",
-    "description": null
+    "value": "1"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "127",
-    "description": null
+    "value": "127"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "128",
-    "description": null
+    "value": "128"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "144",
-    "description": null
+    "value": "144"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "145",
-    "description": null
+    "value": "145"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "146",
-    "description": null
+    "value": "146"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "147",
-    "description": null
+    "value": "147"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "148",
-    "description": null
+    "value": "148"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "149",
-    "description": null
+    "value": "149"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "150",
-    "description": null
+    "value": "150"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "151",
-    "description": null
+    "value": "151"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "152",
-    "description": null
+    "value": "152"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "153",
-    "description": null
+    "value": "153"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "155",
-    "description": null
+    "value": "155"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "156",
-    "description": null
+    "value": "156"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "157",
-    "description": null
+    "value": "157"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "159",
-    "description": null
+    "value": "159"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "160",
-    "description": null
+    "value": "160"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "161",
-    "description": null
+    "value": "161"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "162",
-    "description": null
+    "value": "162"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "163",
-    "description": null
+    "value": "163"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "164",
-    "description": null
+    "value": "164"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "165",
-    "description": null
+    "value": "165"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "166",
-    "description": null
+    "value": "166"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "167",
-    "description": null
+    "value": "167"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "168",
-    "description": null
+    "value": "168"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "169",
-    "description": null
+    "value": "169"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "170",
-    "description": null
+    "value": "170"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "171",
-    "description": null
+    "value": "171"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "172",
-    "description": null
+    "value": "172"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "173",
-    "description": null
+    "value": "173"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "176",
-    "description": null
+    "value": "176"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "177",
-    "description": null
+    "value": "177"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "178",
-    "description": null
+    "value": "178"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "179",
-    "description": null
+    "value": "179"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "180",
-    "description": null
+    "value": "180"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "181",
-    "description": null
+    "value": "181"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "182",
-    "description": null
+    "value": "182"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "183",
-    "description": null
+    "value": "183"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "184",
-    "description": null
+    "value": "184"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "185",
-    "description": null
+    "value": "185"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "186",
-    "description": null
+    "value": "186"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "187",
-    "description": null
+    "value": "187"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "188",
-    "description": null
+    "value": "188"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "191",
-    "description": null
+    "value": "191"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "192",
-    "description": null
+    "value": "192"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "193",
-    "description": null
+    "value": "193"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "194",
-    "description": null
+    "value": "194"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "46",
-    "description": null
+    "value": "46"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "71",
-    "description": null
+    "value": "71"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "72",
-    "description": null
+    "value": "72"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "83",
-    "description": null
+    "value": "83"
   },
   {
     "enumeration_id": "_enumerations---enum_edd0a3feca",
-    "value": "85",
-    "description": null
+    "value": "85"
   },
   {
     "enumeration_id": "_enumerations---enum_eed9cfed19",
-    "value": "2019-06-01",
-    "description": null
+    "value": "2019-06-01"
   },
   {
     "enumeration_id": "_enumerations---enum_eed9cfed19",
-    "value": "2020-01-15",
-    "description": null
+    "value": "2020-01-15"
   },
   {
     "enumeration_id": "_enumerations---enum_eed9cfed19",
-    "value": "2021-03-20",
-    "description": null
+    "value": "2021-03-20"
   },
   {
     "enumeration_id": "_enumerations---enum_ef3ca99c8b",
-    "value": "1",
-    "description": null
+    "value": "1"
   },
   {
     "enumeration_id": "_enumerations---enum_ef3ca99c8b",
-    "value": "2",
-    "description": null
+    "value": "2"
   },
   {
     "enumeration_id": "_enumerations---enum_ef3ca99c8b",
-    "value": "3",
-    "description": null
+    "value": "3"
   },
   {
     "enumeration_id": "_enumerations---enum_ef932f614f",
-    "value": "contact@acme.com",
-    "description": null
+    "value": "contact@acme.com"
   },
   {
     "enumeration_id": "_enumerations---enum_ef932f614f",
-    "value": "info@techstart.com",
-    "description": null
+    "value": "info@techstart.com"
   },
   {
     "enumeration_id": "_enumerations---enum_f099626334",
-    "value": "https://grandsplanssolar.ch",
-    "description": null
+    "value": "https://grandsplanssolar.ch"
   },
   {
     "enumeration_id": "_enumerations---enum_f099626334",
-    "value": "https://www.ekz.ch/de/ueber-ekz/unternehmen/engagement/felsenstrom.html",
-    "description": null
+    "value": "https://www.ekz.ch/de/ueber-ekz/unternehmen/engagement/felsenstrom.html"
   },
   {
     "enumeration_id": "_enumerations---enum_f099626334",
-    "value": "https://www.energia-alpina.ch/",
-    "description": null
+    "value": "https://www.energia-alpina.ch/"
   },
   {
     "enumeration_id": "_enumerations---enum_f099626334",
-    "value": "https://www.engadin.solar",
-    "description": null
+    "value": "https://www.engadin.solar"
   },
   {
     "enumeration_id": "_enumerations---enum_f099626334",
-    "value": "https://www.gondosolar.ch/",
-    "description": null
+    "value": "https://www.gondosolar.ch/"
   },
   {
     "enumeration_id": "_enumerations---enum_f099626334",
-    "value": "https://www.grengiols-solar.ch/de",
-    "description": null
+    "value": "https://www.grengiols-solar.ch/de"
   },
   {
     "enumeration_id": "_enumerations---enum_f099626334",
-    "value": "https://www.jungfrau.ch/de-ch/unternehmen/jungfraubahnen/jungfraubahn-holding-ag/kraftwerk-jungfraubahn/",
-    "description": null
+    "value": "https://www.jungfrau.ch/de-ch/unternehmen/jungfraubahnen/jungfraubahn-holding-ag/kraftwerk-jungfraubahn/"
   },
   {
     "enumeration_id": "_enumerations---enum_f099626334",
-    "value": "https://www.morgeten.ch",
-    "description": null
+    "value": "https://www.morgeten.ch"
   },
   {
     "enumeration_id": "_enumerations---enum_f099626334",
-    "value": "https://www.pv-mont-soleil.ch/",
-    "description": null
+    "value": "https://www.pv-mont-soleil.ch/"
   },
   {
     "enumeration_id": "_enumerations---enum_f099626334",
-    "value": "https://www.scuolsolar.ch/",
-    "description": null
+    "value": "https://www.scuolsolar.ch/"
   },
   {
     "enumeration_id": "_enumerations---enum_f487e9e0e3",
-    "value": "3",
-    "description": null
+    "value": "3"
   },
   {
     "enumeration_id": "_enumerations---enum_f487e9e0e3",
-    "value": "4",
-    "description": null
+    "value": "4"
   },
   {
     "enumeration_id": "_enumerations---enum_f487e9e0e3",
-    "value": "5",
-    "description": null
+    "value": "5"
   },
   {
     "enumeration_id": "_enumerations---enum_f487e9e0e3",
-    "value": "6",
-    "description": null
+    "value": "6"
   },
   {
     "enumeration_id": "_enumerations---enum_f487e9e0e3",
-    "value": "8",
-    "description": null
+    "value": "8"
   },
   {
     "enumeration_id": "_enumerations---enum_f7f5210676",
-    "value": "12011",
-    "description": null
+    "value": "12011"
   },
   {
     "enumeration_id": "_enumerations---enum_f7f5210676",
-    "value": "27208",
-    "description": null
+    "value": "27208"
   },
   {
     "enumeration_id": "_enumerations---enum_f7f5210676",
-    "value": "29906",
-    "description": null
+    "value": "29906"
   },
   {
     "enumeration_id": "_enumerations---enum_f7f5210676",
-    "value": "31400",
-    "description": null
+    "value": "31400"
   },
   {
     "enumeration_id": "_enumerations---enum_f7f5210676",
-    "value": "31806",
-    "description": null
+    "value": "31806"
   },
   {
     "enumeration_id": "_enumerations---enum_f7f5210676",
-    "value": "32082",
-    "description": null
+    "value": "32082"
   },
   {
     "enumeration_id": "_enumerations---enum_f7f5210676",
-    "value": "39151",
-    "description": null
+    "value": "39151"
   },
   {
     "enumeration_id": "_enumerations---enum_f7f5210676",
-    "value": "47784",
-    "description": null
+    "value": "47784"
   },
   {
     "enumeration_id": "_enumerations---enum_f7f5210676",
-    "value": "57433",
-    "description": null
+    "value": "57433"
   },
   {
     "enumeration_id": "_enumerations---enum_f7f5210676",
-    "value": "69711",
-    "description": null
+    "value": "69711"
   },
   {
     "enumeration_id": "_enumerations---enum_f7f5210676",
-    "value": "72724",
-    "description": null
+    "value": "72724"
   },
   {
     "enumeration_id": "_enumerations---enum_f7f5210676",
-    "value": "84061",
-    "description": null
+    "value": "84061"
   },
   {
     "enumeration_id": "_enumerations---enum_f7f5210676",
-    "value": "8722",
-    "description": null
+    "value": "8722"
   },
   {
     "enumeration_id": "_enumerations---enum_faeb83c5f5",
-    "value": "1.0",
-    "description": null
+    "value": "1.0"
   },
   {
     "enumeration_id": "_enumerations---enum_faeb83c5f5",
-    "value": "Demo Corp",
-    "description": null
+    "value": "Demo Corp"
   },
   {
     "enumeration_id": "_enumerations---enum_faf13cd03f",
-    "value": "formation",
-    "description": null
+    "value": "formation"
   },
   {
     "enumeration_id": "_enumerations---enum_faf13cd03f",
-    "value": "materiel",
-    "description": null
+    "value": "materiel"
   },
   {
     "enumeration_id": "_enumerations---enum_faf13cd03f",
-    "value": "salaires",
-    "description": null
+    "value": "salaires"
   },
   {
     "enumeration_id": "_enumerations---enum_fb91005117",
-    "value": "25",
-    "description": null
+    "value": "25"
   },
   {
     "enumeration_id": "_enumerations---enum_fb91005117",
-    "value": "26",
-    "description": null
+    "value": "26"
   },
   {
     "enumeration_id": "_enumerations---enum_fb91005117",
-    "value": "27",
-    "description": null
+    "value": "27"
   },
   {
     "enumeration_id": "_enumerations---enum_fb91005117",
-    "value": "28",
-    "description": null
+    "value": "28"
   },
   {
     "enumeration_id": "_enumerations---enum_fb91005117",
-    "value": "29",
-    "description": null
+    "value": "29"
   },
   {
     "enumeration_id": "_enumerations---enum_fb91005117",
-    "value": "30",
-    "description": null
+    "value": "30"
   },
   {
     "enumeration_id": "_enumerations---enum_fb91005117",
-    "value": "31",
-    "description": null
+    "value": "31"
   },
   {
     "enumeration_id": "_enumerations---enum_fb91005117",
-    "value": "32",
-    "description": null
+    "value": "32"
   },
   {
     "enumeration_id": "_enumerations---enum_fb91005117",
-    "value": "33",
-    "description": null
+    "value": "33"
   },
   {
     "enumeration_id": "_enumerations---enum_fb91005117",
-    "value": "34",
-    "description": null
+    "value": "34"
   },
   {
     "enumeration_id": "_enumerations---enum_fb91005117",
-    "value": "35",
-    "description": null
+    "value": "35"
   },
   {
     "enumeration_id": "_enumerations---enum_fb91005117",
-    "value": "36",
-    "description": null
+    "value": "36"
   },
   {
     "enumeration_id": "_enumerations---enum_fb91005117",
-    "value": "37",
-    "description": null
+    "value": "37"
   },
   {
     "enumeration_id": "_enumerations---enum_fb91005117",
-    "value": "39",
-    "description": null
+    "value": "39"
   },
   {
     "enumeration_id": "_enumerations---enum_fb91005117",
-    "value": "40",
-    "description": null
+    "value": "40"
   },
   {
     "enumeration_id": "_enumerations---enum_fb91005117",
-    "value": "41",
-    "description": null
+    "value": "41"
   },
   {
     "enumeration_id": "_enumerations---enum_fb91005117",
-    "value": "42",
-    "description": null
+    "value": "42"
   },
   {
     "enumeration_id": "_enumerations---enum_fb91005117",
-    "value": "44",
-    "description": null
+    "value": "44"
   },
   {
     "enumeration_id": "_enumerations---enum_fb91005117",
-    "value": "45",
-    "description": null
+    "value": "45"
   }
 ]

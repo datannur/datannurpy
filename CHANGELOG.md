@@ -2,6 +2,7 @@
 
 ## 0.22.0 (2026-04-30)
 
+- change: `export_db` / `export_app` omit columns that are entirely null/empty from the exported JSON files
 - add: public `copy_assets()` helper and `copy_assets` / `base_dir` parameters on `export_db()` / `export_app()`
 - add: `license` fields on folders and datasets, with matching kwargs and export support
 - change: scan APIs now use shared `EntityMetadata` via `metadata=` in Python and YAML

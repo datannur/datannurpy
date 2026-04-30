@@ -328,9 +328,9 @@ class TestDatasetIncrementalFields:
 
         with open(tmp_path / "dataset.json") as f:
             data = json.load(f)
-        # Fields should be null when not set (jsonjsdb includes all fields)
-        assert data[0]["last_update_timestamp"] is None
-        assert data[0]["schema_signature"] is None
+        # Empty columns are stripped from the export
+        assert "last_update_timestamp" not in data[0]
+        assert "schema_signature" not in data[0]
 
 
 class TestSerializationEdgeCases:

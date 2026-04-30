@@ -5,9 +5,6 @@
     "dataset_id": "company---config",
     "enumeration_ids": "_enumerations---enum_3eee4f2a23",
     "tag_ids": "db---unique,db---indexed",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": 1,
@@ -20,8 +17,7 @@
     "std": 3.535534,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---config---value",
@@ -29,9 +25,6 @@
     "dataset_id": "company---config",
     "enumeration_ids": "_enumerations---enum_faeb83c5f5",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -44,8 +37,7 @@
     "std": 4.242641,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---hr---hr_departments---id",
@@ -53,9 +45,6 @@
     "dataset_id": "company---hr---hr_departments",
     "enumeration_ids": "_enumerations---enum_ef3ca99c8b",
     "tag_ids": "db---auto-increment",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": 1,
@@ -68,8 +57,7 @@
     "std": 1.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---hr---hr_departments---location",
@@ -77,9 +65,6 @@
     "dataset_id": "company---hr---hr_departments",
     "enumeration_ids": "_enumerations---enum_e1151e6948",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -92,8 +77,7 @@
     "std": 0.57735,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---hr---hr_departments---name",
@@ -101,9 +85,6 @@
     "dataset_id": "company---hr---hr_departments",
     "enumeration_ids": "_enumerations---enum_0712b1b367",
     "tag_ids": "db---not-null",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -116,8 +97,7 @@
     "std": 4.582576,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---hr---hr_employees---department_id",
@@ -125,9 +105,6 @@
     "dataset_id": "company---hr---hr_employees",
     "enumeration_ids": "_enumerations---enum_b2fef6eb8f",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -140,8 +117,7 @@
     "std": 0.57735,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---hr---hr_employees---email",
@@ -149,9 +125,6 @@
     "dataset_id": "company---hr---hr_employees",
     "enumeration_ids": "_enumerations---enum_ccaef67ab9",
     "tag_ids": "auto---email",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -164,8 +137,7 @@
     "std": 1.527525,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---hr---hr_employees---hire_date",
@@ -173,9 +145,6 @@
     "dataset_id": "company---hr---hr_employees",
     "enumeration_ids": "_enumerations---enum_eed9cfed19",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -188,8 +157,7 @@
     "std": 0.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---hr---hr_employees---id",
@@ -197,9 +165,6 @@
     "dataset_id": "company---hr---hr_employees",
     "enumeration_ids": "_enumerations---enum_ef3ca99c8b",
     "tag_ids": "db---auto-increment",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": 1,
@@ -212,8 +177,7 @@
     "std": 1.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---hr---hr_employees---name",
@@ -221,9 +185,6 @@
     "dataset_id": "company---hr---hr_employees",
     "enumeration_ids": "_enumerations---enum_9164b880af",
     "tag_ids": "db---not-null",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -236,8 +197,7 @@
     "std": 1.527525,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---hr---hr_salaries---amount",
@@ -245,9 +205,6 @@
     "dataset_id": "company---hr---hr_salaries",
     "enumeration_ids": "_enumerations---enum_d22e930acb",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "float",
     "key": null,
@@ -260,8 +217,7 @@
     "std": 6027.713773,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---hr---hr_salaries---effective_date",
@@ -269,9 +225,6 @@
     "dataset_id": "company---hr---hr_salaries",
     "enumeration_ids": "_enumerations---enum_e1bb7570d1",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -284,8 +237,7 @@
     "std": 0.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---hr---hr_salaries---employee_id",
@@ -293,9 +245,6 @@
     "dataset_id": "company---hr---hr_salaries",
     "enumeration_ids": "_enumerations---enum_b2fef6eb8f",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -308,8 +257,7 @@
     "std": 0.57735,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---hr---hr_salaries---id",
@@ -317,9 +265,6 @@
     "dataset_id": "company---hr---hr_salaries",
     "enumeration_ids": "_enumerations---enum_ef3ca99c8b",
     "tag_ids": "db---auto-increment",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": 1,
@@ -332,8 +277,7 @@
     "std": 1.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---inventory---inventory_products---category",
@@ -341,9 +285,6 @@
     "dataset_id": "company---inventory---inventory_products",
     "enumeration_ids": "_enumerations---enum_61a859a3a1",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -356,8 +297,7 @@
     "std": null,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---inventory---inventory_products---id",
@@ -365,9 +305,6 @@
     "dataset_id": "company---inventory---inventory_products",
     "enumeration_ids": "_enumerations---enum_68ee6ca832",
     "tag_ids": "db---auto-increment",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": 1,
@@ -380,8 +317,7 @@
     "std": 0.707107,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---inventory---inventory_products---name",
@@ -389,9 +325,6 @@
     "dataset_id": "company---inventory---inventory_products",
     "enumeration_ids": "_enumerations---enum_ceb2957b9e",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -404,8 +337,7 @@
     "std": 0.707107,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---inventory---inventory_products---price",
@@ -413,9 +345,6 @@
     "dataset_id": "company---inventory---inventory_products",
     "enumeration_ids": "_enumerations---enum_51e321b770",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "float",
     "key": null,
@@ -428,8 +357,7 @@
     "std": 35.355339,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---inventory---inventory_products---sku",
@@ -437,9 +365,6 @@
     "dataset_id": "company---inventory---inventory_products",
     "enumeration_ids": "_enumerations---enum_5dc1df8b13",
     "tag_ids": "db---not-null",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -452,8 +377,7 @@
     "std": 0.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---inventory---inventory_warehouses---capacity",
@@ -461,9 +385,6 @@
     "dataset_id": "company---inventory---inventory_warehouses",
     "enumeration_ids": "_enumerations---enum_7973835a5d",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -476,8 +397,7 @@
     "std": 3535.533906,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---inventory---inventory_warehouses---city",
@@ -485,9 +405,6 @@
     "dataset_id": "company---inventory---inventory_warehouses",
     "enumeration_ids": "_enumerations---enum_e1151e6948",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -500,8 +417,7 @@
     "std": 0.707107,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---inventory---inventory_warehouses---id",
@@ -509,9 +425,6 @@
     "dataset_id": "company---inventory---inventory_warehouses",
     "enumeration_ids": "_enumerations---enum_b2fef6eb8f",
     "tag_ids": "db---auto-increment",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": 1,
@@ -524,8 +437,7 @@
     "std": 0.707107,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---inventory---inventory_warehouses---name",
@@ -533,9 +445,6 @@
     "dataset_id": "company---inventory---inventory_warehouses",
     "enumeration_ids": "_enumerations---enum_186dce4adb",
     "tag_ids": "db---not-null",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -548,8 +457,7 @@
     "std": 2.12132,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---sales---sales_customers---country",
@@ -557,9 +465,6 @@
     "dataset_id": "company---sales---sales_customers",
     "enumeration_ids": "_enumerations---enum_36ee647ea7",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -572,8 +477,7 @@
     "std": 0.707107,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---sales---sales_customers---email",
@@ -581,9 +485,6 @@
     "dataset_id": "company---sales---sales_customers",
     "enumeration_ids": "_enumerations---enum_ef932f614f",
     "tag_ids": "auto---email",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -596,8 +497,7 @@
     "std": 1.414214,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---sales---sales_customers---id",
@@ -605,9 +505,6 @@
     "dataset_id": "company---sales---sales_customers",
     "enumeration_ids": "_enumerations---enum_b2fef6eb8f",
     "tag_ids": "db---auto-increment",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": 1,
@@ -620,8 +517,7 @@
     "std": 0.707107,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---sales---sales_customers---name",
@@ -629,9 +525,6 @@
     "dataset_id": "company---sales---sales_customers",
     "enumeration_ids": "_enumerations---enum_32d8c4d0c0",
     "tag_ids": "db---not-null",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -644,8 +537,7 @@
     "std": 0.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---sales---sales_order---sales_order_headers---customer_id",
@@ -653,9 +545,6 @@
     "dataset_id": "company---sales---sales_order---sales_order_headers",
     "enumeration_ids": "_enumerations---enum_b2fef6eb8f",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -668,8 +557,7 @@
     "std": 0.57735,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---sales---sales_order---sales_order_headers---id",
@@ -677,9 +565,6 @@
     "dataset_id": "company---sales---sales_order---sales_order_headers",
     "enumeration_ids": "_enumerations---enum_ef3ca99c8b",
     "tag_ids": "db---auto-increment",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": 1,
@@ -692,8 +577,7 @@
     "std": 1.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---sales---sales_order---sales_order_headers---order_date",
@@ -701,9 +585,6 @@
     "dataset_id": "company---sales---sales_order---sales_order_headers",
     "enumeration_ids": "_enumerations---enum_c8ab539531",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -716,8 +597,7 @@
     "std": 0.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---sales---sales_order---sales_order_headers---status",
@@ -725,9 +605,6 @@
     "dataset_id": "company---sales---sales_order---sales_order_headers",
     "enumeration_ids": "_enumerations---enum_979ac80ce0",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -740,8 +617,7 @@
     "std": 1.154701,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---sales---sales_order---sales_order_items---id",
@@ -749,9 +625,6 @@
     "dataset_id": "company---sales---sales_order---sales_order_items",
     "enumeration_ids": "_enumerations---enum_ef3ca99c8b",
     "tag_ids": "db---auto-increment",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": 1,
@@ -764,8 +637,7 @@
     "std": 1.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---sales---sales_order---sales_order_items---order_id",
@@ -773,9 +645,6 @@
     "dataset_id": "company---sales---sales_order---sales_order_items",
     "enumeration_ids": "_enumerations---enum_b2fef6eb8f",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -788,8 +657,7 @@
     "std": 0.57735,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---sales---sales_order---sales_order_items---product_id",
@@ -797,9 +665,6 @@
     "dataset_id": "company---sales---sales_order---sales_order_items",
     "enumeration_ids": "_enumerations---enum_68ee6ca832",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -812,8 +677,7 @@
     "std": 0.57735,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---sales---sales_order---sales_order_items---quantity",
@@ -821,9 +685,6 @@
     "dataset_id": "company---sales---sales_order---sales_order_items",
     "enumeration_ids": "_enumerations---enum_71409fff3c",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -836,8 +697,7 @@
     "std": 2.081666,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---sales---sales_order---sales_order_items---unit_price",
@@ -845,9 +705,6 @@
     "dataset_id": "company---sales---sales_order---sales_order_items",
     "enumeration_ids": "_enumerations---enum_51e321b770",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "float",
     "key": null,
@@ -860,8 +717,7 @@
     "std": 28.867513,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---sales---sales_order---sales_order_returns---id",
@@ -869,9 +725,6 @@
     "dataset_id": "company---sales---sales_order---sales_order_returns",
     "enumeration_ids": "_enumerations---enum_4d8a15e3cc",
     "tag_ids": "db---auto-increment",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": 1,
@@ -884,8 +737,7 @@
     "std": null,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---sales---sales_order---sales_order_returns---order_item_id",
@@ -893,9 +745,6 @@
     "dataset_id": "company---sales---sales_order---sales_order_returns",
     "enumeration_ids": "_enumerations---enum_cd314db7df",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -908,8 +757,7 @@
     "std": null,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---sales---sales_order---sales_order_returns---reason",
@@ -917,9 +765,6 @@
     "dataset_id": "company---sales---sales_order---sales_order_returns",
     "enumeration_ids": "_enumerations---enum_6adc02e862",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -932,8 +777,7 @@
     "std": null,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "company---sales---sales_order---sales_order_returns---return_date",
@@ -941,9 +785,6 @@
     "dataset_id": "company---sales---sales_order---sales_order_returns",
     "enumeration_ids": "_enumerations---enum_945de5144a",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -956,8 +797,7 @@
     "std": null,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---cars_sas7bdat---CYL",
@@ -965,9 +805,6 @@
     "dataset_id": "data---cars_sas7bdat",
     "enumeration_ids": "_enumerations---enum_f487e9e0e3",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "number of cylinders",
     "type": "integer",
     "key": null,
@@ -980,8 +817,7 @@
     "std": 1.705783,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---cars_sas7bdat---ENG",
@@ -989,9 +825,6 @@
     "dataset_id": "data---cars_sas7bdat",
     "enumeration_ids": "_enumerations---enum_0c8ef62031",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "engine displacement in cubic inches",
     "type": "float",
     "key": null,
@@ -1004,8 +837,7 @@
     "std": 104.644004,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---cars_sas7bdat---MPG",
@@ -1013,9 +845,6 @@
     "dataset_id": "data---cars_sas7bdat",
     "enumeration_ids": "",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "miles per gallon",
     "type": "float",
     "key": null,
@@ -1028,8 +857,7 @@
     "std": 7.805007,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---cars_sas7bdat---WGT",
@@ -1037,9 +865,6 @@
     "dataset_id": "data---cars_sas7bdat",
     "enumeration_ids": "",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "vehicle weight in pounds",
     "type": "integer",
     "key": null,
@@ -1052,8 +877,7 @@
     "std": 849.40256,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---employees_csv---age",
@@ -1061,9 +885,6 @@
     "dataset_id": "data---csv---employees_csv",
     "enumeration_ids": "_enumerations---enum_fb91005117",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -1076,8 +897,7 @@
     "std": 6.194225,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---employees_csv---date_embauche",
@@ -1085,9 +905,6 @@
     "dataset_id": "data---csv---employees_csv",
     "enumeration_ids": "_enumerations---enum_9897c16df0",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "date",
     "key": null,
@@ -1100,8 +917,7 @@
     "std": 44522186.902281,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---employees_csv---departement",
@@ -1109,9 +925,6 @@
     "dataset_id": "data---csv---employees_csv",
     "enumeration_ids": "_enumerations---enum_3890764482",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -1124,8 +937,7 @@
     "std": 3.235404,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---employees_csv---est_manager",
@@ -1133,9 +945,6 @@
     "dataset_id": "data---csv---employees_csv",
     "enumeration_ids": "_enumerations---enum_6bc4c3e856",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -1148,8 +957,7 @@
     "std": 0.48936,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---employees_csv---id",
@@ -1157,9 +965,6 @@
     "dataset_id": "data---csv---employees_csv",
     "enumeration_ids": "_enumerations---enum_e168f98b9c",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -1172,8 +977,7 @@
     "std": 5.91608,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---employees_csv---nom",
@@ -1181,9 +985,6 @@
     "dataset_id": "data---csv---employees_csv",
     "enumeration_ids": "",
     "tag_ids": "rh,policy---frequency-hidden",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "Nom de famille de l'employé",
     "type": "string",
     "key": null,
@@ -1196,8 +997,7 @@
     "std": 0.988087,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---employees_csv---prenom",
@@ -1205,9 +1005,6 @@
     "dataset_id": "data---csv---employees_csv",
     "enumeration_ids": "_enumerations---enum_a647a41f8d",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -1220,8 +1017,7 @@
     "std": 1.387075,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---employees_csv---salaire",
@@ -1229,9 +1025,6 @@
     "dataset_id": "data---csv---employees_csv",
     "enumeration_ids": "_enumerations---enum_1d39ff883d",
     "tag_ids": "finance,rh",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "Salaire mensuel brut en euros",
     "type": "integer",
     "key": null,
@@ -1244,8 +1037,7 @@
     "std": 8831.015916,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---employees_csv---salaire2",
@@ -1253,9 +1045,6 @@
     "dataset_id": "data---csv---employees_csv",
     "enumeration_ids": "",
     "tag_ids": "finance,rh",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "Salaire mensuel brut en euros",
     "type": null,
     "key": null,
@@ -1268,8 +1057,7 @@
     "std": null,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---employees_csv---ville",
@@ -1277,9 +1065,6 @@
     "dataset_id": "data---csv---employees_csv",
     "enumeration_ids": "_enumerations---enum_433535a949",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -1292,8 +1077,7 @@
     "std": 2.05452,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---legacy_encoding_csv---d_partement",
@@ -1301,9 +1085,6 @@
     "dataset_id": "data---csv---legacy_encoding_csv",
     "enumeration_ids": "_enumerations---enum_0d98aec329",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -1316,8 +1097,7 @@
     "std": 2.581989,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---legacy_encoding_csv---nom",
@@ -1325,9 +1105,6 @@
     "dataset_id": "data---csv---legacy_encoding_csv",
     "enumeration_ids": "_enumerations---enum_6fb4b7bd75",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -1340,8 +1117,7 @@
     "std": 0.5,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---legacy_encoding_csv---pr_nom",
@@ -1349,9 +1125,6 @@
     "dataset_id": "data---csv---legacy_encoding_csv",
     "enumeration_ids": "_enumerations---enum_73d75aa99b",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -1364,8 +1137,7 @@
     "std": 1.892969,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---legacy_encoding_csv---salaire",
@@ -1373,9 +1145,6 @@
     "dataset_id": "data---csv---legacy_encoding_csv",
     "enumeration_ids": "_enumerations---enum_64cf737ed5",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -1388,8 +1157,7 @@
     "std": 1.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---regions_france_csv---densite_pop",
@@ -1397,9 +1165,6 @@
     "dataset_id": "data---csv---regions_france_csv",
     "enumeration_ids": "_enumerations---enum_e9fd39bf30",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "float",
     "key": null,
@@ -1412,8 +1177,7 @@
     "std": 255.228325,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---regions_france_csv---nb_entreprises",
@@ -1421,9 +1185,6 @@
     "dataset_id": "data---csv---regions_france_csv",
     "enumeration_ids": "_enumerations---enum_4e4aadcc2b",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -1436,8 +1197,7 @@
     "std": 352543.08822,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---regions_france_csv---pib_milliards_euros",
@@ -1445,9 +1205,6 @@
     "dataset_id": "data---csv---regions_france_csv",
     "enumeration_ids": "_enumerations---enum_9a0e339ece",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "float",
     "key": null,
@@ -1460,8 +1217,7 @@
     "std": 188.233244,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---regions_france_csv---population",
@@ -1469,9 +1225,6 @@
     "dataset_id": "data---csv---regions_france_csv",
     "enumeration_ids": "_enumerations---enum_e728ada030",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -1484,8 +1237,7 @@
     "std": 2923621.978019,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---regions_france_csv---region",
@@ -1493,9 +1245,6 @@
     "dataset_id": "data---csv---regions_france_csv",
     "enumeration_ids": "_enumerations---enum_5e1931a693",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -1508,8 +1257,7 @@
     "std": 6.423115,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---regions_france_csv---superficie_km2",
@@ -1517,9 +1265,6 @@
     "dataset_id": "data---csv---regions_france_csv",
     "enumeration_ids": "_enumerations---enum_f7f5210676",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -1532,8 +1277,7 @@
     "std": 23178.492597,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---csv---regions_france_csv---taux_chomage",
@@ -1541,9 +1285,6 @@
     "dataset_id": "data---csv---regions_france_csv",
     "enumeration_ids": "_enumerations---enum_9b5b9b2291",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "float",
     "key": null,
@@ -1556,8 +1297,7 @@
     "std": 0.897218,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---datatypes_spss_sav---dtime",
@@ -1565,9 +1305,6 @@
     "dataset_id": "data---datatypes_spss_sav",
     "enumeration_ids": "_enumerations---enum_9ff855e637",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "datetime",
     "type": "datetime",
     "key": null,
@@ -1580,8 +1317,7 @@
     "std": 6103234549.47557,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---datatypes_spss_sav---mychar",
@@ -1589,9 +1325,6 @@
     "dataset_id": "data---datatypes_spss_sav",
     "enumeration_ids": "_enumerations---enum_a4750880c6",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "character",
     "type": "string",
     "key": null,
@@ -1604,8 +1337,7 @@
     "std": 0.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---datatypes_spss_sav---mydate",
@@ -1613,9 +1345,6 @@
     "dataset_id": "data---datatypes_spss_sav",
     "enumeration_ids": "_enumerations---enum_06d1e3109c",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "date",
     "type": "date",
     "key": null,
@@ -1628,8 +1357,7 @@
     "std": 6103223327.828954,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---datatypes_spss_sav---mylabl",
@@ -1637,9 +1365,6 @@
     "dataset_id": "data---datatypes_spss_sav",
     "enumeration_ids": "_enumerations---enum_b2fef6eb8f",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "labeled",
     "type": "integer",
     "key": null,
@@ -1652,8 +1377,7 @@
     "std": 0.547723,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---datatypes_spss_sav---mynum",
@@ -1661,9 +1385,6 @@
     "dataset_id": "data---datatypes_spss_sav",
     "enumeration_ids": "_enumerations---enum_e6dbaef17d",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "numeric",
     "type": "float",
     "key": null,
@@ -1676,8 +1397,7 @@
     "std": 707.319699,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---datatypes_spss_sav---myord",
@@ -1685,9 +1405,6 @@
     "dataset_id": "data---datatypes_spss_sav",
     "enumeration_ids": "_enumerations---enum_ef3ca99c8b",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "ordinal",
     "type": "integer",
     "key": null,
@@ -1700,8 +1417,7 @@
     "std": 0.894427,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---datatypes_spss_sav---mytime",
@@ -1709,9 +1425,6 @@
     "dataset_id": "data---datatypes_spss_sav",
     "enumeration_ids": "_enumerations---enum_b71b2cc283",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "time",
     "type": "time",
     "key": null,
@@ -1724,8 +1437,7 @@
     "std": null,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---datatypes_stata_dta---dtime",
@@ -1733,9 +1445,6 @@
     "dataset_id": "data---datatypes_stata_dta",
     "enumeration_ids": "_enumerations---enum_9ff855e637",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "datetime",
     "type": "datetime",
     "key": null,
@@ -1748,8 +1457,7 @@
     "std": 6103234549.47557,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---datatypes_stata_dta---mychar",
@@ -1757,9 +1465,6 @@
     "dataset_id": "data---datatypes_stata_dta",
     "enumeration_ids": "_enumerations---enum_a4750880c6",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "character",
     "type": "string",
     "key": null,
@@ -1772,8 +1477,7 @@
     "std": 0.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---datatypes_stata_dta---mydate",
@@ -1781,9 +1485,6 @@
     "dataset_id": "data---datatypes_stata_dta",
     "enumeration_ids": "_enumerations---enum_06d1e3109c",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "date",
     "type": "date",
     "key": null,
@@ -1796,8 +1497,7 @@
     "std": 6103223327.828954,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---datatypes_stata_dta---mylabl",
@@ -1805,9 +1505,6 @@
     "dataset_id": "data---datatypes_stata_dta",
     "enumeration_ids": "_enumerations---enum_b2fef6eb8f",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "labeled",
     "type": "integer",
     "key": null,
@@ -1820,8 +1517,7 @@
     "std": 0.547723,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---datatypes_stata_dta---mynum",
@@ -1829,9 +1525,6 @@
     "dataset_id": "data---datatypes_stata_dta",
     "enumeration_ids": "_enumerations---enum_e6dbaef17d",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "numeric",
     "type": "float",
     "key": null,
@@ -1844,8 +1537,7 @@
     "std": 707.319699,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---datatypes_stata_dta---myord",
@@ -1853,9 +1545,6 @@
     "dataset_id": "data---datatypes_stata_dta",
     "enumeration_ids": "_enumerations---enum_ef3ca99c8b",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "ordinal",
     "type": "integer",
     "key": null,
@@ -1868,8 +1557,7 @@
     "std": 0.894427,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---datatypes_stata_dta---mytime",
@@ -1877,9 +1565,6 @@
     "dataset_id": "data---datatypes_stata_dta",
     "enumeration_ids": "_enumerations---enum_b71b2cc283",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "time",
     "type": "time",
     "key": null,
@@ -1892,8 +1577,7 @@
     "std": null,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---iceberg_warehouse---default---test_table---amount",
@@ -1901,9 +1585,6 @@
     "dataset_id": "data---iceberg_warehouse---default---test_table",
     "enumeration_ids": "_enumerations---enum_9e6f60966a",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "Transaction amount",
     "type": "float",
     "key": null,
@@ -1916,8 +1597,7 @@
     "std": 78.859725,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---iceberg_warehouse---default---test_table---city",
@@ -1925,9 +1605,6 @@
     "dataset_id": "data---iceberg_warehouse---default---test_table",
     "enumeration_ids": "_enumerations---enum_377b0126b2",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "City of residence",
     "type": "string",
     "key": null,
@@ -1940,8 +1617,7 @@
     "std": 0.894427,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---iceberg_warehouse---default---test_table---id",
@@ -1949,9 +1625,6 @@
     "dataset_id": "data---iceberg_warehouse---default---test_table",
     "enumeration_ids": "_enumerations---enum_c0e1a30973",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "Unique identifier",
     "type": "integer",
     "key": null,
@@ -1964,8 +1637,7 @@
     "std": 1.581139,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---iceberg_warehouse---default---test_table---name",
@@ -1973,9 +1645,6 @@
     "dataset_id": "data---iceberg_warehouse---default---test_table",
     "enumeration_ids": "_enumerations---enum_c83ffa1257",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "Person's full name",
     "type": "string",
     "key": null,
@@ -1988,8 +1657,7 @@
     "std": 1.67332,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---metadata---organization_csv---description",
@@ -1997,9 +1665,6 @@
     "dataset_id": "data---metadata---organization_csv",
     "enumeration_ids": "_enumerations---enum_3515a63dfa",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2012,8 +1677,7 @@
     "std": 14.142136,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---metadata---organization_csv---email",
@@ -2021,9 +1685,6 @@
     "dataset_id": "data---metadata---organization_csv",
     "enumeration_ids": "_enumerations---enum_ae6d5a38cc",
     "tag_ids": "auto---email",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2036,8 +1697,7 @@
     "std": null,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---metadata---organization_csv---id",
@@ -2045,9 +1705,6 @@
     "dataset_id": "data---metadata---organization_csv",
     "enumeration_ids": "_enumerations---enum_741f0d5c51",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2060,8 +1717,7 @@
     "std": 0.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---metadata---organization_csv---name",
@@ -2069,9 +1725,6 @@
     "dataset_id": "data---metadata---organization_csv",
     "enumeration_ids": "_enumerations---enum_ecdfc6dc16",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2084,8 +1737,7 @@
     "std": 0.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---metadata---tag_csv---description",
@@ -2093,9 +1745,6 @@
     "dataset_id": "data---metadata---tag_csv",
     "enumeration_ids": "_enumerations---enum_a666ee0ac9",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2108,8 +1757,7 @@
     "std": 0.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---metadata---tag_csv---id",
@@ -2117,9 +1765,6 @@
     "dataset_id": "data---metadata---tag_csv",
     "enumeration_ids": "_enumerations---enum_ed49b8ba30",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2132,8 +1777,7 @@
     "std": 3.535534,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---metadata---tag_csv---name",
@@ -2141,9 +1785,6 @@
     "dataset_id": "data---metadata---tag_csv",
     "enumeration_ids": "_enumerations---enum_bda75bc83c",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2156,8 +1797,7 @@
     "std": 3.535534,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---metadata---variable_csv---dataset_id",
@@ -2165,9 +1805,6 @@
     "dataset_id": "data---metadata---variable_csv",
     "enumeration_ids": "_enumerations---enum_802a13bf34",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2180,8 +1817,7 @@
     "std": null,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---metadata---variable_csv---description",
@@ -2189,9 +1825,6 @@
     "dataset_id": "data---metadata---variable_csv",
     "enumeration_ids": "_enumerations---enum_cbc487e7ce",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2204,8 +1837,7 @@
     "std": 1.154701,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---metadata---variable_csv---id",
@@ -2213,9 +1845,6 @@
     "dataset_id": "data---metadata---variable_csv",
     "enumeration_ids": "_enumerations---enum_63eb5b6e11",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2228,8 +1857,7 @@
     "std": 2.645751,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---metadata---variable_csv---tag_ids",
@@ -2237,9 +1865,6 @@
     "dataset_id": "data---metadata---variable_csv",
     "enumeration_ids": "_enumerations---enum_029a67f9a3",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2252,8 +1877,7 @@
     "std": 10.392305,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---subfolder1---employees_old_xls---age2",
@@ -2261,9 +1885,6 @@
     "dataset_id": "data---subfolder1---employees_old_xls",
     "enumeration_ids": "_enumerations---enum_fb91005117",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "float",
     "key": null,
@@ -2276,8 +1897,7 @@
     "std": 6.194225,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---subfolder1---employees_old_xls---id",
@@ -2285,9 +1905,6 @@
     "dataset_id": "data---subfolder1---employees_old_xls",
     "enumeration_ids": "_enumerations---enum_e168f98b9c",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -2300,8 +1917,7 @@
     "std": 5.91608,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---subfolder1---employees_old_xls---nom",
@@ -2309,9 +1925,6 @@
     "dataset_id": "data---subfolder1---employees_old_xls",
     "enumeration_ids": "_enumerations---enum_4aa562f5c5",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2324,8 +1937,7 @@
     "std": 0.988087,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---subfolder1---employees_old_xls---prenom",
@@ -2333,9 +1945,6 @@
     "dataset_id": "data---subfolder1---employees_old_xls",
     "enumeration_ids": "_enumerations---enum_a647a41f8d",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2348,8 +1957,7 @@
     "std": 1.387075,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---subfolder1---employees_xlsx---age",
@@ -2357,9 +1965,6 @@
     "dataset_id": "data---subfolder1---employees_xlsx",
     "enumeration_ids": "_enumerations---enum_fb91005117",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "float",
     "key": null,
@@ -2372,8 +1977,7 @@
     "std": 6.194225,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---subfolder1---employees_xlsx---date_embauche",
@@ -2381,9 +1985,6 @@
     "dataset_id": "data---subfolder1---employees_xlsx",
     "enumeration_ids": "_enumerations---enum_9897c16df0",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "date",
     "key": null,
@@ -2396,8 +1997,7 @@
     "std": 44522186.902281,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---subfolder1---employees_xlsx---departement",
@@ -2405,9 +2005,6 @@
     "dataset_id": "data---subfolder1---employees_xlsx",
     "enumeration_ids": "_enumerations---enum_3890764482",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2420,8 +2017,7 @@
     "std": 3.235404,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---subfolder1---employees_xlsx---est_manager",
@@ -2429,9 +2025,6 @@
     "dataset_id": "data---subfolder1---employees_xlsx",
     "enumeration_ids": "_enumerations---enum_6bc4c3e856",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -2444,8 +2037,7 @@
     "std": 0.48936,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---subfolder1---employees_xlsx---id",
@@ -2453,9 +2045,6 @@
     "dataset_id": "data---subfolder1---employees_xlsx",
     "enumeration_ids": "_enumerations---enum_e168f98b9c",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -2468,8 +2057,7 @@
     "std": 5.91608,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---subfolder1---employees_xlsx---nom",
@@ -2477,9 +2065,6 @@
     "dataset_id": "data---subfolder1---employees_xlsx",
     "enumeration_ids": "_enumerations---enum_4aa562f5c5",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2492,8 +2077,7 @@
     "std": 0.988087,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---subfolder1---employees_xlsx---prenom",
@@ -2501,9 +2085,6 @@
     "dataset_id": "data---subfolder1---employees_xlsx",
     "enumeration_ids": "_enumerations---enum_a647a41f8d",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2516,8 +2097,7 @@
     "std": 1.387075,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---subfolder1---employees_xlsx---salaire",
@@ -2525,9 +2105,6 @@
     "dataset_id": "data---subfolder1---employees_xlsx",
     "enumeration_ids": "_enumerations---enum_1d39ff883d",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -2540,8 +2117,7 @@
     "std": 8831.015916,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---subfolder1---employees_xlsx---ville",
@@ -2549,9 +2125,6 @@
     "dataset_id": "data---subfolder1---employees_xlsx",
     "enumeration_ids": "_enumerations---enum_433535a949",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2564,8 +2137,7 @@
     "std": 2.05452,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---test_delta---age",
@@ -2573,9 +2145,6 @@
     "dataset_id": "data---test_delta",
     "enumeration_ids": "_enumerations---enum_18cda72a94",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -2588,8 +2157,7 @@
     "std": 9.354143,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---test_delta---id",
@@ -2597,9 +2165,6 @@
     "dataset_id": "data---test_delta",
     "enumeration_ids": "_enumerations---enum_730f7b7bab",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -2612,8 +2177,7 @@
     "std": 1.870829,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---test_delta---name",
@@ -2621,9 +2185,6 @@
     "dataset_id": "data---test_delta",
     "enumeration_ids": "_enumerations---enum_6e1c74353a",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2636,8 +2197,7 @@
     "std": 1.505545,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---test_parquet---age",
@@ -2645,9 +2205,6 @@
     "dataset_id": "data---test_parquet",
     "enumeration_ids": "_enumerations---enum_87f94b760f",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -2660,8 +2217,7 @@
     "std": 5.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---test_parquet---id",
@@ -2669,9 +2225,6 @@
     "dataset_id": "data---test_parquet",
     "enumeration_ids": "_enumerations---enum_ef3ca99c8b",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -2684,8 +2237,7 @@
     "std": 1.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---test_parquet---name",
@@ -2693,9 +2245,6 @@
     "dataset_id": "data---test_parquet",
     "enumeration_ids": "_enumerations---enum_8bcead3a0b",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2708,8 +2257,7 @@
     "std": 2.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---test_partitioned---id",
@@ -2717,9 +2265,6 @@
     "dataset_id": "data---test_partitioned",
     "enumeration_ids": "_enumerations---enum_730f7b7bab",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -2732,8 +2277,7 @@
     "std": 1.870829,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---test_partitioned---name",
@@ -2741,9 +2285,6 @@
     "dataset_id": "data---test_partitioned",
     "enumeration_ids": "_enumerations---enum_6e1c74353a",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2756,8 +2297,7 @@
     "std": 1.505545,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---test_partitioned---region",
@@ -2765,9 +2305,6 @@
     "dataset_id": "data---test_partitioned",
     "enumeration_ids": "_enumerations---enum_9da81bde5f",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2780,8 +2317,7 @@
     "std": 0.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---test_partitioned---year",
@@ -2789,9 +2325,6 @@
     "dataset_id": "data---test_partitioned",
     "enumeration_ids": "_enumerations---enum_6188567694",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -2804,8 +2337,7 @@
     "std": 0.547723,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---test_pq---age",
@@ -2813,9 +2345,6 @@
     "dataset_id": "data---test_pq",
     "enumeration_ids": "_enumerations---enum_87f94b760f",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -2828,8 +2357,7 @@
     "std": 5.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---test_pq---id",
@@ -2837,9 +2365,6 @@
     "dataset_id": "data---test_pq",
     "enumeration_ids": "_enumerations---enum_ef3ca99c8b",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -2852,8 +2377,7 @@
     "std": 1.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---test_pq---name",
@@ -2861,9 +2385,6 @@
     "dataset_id": "data---test_pq",
     "enumeration_ids": "_enumerations---enum_8bcead3a0b",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2876,8 +2397,7 @@
     "std": 2.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---test_with_metadata_parquet---age",
@@ -2885,9 +2405,6 @@
     "dataset_id": "data---test_with_metadata_parquet",
     "enumeration_ids": "_enumerations---enum_87f94b760f",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "Age en annees",
     "type": "integer",
     "key": null,
@@ -2900,8 +2417,7 @@
     "std": 5.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---test_with_metadata_parquet---id",
@@ -2909,9 +2425,6 @@
     "dataset_id": "data---test_with_metadata_parquet",
     "enumeration_ids": "_enumerations---enum_ef3ca99c8b",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "Identifiant unique",
     "type": "integer",
     "key": null,
@@ -2924,8 +2437,7 @@
     "std": 1.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---test_with_metadata_parquet---name",
@@ -2933,9 +2445,6 @@
     "dataset_id": "data---test_with_metadata_parquet",
     "enumeration_ids": "_enumerations---enum_8bcead3a0b",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": "Nom complet de la personne",
     "type": "string",
     "key": null,
@@ -2948,8 +2457,7 @@
     "std": 2.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---mixed---budget_---PERIOD---_csv---categorie",
@@ -2957,9 +2465,6 @@
     "dataset_id": "data---timeseries---mixed---budget_---PERIOD---_csv",
     "enumeration_ids": "_enumerations---enum_c60568ab09",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -2972,8 +2477,7 @@
     "std": 1.732051,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---mixed---budget_---PERIOD---_csv---montant",
@@ -2981,9 +2485,6 @@
     "dataset_id": "data---timeseries---mixed---budget_---PERIOD---_csv",
     "enumeration_ids": "_enumerations---enum_d7cb333b55",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -2996,8 +2497,7 @@
     "std": 24378.952671,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---mixed---budget_---PERIOD---_csv---poste",
@@ -3005,9 +2505,6 @@
     "dataset_id": "data---timeseries---mixed---budget_---PERIOD---_csv",
     "enumeration_ids": "_enumerations---enum_faf13cd03f",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3020,8 +2517,7 @@
     "std": 0.57735,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---mixed---census_---PERIOD---_csv---commune",
@@ -3029,9 +2525,6 @@
     "dataset_id": "data---timeseries---mixed---census_---PERIOD---_csv",
     "enumeration_ids": "_enumerations---enum_81fce7934e",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3044,8 +2537,7 @@
     "std": 2.645751,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---mixed---census_---PERIOD---_csv---population",
@@ -3053,9 +2545,6 @@
     "dataset_id": "data---timeseries---mixed---census_---PERIOD---_csv",
     "enumeration_ids": "_enumerations---enum_8e4901402e",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -3068,8 +2557,7 @@
     "std": 855795.731079,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---mixed---census_---PERIOD---_csv---superficie",
@@ -3077,9 +2565,6 @@
     "dataset_id": "data---timeseries---mixed---census_---PERIOD---_csv",
     "enumeration_ids": "_enumerations---enum_2e497825fa",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -3092,8 +2577,7 @@
     "std": 99.158123,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---humidite",
@@ -3101,9 +2585,6 @@
     "dataset_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv",
     "enumeration_ids": "_enumerations---enum_6ecad2a9fb",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -3116,8 +2597,7 @@
     "std": 4.041452,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---jour",
@@ -3125,9 +2605,6 @@
     "dataset_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv",
     "enumeration_ids": "_enumerations---enum_d89a50a28b",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -3140,8 +2617,7 @@
     "std": 13.503086,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---temperature",
@@ -3149,9 +2625,6 @@
     "dataset_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv",
     "enumeration_ids": "_enumerations---enum_8ce13384a7",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "float",
     "key": null,
@@ -3164,8 +2637,7 @@
     "std": 1.955335,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---marge",
@@ -3173,9 +2645,6 @@
     "dataset_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv",
     "enumeration_ids": "_enumerations---enum_a6091cf7c5",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -3188,8 +2657,7 @@
     "std": 25.166115,
     "start_date": "2024Q1",
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---mois",
@@ -3197,9 +2665,6 @@
     "dataset_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv",
     "enumeration_ids": "_enumerations---enum_50424576d6",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3212,8 +2677,7 @@
     "std": 1.732051,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---region",
@@ -3221,9 +2685,6 @@
     "dataset_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv",
     "enumeration_ids": "_enumerations---enum_11b1cdf31f",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3236,8 +2697,7 @@
     "std": 0.57735,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---quarterly---rapport_---PERIOD---_csv---ventes",
@@ -3245,9 +2705,6 @@
     "dataset_id": "data---timeseries---quarterly---rapport_---PERIOD---_csv",
     "enumeration_ids": "_enumerations---enum_0b3bf09e4d",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -3260,8 +2717,7 @@
     "std": 125.830574,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---email",
@@ -3269,9 +2725,6 @@
     "dataset_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv",
     "enumeration_ids": "_enumerations---enum_4082c9af55",
     "tag_ids": "auto---email",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3284,8 +2737,7 @@
     "std": 1.527525,
     "start_date": "2021",
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---id",
@@ -3293,9 +2745,6 @@
     "dataset_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv",
     "enumeration_ids": "_enumerations---enum_ef3ca99c8b",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -3308,8 +2757,7 @@
     "std": 1.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---nom",
@@ -3317,9 +2765,6 @@
     "dataset_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv",
     "enumeration_ids": "_enumerations---enum_b974ffb0d5",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3332,8 +2777,7 @@
     "std": 1.527525,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---schema_evolution---data_---PERIOD---_csv---revenu",
@@ -3341,9 +2785,6 @@
     "dataset_id": "data---timeseries---schema_evolution---data_---PERIOD---_csv",
     "enumeration_ids": "",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": null,
     "key": null,
@@ -3356,8 +2797,7 @@
     "std": null,
     "start_date": null,
     "end_date": "2021",
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---yearly---enquete_---PERIOD---_csv---age",
@@ -3365,9 +2805,6 @@
     "dataset_id": "data---timeseries---yearly---enquete_---PERIOD---_csv",
     "enumeration_ids": "_enumerations---enum_748614813d",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -3380,8 +2817,7 @@
     "std": 7.0,
     "start_date": "2021",
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---yearly---enquete_---PERIOD---_csv---id",
@@ -3389,9 +2825,6 @@
     "dataset_id": "data---timeseries---yearly---enquete_---PERIOD---_csv",
     "enumeration_ids": "_enumerations---enum_c0a038d9c2",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -3404,8 +2837,7 @@
     "std": 1.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---yearly---enquete_---PERIOD---_csv---nom",
@@ -3413,9 +2845,6 @@
     "dataset_id": "data---timeseries---yearly---enquete_---PERIOD---_csv",
     "enumeration_ids": "_enumerations---enum_6bd28bfeff",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3428,8 +2857,7 @@
     "std": 2.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "data---timeseries---yearly---enquete_---PERIOD---_csv---ville",
@@ -3437,9 +2865,6 @@
     "dataset_id": "data---timeseries---yearly---enquete_---PERIOD---_csv",
     "enumeration_ids": "_enumerations---enum_ac565f22a4",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3452,8 +2877,7 @@
     "std": 2.516611,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---EnergySourceCatalogue---DE",
@@ -3461,9 +2885,6 @@
     "dataset_id": "photovoltaik---EnergySourceCatalogue",
     "enumeration_ids": "_enumerations---enum_de545e0867",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3476,8 +2897,7 @@
     "std": 0.707107,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---EnergySourceCatalogue---EN",
@@ -3485,9 +2905,6 @@
     "dataset_id": "photovoltaik---EnergySourceCatalogue",
     "enumeration_ids": "_enumerations---enum_de545e0867",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3500,8 +2917,7 @@
     "std": 0.707107,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---EnergySourceCatalogue---EnergySource_ID",
@@ -3509,9 +2925,6 @@
     "dataset_id": "photovoltaik---EnergySourceCatalogue",
     "enumeration_ids": "_enumerations---enum_209e6cf0ea",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3524,8 +2937,7 @@
     "std": 0.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---EnergySourceCatalogue---FR",
@@ -3533,9 +2945,6 @@
     "dataset_id": "photovoltaik---EnergySourceCatalogue",
     "enumeration_ids": "_enumerations---enum_2dc8eb7aad",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3548,8 +2957,7 @@
     "std": 0.707107,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---EnergySourceCatalogue---IT",
@@ -3557,9 +2965,6 @@
     "dataset_id": "photovoltaik---EnergySourceCatalogue",
     "enumeration_ids": "_enumerations---enum_97cd29cff3",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3572,8 +2977,7 @@
     "std": 0.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---EnergySourceCatalogue---id",
@@ -3581,9 +2985,6 @@
     "dataset_id": "photovoltaik---EnergySourceCatalogue",
     "enumeration_ids": "_enumerations---enum_b2fef6eb8f",
     "tag_ids": "db---not-null,db---auto-increment",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": 1,
@@ -3596,8 +2997,7 @@
     "std": 0.707107,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---Project---Cantons",
@@ -3605,9 +3005,6 @@
     "dataset_id": "photovoltaik---Project",
     "enumeration_ids": "_enumerations---enum_18a1b0c317",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3620,8 +3017,7 @@
     "std": 0.75918,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---Project---Elevation",
@@ -3629,9 +3025,6 @@
     "dataset_id": "photovoltaik---Project",
     "enumeration_ids": "_enumerations---enum_408c5f41d6",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -3644,8 +3037,7 @@
     "std": 518.936695,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---Project---EnergySource",
@@ -3653,9 +3045,6 @@
     "dataset_id": "photovoltaik---Project",
     "enumeration_ids": "_enumerations---enum_36192d4ee6",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3668,8 +3057,7 @@
     "std": null,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---Project---FinalNonRecurrentRemuneration",
@@ -3677,9 +3065,6 @@
     "dataset_id": "photovoltaik---Project",
     "enumeration_ids": "",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "float",
     "key": null,
@@ -3692,8 +3077,7 @@
     "std": null,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---Project---GeometryMultipoint",
@@ -3701,9 +3085,6 @@
     "dataset_id": "photovoltaik---Project",
     "enumeration_ids": "",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3716,8 +3097,7 @@
     "std": null,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---Project---GeometrySurface",
@@ -3725,9 +3105,6 @@
     "dataset_id": "photovoltaik---Project",
     "enumeration_ids": "",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3740,8 +3117,7 @@
     "std": null,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---Project---Municipalities",
@@ -3749,9 +3125,6 @@
     "dataset_id": "photovoltaik---Project",
     "enumeration_ids": "_enumerations---enum_6939a68d43",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3764,8 +3137,7 @@
     "std": 4.784777,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---Project---ProjectManagement",
@@ -3773,9 +3145,6 @@
     "dataset_id": "photovoltaik---Project",
     "enumeration_ids": "_enumerations---enum_6a1d1f89e0",
     "tag_ids": "auto---natural-text",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3788,8 +3157,7 @@
     "std": 17.418989,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---Project---ProjectName",
@@ -3797,9 +3165,6 @@
     "dataset_id": "photovoltaik---Project",
     "enumeration_ids": "_enumerations---enum_7a1f654122",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3812,8 +3177,7 @@
     "std": 11.814869,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---Project---ProjectWeb",
@@ -3821,9 +3185,6 @@
     "dataset_id": "photovoltaik---Project",
     "enumeration_ids": "_enumerations---enum_f099626334",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -3836,8 +3197,7 @@
     "std": 26.621837,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---Project---ShareOfSubsidisedCosts",
@@ -3845,9 +3205,6 @@
     "dataset_id": "photovoltaik---Project",
     "enumeration_ids": "",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "float",
     "key": null,
@@ -3860,8 +3217,7 @@
     "std": null,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---Project---geom",
@@ -3869,9 +3225,6 @@
     "dataset_id": "photovoltaik---Project",
     "enumeration_ids": "",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "geometry",
     "key": null,
@@ -3884,8 +3237,7 @@
     "std": null,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---Project---id",
@@ -3893,9 +3245,6 @@
     "dataset_id": "photovoltaik---Project",
     "enumeration_ids": "_enumerations---enum_e6102166d6",
     "tag_ids": "db---not-null,db---auto-increment",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": 1,
@@ -3908,8 +3257,7 @@
     "std": 8.514693,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---Project---xtf_id",
@@ -3917,9 +3265,6 @@
     "dataset_id": "photovoltaik---Project",
     "enumeration_ids": "_enumerations---enum_31d8f08e11",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -3932,8 +3277,7 @@
     "std": 19.256756,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---ProjectStatus---AnnualProduction",
@@ -3941,9 +3285,6 @@
     "dataset_id": "photovoltaik---ProjectStatus",
     "enumeration_ids": "_enumerations---enum_1251ca08bb",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "float",
     "key": null,
@@ -3956,8 +3297,7 @@
     "std": 19.991479,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---ProjectStatus---Date",
@@ -3965,9 +3305,6 @@
     "dataset_id": "photovoltaik---ProjectStatus",
     "enumeration_ids": "_enumerations---enum_42d79e60af",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "date",
     "key": null,
@@ -3980,8 +3317,7 @@
     "std": 21263199.183943,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---ProjectStatus---NumberOfPlants",
@@ -3989,9 +3325,6 @@
     "dataset_id": "photovoltaik---ProjectStatus",
     "enumeration_ids": "_enumerations---enum_25465bed0b",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -4004,8 +3337,7 @@
     "std": null,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---ProjectStatus---PlantType",
@@ -4013,9 +3345,6 @@
     "dataset_id": "photovoltaik---ProjectStatus",
     "enumeration_ids": "",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -4028,8 +3357,7 @@
     "std": null,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---ProjectStatus---Power",
@@ -4037,9 +3365,6 @@
     "dataset_id": "photovoltaik---ProjectStatus",
     "enumeration_ids": "_enumerations---enum_5570efff37",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "float",
     "key": null,
@@ -4052,8 +3377,7 @@
     "std": 12.542521,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---ProjectStatus---SpecificAnnualProduction",
@@ -4061,9 +3385,6 @@
     "dataset_id": "photovoltaik---ProjectStatus",
     "enumeration_ids": "_enumerations---enum_a0ddf6b2aa",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -4076,8 +3397,7 @@
     "std": 160.546694,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---ProjectStatus---SpecificWinterProduction",
@@ -4085,9 +3405,6 @@
     "dataset_id": "photovoltaik---ProjectStatus",
     "enumeration_ids": "_enumerations---enum_0aff41590a",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -4100,8 +3417,7 @@
     "std": 87.033821,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---ProjectStatus---Status",
@@ -4109,9 +3425,6 @@
     "dataset_id": "photovoltaik---ProjectStatus",
     "enumeration_ids": "_enumerations---enum_649d7c0cd5",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -4124,8 +3437,7 @@
     "std": 0.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---ProjectStatus---WinterProduction",
@@ -4133,9 +3445,6 @@
     "dataset_id": "photovoltaik---ProjectStatus",
     "enumeration_ids": "_enumerations---enum_e90261b5fd",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "float",
     "key": null,
@@ -4148,8 +3457,7 @@
     "std": 8.856359,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---ProjectStatus---id",
@@ -4157,9 +3465,6 @@
     "dataset_id": "photovoltaik---ProjectStatus",
     "enumeration_ids": "_enumerations---enum_89d629b09d",
     "tag_ids": "db---not-null,db---auto-increment",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": 1,
@@ -4172,8 +3477,7 @@
     "std": 15.443445,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---ProjectStatus---xtf_id",
@@ -4181,9 +3485,6 @@
     "dataset_id": "photovoltaik---ProjectStatus",
     "enumeration_ids": "_enumerations---enum_edd0a3feca",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": null,
@@ -4196,8 +3497,7 @@
     "std": 38.982989,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---StatusCatalogue---DE",
@@ -4205,9 +3505,6 @@
     "dataset_id": "photovoltaik---StatusCatalogue",
     "enumeration_ids": "_enumerations---enum_69987225ba",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -4220,8 +3517,7 @@
     "std": 5.119989,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---StatusCatalogue---EN",
@@ -4229,9 +3525,6 @@
     "dataset_id": "photovoltaik---StatusCatalogue",
     "enumeration_ids": "_enumerations---enum_9434755384",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -4244,8 +3537,7 @@
     "std": 11.102606,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---StatusCatalogue---FR",
@@ -4253,9 +3545,6 @@
     "dataset_id": "photovoltaik---StatusCatalogue",
     "enumeration_ids": "_enumerations---enum_5cbe3d324b",
     "tag_ids": "auto---natural-text",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -4268,8 +3557,7 @@
     "std": 12.928374,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---StatusCatalogue---IT",
@@ -4277,9 +3565,6 @@
     "dataset_id": "photovoltaik---StatusCatalogue",
     "enumeration_ids": "_enumerations---enum_cdae6051e3",
     "tag_ids": "auto---natural-text",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -4292,8 +3577,7 @@
     "std": 14.055375,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---StatusCatalogue---Status_ID",
@@ -4301,9 +3585,6 @@
     "dataset_id": "photovoltaik---StatusCatalogue",
     "enumeration_ids": "_enumerations---enum_aabc56e083",
     "tag_ids": "",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "string",
     "key": null,
@@ -4316,8 +3597,7 @@
     "std": 0.0,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   },
   {
     "id": "photovoltaik---StatusCatalogue---id",
@@ -4325,9 +3605,6 @@
     "dataset_id": "photovoltaik---StatusCatalogue",
     "enumeration_ids": "_enumerations---enum_1bf03e385e",
     "tag_ids": "db---not-null,db---auto-increment",
-    "source_var_ids": "",
-    "fk_var_id": null,
-    "original_name": null,
     "description": null,
     "type": "integer",
     "key": 1,
@@ -4340,7 +3617,6 @@
     "std": 2.44949,
     "start_date": null,
     "end_date": null,
-    "is_pattern": false,
-    "concept_id": null
+    "is_pattern": false
   }
 ]

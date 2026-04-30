@@ -10,6 +10,8 @@ import webbrowser
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import polars as pl
+
 from .utils.log import _write_log
 from .utils.params import validate_params
 
@@ -18,6 +20,29 @@ if TYPE_CHECKING:
 
 from .add_metadata import ensure_metadata_applied
 from .errors import ConfigError
+
+
+def _drop_empty_columns(catalog: Catalog) -> None:
+    """Drop all-null/empty columns from catalog tables in place before export."""
+    for table in catalog._tables.values():
+        df = table._df
+        if df.is_empty():
+            continue
+        keep = table.runtime_fields | {"id"}
+        cols = [c for c in df.columns if c in keep or not _is_empty_column(df[c])]
+        if len(cols) != len(df.columns):
+            table._df = df.select(cols)
+
+
+def _is_empty_column(col: pl.Series) -> bool:
+    """Return True if every value is null, empty string or empty list."""
+    if col.null_count() == col.len():
+        return True
+    if isinstance(col.dtype, pl.List):
+        return bool(col.list.len().fill_null(0).sum() == 0)
+    if col.dtype == pl.Utf8:
+        return bool((col.drop_nulls().str.len_chars() == 0).all())
+    return False
 
 
 def _normalize_copy_assets(copy_assets: Any) -> list[dict[str, Any]]:
@@ -250,6 +275,7 @@ def export_db(
         "frequency": "variable",
         "value": "enumeration",
     }
+    _drop_empty_columns(catalog)
     catalog.save(
         path,
         track_evolution=track_evolution,
