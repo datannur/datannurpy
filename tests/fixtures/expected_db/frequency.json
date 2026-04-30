@@ -131,17 +131,17 @@
   },
   {
     "variable_id": "company---hr---hr_salaries---amount",
-    "value": "48000.0",
+    "value": "48000",
     "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_salaries---amount",
-    "value": "55000.0",
+    "value": "55000",
     "frequency": 1
   },
   {
     "variable_id": "company---hr---hr_salaries---amount",
-    "value": "60000.0",
+    "value": "60000",
     "frequency": 1
   },
   {
@@ -466,397 +466,397 @@
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "101.0",
+    "value": "101",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "104.0",
+    "value": "104",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "105.0",
+    "value": "105",
     "frequency": 7
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "107.0",
+    "value": "107",
     "frequency": 5
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "108.0",
+    "value": "108",
     "frequency": 5
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "110.0",
+    "value": "110",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "111.0",
+    "value": "111",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "112.0",
+    "value": "112",
     "frequency": 4
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "113.0",
+    "value": "113",
     "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "114.0",
+    "value": "114",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "115.0",
+    "value": "115",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "116.0",
+    "value": "116",
     "frequency": 4
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "119.0",
+    "value": "119",
     "frequency": 6
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "120.0",
+    "value": "120",
     "frequency": 9
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "121.0",
+    "value": "121",
     "frequency": 11
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "122.0",
+    "value": "122",
     "frequency": 7
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "130.0",
+    "value": "130",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "131.0",
+    "value": "131",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "134.0",
+    "value": "134",
     "frequency": 4
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "135.0",
+    "value": "135",
     "frequency": 5
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "140.0",
+    "value": "140",
     "frequency": 15
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "141.0",
+    "value": "141",
     "frequency": 2
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "144.0",
+    "value": "144",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "145.0",
+    "value": "145",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "146.0",
+    "value": "146",
     "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "151.0",
+    "value": "151",
     "frequency": 9
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "155.0",
+    "value": "155",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "156.0",
+    "value": "156",
     "frequency": 6
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "163.0",
+    "value": "163",
     "frequency": 2
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "168.0",
+    "value": "168",
     "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "171.0",
+    "value": "171",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "173.0",
+    "value": "173",
     "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "181.0",
+    "value": "181",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "183.0",
+    "value": "183",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "198.0",
+    "value": "198",
     "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "199.0",
+    "value": "199",
     "frequency": 2
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "200.0",
+    "value": "200",
     "frequency": 7
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "225.0",
+    "value": "225",
     "frequency": 13
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "231.0",
+    "value": "231",
     "frequency": 8
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "232.0",
+    "value": "232",
     "frequency": 11
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "250.0",
+    "value": "250",
     "frequency": 17
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "258.0",
+    "value": "258",
     "frequency": 5
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "260.0",
+    "value": "260",
     "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "262.0",
+    "value": "262",
     "frequency": 2
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "267.0",
+    "value": "267",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "302.0",
+    "value": "302",
     "frequency": 11
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "304.0",
+    "value": "304",
     "frequency": 7
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "305.0",
+    "value": "305",
     "frequency": 4
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "307.0",
+    "value": "307",
     "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "318.0",
+    "value": "318",
     "frequency": 17
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "340.0",
+    "value": "340",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "350.0",
+    "value": "350",
     "frequency": 18
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "351.0",
+    "value": "351",
     "frequency": 8
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "360.0",
+    "value": "360",
     "frequency": 4
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "383.0",
+    "value": "383",
     "frequency": 2
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "390.0",
+    "value": "390",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "400.0",
+    "value": "400",
     "frequency": 13
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "429.0",
+    "value": "429",
     "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "440.0",
+    "value": "440",
     "frequency": 2
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "454.0",
+    "value": "454",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "455.0",
+    "value": "455",
     "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "68.0",
+    "value": "68",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "70.0",
+    "value": "70",
     "frequency": 3
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "71.0",
+    "value": "71",
     "frequency": 2
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "72.0",
+    "value": "72",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "76.0",
+    "value": "76",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "78.0",
+    "value": "78",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "79.0",
+    "value": "79",
     "frequency": 6
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "80.0",
+    "value": "80",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "81.0",
+    "value": "81",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "83.0",
+    "value": "83",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "85.0",
+    "value": "85",
     "frequency": 7
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "86.0",
+    "value": "86",
     "frequency": 4
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "88.0",
+    "value": "88",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "89.0",
+    "value": "89",
     "frequency": 5
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "90.0",
+    "value": "90",
     "frequency": 8
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "91.0",
+    "value": "91",
     "frequency": 12
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "96.0",
+    "value": "96",
     "frequency": 1
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "97.0",
+    "value": "97",
     "frequency": 21
   },
   {
@@ -866,7 +866,7 @@
   },
   {
     "variable_id": "data---cars_sas7bdat---ENG",
-    "value": "98.0",
+    "value": "98",
     "frequency": 17
   },
   {
@@ -1511,7 +1511,7 @@
   },
   {
     "variable_id": "data---csv---regions_france_csv---densite_pop",
-    "value": "124.0",
+    "value": "124",
     "frequency": 1
   },
   {
@@ -2226,12 +2226,12 @@
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---amount",
-    "value": "200.0",
+    "value": "200",
     "frequency": 1
   },
   {
     "variable_id": "data---iceberg_warehouse---default---test_table---amount",
-    "value": "250.0",
+    "value": "250",
     "frequency": 1
   },
   {
@@ -2421,97 +2421,97 @@
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "value": "25.0",
+    "value": "25",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "value": "26.0",
+    "value": "26",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "value": "27.0",
+    "value": "27",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "value": "28.0",
+    "value": "28",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "value": "29.0",
+    "value": "29",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "value": "30.0",
+    "value": "30",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "value": "31.0",
+    "value": "31",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "value": "32.0",
+    "value": "32",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "value": "33.0",
+    "value": "33",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "value": "34.0",
+    "value": "34",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "value": "35.0",
+    "value": "35",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "value": "36.0",
+    "value": "36",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "value": "37.0",
+    "value": "37",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "value": "39.0",
+    "value": "39",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "value": "40.0",
+    "value": "40",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "value": "41.0",
+    "value": "41",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "value": "42.0",
+    "value": "42",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "value": "44.0",
+    "value": "44",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_old_xls---age2",
-    "value": "45.0",
+    "value": "45",
     "frequency": 1
   },
   {
@@ -2811,97 +2811,97 @@
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
-    "value": "25.0",
+    "value": "25",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
-    "value": "26.0",
+    "value": "26",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
-    "value": "27.0",
+    "value": "27",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
-    "value": "28.0",
+    "value": "28",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
-    "value": "29.0",
+    "value": "29",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
-    "value": "30.0",
+    "value": "30",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
-    "value": "31.0",
+    "value": "31",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
-    "value": "32.0",
+    "value": "32",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
-    "value": "33.0",
+    "value": "33",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
-    "value": "34.0",
+    "value": "34",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
-    "value": "35.0",
+    "value": "35",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
-    "value": "36.0",
+    "value": "36",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
-    "value": "37.0",
+    "value": "37",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
-    "value": "39.0",
+    "value": "39",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
-    "value": "40.0",
+    "value": "40",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
-    "value": "41.0",
+    "value": "41",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
-    "value": "42.0",
+    "value": "42",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
-    "value": "44.0",
+    "value": "44",
     "frequency": 1
   },
   {
     "variable_id": "data---subfolder1---employees_xlsx---age",
-    "value": "45.0",
+    "value": "45",
     "frequency": 1
   },
   {
@@ -3871,7 +3871,7 @@
   },
   {
     "variable_id": "data---timeseries---monthly_folders------PERIOD---------PERIOD------export_csv---temperature",
-    "value": "11.0",
+    "value": "11",
     "frequency": 1
   },
   {
@@ -5081,7 +5081,7 @@
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
-    "value": "12.0",
+    "value": "12",
     "frequency": 3
   },
   {
@@ -5136,7 +5136,7 @@
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
-    "value": "148.0",
+    "value": "148",
     "frequency": 1
   },
   {
@@ -5186,17 +5186,17 @@
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
-    "value": "31.0",
+    "value": "31",
     "frequency": 2
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
-    "value": "44.0",
+    "value": "44",
     "frequency": 1
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---AnnualProduction",
-    "value": "45.0",
+    "value": "45",
     "frequency": 1
   },
   {
@@ -5446,7 +5446,7 @@
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
-    "value": "10.0",
+    "value": "10",
     "frequency": 1
   },
   {
@@ -5496,7 +5496,7 @@
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
-    "value": "28.0",
+    "value": "28",
     "frequency": 1
   },
   {
@@ -5566,7 +5566,7 @@
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
-    "value": "9.0",
+    "value": "9",
     "frequency": 3
   },
   {
@@ -5586,7 +5586,7 @@
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---Power",
-    "value": "92.0",
+    "value": "92",
     "frequency": 1
   },
   {
@@ -5926,7 +5926,7 @@
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
-    "value": "20.0",
+    "value": "20",
     "frequency": 1
   },
   {
@@ -5936,7 +5936,7 @@
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
-    "value": "22.0",
+    "value": "22",
     "frequency": 1
   },
   {
@@ -6026,7 +6026,7 @@
   },
   {
     "variable_id": "photovoltaik---ProjectStatus---WinterProduction",
-    "value": "64.0",
+    "value": "64",
     "frequency": 1
   },
   {

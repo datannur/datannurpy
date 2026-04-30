@@ -438,6 +438,32 @@ class TestBuildVariables:
         assert freq is not None
         assert variables[0].nb_distinct == 2
 
+    def test_freq_skips_unhashable_column_type(self):
+        """Columns whose Arrow type isn't hashable by value_counts are skipped."""
+        import pyarrow as pa
+
+        # list<int64> isn't supported by ``Array.value_counts``; the
+        # corresponding column should be silently skipped, while a sibling
+        # string column still gets its frequency computed.
+        arrow_tbl = pa.table(
+            {
+                "tags": pa.array(
+                    [[1, 2], [3], [1, 2]],
+                    type=pa.list_(pa.int64()),
+                ),
+                "kind": pa.array(["a", "b", "a"]),
+            }
+        )
+        table = ibis.memtable(arrow_tbl)
+        variables, freq = build_variables(
+            table, nb_rows=3, dataset_id="test", freq_threshold=10
+        )
+        assert freq is not None
+        var_ids = set(freq.column("variable_id").to_pylist())
+        assert var_ids == {"kind"}
+        # Both columns still appear in variables (skip is for freq only)
+        assert {v.name for v in variables} == {"tags", "kind"}
+
 
 class TestGetDirDataSize:
     """Test get_dir_data_size with remote filesystem."""

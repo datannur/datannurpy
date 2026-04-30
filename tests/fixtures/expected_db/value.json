@@ -205,6 +205,411 @@
     "description": null
   },
   {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "101",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "104",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "105",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "107",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "108",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "110",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "111",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "112",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "113",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "114",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "115",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "116",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "119",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "120",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "121",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "122",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "130",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "131",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "134",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "135",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "140",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "141",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "144",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "145",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "146",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "151",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "155",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "156",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "163",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "168",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "171",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "173",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "181",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "183",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "198",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "199",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "200",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "225",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "231",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "232",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "250",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "258",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "260",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "262",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "267",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "302",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "304",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "305",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "307",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "318",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "340",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "350",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "351",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "360",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "383",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "390",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "400",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "429",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "440",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "454",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "455",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "68",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "70",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "71",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "72",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "76",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "78",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "79",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "80",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "81",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "83",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "85",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "86",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "88",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "89",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "90",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "91",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "96",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "97",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "97.5",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_0c8ef62031",
+    "value": "98",
+    "description": null
+  },
+  {
     "enumeration_id": "_enumerations---enum_0d98aec329",
     "value": "Alsace…",
     "description": null
@@ -237,6 +642,156 @@
   {
     "enumeration_id": "_enumerations---enum_11b1cdf31f",
     "value": "sud",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "10.69",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "11.2",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "11.38",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "11.45",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "11.46",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "12",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "12.1",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "12.2",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "12.4",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "12.6",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "12.62",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "12.9",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "13.8",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "14.3",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "14.43",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "14.6",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "148",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "15.3",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "16.9",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "18.25",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "18.8",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "18.83",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "19.1",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "19.5",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "22.1",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "28.6",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "31",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "44",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "45",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_1251ca08bb",
+    "value": "48.13",
     "description": null
   },
   {
@@ -645,161 +1200,6 @@
     "description": null
   },
   {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "12.8",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "14.4",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "20.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "21.41",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "22.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "4.08",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "4.4",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "4.57",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "4.6",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "4.75",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "4.87",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "4.9",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "5.274",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "5.335",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "5.36",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "5.4",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "5.5",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "5.6",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "5.66",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "6.13",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "6.3",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "6.72",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "64.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "7.2",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "7.56",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "7.8246",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "8.6",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "8.602",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "8.733",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "8.92",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3286dc76f0",
-    "value": "9.165",
-    "description": null
-  },
-  {
     "enumeration_id": "_enumerations---enum_32d8c4d0c0",
     "value": "Acme Corp",
     "description": null
@@ -807,101 +1207,6 @@
   {
     "enumeration_id": "_enumerations---enum_32d8c4d0c0",
     "value": "TechStart",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3429529c0e",
-    "value": "25.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3429529c0e",
-    "value": "26.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3429529c0e",
-    "value": "27.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3429529c0e",
-    "value": "28.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3429529c0e",
-    "value": "29.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3429529c0e",
-    "value": "30.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3429529c0e",
-    "value": "31.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3429529c0e",
-    "value": "32.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3429529c0e",
-    "value": "33.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3429529c0e",
-    "value": "34.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3429529c0e",
-    "value": "35.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3429529c0e",
-    "value": "36.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3429529c0e",
-    "value": "37.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3429529c0e",
-    "value": "39.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3429529c0e",
-    "value": "40.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3429529c0e",
-    "value": "41.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3429529c0e",
-    "value": "42.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3429529c0e",
-    "value": "44.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_3429529c0e",
-    "value": "45.0",
     "description": null
   },
   {
@@ -1505,151 +1810,6 @@
     "description": null
   },
   {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "10.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "10.12",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "10.5",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "10.8",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "12.6",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "12.9",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "14.5",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "15.9",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "18.4",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "19.2",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "28.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "32.7",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "33.6",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "6.2",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "6.3",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "7.53",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "7.7",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "8.04",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "8.07",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "8.3",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "8.47",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "8.62",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "8.64",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "8.8",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "9.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "9.2",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "9.39",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "9.93",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_4d9304adb8",
-    "value": "92.0",
-    "description": null
-  },
-  {
     "enumeration_id": "_enumerations---enum_4e4aadcc2b",
     "value": "1456789",
     "description": null
@@ -1737,6 +1897,151 @@
   {
     "enumeration_id": "_enumerations---enum_51e321b770",
     "value": "99.99",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "10",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "10.12",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "10.5",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "10.8",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "12.6",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "12.9",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "14.5",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "15.9",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "18.4",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "19.2",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "28",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "32.7",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "33.6",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "6.2",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "6.3",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "7.53",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "7.7",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "8.04",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "8.07",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "8.3",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "8.47",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "8.62",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "8.64",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "8.8",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "9",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "9.2",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "9.39",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "9.93",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_5570efff37",
+    "value": "92",
     "description": null
   },
   {
@@ -2072,156 +2377,6 @@
   {
     "enumeration_id": "_enumerations---enum_6939a68d43",
     "value": "Zwischbergen",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "10.69",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "11.2",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "11.38",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "11.45",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "11.46",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "12.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "12.1",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "12.2",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "12.4",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "12.6",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "12.62",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "12.9",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "13.8",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "14.3",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "14.43",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "14.6",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "148.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "15.3",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "16.9",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "18.25",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "18.8",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "18.83",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "19.1",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "19.5",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "22.1",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "28.6",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "31.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "44.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "45.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_6970c2b793",
-    "value": "48.13",
     "description": null
   },
   {
@@ -3050,6 +3205,21 @@
     "description": null
   },
   {
+    "enumeration_id": "_enumerations---enum_8ce13384a7",
+    "value": "11",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_8ce13384a7",
+    "value": "7.1",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_8ce13384a7",
+    "value": "9.3",
+    "description": null
+  },
+  {
     "enumeration_id": "_enumerations---enum_8e4901402e",
     "value": "2150000",
     "description": null
@@ -3077,411 +3247,6 @@
   {
     "enumeration_id": "_enumerations---enum_9164b880af",
     "value": "Claire Durand",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "101.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "104.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "105.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "107.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "108.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "110.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "111.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "112.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "113.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "114.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "115.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "116.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "119.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "120.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "121.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "122.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "130.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "131.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "134.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "135.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "140.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "141.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "144.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "145.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "146.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "151.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "155.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "156.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "163.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "168.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "171.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "173.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "181.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "183.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "198.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "199.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "200.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "225.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "231.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "232.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "250.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "258.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "260.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "262.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "267.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "302.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "304.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "305.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "307.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "318.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "340.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "350.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "351.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "360.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "383.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "390.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "400.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "429.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "440.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "454.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "455.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "68.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "70.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "71.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "72.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "76.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "78.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "79.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "80.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "81.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "83.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "85.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "86.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "88.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "89.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "90.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "91.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "96.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "97.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "97.5",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_92ae6bfb54",
-    "value": "98.0",
     "description": null
   },
   {
@@ -3790,6 +3555,31 @@
     "description": null
   },
   {
+    "enumeration_id": "_enumerations---enum_9e6f60966a",
+    "value": "100.5",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_9e6f60966a",
+    "value": "150.75",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_9e6f60966a",
+    "value": "200",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_9e6f60966a",
+    "value": "250",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_9e6f60966a",
+    "value": "300.25",
+    "description": null
+  },
+  {
     "enumeration_id": "_enumerations---enum_9ff855e637",
     "value": "1583-01-01 00:00:00",
     "description": null
@@ -4010,21 +3800,6 @@
     "description": null
   },
   {
-    "enumeration_id": "_enumerations---enum_a61987ee8a",
-    "value": "11.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_a61987ee8a",
-    "value": "7.1",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_a61987ee8a",
-    "value": "9.3",
-    "description": null
-  },
-  {
     "enumeration_id": "_enumerations---enum_a647a41f8d",
     "value": "Anne",
     "description": null
@@ -4127,21 +3902,6 @@
   {
     "enumeration_id": "_enumerations---enum_a666ee0ac9",
     "value": "Ressources humaines",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_a814e33106",
-    "value": "48000.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_a814e33106",
-    "value": "55000.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_a814e33106",
-    "value": "60000.0",
     "description": null
   },
   {
@@ -4430,6 +4190,21 @@
     "description": null
   },
   {
+    "enumeration_id": "_enumerations---enum_d22e930acb",
+    "value": "48000",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_d22e930acb",
+    "value": "55000",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_d22e930acb",
+    "value": "60000",
+    "description": null
+  },
+  {
     "enumeration_id": "_enumerations---enum_d7cb333b55",
     "value": "15000",
     "description": null
@@ -4457,31 +4232,6 @@
   {
     "enumeration_id": "_enumerations---enum_d89a50a28b",
     "value": "28",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_db169b4a86",
-    "value": "100.5",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_db169b4a86",
-    "value": "150.75",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_db169b4a86",
-    "value": "200.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_db169b4a86",
-    "value": "250.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_db169b4a86",
-    "value": "300.25",
     "description": null
   },
   {
@@ -4765,71 +4515,6 @@
     "description": null
   },
   {
-    "enumeration_id": "_enumerations---enum_e6d37e1198",
-    "value": "1010.8",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_e6d37e1198",
-    "value": "111.1",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_e6d37e1198",
-    "value": "115.4",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_e6d37e1198",
-    "value": "119.5",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_e6d37e1198",
-    "value": "124.0",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_e6d37e1198",
-    "value": "162.2",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_e6d37e1198",
-    "value": "187.5",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_e6d37e1198",
-    "value": "39.5",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_e6d37e1198",
-    "value": "58.5",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_e6d37e1198",
-    "value": "65.7",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_e6d37e1198",
-    "value": "71.5",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_e6d37e1198",
-    "value": "81.4",
-    "description": null
-  },
-  {
-    "enumeration_id": "_enumerations---enum_e6d37e1198",
-    "value": "96.1",
-    "description": null
-  },
-  {
     "enumeration_id": "_enumerations---enum_e6dbaef17d",
     "value": "-1.4",
     "description": null
@@ -4917,6 +4602,226 @@
   {
     "enumeration_id": "_enumerations---enum_e728ada030",
     "value": "8042936",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "12.8",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "14.4",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "20",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "21.41",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "22",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "4.08",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "4.4",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "4.57",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "4.6",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "4.75",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "4.87",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "4.9",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "5.274",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "5.335",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "5.36",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "5.4",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "5.5",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "5.6",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "5.66",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "6.13",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "6.3",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "6.72",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "64",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "7.2",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "7.56",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "7.8246",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "8.6",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "8.602",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "8.733",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "8.92",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e90261b5fd",
+    "value": "9.165",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e9fd39bf30",
+    "value": "1010.8",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e9fd39bf30",
+    "value": "111.1",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e9fd39bf30",
+    "value": "115.4",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e9fd39bf30",
+    "value": "119.5",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e9fd39bf30",
+    "value": "124",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e9fd39bf30",
+    "value": "162.2",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e9fd39bf30",
+    "value": "187.5",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e9fd39bf30",
+    "value": "39.5",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e9fd39bf30",
+    "value": "58.5",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e9fd39bf30",
+    "value": "65.7",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e9fd39bf30",
+    "value": "71.5",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e9fd39bf30",
+    "value": "81.4",
+    "description": null
+  },
+  {
+    "enumeration_id": "_enumerations---enum_e9fd39bf30",
+    "value": "96.1",
     "description": null
   },
   {
