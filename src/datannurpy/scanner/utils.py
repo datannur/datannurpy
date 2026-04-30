@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import errno
+import os
 from collections.abc import Sequence
 from datetime import datetime, timezone
 from pathlib import Path, PurePath, PurePosixPath
@@ -11,8 +13,11 @@ import ibis
 import ibis.expr.datatypes as dt
 
 from ..schema import Variable
+from ..utils.log import log_warn
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     import pyarrow as pa
 
     from .filesystem import FileSystem
@@ -62,6 +67,92 @@ DEFAULT_EXCLUDE_DIRS = {
 DEFAULT_EXCLUDE_PREFIXES = ("~$", ".~lock.")  # Office/LibreOffice temp/lock files
 
 
+# ---------------------------------------------------------------------------
+# Permission-tolerant traversal helpers
+#
+# Directory listings can fail on directories the user can `stat`/traverse but
+# not list (typical on SFTP with restrictive ACLs, or on local filesystems
+# with `chmod 0`). The helpers below log a warning and skip the offending
+# path instead of letting `PermissionError` propagate and abort the scan.
+# ---------------------------------------------------------------------------
+
+
+def _is_permission_error(exc: BaseException) -> bool:
+    """Return True for errors that mean 'cannot list this directory'."""
+    if isinstance(exc, PermissionError):
+        return True
+    if isinstance(exc, OSError) and exc.errno in (errno.EACCES, errno.EPERM):
+        return True
+    return False
+
+
+def _warn_permission(path: Any, exc: BaseException) -> None:
+    """Emit a warning that a path was skipped because it is not listable."""
+    log_warn(f"{path}: skipped (permission denied: {exc})", quiet=False)
+
+
+def safe_iterdir_fs(fs: FileSystem, path: str) -> Iterator[str]:
+    """Iterate over `fs.iterdir(path)`, skipping with a warning on EACCES."""
+    try:
+        yield from fs.iterdir(path)
+    except OSError as exc:
+        if _is_permission_error(exc):
+            _warn_permission(path, exc)
+            return
+        raise
+
+
+def safe_iterdir_local(path: Path) -> Iterator[Path]:
+    """Iterate over `path.iterdir()`, skipping with a warning on EACCES."""
+    try:
+        yield from path.iterdir()
+    except OSError as exc:
+        if _is_permission_error(exc):
+            _warn_permission(path, exc)
+            return
+        raise
+
+
+def safe_glob_fs(fs: FileSystem, pattern: str) -> list[str]:
+    """`fs.glob(pattern)` returning [] with a warning on EACCES."""
+    try:
+        return fs.glob(pattern)
+    except OSError as exc:
+        if _is_permission_error(exc):
+            _warn_permission(pattern, exc)
+            return []
+        raise
+
+
+def safe_walk_local(root: Path) -> Iterator[Path]:
+    """Yield every file under `root`, skipping unreadable subtrees."""
+
+    def _onerror(exc: OSError) -> None:
+        if _is_permission_error(exc):
+            _warn_permission(getattr(exc, "filename", None) or root, exc)
+            return
+        raise exc
+
+    for dirpath, dirnames, filenames in os.walk(root, onerror=_onerror):
+        # Filter out always-excluded directories in-place so os.walk skips them.
+        dirnames[:] = [d for d in dirnames if d not in DEFAULT_EXCLUDE_DIRS]
+        for name in filenames:
+            yield Path(dirpath) / name
+
+
+def safe_glob_local(root: Path, pattern: str) -> list[Path]:
+    """`root.glob(pattern)` returning partial results with a warning on EACCES."""
+    results: list[Path] = []
+    try:
+        results.extend(root.glob(pattern))
+    except OSError as exc:
+        if _is_permission_error(exc):
+            _warn_permission(root, exc)
+            return results
+        raise
+    return results
+
+
 def get_mtime_iso(path: PurePath, fs: FileSystem | None = None) -> str:
     """Get file modification time as YYYY/MM/DD."""
     if fs is not None:
@@ -104,10 +195,12 @@ def get_dir_data_size(path: PurePath, fs: FileSystem | None = None) -> int:
     """Get total size of parquet files in a directory tree."""
     if fs is not None:
         path_str = str(path)
-        files = fs.glob(f"{path_str}/**/*.parquet") + fs.glob(f"{path_str}/**/*.pq")
+        files = safe_glob_fs(fs, f"{path_str}/**/*.parquet") + safe_glob_fs(
+            fs, f"{path_str}/**/*.pq"
+        )
         return sum(int(fs.info(f).get("size", 0)) for f in files)
     assert isinstance(path, Path)
-    files = list(path.rglob("*.parquet")) + list(path.rglob("*.pq"))
+    files = safe_glob_local(path, "**/*.parquet") + safe_glob_local(path, "**/*.pq")
     return sum(f.stat().st_size for f in files)
 
 
@@ -125,10 +218,18 @@ def find_files(
     assert isinstance(root, Path)
 
     if include is None:
-        pattern = "**/*" if recursive else "*"
-        candidates = [
-            f for f in root.glob(pattern) if f.suffix.lower() in SUPPORTED_FORMATS
-        ]
+        if recursive:
+            candidates = [
+                f
+                for f in safe_walk_local(root)
+                if f.suffix.lower() in SUPPORTED_FORMATS
+            ]
+        else:
+            candidates = [
+                f
+                for f in safe_glob_local(root, "*")
+                if f.suffix.lower() in SUPPORTED_FORMATS
+            ]
     else:
         candidates = []
         for pat in include:
@@ -136,12 +237,12 @@ def find_files(
             if pat.endswith("/**"):
                 base = pat[:-3]  # Remove /**
                 # Match files in the directory and subdirectories
-                candidates.extend(root.glob(f"{base}/*"))
-                candidates.extend(root.glob(f"{base}/**/*"))
+                candidates.extend(safe_glob_local(root, f"{base}/*"))
+                candidates.extend(safe_glob_local(root, f"{base}/**/*"))
             elif recursive and "**" not in pat:
-                candidates.extend(root.glob(f"**/{pat}"))
+                candidates.extend(safe_glob_local(root, f"**/{pat}"))
             else:
-                candidates.extend(root.glob(pat))
+                candidates.extend(safe_glob_local(root, pat))
 
     candidates = [f for f in candidates if f.is_file()]
 
@@ -165,7 +266,7 @@ def find_files(
                         excluded.add(f.resolve())
             # Otherwise use glob for patterns with wildcards
             elif "*" in pat:
-                for f in root.glob(f"**/{pat}" if recursive else pat):
+                for f in safe_glob_local(root, f"**/{pat}" if recursive else pat):
                     excluded.add(f.resolve())
             # Exact file match
             elif target.is_file():
@@ -187,7 +288,7 @@ def _find_files_with_fs(
 
     if include is None:
         pattern = "**/*" if recursive else "*"
-        all_paths = fs.glob(f"{root_str}/{pattern}")
+        all_paths = safe_glob_fs(fs, f"{root_str}/{pattern}")
         candidates = [
             p for p in all_paths if PurePosixPath(p).suffix.lower() in SUPPORTED_FORMATS
         ]
@@ -196,12 +297,12 @@ def _find_files_with_fs(
         for pat in include:
             if pat.endswith("/**"):
                 base = pat[:-3]
-                candidates_set.update(fs.glob(f"{root_str}/{base}/*"))
-                candidates_set.update(fs.glob(f"{root_str}/{base}/**/*"))
+                candidates_set.update(safe_glob_fs(fs, f"{root_str}/{base}/*"))
+                candidates_set.update(safe_glob_fs(fs, f"{root_str}/{base}/**/*"))
             elif recursive and "**" not in pat:
-                candidates_set.update(fs.glob(f"{root_str}/**/{pat}"))
+                candidates_set.update(safe_glob_fs(fs, f"{root_str}/**/{pat}"))
             else:
-                candidates_set.update(fs.glob(f"{root_str}/{pat}"))
+                candidates_set.update(safe_glob_fs(fs, f"{root_str}/{pat}"))
         candidates = list(candidates_set)
 
     # Filter to files only and supported formats
@@ -231,7 +332,7 @@ def _find_files_with_fs(
                         excluded.add(f)
             elif "*" in pat:
                 pattern = f"{root_str}/**/{pat}" if recursive else f"{root_str}/{pat}"
-                for f in fs.glob(pattern):
+                for f in safe_glob_fs(fs, pattern):
                     excluded.add(f)
             elif fs.isfile(target):
                 excluded.add(target)

@@ -3,6 +3,7 @@
 # unreleased
 
 - add: public `copy_assets()` helper and matching `copy_assets` / `base_dir` parameters on `export_db()` and `export_app()`
+- fix: folder discovery no longer aborts on unreadable subdirectories (typically SFTP with restrictive ACLs); the offending path is logged and skipped, the rest of the scan continues
 - fix: `add_folder(depth="dataset")` now logs each processed dataset and unchanged skip, aligned with other depth modes
 - fix: time series detection no longer crashes or drops entries when a 4-digit year contains a constant 2-digit token elsewhere in the same file name
 - fix: mixed time series granularities with the same base name are now split into separate yearly, quarterly, monthly, or daily groups instead of being merged
