@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import duckdb as _duckdb
 import ibis
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -133,13 +134,14 @@ def scan_simple(
                 sample_size=sample_size,
                 table_name=table_name,
             )
-        except KeyError as exc:
+        except (KeyError, _duckdb.InvalidInputException) as exc:
             # DuckDB exposes GeoParquet geometry as GEOMETRY('<crs>') where
             # <crs> may be a full projjson string, a short form like
             # 'OGC:CRS84', or an EPSG code. Ibis 12.x only knows POINT,
-            # POLYGON, etc. and raises KeyError on anything else. Trigger
-            # the fallback whenever the file actually carries GeoParquet
-            # metadata, regardless of the exact CRS string.
+            # POLYGON, etc. and raises KeyError on anything else. Newer
+            # DuckDB versions reject malformed GeoParquet metadata directly
+            # with InvalidInputException. Trigger the fallback whenever the
+            # file actually carries GeoParquet metadata.
             try:
                 pq_meta = pq.ParquetFile(path).schema_arrow.metadata or {}
             except Exception:
