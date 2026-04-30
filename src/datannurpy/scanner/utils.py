@@ -37,6 +37,13 @@ def _round6(val: Any) -> float | None:
     return round(float(val), 6)
 
 
+# Maximum row count above which a remote/file-backed table is *not*
+# materialized into memory before per-column value-level passes (autotag,
+# frequency, pattern). Below this threshold materialization avoids re-scanning
+# the source once per column, which dominates wall time on wide datasets.
+_MATERIALIZE_MAX_ROWS = 1_000_000
+
+
 # Supported file formats: suffix -> delivery_format
 SUPPORTED_FORMATS: dict[str, str] = {
     ".csv": "csv",
@@ -597,6 +604,22 @@ def build_variables(
                     pass  # stats remains empty, all stats will be None
                 else:
                     raise
+
+    # Materialize a file/DB-backed table to an in-memory Arrow buffer before the
+    # per-column value-level passes (autotag, frequency, pattern). Each of these
+    # phases issues one aggregation per eligible column; on a remote view (e.g.
+    # ``con.read_csv`` / ``con.read_parquet`` / a database table) this would
+    # otherwise re-scan the source N times — catastrophic for wide datasets.
+    # Bounded by ``_MATERIALIZE_MAX_ROWS`` to keep RAM usage predictable.
+    if freq_threshold is not None and nb_rows > 0 and nb_rows <= _MATERIALIZE_MAX_ROWS:
+        from ibis.expr.operations import InMemoryTable, PhysicalTable
+
+        physical = list(table.op().find(PhysicalTable))
+        if physical and not all(isinstance(p, InMemoryTable) for p in physical):
+            try:
+                table = ibis.memtable(table.to_pyarrow())
+            except Exception:  # pragma: no cover - fall back to remote table
+                pass
 
     # Auto-tag string columns BEFORE frequency (security tags suppress raw frequency values)
     auto_tag_map: dict[str, str] = {}

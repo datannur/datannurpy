@@ -8,6 +8,7 @@
 - fix: time series detection no longer crashes or drops entries when a 4-digit year contains a constant 2-digit token elsewhere in the same file name
 - fix: mixed time series granularities with the same base name are now split into separate yearly, quarterly, monthly, or daily groups instead of being merged
 - fix: time series detection now recognizes compact `YYYYMMDD` dates in file paths and table names
+- fix: `depth: value` no longer re-scans the source file once per column on wide datasets — the file/DB-backed table is materialized into an Arrow buffer (capped at 1M rows) before the autotag, frequency, and pattern passes
 
 ## 0.21.0 (2026-04-27)
 

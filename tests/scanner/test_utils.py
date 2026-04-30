@@ -399,6 +399,45 @@ class TestBuildVariables:
         assert v.type == "float"
         assert v.nb_distinct is not None
 
+    def test_materializes_remote_table_for_freq(self, tmp_path):
+        """A file-backed view should be materialized once before per-column passes."""
+        import pyarrow as pa
+        import pyarrow.csv as pa_csv
+        from ibis.expr.operations import InMemoryTable, PhysicalTable
+
+        csv_path = tmp_path / "small.csv"
+        pa_csv.write_csv(
+            pa.table({"a": ["x", "y", "x"], "b": ["p", "p", "q"]}),
+            csv_path,
+        )
+        con = ibis.duckdb.connect()
+        table = con.read_csv(str(csv_path))
+        # Sanity: starts as a file-backed (non in-memory) view.
+        assert any(
+            not isinstance(p, InMemoryTable) for p in table.op().find(PhysicalTable)
+        )
+        variables, freq = build_variables(
+            table, nb_rows=3, dataset_id="test", freq_threshold=10
+        )
+        assert freq is not None
+        assert {v.name for v in variables} == {"a", "b"}
+        # column "a" has 2 distinct values, column "b" has 2 distinct values
+        assert freq.num_rows == 4
+
+    def test_skips_materialization_above_threshold(self, monkeypatch):
+        """Tables larger than the materialization threshold are left untouched."""
+        from datannurpy.scanner import utils as scanner_utils
+
+        monkeypatch.setattr(scanner_utils, "_MATERIALIZE_MAX_ROWS", 1)
+        table = ibis.memtable({"a": ["x", "y", "x"]})
+        # Even though nb_rows exceeds the threshold we still get correct results
+        # (memtable path is unaffected by the materialization gate).
+        variables, freq = build_variables(
+            table, nb_rows=3, dataset_id="test", freq_threshold=10
+        )
+        assert freq is not None
+        assert variables[0].nb_distinct == 2
+
 
 class TestGetDirDataSize:
     """Test get_dir_data_size with remote filesystem."""
