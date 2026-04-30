@@ -898,7 +898,7 @@ class TestListPath:
 
 
 class TestAddFolderKwargs:
-    """Test id/name/description kwargs on add_folder."""
+    """Test id/name/description/license kwargs on add_folder."""
 
     def test_name_only_auto_generates_id(self, tmp_path: Path):
         """Passing name without id auto-generates id from path."""
@@ -925,19 +925,26 @@ class TestAddFolderKwargs:
         f = next(f for f in folders if f.id == "hr")
         assert f.description == "HR data"
 
-    def test_id_name_description(self, tmp_path: Path):
-        """Passing all three kwargs works."""
+    def test_id_name_description_license(self, tmp_path: Path):
+        """Passing folder metadata kwargs works."""
         d = tmp_path / "data"
         d.mkdir()
         (d / "f.csv").write_text("x\n1")
 
         catalog = Catalog(quiet=True)
-        catalog.add_folder(d, id="my_id", name="My Name", description="My Desc")
+        catalog.add_folder(
+            d,
+            id="my_id",
+            name="My Name",
+            description="My Desc",
+            license="ODbL-1.0",
+        )
 
         folders = catalog.folder.all()
         f = next(f for f in folders if f.id == "my_id")
         assert f.name == "My Name"
         assert f.description == "My Desc"
+        assert f.license == "ODbL-1.0"
 
     def test_folder_and_kwargs_raises(self, tmp_path: Path):
         """Cannot specify both folder and id/name/description."""

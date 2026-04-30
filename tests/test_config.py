@@ -773,7 +773,7 @@ add:
         assert len(catalog.dataset.all()) > 0
 
     def test_folder_shorthand_with_kwargs(self, tmp_path: Path, data_dir: Path):
-        """Shorthand folder entry with id/name/description."""
+        """Shorthand folder entry with folder metadata kwargs."""
         config_file = tmp_path / "catalog.yml"
         config_file.write_text(f"""
 app_path: {tmp_path / "output"}
@@ -785,6 +785,7 @@ add:
     id: my_csv
     name: My CSV Data
     description: Test description
+    license: ODbL-1.0
 """)
         catalog = run_config(config_file)
         folders = catalog.folder.all()
@@ -792,6 +793,7 @@ add:
         f = next(f for f in folders if f.id == "my_csv")
         assert f.name == "My CSV Data"
         assert f.description == "Test description"
+        assert f.license == "ODbL-1.0"
 
     def test_database_shorthand(self, tmp_path: Path):
         """Shorthand database entry scans correctly."""
@@ -817,7 +819,7 @@ add:
         assert any(d.name == "items" for d in catalog.dataset.all())
 
     def test_database_shorthand_with_kwargs(self, tmp_path: Path):
-        """Shorthand database entry with id/name/description."""
+        """Shorthand database entry with folder metadata kwargs."""
         import sqlite3
 
         db_path = tmp_path / "test.db"
@@ -837,6 +839,7 @@ add:
     id: my_db
     name: My Database
     description: Test DB
+    license: CC-BY-4.0
 """)
         catalog = run_config(config_file)
         folders = catalog.folder.all()
@@ -844,6 +847,7 @@ add:
         f = next(f for f in folders if f.id == "my_db")
         assert f.name == "My Database"
         assert f.description == "Test DB"
+        assert f.license == "CC-BY-4.0"
 
     def test_dataset_shorthand(self, tmp_path: Path, data_dir: Path):
         """Shorthand dataset entry scans correctly."""

@@ -50,6 +50,7 @@ class DatasetMeta:
 
     name: str | None = None
     description: str | None = None
+    license: str | None = None
     type: str | None = None
     link: str | None = None
     localisation: str | None = None
@@ -83,6 +84,7 @@ def _create_dataset(
         id=dataset_id,
         name=meta.name or default_name,
         folder_id=folder_id,
+        license=meta.license,
         data_path=data_path,
         last_update_date=get_mtime_iso(dataset_path, fs=fs),
         last_update_timestamp=current_mtime,
@@ -126,6 +128,7 @@ def add_dataset(
     # Dataset metadata overrides
     name: str | None = None,
     description: str | None = None,
+    license: str | None = None,
     type: str | None = None,
     link: str | None = None,
     localisation: str | None = None,
@@ -187,6 +190,7 @@ def add_dataset(
     meta = DatasetMeta(
         name=name,
         description=description,
+        license=license,
         type=type,
         link=link,
         localisation=localisation,

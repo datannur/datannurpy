@@ -92,6 +92,7 @@ class TestAddDataset:
             CSV_DIR / "employees.csv",
             name="Employés",
             description="Liste des employés",
+            license="CC-BY-4.0",
             type="référentiel",
             link="https://example.com",
             start_date="2020/01/01",
@@ -100,6 +101,7 @@ class TestAddDataset:
         ds = catalog.dataset.all()[0]
         assert ds.name == "Employés"
         assert ds.description == "Liste des employés"
+        assert ds.license == "CC-BY-4.0"
         assert ds.type == "référentiel"
         assert ds.link == "https://example.com"
         assert ds.start_date == "2020/01/01"

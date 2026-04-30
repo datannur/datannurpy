@@ -15,8 +15,11 @@ def _make_employees_catalog() -> Catalog:
     """Scan employees.csv once."""
     catalog = Catalog()
     catalog.add_folder(
-        CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+        CSV_DIR,
+        Folder(id="test", name="Test", license="ODbL-1.0"),
+        include=["employees.csv"],
     )
+    catalog.dataset.update("test---employees_csv", license="CC-BY-4.0")
     return catalog
 
 
@@ -157,6 +160,7 @@ class TestCatalogWrite:
         assert len(data) == 1
         assert data[0]["id"] == "test---employees_csv"
         assert data[0]["folder_id"] == "test"
+        assert data[0]["license"] == "CC-BY-4.0"
 
     def test_write_folder_json_content(self, tmp_path):
         """write should produce valid folder JSON."""
@@ -171,6 +175,7 @@ class TestCatalogWrite:
         assert len(user_folders) == 1
         assert user_folders[0]["id"] == "test"
         assert user_folders[0]["name"] == "Test"
+        assert user_folders[0]["license"] == "ODbL-1.0"
 
     def test_write_jsonjs_format(self, tmp_path):
         """write should produce correct jsonjs format."""

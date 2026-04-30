@@ -8,6 +8,7 @@
     "doc_ids": "",
     "name": "Enumerations",
     "description": null,
+    "license": null,
     "type": null,
     "data_path": null
   },
@@ -20,6 +21,7 @@
     "doc_ids": "",
     "name": "company",
     "description": null,
+    "license": null,
     "type": "sqlite",
     "data_path": "company.db"
   },
@@ -32,6 +34,7 @@
     "doc_ids": "",
     "name": "hr",
     "description": null,
+    "license": null,
     "type": "table_prefix",
     "data_path": null
   },
@@ -44,6 +47,7 @@
     "doc_ids": "",
     "name": "inventory",
     "description": null,
+    "license": null,
     "type": "table_prefix",
     "data_path": null
   },
@@ -56,6 +60,7 @@
     "doc_ids": "",
     "name": "sales",
     "description": null,
+    "license": null,
     "type": "table_prefix",
     "data_path": null
   },
@@ -68,6 +73,7 @@
     "doc_ids": "",
     "name": "sales_order",
     "description": null,
+    "license": null,
     "type": "table_prefix",
     "data_path": null
   },
@@ -80,6 +86,7 @@
     "doc_ids": "",
     "name": "data",
     "description": null,
+    "license": null,
     "type": "filesystem",
     "data_path": ""
   },
@@ -92,6 +99,7 @@
     "doc_ids": "",
     "name": "csv",
     "description": null,
+    "license": null,
     "type": "filesystem",
     "data_path": "csv"
   },
@@ -104,6 +112,7 @@
     "doc_ids": "",
     "name": "iceberg_warehouse",
     "description": null,
+    "license": null,
     "type": "filesystem",
     "data_path": "iceberg_warehouse"
   },
@@ -116,6 +125,7 @@
     "doc_ids": "",
     "name": "default",
     "description": null,
+    "license": null,
     "type": "filesystem",
     "data_path": "iceberg_warehouse/default"
   },
@@ -128,6 +138,7 @@
     "doc_ids": "",
     "name": "metadata",
     "description": null,
+    "license": null,
     "type": "filesystem",
     "data_path": "metadata"
   },
@@ -140,6 +151,7 @@
     "doc_ids": "",
     "name": "subfolder1",
     "description": null,
+    "license": null,
     "type": "filesystem",
     "data_path": "subfolder1"
   },
@@ -152,6 +164,7 @@
     "doc_ids": "",
     "name": "timeseries",
     "description": null,
+    "license": null,
     "type": "filesystem",
     "data_path": "timeseries"
   },
@@ -164,6 +177,7 @@
     "doc_ids": "",
     "name": "mixed",
     "description": null,
+    "license": null,
     "type": "filesystem",
     "data_path": "timeseries/mixed"
   },
@@ -176,6 +190,7 @@
     "doc_ids": "",
     "name": "monthly_folders",
     "description": null,
+    "license": null,
     "type": "filesystem",
     "data_path": "timeseries/monthly_folders"
   },
@@ -188,6 +203,7 @@
     "doc_ids": "",
     "name": "quarterly",
     "description": null,
+    "license": null,
     "type": "filesystem",
     "data_path": "timeseries/quarterly"
   },
@@ -200,6 +216,7 @@
     "doc_ids": "",
     "name": "schema_evolution",
     "description": null,
+    "license": null,
     "type": "filesystem",
     "data_path": "timeseries/schema_evolution"
   },
@@ -212,6 +229,7 @@
     "doc_ids": "",
     "name": "yearly",
     "description": null,
+    "license": null,
     "type": "filesystem",
     "data_path": "timeseries/yearly"
   },
@@ -224,6 +242,7 @@
     "doc_ids": "",
     "name": "Grandes installations photovoltaïques",
     "description": "Installations photovoltaïques de haute altitude en Suisse. Source: Office fédéral de l'énergie (OFEN) - opendata.swiss",
+    "license": null,
     "type": "sqlite",
     "data_path": "photovoltaik.gpkg"
   }

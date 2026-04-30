@@ -19,6 +19,7 @@ class Folder:
     doc_ids: list[str] = field(default_factory=list)
     name: str | None = None
     description: str | None = None
+    license: str | None = None
     type: str | None = None  # filesystem, sqlite, postgres, etc.
     data_path: str | None = None
     last_update_date: str | None = None
@@ -38,6 +39,7 @@ class Dataset:
     doc_ids: list[str] = field(default_factory=list)
     name: str | None = None
     description: str | None = None
+    license: str | None = None
     type: str | None = None
     data_path: str | None = None
     link: str | None = None

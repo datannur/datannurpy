@@ -83,7 +83,7 @@ Combined with `add_folder('./data/parquet', create_folders=False)`, the scan att
 
 **Constraints:**
 
-- `create_folders=False` is incompatible with `folder=` / `id=` / `name=` / `description=` / `manager_id=` / `owner_id=` (no folder is created).
+- `create_folders=False` is incompatible with `folder=` / `id=` / `name=` / `description=` / `license=` / `manager_id=` / `owner_id=` (no folder is created).
 - The `data_path` you write in `metadata/dataset.csv` is also exported as-is in the output (it is the public link to the data, not a private match key). Use a URL or a deployment-relative path if you want it to remain valid in the front-end.
 
 ## Environment variables

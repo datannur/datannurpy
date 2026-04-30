@@ -55,6 +55,7 @@ catalog.add_folder(
     id=None,
     name=None,
     description=None,
+    license=None,
     manager_id=None,
     owner_id=None,
 )
@@ -80,6 +81,7 @@ catalog.add_folder(
 | id              | str \| None                               | None     | Override folder ID                            |
 | name            | str \| None                               | None     | Override folder name                          |
 | description     | str \| None                               | None     | Override folder description                   |
+| license         | str \| None                               | None     | Override folder license                       |
 | manager_id      | str \| None                               | None     | Organization ID managing the folder           |
 | owner_id        | str \| None                               | None     | Organization ID owning the folder             |
 
@@ -100,6 +102,7 @@ catalog.add_dataset(
     quiet=None,
     name=None,
     description=None,
+    license=None,
     ...,
 )
 ```
@@ -118,6 +121,7 @@ catalog.add_dataset(
 | quiet           | bool \| None                              | None     | Override catalog quiet setting                |
 | name            | str \| None                               | None     | Override dataset name                         |
 | description     | str \| None                               | None     | Override dataset description                  |
+| license         | str \| None                               | None     | Override dataset license                      |
 
 Additional metadata parameters: `type`, `link`, `localisation`, `manager_id`, `owner_id`, `tag_ids`, `doc_ids`, `start_date`, `end_date`, `updating_each`, `no_more_update`
 
@@ -144,6 +148,7 @@ catalog.add_database(
     id=None,
     name=None,
     description=None,
+    license=None,
     manager_id=None,
     owner_id=None,
 )
@@ -169,6 +174,7 @@ catalog.add_database(
 | id                 | str \| None                                     | None     | Override folder ID                         |
 | name               | str \| None                                     | None     | Override folder name                       |
 | description        | str \| None                                     | None     | Override folder description                |
+| license            | str \| None                                     | None     | Override folder license                    |
 | manager_id         | str \| None                                     | None     | Organization ID managing the folder        |
 | owner_id           | str \| None                                     | None     | Organization ID owning the folder          |
 

@@ -476,6 +476,29 @@ class TestBuildVariables:
         finally:
             con.disconnect()
 
+    def test_table_to_arrow_reuses_arrow_execute_result(self):
+        """_table_to_arrow should reuse a PyArrow table returned by execute()."""
+        from unittest.mock import patch
+
+        import pyarrow as pa
+
+        from datannurpy.scanner.utils import _table_to_arrow
+
+        table = ibis.memtable({"a": [1, 2]})
+        arrow = pa.table({"a": [1, 2]})
+
+        def patched_to_pyarrow(self_expr, **kw):  # type: ignore[no-untyped-def]
+            raise pa.ArrowInvalid("boom")
+
+        def patched_execute(self_expr, **kw):  # type: ignore[no-untyped-def]
+            return arrow
+
+        with patch.object(type(table), "to_pyarrow", patched_to_pyarrow):
+            with patch.object(type(table), "execute", patched_execute):
+                result = _table_to_arrow(table)
+
+        assert result is arrow
+
     def test_skips_materialization_above_threshold(self, monkeypatch):
         """Tables larger than the materialization threshold are left untouched."""
         from datannurpy.scanner import utils as scanner_utils
