@@ -10,6 +10,7 @@
 - fix: time series detection now recognizes compact `YYYYMMDD` dates in file paths and table names
 - fix: `depth: value` no longer re-scans the source file once per column on wide datasets — the file/DB-backed table is materialized into an Arrow buffer (capped at 1M rows) before the autotag, frequency, and pattern passes
 - perf: frequency value counts now use PyArrow directly (~27× faster on wide datasets); float values drop the trailing `.0` and timestamp/time values drop trailing zero sub-seconds
+- add: warning when scanning a remote source with more rows than the materialization cap (suggests configuring `sample_size`)
 
 ## 0.21.0 (2026-04-27)
 

@@ -438,6 +438,29 @@ class TestBuildVariables:
         assert freq is not None
         assert variables[0].nb_distinct == 2
 
+    def test_warns_above_threshold_on_remote_source(
+        self, monkeypatch, tmp_path, capsys
+    ):
+        """Above the materialization cap on a remote source, emit a warning."""
+        import pyarrow as pa
+        import pyarrow.csv as pa_csv
+
+        from datannurpy.scanner import utils as scanner_utils
+
+        monkeypatch.setattr(scanner_utils, "_MATERIALIZE_MAX_ROWS", 1)
+        csv_path = tmp_path / "small.csv"
+        pa_csv.write_csv(pa.table({"a": ["x", "y", "x"]}), csv_path)
+        con = ibis.duckdb.connect()
+        table = con.read_csv(str(csv_path))
+        variables, freq = build_variables(
+            table, nb_rows=3, dataset_id="bigds", freq_threshold=10
+        )
+        captured = capsys.readouterr()
+        assert "bigds" in captured.err
+        assert "sample_size" in captured.err
+        # Frequency results are still produced (slow path, but correct).
+        assert freq is not None
+
     def test_freq_skips_unhashable_column_type(self):
         """Columns whose Arrow type isn't hashable by value_counts are skipped."""
         import pyarrow as pa

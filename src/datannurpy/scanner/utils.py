@@ -611,15 +611,29 @@ def build_variables(
     # ``con.read_csv`` / ``con.read_parquet`` / a database table) this would
     # otherwise re-scan the source N times — catastrophic for wide datasets.
     # Bounded by ``_MATERIALIZE_MAX_ROWS`` to keep RAM usage predictable.
-    if freq_threshold is not None and nb_rows > 0 and nb_rows <= _MATERIALIZE_MAX_ROWS:
+    if freq_threshold is not None and nb_rows > 0:
         from ibis.expr.operations import InMemoryTable, PhysicalTable
 
         physical = list(table.op().find(PhysicalTable))
-        if physical and not all(isinstance(p, InMemoryTable) for p in physical):
+        is_remote = bool(physical) and not all(
+            isinstance(p, InMemoryTable) for p in physical
+        )
+        if is_remote and nb_rows <= _MATERIALIZE_MAX_ROWS:
             try:
                 table = ibis.memtable(table.to_pyarrow())
             except Exception:  # pragma: no cover - fall back to remote table
                 pass
+        elif is_remote:
+            # Above the materialization cap on a remote source: per-column
+            # passes will re-scan the source once per eligible column. Surface
+            # a warning so users can configure ``sample_size`` if desired.
+            log_warn(
+                f"{dataset_id}: {nb_rows} rows exceeds the in-memory frequency "
+                f"materialization cap ({_MATERIALIZE_MAX_ROWS}); per-column "
+                f"frequency passes will re-scan the source. Configure "
+                f"sample_size to bound this cost.",
+                quiet=False,
+            )
 
     # Auto-tag string columns BEFORE frequency (security tags suppress raw frequency values)
     auto_tag_map: dict[str, str] = {}
