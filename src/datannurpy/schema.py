@@ -21,7 +21,13 @@ class Folder:
     description: str | None = None
     license: str | None = None
     type: str | None = None  # filesystem, sqlite, postgres, etc.
+    link: str | None = None
+    localisation: str | None = None
     data_path: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    updating_each: str | None = None
+    no_more_update: str | None = None
     last_update_date: str | None = None
     # Runtime field (not persisted)
     _seen: bool = False

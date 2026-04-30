@@ -3,13 +3,27 @@
 ### `Catalog`
 
 ```python
-Catalog(app_path=None, metadata_path=None, depth="value", refresh=False, freq_threshold=100, csv_encoding=None, sample_size=100_000, csv_skip_copy=False, app_config=None, quiet=False, verbose=False, log_file=None)
+Catalog(
+    *,
+    app_path=None,
+    metadata_path=None,
+    depth="value",
+    refresh=False,
+    freq_threshold=100,
+    csv_encoding=None,
+    sample_size=100_000,
+    csv_skip_copy=False,
+    app_config=None,
+    quiet=False,
+    verbose=False,
+    log_file=None,
+)
 ```
 
 | Attribute      | Type                              | Description                                        |
 | -------------- | --------------------------------- | -------------------------------------------------- |
 | app_path       | str \| Path \| None               | Load existing catalog for incremental scan         |
-| metadata_path  | str \| Path \| list \| None       | Metadata source folder, database URI, or list of sources |
+| metadata_path  | str \| Path \| list[str \| Path] \| None | Metadata source folder, database URI, or list of sources |
 | depth          | "dataset" \| "variable" \| "stat" \| "value" | Default scan depth (default: "value")              |
 | refresh        | bool                              | Force full rescan ignoring cache (default: False)  |
 | freq_threshold | int                               | Max distinct values for frequency/enumeration detection. Strings above this threshold get pattern frequencies instead |
@@ -37,7 +51,7 @@ Catalog(app_path=None, metadata_path=None, depth="value", refresh=False, freq_th
 ```python
 catalog.add_folder(
     path,
-    folder=None,
+    metadata=None,
     *,
     depth=None,
     include=None,
@@ -52,19 +66,13 @@ catalog.add_folder(
     time_series=True,
     create_folders=True,
     on_unmatched="warn",
-    id=None,
-    name=None,
-    description=None,
-    license=None,
-    manager_id=None,
-    owner_id=None,
 )
 ```
 
 | Parameter       | Type                                      | Default  | Description                                   |
 | --------------- | ----------------------------------------- | -------- | --------------------------------------------- |
 | path            | str \| Path \| list[str \| Path]           | required | Directory or list of directories to scan      |
-| folder          | Folder \| None                            | None     | Custom folder metadata                        |
+| metadata        | EntityMetadata \| None                    | None     | Identity, parent linkage, and metadata for the root folder |
 | depth           | "dataset" \| "variable" \| "stat" \| "value" \| None | None     | Scan depth (uses catalog.depth if None)       |
 | include         | list[str] \| None                         | None     | Glob patterns to include                      |
 | exclude         | list[str] \| None                         | None     | Glob patterns to exclude                      |
@@ -78,21 +86,14 @@ catalog.add_folder(
 | time_series     | bool                                      | True     | Group files with temporal patterns            |
 | create_folders  | bool                                      | True     | If False, do not create folders from disk; rely on `metadata_path` for structure (metadata-first) |
 | on_unmatched    | "skip" \| "warn" \| "error"               | "warn"   | Policy when a scanned file has no metadata match (only when `create_folders=False`) |
-| id              | str \| None                               | None     | Override folder ID                            |
-| name            | str \| None                               | None     | Override folder name                          |
-| description     | str \| None                               | None     | Override folder description                   |
-| license         | str \| None                               | None     | Override folder license                       |
-| manager_id      | str \| None                               | None     | Organization ID managing the folder           |
-| owner_id        | str \| None                               | None     | Organization ID owning the folder             |
 
 ### `Catalog.add_dataset()`
 
 ```python
 catalog.add_dataset(
     path,
-    folder=None,
     *,
-    folder_id=None,
+    metadata=None,
     depth=None,
     csv_encoding=None,
     sample_size=None,
@@ -100,18 +101,13 @@ catalog.add_dataset(
     storage_options=None,
     refresh=None,
     quiet=None,
-    name=None,
-    description=None,
-    license=None,
-    ...,
 )
 ```
 
 | Parameter       | Type                                      | Default  | Description                                   |
 | --------------- | ----------------------------------------- | -------- | --------------------------------------------- |
 | path            | str \| Path \| list[str \| Path]           | required | File(s) or partitioned directory (local/remote) |
-| folder          | Folder \| None                            | None     | Parent folder                                 |
-| folder_id       | str \| None                               | None     | Parent folder ID (alternative to folder)      |
+| metadata        | EntityMetadata \| None                    | None     | Dataset identity, parent linkage, and metadata |
 | depth           | "dataset" \| "variable" \| "stat" \| "value" \| None | None     | Scan depth (uses catalog.depth if None)       |
 | csv_encoding    | str \| None                               | None     | Override CSV encoding                         |
 | sample_size     | int \| None                               | None     | Sample rows for stats (overrides catalog)     |
@@ -119,18 +115,13 @@ catalog.add_dataset(
 | storage_options | dict \| None                              | None     | Options for remote storage (passed to fsspec) |
 | refresh         | bool \| None                              | None     | Force rescan (overrides catalog setting)      |
 | quiet           | bool \| None                              | None     | Override catalog quiet setting                |
-| name            | str \| None                               | None     | Override dataset name                         |
-| description     | str \| None                               | None     | Override dataset description                  |
-| license         | str \| None                               | None     | Override dataset license                      |
-
-Additional metadata parameters: `type`, `link`, `localisation`, `manager_id`, `owner_id`, `tag_ids`, `doc_ids`, `start_date`, `end_date`, `updating_each`, `no_more_update`
 
 ### `Catalog.add_database()`
 
 ```python
 catalog.add_database(
     connection,
-    folder=None,
+    metadata=None,
     *,
     depth=None,
     schema=None,
@@ -145,19 +136,13 @@ catalog.add_database(
     quiet=None,
     oracle_client_path=None,
     ssh_tunnel=None,
-    id=None,
-    name=None,
-    description=None,
-    license=None,
-    manager_id=None,
-    owner_id=None,
 )
 ```
 
 | Parameter          | Type                                            | Default  | Description                                |
 | ------------------ | ----------------------------------------------- | -------- | ------------------------------------------ |
 | connection         | str \| ibis.BaseBackend                          | required | Connection string or ibis backend object   |
-| folder             | Folder \| None                                  | None     | Custom root folder                         |
+| metadata           | EntityMetadata \| None                          | None     | Identity, parent linkage, and metadata for the root folder |
 | depth              | \"dataset\" \| \"variable\" \| \"stat\" \| \"value\" \| None | None     | Scan depth (uses catalog.depth if None)    |
 | schema             | str \| list[str] \| None                         | None     | Schema(s) to scan                          |
 | include            | list[str] \| None                               | None     | Table name patterns to include             |
@@ -171,17 +156,60 @@ catalog.add_database(
 | quiet              | bool \| None                                    | None     | Override catalog quiet setting             |
 | oracle_client_path | str \| None                                     | None     | Path to Oracle Instant Client libraries    |
 | ssh_tunnel         | dict \| None                                    | None     | SSH tunnel config (host, user, port, etc.) |
-| id                 | str \| None                                     | None     | Override folder ID                         |
-| name               | str \| None                                     | None     | Override folder name                       |
-| description        | str \| None                                     | None     | Override folder description                |
-| license            | str \| None                                     | None     | Override folder license                    |
-| manager_id         | str \| None                                     | None     | Organization ID managing the folder        |
-| owner_id           | str \| None                                     | None     | Organization ID owning the folder          |
+
+### `EntityMetadata`
+
+```python
+EntityMetadata(
+    id=None,
+    parent_id=None,
+    manager_id=None,
+    owner_id=None,
+    tag_ids=None,
+    doc_ids=None,
+    name=None,
+    description=None,
+    license=None,
+    type=None,
+    link=None,
+    localisation=None,
+    start_date=None,
+    end_date=None,
+    updating_each=None,
+    no_more_update=None,
+)
+```
+
+| Parameter      | Type              | Description |
+| -------------- | ----------------- | ----------- |
+| id             | str \| None       | Explicit entity ID. If omitted, scan-derived defaults are used. |
+| parent_id      | str \| None       | Parent folder ID (`Folder.parent_id` for folders, `Dataset.folder_id` for datasets). |
+| manager_id     | str \| None       | Managing organization ID. |
+| owner_id       | str \| None       | Owning organization ID. |
+| tag_ids        | list[str] \| None | Related tag IDs. |
+| doc_ids        | list[str] \| None | Related document IDs. |
+| name           | str \| None       | Display name. |
+| description    | str \| None       | Description text. |
+| license        | str \| None       | License string. |
+| type           | str \| None       | Entity type/category. |
+| link           | str \| None       | External reference URL. |
+| localisation   | str \| None       | Geographic coverage. |
+| start_date     | str \| None       | Covered period start. |
+| end_date       | str \| None       | Covered period end. |
+| updating_each  | str \| None       | Update frequency. |
+| no_more_update | str \| None       | Marker that no further updates are expected. |
 
 ### `Catalog.export_db()`
 
 ```python
-catalog.export_db(output_dir=None, track_evolution=True, copy_assets=None, base_dir=None, quiet=None)
+catalog.export_db(
+    output_dir=None,
+    *,
+    track_evolution=True,
+    copy_assets=None,
+    base_dir=None,
+    quiet=None,
+)
 ```
 
 | Parameter       | Type             | Default | Description                                |
@@ -194,18 +222,18 @@ catalog.export_db(output_dir=None, track_evolution=True, copy_assets=None, base_
 
 Exports JSON metadata files. Calls `finalize()` automatically when data has been scanned.
 
-### `Catalog.finalize()`
-
-```python
-catalog.finalize()
-```
-
-Removes entities no longer seen during scan. Called automatically by `export_db()`/`export_app()`.
-
 ### `Catalog.export_app()`
 
 ```python
-catalog.export_app(output_dir=None, open_browser=False, track_evolution=True, copy_assets=None, base_dir=None, quiet=None)
+catalog.export_app(
+    output_dir=None,
+    *,
+    open_browser=False,
+    track_evolution=True,
+    copy_assets=None,
+    base_dir=None,
+    quiet=None,
+)
 ```
 
 | Parameter       | Type                | Default | Description                                |
@@ -219,12 +247,26 @@ catalog.export_app(output_dir=None, open_browser=False, track_evolution=True, co
 
 Exports complete standalone datannur app with data. Uses `app_path` by default if set at init.
 
+### `run_config()`
+
+```python
+from datannurpy import run_config
+
+catalog = run_config(path)
+```
+
+| Parameter | Type       | Default  | Description |
+| --------- | ---------- | -------- | ----------- |
+| path      | str \| Path | required | YAML configuration file to load and execute |
+
+Runs a `catalog.yml` workflow and returns the resulting `Catalog`.
+
 ### `copy_assets()`
 
 ```python
 from datannurpy import copy_assets
 
-copy_assets(output_dir, rules, base_dir=None, quiet=False)
+copy_assets(output_dir, rules, *, base_dir=None, quiet=False)
 ```
 
 | Parameter  | Type                          | Default | Description |
@@ -238,22 +280,17 @@ Each rule accepts `from`, `to`, optional `include`, and optional `clean`.
 
 `Catalog.export_db()` and `Catalog.export_app()` also accept `copy_assets=` and `base_dir=` as convenience wrappers around this helper.
 
-### `Folder`
+## Advanced
+
+### `Catalog.finalize()`
 
 ```python
-Folder(id, parent_id=None, tag_ids=[], doc_ids=[], name=None, description=None, type=None, data_path=None)
+catalog.finalize()
 ```
 
-| Parameter   | Type        | Description                  |
-| ----------- | ----------- | ---------------------------- |
-| id          | str         | Unique identifier            |
-| parent_id   | str \| None | Parent folder ID             |
-| tag_ids     | list[str]   | Associated tag IDs           |
-| doc_ids     | list[str]   | Associated document IDs      |
-| name        | str \| None | Display name                 |
-| description | str \| None | Description                  |
-| type        | str \| None | Folder type                  |
-| data_path   | str \| None | Path to the data source      |
+Advanced lifecycle method. Removes entities no longer seen during scan.
+
+In normal usage, you usually do not need to call it directly: `export_db()` and `export_app()` call it automatically after scanning.
 
 ### ID helpers
 

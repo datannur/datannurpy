@@ -6,7 +6,7 @@ import json
 import os
 from pathlib import Path
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata
 from datannurpy.finalize import remove_dataset_cascade
 
 
@@ -23,7 +23,7 @@ class TestIncrementalScanFiles:
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
         assert len(catalog1.dataset.all()) == 1
@@ -32,7 +32,7 @@ class TestIncrementalScanFiles:
         # Second scan (same file, same mtime)
         catalog2 = Catalog(app_path=app_dir, quiet=True)
         initial_datasets = len(catalog2.dataset.all())
-        catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog2.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
 
         # Should still have same number of datasets (unchanged, skipped)
         assert len(catalog2.dataset.all()) == initial_datasets
@@ -55,7 +55,7 @@ class TestIncrementalScanFiles:
         )
 
         catalog1 = Catalog(app_path=app_dir, metadata_path=meta_dir, quiet=True)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
         catalog2 = Catalog(app_path=app_dir, metadata_path=meta_dir, quiet=True)
@@ -63,7 +63,7 @@ class TestIncrementalScanFiles:
         assert ds_before is not None
         assert ds_before._match_path == str(csv_file)
 
-        catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog2.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
 
         assert len(catalog2.dataset.all()) == 1
         ds_after = catalog2.dataset.get_by("id", "src---test_csv")
@@ -80,7 +80,7 @@ class TestIncrementalScanFiles:
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
         first_timestamp = catalog1.dataset.all()[0].last_update_timestamp
@@ -94,7 +94,7 @@ class TestIncrementalScanFiles:
 
         # Second scan
         catalog2 = Catalog(app_path=app_dir, quiet=True)
-        catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog2.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
 
         # Should have rescanned with new data
         assert len(catalog2.dataset.all()) == 1
@@ -112,7 +112,7 @@ class TestIncrementalScanFiles:
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
         assert len(catalog1.dataset.all()) == 1
@@ -122,7 +122,7 @@ class TestIncrementalScanFiles:
 
         # Second scan
         catalog2 = Catalog(app_path=app_dir, quiet=True)
-        catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog2.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
 
         # Should have both datasets
         assert len(catalog2.dataset.all()) == 2
@@ -137,12 +137,12 @@ class TestIncrementalScanFiles:
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
         # Second scan with refresh=True (global)
         catalog2 = Catalog(app_path=app_dir, refresh=True, quiet=True)
-        catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog2.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
 
         # Should have rescanned (dataset recreated)
         assert len(catalog2.dataset.all()) == 1
@@ -159,12 +159,16 @@ class TestIncrementalScanFiles:
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
         # Second scan with refresh=False global but refresh=True on method
         catalog2 = Catalog(app_path=app_dir, refresh=False, quiet=True)
-        catalog2.add_folder(data_dir, Folder(id="src", name="Source"), refresh=True)
+        catalog2.add_folder(
+            data_dir,
+            metadata=EntityMetadata(id="src", name="Source"),
+            refresh=True,
+        )
 
         # Should have rescanned
         assert len(catalog2.dataset.all()) == 1
@@ -480,14 +484,14 @@ class TestIncrementalFolderWithParquet:
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
         assert len(catalog1.dataset.all()) == 1
 
         # Second scan (unchanged)
         catalog2 = Catalog(app_path=app_dir, quiet=True)
-        catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog2.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
 
         # Should be skipped
         assert len(catalog2.dataset.all()) == 1
@@ -510,7 +514,7 @@ class TestIncrementalFolderWithParquet:
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
         first_timestamp = catalog1.dataset.all()[0].last_update_timestamp
@@ -522,7 +526,7 @@ class TestIncrementalFolderWithParquet:
 
         # Second scan
         catalog2 = Catalog(app_path=app_dir, quiet=True)
-        catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog2.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
 
         # Should have rescanned
         assert len(catalog2.dataset.all()) == 1

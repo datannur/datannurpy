@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata
 from datannurpy.scanner.timeseries import (
     PERIOD_PLACEHOLDER,
     build_series_dataset_id,
@@ -585,7 +585,11 @@ class TestAddFolderTimeSeries:
             (tmp_path / name).write_text("id,value\n1,10\n")
 
         catalog = Catalog(quiet=True)
-        catalog.add_folder(tmp_path, Folder(id="root", name="Root"), quiet=True)
+        catalog.add_folder(
+            tmp_path,
+            metadata=EntityMetadata(id="root", name="Root"),
+            quiet=True,
+        )
 
         datasets = sorted(catalog.dataset.all(), key=lambda dataset: dataset.name or "")
         assert len(datasets) == 2
@@ -599,7 +603,9 @@ class TestAddFolderTimeSeries:
         """Yearly series creates one dataset instead of multiple."""
         catalog = Catalog()
         catalog.add_folder(
-            TIMESERIES_DIR / "yearly", Folder(id="yearly", name="Yearly"), quiet=True
+            TIMESERIES_DIR / "yearly",
+            metadata=EntityMetadata(id="yearly", name="Yearly"),
+            quiet=True,
         )
 
         datasets = catalog.dataset.all()
@@ -614,7 +620,7 @@ class TestAddFolderTimeSeries:
         catalog = Catalog()
         catalog.add_folder(
             TIMESERIES_DIR / "quarterly",
-            Folder(id="quarterly", name="Quarterly"),
+            metadata=EntityMetadata(id="quarterly", name="Quarterly"),
             quiet=True,
         )
 
@@ -629,7 +635,7 @@ class TestAddFolderTimeSeries:
         catalog = Catalog()
         catalog.add_folder(
             TIMESERIES_DIR / "schema_evolution",
-            Folder(id="evolution", name="Evolution"),
+            metadata=EntityMetadata(id="evolution", name="Evolution"),
             quiet=True,
         )
 
@@ -656,7 +662,9 @@ class TestAddFolderTimeSeries:
         """Multiple series in same folder are grouped separately."""
         catalog = Catalog()
         catalog.add_folder(
-            TIMESERIES_DIR / "mixed", Folder(id="mixed", name="Mixed"), quiet=True
+            TIMESERIES_DIR / "mixed",
+            metadata=EntityMetadata(id="mixed", name="Mixed"),
+            quiet=True,
         )
 
         datasets = catalog.dataset.all()
@@ -672,7 +680,7 @@ class TestAddFolderTimeSeries:
         catalog = Catalog()
         catalog.add_folder(
             TIMESERIES_DIR / "yearly",
-            Folder(id="yearly", name="Yearly"),
+            metadata=EntityMetadata(id="yearly", name="Yearly"),
             time_series=False,
             quiet=True,
         )
@@ -687,7 +695,7 @@ class TestAddFolderTimeSeries:
         catalog = Catalog()
         catalog.add_folder(
             TIMESERIES_DIR / "schema_evolution",
-            Folder(id="evolution", name="Evolution"),
+            metadata=EntityMetadata(id="evolution", name="Evolution"),
             quiet=True,
         )
 
@@ -702,7 +710,7 @@ class TestAddFolderTimeSeries:
         catalog = Catalog()
         catalog.add_folder(
             TIMESERIES_DIR / "yearly",
-            Folder(id="yearly", name="Yearly"),
+            metadata=EntityMetadata(id="yearly", name="Yearly"),
             depth="dataset",
             quiet=True,
         )
@@ -720,7 +728,7 @@ class TestAddFolderTimeSeries:
         catalog = Catalog()
         catalog.add_folder(
             TIMESERIES_DIR / "schema_evolution",
-            Folder(id="evolution", name="Evolution"),
+            metadata=EntityMetadata(id="evolution", name="Evolution"),
             depth="variable",
             quiet=True,
         )
@@ -740,7 +748,11 @@ class TestAddFolderTimeSeries:
             )
 
         catalog = Catalog(quiet=True)
-        catalog.add_folder(ts_dir, Folder(id="ts", name="TS"), sample_size=100)
+        catalog.add_folder(
+            ts_dir,
+            metadata=EntityMetadata(id="ts", name="TS"),
+            sample_size=100,
+        )
 
         dataset = catalog.dataset.all()[0]
         assert dataset.nb_row == 240
@@ -940,7 +952,11 @@ class TestTimeSeriesRescan:
 
         # First scan
         catalog = Catalog()
-        catalog.add_folder(ts_dir, Folder(id="test", name="Test"), quiet=True)
+        catalog.add_folder(
+            ts_dir,
+            metadata=EntityMetadata(id="test", name="Test"),
+            quiet=True,
+        )
         datasets = catalog.dataset.all()
         assert len(datasets) == 1
         assert datasets[0].nb_resources == 2
@@ -951,7 +967,10 @@ class TestTimeSeriesRescan:
 
         # Rescan same catalog (refresh=True to force rescan)
         catalog.add_folder(
-            ts_dir, Folder(id="test", name="Test"), quiet=True, refresh=True
+            ts_dir,
+            metadata=EntityMetadata(id="test", name="Test"),
+            quiet=True,
+            refresh=True,
         )
         datasets2 = catalog.dataset.all()
         assert len(datasets2) == 1
@@ -968,7 +987,11 @@ class TestTimeSeriesRescan:
         (ts_dir / "data_2021.csv").write_text("id,value\n")
 
         catalog = Catalog()
-        catalog.add_folder(ts_dir, Folder(id="test", name="Test"), quiet=True)
+        catalog.add_folder(
+            ts_dir,
+            metadata=EntityMetadata(id="test", name="Test"),
+            quiet=True,
+        )
 
         datasets = catalog.dataset.all()
         assert len(datasets) == 1
@@ -982,7 +1005,11 @@ class TestTimeSeriesRescan:
         (tmp_path / "report_2021.csv").write_text("id,value\n2,200\n")
 
         catalog = Catalog()
-        catalog.add_folder(tmp_path, Folder(id="root", name="Root"), quiet=True)
+        catalog.add_folder(
+            tmp_path,
+            metadata=EntityMetadata(id="root", name="Root"),
+            quiet=True,
+        )
 
         # Should have one grouped dataset
         datasets = catalog.dataset.all()

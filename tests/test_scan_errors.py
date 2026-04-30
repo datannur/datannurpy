@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 
@@ -44,7 +44,7 @@ class TestAddFolderScanError:
             "datannurpy.add_folder.scan_file",
             side_effect=_fail_nth("datannurpy.scanner.scan.scan_file"),
         ):
-            catalog.add_folder(tmp_path, Folder(id="t", name="T"))
+            catalog.add_folder(tmp_path, metadata=EntityMetadata(id="t", name="T"))
 
         assert catalog.dataset.count == 1
         assert "1 error" in capsys.readouterr().err
@@ -52,12 +52,16 @@ class TestAddFolderScanError:
     def test_preserves_old_dataset_on_rescan_error(self, tmp_path: Path) -> None:
         (tmp_path / "data.csv").write_text("x\n1\n2")
         catalog = Catalog(quiet=True)
-        catalog.add_folder(tmp_path, Folder(id="t", name="T"))
+        catalog.add_folder(tmp_path, metadata=EntityMetadata(id="t", name="T"))
 
         with patch(
             "datannurpy.add_folder.scan_file", side_effect=RuntimeError("corrupt")
         ):
-            catalog.add_folder(tmp_path, Folder(id="t", name="T"), refresh=True)
+            catalog.add_folder(
+                tmp_path,
+                metadata=EntityMetadata(id="t", name="T"),
+                refresh=True,
+            )
 
         assert catalog.dataset.count == 1
 
@@ -67,7 +71,8 @@ class TestAddFolderScanError:
             "datannurpy.add_folder._scan_time_series", side_effect=RuntimeError("bad")
         ):
             catalog.add_folder(
-                DATA_DIR / "timeseries" / "yearly", Folder(id="ts", name="TS")
+                DATA_DIR / "timeseries" / "yearly",
+                metadata=EntityMetadata(id="ts", name="TS"),
             )
         assert catalog.dataset.count == 0
 

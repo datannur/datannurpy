@@ -9,6 +9,10 @@ from urllib.parse import urlparse
 
 import ibis
 
+from .entity_metadata import (
+    EntityMetadata,
+    folder_from_metadata,
+)
 from .scanner.database import _encode_uri_credentials
 from .utils import (
     build_variable_ids,
@@ -27,7 +31,6 @@ from .utils import (
     upsert_folder,
 )
 from .utils.params import _UNSET, validate_params
-from .errors import ConfigError
 from .scanner.filesystem import FileSystem
 from .scanner.utils import get_mtime_iso
 from .finalize import remove_dataset_cascade
@@ -76,7 +79,7 @@ if TYPE_CHECKING:
 def add_database(
     catalog: Catalog,
     connection: str | ibis.BaseBackend,
-    folder: Folder | None = None,
+    metadata: EntityMetadata | None = None,
     *,
     depth: Depth | None = None,
     schema: str | Sequence[str] | None = None,
@@ -91,34 +94,8 @@ def add_database(
     storage_options: dict[str, str] | None = None,
     oracle_client_path: str | None = None,
     ssh_tunnel: dict[str, str | int] | None = None,
-    id: str | None = None,
-    name: str | None = None,
-    description: str | None = None,
-    license: str | None = None,
-    manager_id: str | None = None,
-    owner_id: str | None = None,
 ) -> None:
     """Scan a database and add its tables to the catalog."""
-    if (
-        id is not None
-        or name is not None
-        or description is not None
-        or license is not None
-        or manager_id is not None
-        or owner_id is not None
-    ):
-        if folder is not None:
-            raise ConfigError(
-                "Cannot specify both folder and id/name/description/license/manager_id/owner_id"
-            )
-        folder = Folder(
-            id=id or "",
-            name=name,
-            description=description,
-            license=license,
-            manager_id=manager_id,
-            owner_id=owner_id,
-        )
     if isinstance(schema, list):
         kwargs = {k: v for k, v in locals().items() if k not in ("catalog", "schema")}
         for s in schema:
@@ -138,7 +115,7 @@ def add_database(
             _add_database_impl(
                 catalog,
                 f"sqlite:///{local_path}",
-                folder,
+                metadata,
                 depth=depth,
                 schema=schema,
                 include=include,
@@ -159,7 +136,7 @@ def add_database(
             _add_database_impl(
                 catalog,
                 tunneled_uri,
-                folder,
+                metadata,
                 depth=depth,
                 schema=schema,
                 include=include,
@@ -178,7 +155,7 @@ def add_database(
     _add_database_impl(
         catalog,
         connection,
-        folder,
+        metadata,
         depth=depth,
         schema=schema,
         include=include,
@@ -197,7 +174,7 @@ def add_database(
 def _add_database_impl(
     catalog: Catalog,
     connection: str | ibis.BaseBackend,
-    folder: Folder | None,
+    metadata: EntityMetadata | None,
     *,
     depth: Depth | None,
     schema: str | None,
@@ -240,15 +217,15 @@ def _add_database_impl(
     schemas_to_scan = get_schemas_to_scan(con, schema, backend_name)
 
     # Create root folder for database
-    if folder is None:
+    if metadata is None:
         root_folder_id = sanitize_id(db_name)
         folder = Folder(id=root_folder_id, name=db_name)
-    elif not folder.id:
-        root_folder_id = sanitize_id(db_name)
-        folder.id = root_folder_id
-        if folder.name is None:
-            folder.name = db_name
     else:
+        folder = folder_from_metadata(
+            metadata,
+            default_id=sanitize_id(db_name),
+            default_name=db_name,
+        )
         root_folder_id = folder.id
 
     # Set data_path: use remote_path if remote, otherwise local path
@@ -266,7 +243,7 @@ def _add_database_impl(
             folder.last_update_date = get_mtime_iso(Path(folder.data_path))
         else:
             folder.last_update_date = None
-    folder.type = backend_name
+    folder.type = folder.type or backend_name
 
     # Add or update root folder
     upsert_folder(catalog, folder)

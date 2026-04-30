@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata
 
 HERE = Path(__file__).parent
 DATA = HERE.parent / "data"
@@ -12,7 +12,7 @@ catalog.add_folder(DATA)
 catalog.add_database(f"sqlite:///{DATA}/company.db")
 catalog.add_database(
     f"sqlite:///{DATA}/photovoltaik.gpkg",
-    folder=Folder(
+    metadata=EntityMetadata(
         id="photovoltaik",
         name="Grandes installations photovoltaïques",
         description="Installations photovoltaïques de haute altitude en Suisse. "

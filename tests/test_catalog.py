@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata, Folder
 from datannurpy.errors import ConfigError
 
 
@@ -294,7 +294,7 @@ class TestCatalogExportDbDefault:
 
         # First run: scan and export
         catalog1 = Catalog(app_path=app_dir)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
         assert (db_dir / "folder.json").exists()
@@ -323,7 +323,7 @@ class TestCatalogDepth:
 
         # First run: full scan with low freq_threshold to create frequency entries
         catalog1 = Catalog(app_path=app_dir, depth="value", freq_threshold=2)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
         # Verify we have data in all tables

@@ -10,7 +10,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata
 from datannurpy.scanner.filesystem import FileSystem
 from datannurpy.scanner.parquet.core import scan_parquet
 from datannurpy.scanner.parquet.discovery import (
@@ -189,7 +189,9 @@ class TestParquetFormats:
         """add_folder should detect and scan Delta Lake tables."""
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["test_delta/**"]
+            DATA_DIR,
+            metadata=EntityMetadata(id="test", name="Test"),
+            include=["test_delta/**"],
         )
         assert len(catalog.dataset.all()) == 1
         assert catalog.dataset.all()[0].delivery_format == "delta"
@@ -201,7 +203,9 @@ class TestParquetFormats:
         """add_folder should extract Delta Lake metadata."""
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["test_delta/**"]
+            DATA_DIR,
+            metadata=EntityMetadata(id="test", name="Test"),
+            include=["test_delta/**"],
         )
         ds = catalog.dataset.all()[0]
         assert ds.description == "A test Delta Lake table"
@@ -210,7 +214,9 @@ class TestParquetFormats:
         """add_folder should detect and scan Hive-partitioned Parquet datasets."""
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["test_partitioned/**"]
+            DATA_DIR,
+            metadata=EntityMetadata(id="test", name="Test"),
+            include=["test_partitioned/**"],
         )
         assert len(catalog.dataset.all()) == 1
         assert catalog.dataset.all()[0].delivery_format == "hive"
@@ -227,7 +233,8 @@ class TestParquetFormats:
 
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR / "iceberg_warehouse", Folder(id="test", name="Test")
+            DATA_DIR / "iceberg_warehouse",
+            metadata=EntityMetadata(id="test", name="Test"),
         )
 
         iceberg_datasets = [
@@ -244,7 +251,8 @@ class TestParquetFormats:
 
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR / "iceberg_warehouse", Folder(id="test", name="Test")
+            DATA_DIR / "iceberg_warehouse",
+            metadata=EntityMetadata(id="test", name="Test"),
         )
 
         ds = catalog.dataset.all()[0]

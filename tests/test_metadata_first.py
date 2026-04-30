@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata
 from datannurpy.errors import ConfigError
 
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -47,7 +47,7 @@ class TestMatchPathRuntimeField:
     def test_match_path_set_at_scan_time(self, tmp_path: Path):
         csv = _write_csv(tmp_path)
         catalog = Catalog()
-        catalog.add_folder(tmp_path, Folder(id="src", name="Src"))
+        catalog.add_folder(tmp_path, metadata=EntityMetadata(id="src", name="Src"))
         df = catalog.dataset._df
         assert "_match_path" in df.columns
         match_paths = df["_match_path"].to_list()
@@ -56,7 +56,7 @@ class TestMatchPathRuntimeField:
     def test_match_path_is_runtime_field_not_persisted(self, tmp_path: Path):
         _write_csv(tmp_path)
         catalog = Catalog()
-        catalog.add_folder(tmp_path, Folder(id="src", name="Src"))
+        catalog.add_folder(tmp_path, metadata=EntityMetadata(id="src", name="Src"))
         assert "_match_path" in catalog.dataset.runtime_fields
 
 
@@ -159,13 +159,13 @@ class TestMetadataFirstE2E:
         with pytest.raises(ConfigError, match="orphan.csv"):
             catalog.add_folder(data_dir, create_folders=False, on_unmatched="error")
 
-    def test_create_folders_false_with_folder_arg_raises(self, tmp_path: Path):
-        """create_folders=False is incompatible with folder argument."""
+    def test_create_folders_false_with_metadata_arg_raises(self, tmp_path: Path):
+        """create_folders=False is incompatible with metadata argument."""
         catalog = Catalog()
         with pytest.raises(ConfigError, match="create_folders=False"):
             catalog.add_folder(
                 tmp_path,
-                Folder(id="x", name="X"),
+                metadata=EntityMetadata(id="x", name="X"),
                 create_folders=False,
             )
 
@@ -198,7 +198,7 @@ class TestMetadataFirstE2E:
         data_dir.mkdir()
         _write_csv(data_dir, "x.csv")
         catalog = Catalog()
-        catalog.add_folder(data_dir, Folder(id="src", name="Src"))
+        catalog.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Src"))
         # Folder gets created
         assert any(f.id == "src" for f in catalog.folder.all())
         assert len(catalog.dataset.all()) == 1
@@ -248,11 +248,19 @@ class TestMetadataFirstStructureOnly:
 
         catalog = Catalog(quiet=False)
 
-        catalog.add_folder(data_dir, Folder(id="src", name="Src"), depth="dataset")
+        catalog.add_folder(
+            data_dir,
+            metadata=EntityMetadata(id="src", name="Src"),
+            depth="dataset",
+        )
         first = capsys.readouterr()
         assert "x.csv" in first.err
 
-        catalog.add_folder(data_dir, Folder(id="src", name="Src"), depth="dataset")
+        catalog.add_folder(
+            data_dir,
+            metadata=EntityMetadata(id="src", name="Src"),
+            depth="dataset",
+        )
         second = capsys.readouterr()
         assert "x.csv (unchanged)" in second.err
 
@@ -309,7 +317,7 @@ class TestPeekFolderIdFallback:
             f"id,name,folder_id,data_path\nmeta_id,X, ,{csv}\n"
         )
         catalog = Catalog(metadata_path=meta_dir, quiet=True)
-        catalog.add_folder(data_dir, Folder(id="src", name="Src"))
+        catalog.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Src"))
         ds = catalog.dataset.get_by("id", "meta_id")
         assert ds is not None
         assert ds.folder_id == "src"
@@ -467,7 +475,11 @@ class TestPeekFolderIdFallbackOtherPaths:
             f"id,name,folder_id,data_path\nmid,X, ,{csv}\n"
         )
         catalog = Catalog(metadata_path=meta_dir, quiet=True)
-        catalog.add_folder(data_dir, Folder(id="src", name="Src"), depth="dataset")
+        catalog.add_folder(
+            data_dir,
+            metadata=EntityMetadata(id="src", name="Src"),
+            depth="dataset",
+        )
         ds = catalog.dataset.get_by("id", "mid")
         assert ds is not None
         assert ds.folder_id == "src"
@@ -485,7 +497,7 @@ class TestPeekFolderIdFallbackOtherPaths:
             f"id,name,folder_id,data_path\ntsid,TS, ,{last}\n"
         )
         catalog = Catalog(metadata_path=meta_dir, quiet=True)
-        catalog.add_folder(data_dir, Folder(id="src", name="Src"))
+        catalog.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Src"))
         ds = catalog.dataset.get_by("id", "tsid")
         assert ds is not None
         assert ds.folder_id == "src"

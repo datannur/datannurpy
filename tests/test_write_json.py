@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata, Folder
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 CSV_DIR = DATA_DIR / "csv"
@@ -16,7 +16,7 @@ def _make_employees_catalog() -> Catalog:
     catalog = Catalog()
     catalog.add_folder(
         CSV_DIR,
-        Folder(id="test", name="Test", license="ODbL-1.0"),
+        metadata=EntityMetadata(id="test", name="Test", license="ODbL-1.0"),
         include=["employees.csv"],
     )
     catalog.dataset.update("test---employees_csv", license="CC-BY-4.0")

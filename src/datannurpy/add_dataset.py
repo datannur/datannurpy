@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
 from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Any, cast
 
+from .entity_metadata import EntityMetadata
 from .utils import (
     build_variable_ids,
     log_done,
@@ -14,12 +14,11 @@ from .utils import (
     log_skip,
     make_id,
     sanitize_id,
-    upsert_folder,
 )
 from .utils.params import _UNSET, validate_params
 from .errors import ConfigError
 from .finalize import remove_dataset_cascade
-from .schema import Dataset, Folder
+from .schema import Dataset
 from .scanner.filesystem import FileSystem, is_remote_url
 from .scanner.utils import (
     SUPPORTED_FORMATS,
@@ -44,26 +43,6 @@ if TYPE_CHECKING:
     from .catalog import Catalog, Depth
 
 
-@dataclass
-class DatasetMeta:
-    """User-provided dataset metadata."""
-
-    name: str | None = None
-    description: str | None = None
-    license: str | None = None
-    type: str | None = None
-    link: str | None = None
-    localisation: str | None = None
-    manager_id: str | None = None
-    owner_id: str | None = None
-    tag_ids: list[str] | None = None
-    doc_ids: list[str] | None = None
-    start_date: str | None = None
-    end_date: str | None = None
-    updating_each: str | None = None
-    no_more_update: str | None = None
-
-
 def _create_dataset(
     dataset_id: str,
     default_name: str,
@@ -72,7 +51,7 @@ def _create_dataset(
     dataset_path: PurePath,
     current_mtime: int,
     delivery_format: str,
-    meta: DatasetMeta,
+    metadata: EntityMetadata | None,
     nb_row: int | None = None,
     sample_size: int | None = None,
     data_size: int | None = None,
@@ -80,11 +59,12 @@ def _create_dataset(
     fs: FileSystem | None = None,
 ) -> Dataset:
     """Create Dataset with common fields."""
+    resolved_metadata = metadata or EntityMetadata()
     return Dataset(
         id=dataset_id,
-        name=meta.name or default_name,
+        name=resolved_metadata.name or default_name,
         folder_id=folder_id,
-        license=meta.license,
+        license=resolved_metadata.license,
         data_path=data_path,
         last_update_date=get_mtime_iso(dataset_path, fs=fs),
         last_update_timestamp=current_mtime,
@@ -92,20 +72,20 @@ def _create_dataset(
         nb_row=nb_row,
         sample_size=sample_size,
         data_size=data_size,
-        description=meta.description
-        if meta.description is not None
+        description=resolved_metadata.description
+        if resolved_metadata.description is not None
         else scanned_description,
-        type=meta.type,
-        link=meta.link,
-        localisation=meta.localisation,
-        manager_id=meta.manager_id,
-        owner_id=meta.owner_id,
-        tag_ids=meta.tag_ids or [],
-        doc_ids=meta.doc_ids or [],
-        start_date=meta.start_date,
-        end_date=meta.end_date,
-        updating_each=meta.updating_each,
-        no_more_update=meta.no_more_update,
+        type=resolved_metadata.type,
+        link=resolved_metadata.link,
+        localisation=resolved_metadata.localisation,
+        manager_id=resolved_metadata.manager_id,
+        owner_id=resolved_metadata.owner_id,
+        tag_ids=resolved_metadata.tag_ids or [],
+        doc_ids=resolved_metadata.doc_ids or [],
+        start_date=resolved_metadata.start_date,
+        end_date=resolved_metadata.end_date,
+        updating_each=resolved_metadata.updating_each,
+        no_more_update=resolved_metadata.no_more_update,
         _seen=True,
         _match_path=data_path,
     )
@@ -115,31 +95,15 @@ def _create_dataset(
 def add_dataset(
     catalog: Catalog,
     path: str | Path | Sequence[str | Path],
-    folder: Folder | None = None,
     *,
+    metadata: EntityMetadata | None = None,
     depth: Depth | None = None,
-    folder_id: str | None = None,
     csv_encoding: str | None = None,
     sample_size: int | None = _UNSET,
     csv_skip_copy: bool | None = None,
     quiet: bool | None = None,
     refresh: bool | None = None,
     storage_options: dict[str, Any] | None = None,
-    # Dataset metadata overrides
-    name: str | None = None,
-    description: str | None = None,
-    license: str | None = None,
-    type: str | None = None,
-    link: str | None = None,
-    localisation: str | None = None,
-    manager_id: str | None = None,
-    owner_id: str | None = None,
-    tag_ids: list[str] | None = None,
-    doc_ids: list[str] | None = None,
-    start_date: str | None = None,
-    end_date: str | None = None,
-    updating_each: str | None = None,
-    no_more_update: str | None = None,
 ) -> None:
     """Add a single dataset file or partitioned directory to the catalog."""
     if isinstance(path, list):
@@ -176,33 +140,7 @@ def add_dataset(
 
     start_time = log_section("add_dataset", path_name, q)
 
-    # Handle folder
-    resolved_folder_id: str | None = None
-    if folder is not None:
-        if folder_id is not None:
-            raise ConfigError("Cannot specify both folder and folder_id")
-        upsert_folder(catalog, folder)
-        resolved_folder_id = folder.id
-    elif folder_id is not None:
-        resolved_folder_id = folder_id
-
-    # Build metadata container
-    meta = DatasetMeta(
-        name=name,
-        description=description,
-        license=license,
-        type=type,
-        link=link,
-        localisation=localisation,
-        manager_id=manager_id,
-        owner_id=owner_id,
-        tag_ids=tag_ids,
-        doc_ids=doc_ids,
-        start_date=start_date,
-        end_date=end_date,
-        updating_each=updating_each,
-        no_more_update=no_more_update,
-    )
+    resolved_folder_id = metadata.parent_id if metadata is not None else None
 
     resolved_sample_size = (
         sample_size if sample_size is not _UNSET else catalog.sample_size
@@ -219,7 +157,7 @@ def add_dataset(
             catalog,
             dataset_path,
             resolved_folder_id,
-            meta,
+            metadata,
             depth=resolved_depth,
             sample_size=resolved_sample_size,
             quiet=q,
@@ -259,7 +197,11 @@ def add_dataset(
     path_stem = Path(path_name).stem
     base_name = sanitize_id(path_stem)
     dataset_id = (
-        make_id(resolved_folder_id, base_name) if resolved_folder_id else base_name
+        metadata.id
+        if metadata is not None and metadata.id is not None
+        else (
+            make_id(resolved_folder_id, base_name) if resolved_folder_id else base_name
+        )
     )
 
     # Resolve csv_encoding
@@ -279,7 +221,7 @@ def add_dataset(
             dataset_path,
             current_mtime,
             delivery_format,
-            meta,
+            metadata,
             data_size=get_data_size(dataset_path, fs=fs),
             fs=fs,
         )
@@ -314,7 +256,7 @@ def add_dataset(
         dataset_path,
         current_mtime,
         delivery_format,
-        meta,
+        metadata,
         nb_row=result.nb_row,
         sample_size=result.sample_size,
         data_size=get_data_size(dataset_path, fs=fs),
@@ -346,7 +288,7 @@ def _add_parquet_directory(
     catalog: Catalog,
     dir_path: PurePath,
     folder_id: str | None,
-    meta: DatasetMeta,
+    metadata: EntityMetadata | None,
     *,
     depth: Depth,
     sample_size: int | None,
@@ -385,7 +327,11 @@ def _add_parquet_directory(
 
     # Build dataset ID
     base_name = sanitize_id(dir_name)
-    dataset_id = make_id(folder_id, base_name) if folder_id else base_name
+    dataset_id = (
+        metadata.id
+        if metadata is not None and metadata.id is not None
+        else (make_id(folder_id, base_name) if folder_id else base_name)
+    )
 
     # Structure mode: create dataset without scanning
     if depth == "dataset":
@@ -397,7 +343,7 @@ def _add_parquet_directory(
             dir_path,
             current_mtime,
             delivery_format,
-            meta,
+            metadata,
             data_size=get_dir_data_size(dir_path, fs=fs),
             fs=fs,
         )
@@ -416,8 +362,10 @@ def _add_parquet_directory(
         sample_size=(sample_size if depth == "value" else None),
     )
 
-    # Override meta.name with parquet metadata if not user-provided
-    default_name = meta.name or pq_meta.name or dir_name
+    # Override default_name with parquet metadata if the caller did not set one.
+    default_name = (
+        (metadata.name if metadata is not None else None) or pq_meta.name or dir_name
+    )
     scanned_desc = pq_meta.description
 
     dataset = _create_dataset(
@@ -428,7 +376,7 @@ def _add_parquet_directory(
         dir_path,
         current_mtime,
         delivery_format,
-        meta,
+        metadata,
         nb_row=nb_row,
         sample_size=pq_meta.sample_size,
         data_size=pq_meta.data_size,

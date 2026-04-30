@@ -7,7 +7,7 @@ from pathlib import Path
 import duckdb
 import pytest
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata
 
 # Pre-install DuckDB extensions to avoid lock conflicts with parallel workers
 duckdb.execute("INSTALL delta")
@@ -34,5 +34,5 @@ def csv_dir() -> Path:
 def full_catalog() -> Catalog:
     """Scan DATA_DIR once, reuse across read-only tests."""
     catalog = Catalog()
-    catalog.add_folder(DATA_DIR, Folder(id="test", name="Test"))
+    catalog.add_folder(DATA_DIR, metadata=EntityMetadata(id="test", name="Test"))
     return catalog

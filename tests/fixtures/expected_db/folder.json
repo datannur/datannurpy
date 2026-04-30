@@ -10,7 +10,13 @@
     "description": null,
     "license": null,
     "type": null,
-    "data_path": null
+    "link": null,
+    "localisation": null,
+    "data_path": null,
+    "start_date": null,
+    "end_date": null,
+    "updating_each": null,
+    "no_more_update": null
   },
   {
     "id": "company",
@@ -23,7 +29,13 @@
     "description": null,
     "license": null,
     "type": "sqlite",
-    "data_path": "company.db"
+    "link": null,
+    "localisation": null,
+    "data_path": "company.db",
+    "start_date": null,
+    "end_date": null,
+    "updating_each": null,
+    "no_more_update": null
   },
   {
     "id": "company---hr",
@@ -36,7 +48,13 @@
     "description": null,
     "license": null,
     "type": "table_prefix",
-    "data_path": null
+    "link": null,
+    "localisation": null,
+    "data_path": null,
+    "start_date": null,
+    "end_date": null,
+    "updating_each": null,
+    "no_more_update": null
   },
   {
     "id": "company---inventory",
@@ -49,7 +67,13 @@
     "description": null,
     "license": null,
     "type": "table_prefix",
-    "data_path": null
+    "link": null,
+    "localisation": null,
+    "data_path": null,
+    "start_date": null,
+    "end_date": null,
+    "updating_each": null,
+    "no_more_update": null
   },
   {
     "id": "company---sales",
@@ -62,7 +86,13 @@
     "description": null,
     "license": null,
     "type": "table_prefix",
-    "data_path": null
+    "link": null,
+    "localisation": null,
+    "data_path": null,
+    "start_date": null,
+    "end_date": null,
+    "updating_each": null,
+    "no_more_update": null
   },
   {
     "id": "company---sales---sales_order",
@@ -75,7 +105,13 @@
     "description": null,
     "license": null,
     "type": "table_prefix",
-    "data_path": null
+    "link": null,
+    "localisation": null,
+    "data_path": null,
+    "start_date": null,
+    "end_date": null,
+    "updating_each": null,
+    "no_more_update": null
   },
   {
     "id": "data",
@@ -88,7 +124,13 @@
     "description": null,
     "license": null,
     "type": "filesystem",
-    "data_path": ""
+    "link": null,
+    "localisation": null,
+    "data_path": "",
+    "start_date": null,
+    "end_date": null,
+    "updating_each": null,
+    "no_more_update": null
   },
   {
     "id": "data---csv",
@@ -101,7 +143,13 @@
     "description": null,
     "license": null,
     "type": "filesystem",
-    "data_path": "csv"
+    "link": null,
+    "localisation": null,
+    "data_path": "csv",
+    "start_date": null,
+    "end_date": null,
+    "updating_each": null,
+    "no_more_update": null
   },
   {
     "id": "data---iceberg_warehouse",
@@ -114,7 +162,13 @@
     "description": null,
     "license": null,
     "type": "filesystem",
-    "data_path": "iceberg_warehouse"
+    "link": null,
+    "localisation": null,
+    "data_path": "iceberg_warehouse",
+    "start_date": null,
+    "end_date": null,
+    "updating_each": null,
+    "no_more_update": null
   },
   {
     "id": "data---iceberg_warehouse---default",
@@ -127,7 +181,13 @@
     "description": null,
     "license": null,
     "type": "filesystem",
-    "data_path": "iceberg_warehouse/default"
+    "link": null,
+    "localisation": null,
+    "data_path": "iceberg_warehouse/default",
+    "start_date": null,
+    "end_date": null,
+    "updating_each": null,
+    "no_more_update": null
   },
   {
     "id": "data---metadata",
@@ -140,7 +200,13 @@
     "description": null,
     "license": null,
     "type": "filesystem",
-    "data_path": "metadata"
+    "link": null,
+    "localisation": null,
+    "data_path": "metadata",
+    "start_date": null,
+    "end_date": null,
+    "updating_each": null,
+    "no_more_update": null
   },
   {
     "id": "data---subfolder1",
@@ -153,7 +219,13 @@
     "description": null,
     "license": null,
     "type": "filesystem",
-    "data_path": "subfolder1"
+    "link": null,
+    "localisation": null,
+    "data_path": "subfolder1",
+    "start_date": null,
+    "end_date": null,
+    "updating_each": null,
+    "no_more_update": null
   },
   {
     "id": "data---timeseries",
@@ -166,7 +238,13 @@
     "description": null,
     "license": null,
     "type": "filesystem",
-    "data_path": "timeseries"
+    "link": null,
+    "localisation": null,
+    "data_path": "timeseries",
+    "start_date": null,
+    "end_date": null,
+    "updating_each": null,
+    "no_more_update": null
   },
   {
     "id": "data---timeseries---mixed",
@@ -179,7 +257,13 @@
     "description": null,
     "license": null,
     "type": "filesystem",
-    "data_path": "timeseries/mixed"
+    "link": null,
+    "localisation": null,
+    "data_path": "timeseries/mixed",
+    "start_date": null,
+    "end_date": null,
+    "updating_each": null,
+    "no_more_update": null
   },
   {
     "id": "data---timeseries---monthly_folders",
@@ -192,7 +276,13 @@
     "description": null,
     "license": null,
     "type": "filesystem",
-    "data_path": "timeseries/monthly_folders"
+    "link": null,
+    "localisation": null,
+    "data_path": "timeseries/monthly_folders",
+    "start_date": null,
+    "end_date": null,
+    "updating_each": null,
+    "no_more_update": null
   },
   {
     "id": "data---timeseries---quarterly",
@@ -205,7 +295,13 @@
     "description": null,
     "license": null,
     "type": "filesystem",
-    "data_path": "timeseries/quarterly"
+    "link": null,
+    "localisation": null,
+    "data_path": "timeseries/quarterly",
+    "start_date": null,
+    "end_date": null,
+    "updating_each": null,
+    "no_more_update": null
   },
   {
     "id": "data---timeseries---schema_evolution",
@@ -218,7 +314,13 @@
     "description": null,
     "license": null,
     "type": "filesystem",
-    "data_path": "timeseries/schema_evolution"
+    "link": null,
+    "localisation": null,
+    "data_path": "timeseries/schema_evolution",
+    "start_date": null,
+    "end_date": null,
+    "updating_each": null,
+    "no_more_update": null
   },
   {
     "id": "data---timeseries---yearly",
@@ -231,7 +333,13 @@
     "description": null,
     "license": null,
     "type": "filesystem",
-    "data_path": "timeseries/yearly"
+    "link": null,
+    "localisation": null,
+    "data_path": "timeseries/yearly",
+    "start_date": null,
+    "end_date": null,
+    "updating_each": null,
+    "no_more_update": null
   },
   {
     "id": "photovoltaik",
@@ -244,6 +352,12 @@
     "description": "Installations photovoltaïques de haute altitude en Suisse. Source: Office fédéral de l'énergie (OFEN) - opendata.swiss",
     "license": null,
     "type": "sqlite",
-    "data_path": "photovoltaik.gpkg"
+    "link": null,
+    "localisation": null,
+    "data_path": "photovoltaik.gpkg",
+    "start_date": null,
+    "end_date": null,
+    "updating_each": null,
+    "no_more_update": null
   }
 ]

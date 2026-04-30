@@ -9,7 +9,7 @@ from pathlib import Path
 import ibis
 import pytest
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata
 from datannurpy.scanner.database import (
     build_table_data_path,
     close_connection,
@@ -118,14 +118,18 @@ class TestIncrementalScanDatabase:
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog1.add_database(
+            conn_str, metadata=EntityMetadata(id="db", name="Database")
+        )
         catalog1.export_db()
 
         assert len(catalog1.dataset.all()) == 2
 
         # Second scan
         catalog2 = Catalog(app_path=app_dir, quiet=True)
-        catalog2.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog2.add_database(
+            conn_str, metadata=EntityMetadata(id="db", name="Database")
+        )
 
         # Should still have 2 datasets (unchanged)
         assert len(catalog2.dataset.all()) == 2
@@ -140,7 +144,9 @@ class TestIncrementalScanDatabase:
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog1.add_database(
+            conn_str, metadata=EntityMetadata(id="db", name="Database")
+        )
         catalog1.export_db()
 
         users_ds = next(
@@ -157,7 +163,9 @@ class TestIncrementalScanDatabase:
 
         # Second scan
         catalog2 = Catalog(app_path=app_dir, quiet=True)
-        catalog2.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog2.add_database(
+            conn_str, metadata=EntityMetadata(id="db", name="Database")
+        )
 
         # Should have rescanned with new row count
         users_ds2 = next(
@@ -172,7 +180,9 @@ class TestIncrementalScanDatabase:
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog1.add_database(
+            conn_str, metadata=EntityMetadata(id="db", name="Database")
+        )
         catalog1.export_db()
 
         users_ds = next(
@@ -189,7 +199,9 @@ class TestIncrementalScanDatabase:
 
         # Second scan
         catalog2 = Catalog(app_path=app_dir, quiet=True)
-        catalog2.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog2.add_database(
+            conn_str, metadata=EntityMetadata(id="db", name="Database")
+        )
 
         # Should have new signature
         users_ds2 = next(
@@ -204,7 +216,9 @@ class TestIncrementalScanDatabase:
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog1.add_database(
+            conn_str, metadata=EntityMetadata(id="db", name="Database")
+        )
         catalog1.export_db()
 
         assert len(catalog1.dataset.all()) == 2
@@ -219,7 +233,9 @@ class TestIncrementalScanDatabase:
 
         # Second scan
         catalog2 = Catalog(app_path=app_dir, quiet=True)
-        catalog2.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog2.add_database(
+            conn_str, metadata=EntityMetadata(id="db", name="Database")
+        )
 
         # Should have 3 datasets
         assert len(catalog2.dataset.all()) == 3
@@ -232,14 +248,20 @@ class TestIncrementalScanDatabase:
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog1.add_database(
+            conn_str, metadata=EntityMetadata(id="db", name="Database")
+        )
         catalog1.export_db()
 
         initial_vars = len(catalog1.variable.all())
 
         # Second scan with refresh=True - should rescan and update existing datasets
         catalog2 = Catalog(app_path=app_dir, quiet=True)
-        catalog2.add_database(conn_str, Folder(id="db", name="Database"), refresh=True)
+        catalog2.add_database(
+            conn_str,
+            metadata=EntityMetadata(id="db", name="Database"),
+            refresh=True,
+        )
 
         # With refresh, tables are rescanned and updated (not duplicated)
         # The key is that refresh=True doesn't skip the tables even if unchanged
@@ -253,12 +275,16 @@ class TestIncrementalScanDatabase:
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog1.add_database(
+            conn_str, metadata=EntityMetadata(id="db", name="Database")
+        )
         catalog1.export_db()
 
         # Second scan with same folder (datasets should be skipped)
         catalog2 = Catalog(app_path=app_dir, quiet=True)
-        catalog2.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog2.add_database(
+            conn_str, metadata=EntityMetadata(id="db", name="Database")
+        )
 
         # Should have same number of datasets (not duplicated)
         assert len(catalog2.dataset.all()) == 2
@@ -267,7 +293,9 @@ class TestIncrementalScanDatabase:
         """Tables should have data_path stored for incremental tracking."""
         catalog = Catalog(quiet=True)
         conn_str = f"sqlite:////{sample_db}"
-        catalog.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog.add_database(
+            conn_str, metadata=EntityMetadata(id="db", name="Database")
+        )
 
         for ds in catalog.dataset.all():
             assert ds.data_path is not None
@@ -277,7 +305,9 @@ class TestIncrementalScanDatabase:
         """Tables should have schema_signature stored."""
         catalog = Catalog(quiet=True)
         conn_str = f"sqlite:////{sample_db}"
-        catalog.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog.add_database(
+            conn_str, metadata=EntityMetadata(id="db", name="Database")
+        )
 
         for ds in catalog.dataset.all():
             assert ds.schema_signature is not None
@@ -287,7 +317,9 @@ class TestIncrementalScanDatabase:
         """First scan should set last_update_date/timestamp to None."""
         catalog = Catalog(quiet=True)
         conn_str = f"sqlite:////{sample_db}"
-        catalog.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog.add_database(
+            conn_str, metadata=EntityMetadata(id="db", name="Database")
+        )
 
         for ds in catalog.dataset.all():
             assert ds.last_update_timestamp is None
@@ -299,7 +331,9 @@ class TestIncrementalScanDatabase:
         conn_str = f"sqlite:////{sample_db}"
 
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog1.add_database(
+            conn_str, metadata=EntityMetadata(id="db", name="Database")
+        )
         catalog1.export_db()
 
         # Modify table
@@ -310,7 +344,9 @@ class TestIncrementalScanDatabase:
         conn.close()
 
         catalog2 = Catalog(app_path=app_dir, quiet=True)
-        catalog2.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog2.add_database(
+            conn_str, metadata=EntityMetadata(id="db", name="Database")
+        )
 
         users = next(d for d in catalog2.dataset.all() if "users" in (d.name or ""))
         assert users.last_update_date is not None
@@ -325,7 +361,9 @@ class TestIncrementalScanDatabase:
 
         # Scan 1: first scan (timestamps are None)
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog1.add_database(
+            conn_str, metadata=EntityMetadata(id="db", name="Database")
+        )
         catalog1.export_db()
 
         # Modify table to trigger a real change
@@ -337,7 +375,9 @@ class TestIncrementalScanDatabase:
 
         # Scan 2: detects change → sets timestamp
         catalog2 = Catalog(app_path=app_dir, quiet=True)
-        catalog2.add_database(conn_str, Folder(id="db", name="Database"))
+        catalog2.add_database(
+            conn_str, metadata=EntityMetadata(id="db", name="Database")
+        )
         catalog2.export_db()
 
         users2 = next(d for d in catalog2.dataset.all() if "users" in (d.name or ""))
@@ -346,7 +386,11 @@ class TestIncrementalScanDatabase:
 
         # Scan 3: refresh=True but no change → preserves timestamp
         catalog3 = Catalog(app_path=app_dir, quiet=True)
-        catalog3.add_database(conn_str, Folder(id="db", name="Database"), refresh=True)
+        catalog3.add_database(
+            conn_str,
+            metadata=EntityMetadata(id="db", name="Database"),
+            refresh=True,
+        )
 
         users3 = next(d for d in catalog3.dataset.all() if "users" in (d.name or ""))
         assert users3.last_update_timestamp == saved_ts

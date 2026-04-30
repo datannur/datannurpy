@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata, Folder
 from datannurpy.errors import ConfigError
 from datannurpy.schema import Enumeration, Frequency, Value, Variable
 from datannurpy.utils.ids import build_frequency_id, build_value_id
@@ -1344,7 +1344,7 @@ class TestFrequencyHiddenPolicy:
         self._make_csv(tmp_path)
         meta = self._make_metadata(tmp_path, "src")
         catalog = Catalog(metadata_path=meta, quiet=True)
-        catalog.add_folder(tmp_path, folder=Folder(id="src"), include="*.csv")
+        catalog.add_folder(tmp_path, metadata=EntityMetadata(id="src"), include="*.csv")
         ensure_metadata_applied(catalog)
 
         name_var = catalog.variable.get("src---data_csv---name")
@@ -1375,7 +1375,7 @@ class TestFrequencyHiddenPolicy:
         self._make_csv(tmp_path)
         meta = self._make_metadata(tmp_path, "src")
         catalog = Catalog(metadata_path=meta, quiet=True)
-        catalog.add_folder(tmp_path, folder=Folder(id="src"), include="*.csv")
+        catalog.add_folder(tmp_path, metadata=EntityMetadata(id="src"), include="*.csv")
 
         name_var = catalog.variable.get("src---data_csv---name")
         assert name_var is not None
@@ -1386,7 +1386,7 @@ class TestFrequencyHiddenPolicy:
         self._make_csv(tmp_path)
         meta = self._make_metadata(tmp_path, "src")
         catalog = Catalog(metadata_path=meta, quiet=True)
-        catalog.add_folder(tmp_path, folder=Folder(id="src"), include="*.csv")
+        catalog.add_folder(tmp_path, metadata=EntityMetadata(id="src"), include="*.csv")
         ensure_metadata_applied(catalog)
 
         name_var = catalog.variable.get("src---data_csv---name")
@@ -1397,7 +1397,7 @@ class TestFrequencyHiddenPolicy:
         """Without metadata_path, no variables are hidden."""
         self._make_csv(tmp_path)
         catalog = Catalog(quiet=True)
-        catalog.add_folder(tmp_path, folder=Folder(id="src"), include="*.csv")
+        catalog.add_folder(tmp_path, metadata=EntityMetadata(id="src"), include="*.csv")
 
         name_var = catalog.variable.get("src---data_csv---name")
         assert name_var is not None
@@ -1425,7 +1425,7 @@ class TestFrequencyHiddenPolicy:
             "src---data_csv---name",
             "src---data_csv---color",
         }
-        catalog.add_folder(tmp_path, folder=Folder(id="src"), include="*.csv")
+        catalog.add_folder(tmp_path, metadata=EntityMetadata(id="src"), include="*.csv")
         ensure_metadata_applied(catalog)
 
         for col in ("name", "color"):
@@ -1491,7 +1491,9 @@ class TestConceptEntity:
         meta.mkdir()
         (meta / "concept.csv").write_text("id,name\nc1,C1\n")
         catalog = Catalog(metadata_path=meta, quiet=True)
-        catalog.add_folder(tmp_path, folder=Folder(id="src"), include="data.csv")
+        catalog.add_folder(
+            tmp_path, metadata=EntityMetadata(id="src"), include="data.csv"
+        )
         # concept not referenced by any variable -> unseen -> removed
         assert catalog.concept.count == 0
 

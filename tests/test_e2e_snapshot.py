@@ -16,7 +16,7 @@ from typing import Any
 
 import pytest
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 FIXTURES_DIR = Path(__file__).parent / "fixtures" / "expected_db"
@@ -96,7 +96,7 @@ def build_demo_catalog(app_dir: Path) -> tuple[Catalog, Path]:
     catalog.add_database(f"sqlite:///{DATA_DIR}/company.db")
     catalog.add_database(
         f"sqlite:///{DATA_DIR}/photovoltaik.gpkg",
-        folder=Folder(
+        metadata=EntityMetadata(
             id="photovoltaik",
             name="Grandes installations photovoltaïques",
             description="Installations photovoltaïques de haute altitude en Suisse. "

@@ -4,6 +4,7 @@
 
 - add: public `copy_assets()` helper and `copy_assets` / `base_dir` parameters on `export_db()` / `export_app()`
 - add: `license` fields on folders and datasets, with matching kwargs and export support
+- change: scan APIs now use shared `EntityMetadata` via `metadata=` in Python and YAML
 - add: warning when a remote scan exceeds the materialization cap (suggests `sample_size`)
 - fix: folder discovery skips unreadable subdirectories (e.g. SFTP ACLs) instead of aborting
 - fix: `add_folder(depth="dataset")` logs each dataset like other depth modes

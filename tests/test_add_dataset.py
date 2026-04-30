@@ -9,7 +9,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata, Folder
 from datannurpy.errors import ConfigError
 
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -54,12 +54,13 @@ class TestAddDataset:
         exported = json.loads((out_dir / "dataset.json").read_text())
         assert exported[0]["sample_size"] == 100
 
-    def test_add_dataset_with_folder(self):
-        """add_dataset with folder should create folder and link."""
+    def test_add_dataset_with_parent_spec(self):
+        """add_dataset should link to the parent folder declared in EntityMetadata."""
         catalog = Catalog()
+        catalog.folder.add(Folder(id="hr", name="HR Data"))
         catalog.add_dataset(
             CSV_DIR / "employees.csv",
-            folder=Folder(id="hr", name="HR Data"),
+            metadata=EntityMetadata(parent_id="hr"),
         )
 
         assert len(catalog.folder.where("id", "!=", "_enumerations")) == 1
@@ -67,35 +68,48 @@ class TestAddDataset:
         assert catalog.dataset.all()[0].folder_id == "hr"
         assert catalog.dataset.all()[0].id == "hr---employees"
 
-    def test_add_dataset_with_folder_id(self):
-        """add_dataset with folder_id should link to existing folder."""
+    def test_add_dataset_with_metadata_parent_id(self):
+        """add_dataset should link to the existing folder from metadata.parent_id."""
         catalog = Catalog()
-        catalog.add_folder(CSV_DIR, Folder(id="data", name="Data"), include=[])
-        catalog.add_dataset(CSV_DIR / "employees.csv", folder_id="data")
+        catalog.add_folder(
+            CSV_DIR,
+            metadata=EntityMetadata(id="data", name="Data"),
+            include=[],
+        )
+        catalog.add_dataset(
+            CSV_DIR / "employees.csv", metadata=EntityMetadata(parent_id="data")
+        )
 
         assert catalog.dataset.all()[0].folder_id == "data"
 
-    def test_add_dataset_reuses_folder(self):
-        """add_dataset should not duplicate folder."""
+    def test_add_dataset_reuses_existing_folder(self):
+        """add_dataset should reuse an existing folder referenced by metadata.parent_id."""
         catalog = Catalog()
         folder = Folder(id="src", name="Source")
-        catalog.add_dataset(CSV_DIR / "employees.csv", folder=folder)
-        catalog.add_dataset(CSV_DIR / "regions_france.csv", folder=folder)
+        catalog.folder.add(folder)
+        catalog.add_dataset(
+            CSV_DIR / "employees.csv", metadata=EntityMetadata(parent_id="src")
+        )
+        catalog.add_dataset(
+            CSV_DIR / "regions_france.csv", metadata=EntityMetadata(parent_id="src")
+        )
 
         assert len(catalog.folder.where("id", "!=", "_enumerations")) == 1
         assert len(catalog.dataset.all()) == 2
 
     def test_add_dataset_with_metadata(self):
-        """add_dataset should accept metadata overrides."""
+        """add_dataset should accept metadata overrides through EntityMetadata."""
         catalog = Catalog()
         catalog.add_dataset(
             CSV_DIR / "employees.csv",
-            name="Employés",
-            description="Liste des employés",
-            license="CC-BY-4.0",
-            type="référentiel",
-            link="https://example.com",
-            start_date="2020/01/01",
+            metadata=EntityMetadata(
+                name="Employés",
+                description="Liste des employés",
+                license="CC-BY-4.0",
+                type="référentiel",
+                link="https://example.com",
+                start_date="2020/01/01",
+            ),
         )
 
         ds = catalog.dataset.all()[0]
@@ -123,7 +137,10 @@ class TestAddDataset:
     def test_add_dataset_explicit_description_not_overwritten(self):
         """add_dataset should keep explicit description over file metadata."""
         catalog = Catalog()
-        catalog.add_dataset(DATA_DIR / "cars.sas7bdat", description="Custom desc")
+        catalog.add_dataset(
+            DATA_DIR / "cars.sas7bdat",
+            metadata=EntityMetadata(description="Custom desc"),
+        )
 
         assert catalog.dataset.all()[0].description == "Custom desc"
 
@@ -141,15 +158,16 @@ class TestAddDataset:
         with pytest.raises(ConfigError, match="Unsupported format"):
             catalog.add_dataset(tmp_path / "data.json")
 
-    def test_add_dataset_folder_and_folder_id_error(self):
-        """add_dataset should raise if both folder and folder_id given."""
+    def test_add_dataset_explicit_id_overrides_generated_id(self):
+        """add_dataset should use metadata.id when provided."""
         catalog = Catalog()
-        with pytest.raises(ConfigError, match="Cannot specify both"):
-            catalog.add_dataset(
-                CSV_DIR / "employees.csv",
-                folder=Folder(id="a", name="A"),
-                folder_id="b",
-            )
+        catalog.add_dataset(
+            CSV_DIR / "employees.csv",
+            metadata=EntityMetadata(id="employees_v1", parent_id="raw"),
+        )
+
+        assert catalog.dataset.all()[0].id == "employees_v1"
+        assert catalog.dataset.all()[0].folder_id == "raw"
 
 
 class TestAddDatasetDelta:
@@ -169,13 +187,16 @@ class TestAddDatasetDelta:
         assert ds.description == "A test Delta Lake table"
 
     def test_add_dataset_delta_with_overrides(self):
-        """add_dataset on Delta should allow metadata overrides."""
+        """add_dataset on Delta should allow EntityMetadata overrides."""
         catalog = Catalog()
+        catalog.folder.add(Folder(id="sales", name="Sales"))
         catalog.add_dataset(
             DATA_DIR / "test_delta",
-            name="Custom Name",
-            description="Custom description",
-            folder=Folder(id="sales", name="Sales"),
+            metadata=EntityMetadata(
+                parent_id="sales",
+                name="Custom Name",
+                description="Custom description",
+            ),
             quiet=True,
         )
 
@@ -428,14 +449,15 @@ class TestListPath:
         assert "b" in ids
 
     def test_add_dataset_list_shared_folder(self, tmp_path: Path):
-        """Shared folder is applied to all paths."""
+        """Shared metadata.parent_id is applied to all paths."""
         (tmp_path / "a.csv").write_text("x\n1")
         (tmp_path / "b.csv").write_text("y\n2")
 
         catalog = Catalog(quiet=True)
+        catalog.folder.add(Folder(id="src", name="Source"))
         catalog.add_dataset(
             [tmp_path / "a.csv", tmp_path / "b.csv"],
-            folder=Folder(id="src", name="Source"),
+            metadata=EntityMetadata(parent_id="src"),
         )
 
         ids = {d.id for d in catalog.dataset.all()}

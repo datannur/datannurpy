@@ -6,6 +6,10 @@ from collections.abc import Sequence
 from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Any, Literal
 
+from .entity_metadata import (
+    EntityMetadata,
+    folder_from_metadata,
+)
 from .utils import (
     build_dataset_id_name,
     build_variable_ids,
@@ -96,7 +100,7 @@ def _resolve_ids_from_peek(
 def add_folder(
     catalog: Catalog,
     path: str | Path | Sequence[str | Path],
-    folder: Folder | None = None,
+    metadata: EntityMetadata | None = None,
     *,
     depth: Depth | None = None,
     include: Sequence[str] | None = None,
@@ -111,38 +115,11 @@ def add_folder(
     storage_options: dict[str, Any] | None = None,
     create_folders: bool = True,
     on_unmatched: OnUnmatched = "warn",
-    id: str | None = None,
-    name: str | None = None,
-    description: str | None = None,
-    license: str | None = None,
-    manager_id: str | None = None,
-    owner_id: str | None = None,
 ) -> None:
     """Scan a folder and add its contents to the catalog."""
-    if (
-        id is not None
-        or name is not None
-        or description is not None
-        or license is not None
-        or manager_id is not None
-        or owner_id is not None
-    ):
-        if folder is not None:
-            raise ConfigError(
-                "Cannot specify both folder and id/name/description/license/manager_id/owner_id"
-            )
-        folder = Folder(
-            id=id or "",
-            name=name,
-            description=description,
-            license=license,
-            manager_id=manager_id,
-            owner_id=owner_id,
-        )
-    if not create_folders and folder is not None:
+    if not create_folders and metadata is not None:
         raise ConfigError(
-            "create_folders=False is incompatible with folder/id/name/"
-            "description/license/manager_id/owner_id (no folder is created)"
+            "create_folders=False is incompatible with metadata= (no folder is created)"
         )
     if isinstance(path, list):
         kwargs = {k: v for k, v in locals().items() if k not in ("catalog", "path")}
@@ -202,16 +179,18 @@ def add_folder(
 
     if create_folders:
         # Create default folder from directory name if not provided
-        if folder is None:
+        if metadata is None:
             folder = Folder(id=sanitize_id(root_name), name=root_name)
-        elif not folder.id:
-            folder.id = sanitize_id(root_name)
-            if folder.name is None:
-                folder.name = root_name
+        else:
+            folder = folder_from_metadata(
+                metadata,
+                default_id=sanitize_id(root_name),
+                default_name=root_name,
+            )
 
         # Set data_path for root folder
         folder.data_path = str(root)
-        folder.type = "filesystem"
+        folder.type = folder.type or "filesystem"
 
         # Add or update root folder
         upsert_folder(catalog, folder)

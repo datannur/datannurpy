@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata
 from datannurpy.errors import ConfigError
 
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -21,14 +21,20 @@ class TestAddFolderFormats:
         """add_folder should scan CSV files."""
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+            DATA_DIR,
+            metadata=EntityMetadata(id="test", name="Test"),
+            include=["employees.csv"],
         )
         assert len(catalog.variable.all()) == 9
 
     def test_add_folder_scans_excel(self):
         """add_folder should scan Excel files."""
         catalog = Catalog()
-        catalog.add_folder(DATA_DIR, Folder(id="test", name="Test"), include=["*.xlsx"])
+        catalog.add_folder(
+            DATA_DIR,
+            metadata=EntityMetadata(id="test", name="Test"),
+            include=["*.xlsx"],
+        )
         assert len(catalog.variable.all()) > 0
 
     def test_add_folder_empty_excel(self, tmp_path: Path):
@@ -125,7 +131,9 @@ class TestAddFolderFormats:
         """add_folder should scan Parquet files (.parquet extension)."""
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["test.parquet"]
+            DATA_DIR,
+            metadata=EntityMetadata(id="test", name="Test"),
+            include=["test.parquet"],
         )
         assert len(catalog.dataset.all()) == 1
         assert catalog.dataset.all()[0].delivery_format == "parquet"
@@ -135,7 +143,9 @@ class TestAddFolderFormats:
         """add_folder should scan Parquet files (.pq extension)."""
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["test.pq"]
+            DATA_DIR,
+            metadata=EntityMetadata(id="test", name="Test"),
+            include=["test.pq"],
         )
         assert len(catalog.dataset.all()) == 1
         assert catalog.dataset.all()[0].delivery_format == "parquet"
@@ -146,7 +156,7 @@ class TestAddFolderFormats:
         catalog = Catalog()
         catalog.add_folder(
             DATA_DIR,
-            Folder(id="test", name="Test"),
+            metadata=EntityMetadata(id="test", name="Test"),
             include=["test_with_metadata.parquet"],
         )
         assert (
@@ -173,7 +183,9 @@ class TestAddFolderIds:
         """add_folder should prefix IDs with folder ID."""
         catalog = Catalog()
         catalog.add_folder(
-            CSV_DIR, Folder(id="src", name="Source"), include=["employees.csv"]
+            CSV_DIR,
+            metadata=EntityMetadata(id="src", name="Source"),
+            include=["employees.csv"],
         )
         assert catalog.dataset.all()[0].id == "src---employees_csv"
         assert catalog.variable.all()[0].id.startswith("src---employees_csv---")
@@ -186,7 +198,9 @@ class TestAddFolderStats:
         """add_folder should compute stats by default."""
         catalog = Catalog()
         catalog.add_folder(
-            CSV_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+            CSV_DIR,
+            metadata=EntityMetadata(id="test", name="Test"),
+            include=["employees.csv"],
         )
         assert all(v.nb_distinct is not None for v in catalog.variable.all())
         assert all(v.nb_missing is not None for v in catalog.variable.all())
@@ -196,7 +210,7 @@ class TestAddFolderStats:
         catalog = Catalog()
         catalog.add_folder(
             CSV_DIR,
-            Folder(id="test", name="Test"),
+            metadata=EntityMetadata(id="test", name="Test"),
             include=["employees.csv"],
             depth="variable",
         )
@@ -259,7 +273,7 @@ class TestSubfolders:
         (subdir / "sales.csv").write_text("amount,qty\n100,5\n200,10")
 
         catalog = Catalog()
-        catalog.add_folder(tmp_path, Folder(id="src", name="Source"))
+        catalog.add_folder(tmp_path, metadata=EntityMetadata(id="src", name="Source"))
 
         assert len(catalog.dataset.all()) == 1
         assert catalog.dataset.all()[0].id == "src---2024---january---sales_csv"
@@ -270,7 +284,7 @@ class TestSubfolders:
         (tmp_path / "2024" / "data.csv").write_text("x\n1")
 
         catalog = Catalog()
-        catalog.add_folder(tmp_path, Folder(id="root", name="Root"))
+        catalog.add_folder(tmp_path, metadata=EntityMetadata(id="root", name="Root"))
 
         user_folders = catalog.folder.where("id", "!=", "_enumerations")
         assert len(user_folders) == 2  # root + 2024
@@ -285,7 +299,7 @@ class TestSubfolders:
         (deep / "file.csv").write_text("col\n1")
 
         catalog = Catalog()
-        catalog.add_folder(tmp_path, Folder(id="x", name="X"))
+        catalog.add_folder(tmp_path, metadata=EntityMetadata(id="x", name="X"))
 
         user_folders = catalog.folder.where("id", "!=", "_enumerations")
         assert len(user_folders) == 4
@@ -301,7 +315,7 @@ class TestSubfolders:
         (tmp_path / "a" / "b" / "data.csv").write_text("x\n1")
 
         catalog = Catalog()
-        catalog.add_folder(tmp_path, Folder(id="root", name="Root"))
+        catalog.add_folder(tmp_path, metadata=EntityMetadata(id="root", name="Root"))
 
         folders_by_id = {f.id: f for f in catalog.folder.all()}
         assert folders_by_id["root---a"].parent_id == "root"
@@ -340,7 +354,7 @@ class TestIdSanitization:
         (tmp_path / "my file.csv").write_text("x\n1")
 
         catalog = Catalog()
-        catalog.add_folder(tmp_path, Folder(id="src", name="Source"))
+        catalog.add_folder(tmp_path, metadata=EntityMetadata(id="src", name="Source"))
 
         assert catalog.dataset.all()[0].id == "src---my file_csv"
 
@@ -349,7 +363,7 @@ class TestIdSanitization:
         (tmp_path / "data@2024#v1.csv").write_text("x\n1")
 
         catalog = Catalog()
-        catalog.add_folder(tmp_path, Folder(id="src", name="Source"))
+        catalog.add_folder(tmp_path, metadata=EntityMetadata(id="src", name="Source"))
 
         assert catalog.dataset.all()[0].id == "src---data_2024_v1_csv"
 
@@ -360,7 +374,7 @@ class TestIdSanitization:
         (subdir / "data.csv").write_text("x\n1")
 
         catalog = Catalog()
-        catalog.add_folder(tmp_path, Folder(id="root", name="Root"))
+        catalog.add_folder(tmp_path, metadata=EntityMetadata(id="root", name="Root"))
 
         assert "root---Year 2024" in [f.id for f in catalog.folder.all()]
 
@@ -369,7 +383,7 @@ class TestIdSanitization:
         (tmp_path / "data.csv").write_text("col@name,col#2\n1,2")
 
         catalog = Catalog()
-        catalog.add_folder(tmp_path, Folder(id="src", name="Source"))
+        catalog.add_folder(tmp_path, metadata=EntityMetadata(id="src", name="Source"))
 
         var_ids = [v.id for v in catalog.variable.all()]
         assert "src---data_csv---col_name" in var_ids
@@ -471,7 +485,7 @@ class TestEdgeCases:
     def test_empty_folder(self, tmp_path: Path):
         """Empty folder should create no datasets."""
         catalog = Catalog()
-        catalog.add_folder(tmp_path, Folder(id="empty", name="Empty"))
+        catalog.add_folder(tmp_path, metadata=EntityMetadata(id="empty", name="Empty"))
 
         assert len(catalog.folder.all()) == 1
         assert len(catalog.dataset.all()) == 0
@@ -537,12 +551,12 @@ class TestIncrementalScanSubfolders:
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
         # Reload and rescan
         catalog2 = Catalog(app_path=app_dir, quiet=True)
-        catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog2.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog2.finalize()
 
         # All user folders should be kept (excluding _enumerations system folder)
@@ -897,36 +911,36 @@ class TestListPath:
         assert len(catalog.dataset.all()) == 2
 
 
-class TestAddFolderKwargs:
-    """Test id/name/description/license kwargs on add_folder."""
+class TestAddFolderMetadata:
+    """Test EntityMetadata on add_folder."""
 
     def test_name_only_auto_generates_id(self, tmp_path: Path):
-        """Passing name without id auto-generates id from path."""
+        """EntityMetadata name without id auto-generates id from path."""
         d = tmp_path / "sales"
         d.mkdir()
         (d / "f.csv").write_text("x\n1")
 
         catalog = Catalog(quiet=True)
-        catalog.add_folder(d, name="Sales Data")
+        catalog.add_folder(d, metadata=EntityMetadata(name="Sales Data"))
 
         folders = catalog.folder.all()
         assert any(f.id == "sales" and f.name == "Sales Data" for f in folders)
 
     def test_description_only_auto_generates_id(self, tmp_path: Path):
-        """Passing description without id auto-generates id from path."""
+        """EntityMetadata description without id auto-generates id from path."""
         d = tmp_path / "hr"
         d.mkdir()
         (d / "f.csv").write_text("x\n1")
 
         catalog = Catalog(quiet=True)
-        catalog.add_folder(d, description="HR data")
+        catalog.add_folder(d, metadata=EntityMetadata(description="HR data"))
 
         folders = catalog.folder.all()
         f = next(f for f in folders if f.id == "hr")
         assert f.description == "HR data"
 
-    def test_id_name_description_license(self, tmp_path: Path):
-        """Passing folder metadata kwargs works."""
+    def test_metadata_id_name_description_license(self, tmp_path: Path):
+        """Passing folder metadata through EntityMetadata works."""
         d = tmp_path / "data"
         d.mkdir()
         (d / "f.csv").write_text("x\n1")
@@ -934,10 +948,12 @@ class TestAddFolderKwargs:
         catalog = Catalog(quiet=True)
         catalog.add_folder(
             d,
-            id="my_id",
-            name="My Name",
-            description="My Desc",
-            license="ODbL-1.0",
+            metadata=EntityMetadata(
+                id="my_id",
+                name="My Name",
+                description="My Desc",
+                license="ODbL-1.0",
+            ),
         )
 
         folders = catalog.folder.all()
@@ -946,10 +962,14 @@ class TestAddFolderKwargs:
         assert f.description == "My Desc"
         assert f.license == "ODbL-1.0"
 
-    def test_folder_and_kwargs_raises(self, tmp_path: Path):
-        """Cannot specify both folder and id/name/description."""
+    def test_create_folders_false_rejects_spec(self, tmp_path: Path):
+        """create_folders=False rejects EntityMetadata input."""
         d = tmp_path / "data"
         d.mkdir()
 
-        with pytest.raises(ConfigError, match="Cannot specify both"):
-            Catalog(quiet=True).add_folder(d, folder=Folder(id="x"), name="conflict")
+        with pytest.raises(ConfigError, match="create_folders=False is incompatible"):
+            Catalog(quiet=True).add_folder(
+                d,
+                metadata=EntityMetadata(id="x"),
+                create_folders=False,
+            )
