@@ -219,16 +219,25 @@ def scan_csv(
 
             con = ibis.duckdb.connect()
             try:
+                # DuckDB's CSV sniffer in strict mode occasionally rejects
+                # files that are nonetheless RFC 4180-compliant. Retry once
+                # with strict_mode=False before giving up.
+                strict_mode = True
                 try:
                     table = con.read_csv(str(csv_path))
                     row_count = int(table.count().to_pyarrow().as_py())
-                except _duckdb.InvalidInputException as exc:
-                    log_warn(
-                        f"{file_path.name}: malformed CSV "
-                        f"({_short_csv_error(exc)}); skipped as untreatable",
-                        quiet,
-                    )
-                    return [], None, None, None
+                except _duckdb.InvalidInputException:
+                    try:
+                        table = con.read_csv(str(csv_path), strict_mode=False)
+                        row_count = int(table.count().to_pyarrow().as_py())
+                        strict_mode = False
+                    except _duckdb.InvalidInputException as exc:
+                        log_warn(
+                            f"{file_path.name}: unscannable CSV "
+                            f"({_short_csv_error(exc)}); skipped as untreatable",
+                            quiet,
+                        )
+                        return [], None, None, None
 
                 if row_count == 0:
                     variables, freq_table = build_variables(
@@ -242,8 +251,9 @@ def scan_csv(
                 actual_sample_size: int | None = None
                 if sample_size is not None and row_count > sample_size and infer_stats:
                     safe_path = str(csv_path).replace("'", "''")
+                    strict_arg = "" if strict_mode else ", strict_mode=false"
                     cursor: Any = con.raw_sql(
-                        f"SELECT * FROM read_csv('{safe_path}') "
+                        f"SELECT * FROM read_csv('{safe_path}'{strict_arg}) "
                         f"USING SAMPLE reservoir({sample_size} ROWS)"
                     )
                     sample_arrow = cursor.fetch_arrow_table()

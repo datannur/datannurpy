@@ -180,7 +180,7 @@ class TestSampling:
         assert frequency is None
 
     def test_scan_csv_malformed_caught(self, tmp_path: Path, monkeypatch, capsys):
-        """Malformed CSV that DuckDB rejects is reported cleanly (no traceback)."""
+        """Malformed CSV that DuckDB rejects (even with strict_mode=False) is reported cleanly."""
         import duckdb
 
         from datannurpy.scanner import csv as csv_mod
@@ -213,13 +213,51 @@ class TestSampling:
         )
 
         captured = capsys.readouterr()
-        assert "malformed CSV" in captured.err
+        assert "unscannable CSV" in captured.err
         assert "skipped as untreatable" in captured.err
         assert "Traceback" not in captured.err
         assert variables == []
         assert nb_row is None
         assert actual_sample is None
         assert frequency is None
+
+    def test_scan_csv_strict_mode_fallback(self, tmp_path: Path, monkeypatch):
+        """When strict-mode read_csv fails, retry with strict_mode=False succeeds."""
+        import duckdb
+
+        from datannurpy.scanner import csv as csv_mod
+
+        csv_file = tmp_path / "ok.csv"
+        csv_file.write_text("a,b\n1,2\n3,4\n")
+
+        original_connect = csv_mod.ibis.duckdb.connect
+
+        class _Wrap:
+            def __init__(self, real):
+                self._real = real
+
+            def read_csv(self, *a, **kw):
+                if not kw.get("strict_mode", True):
+                    return self._real.read_csv(*a, **kw)
+                raise duckdb.InvalidInputException(
+                    "Invalid Input Error: It was not possible to automatically "
+                    "detect the CSV parsing dialect"
+                )
+
+            def __getattr__(self, name):
+                return getattr(self._real, name)
+
+        def fake_connect(*a, **kw):
+            return _Wrap(original_connect(*a, **kw))
+
+        monkeypatch.setattr(csv_mod.ibis.duckdb, "connect", fake_connect)
+
+        variables, nb_row, _actual_sample, _frequency = csv_mod.scan_csv(
+            csv_file, dataset_id="test", quiet=True
+        )
+
+        assert nb_row == 2
+        assert [v.name for v in variables] == ["a", "b"]
 
     def test_read_preview_rows_csv_non_utf8(self, tmp_path: Path):
         """_read_preview_rows_csv falls back to cp1252 on non-utf8 bytes."""
