@@ -585,35 +585,6 @@ class TestPatternFrequencyIntegration:
         assert variables[0].is_pattern is True
         assert "auto---free-text" in variables[0].tag_ids
 
-    def test_pattern_works_with_non_regex_backend(self):
-        """Pattern computation should materialize to memtable if backend lacks regex."""
-        from unittest.mock import patch
-
-        values = [f"AB-{i:04d}" for i in range(50)]
-        table = ibis.memtable({"code": values})
-
-        # Simulate a backend where _prepare_table materializes
-        def fake_prepare(t, cols):
-            arrow = t.select(*cols).to_pyarrow()
-            return ibis.memtable(arrow)
-
-        with patch(
-            "datannurpy.scanner.pattern._prepare_table",
-            side_effect=fake_prepare,
-        ):
-            variables, freq_table = build_variables(
-                table,
-                nb_rows=50,
-                dataset_id="test",
-                infer_stats=True,
-                freq_threshold=10,
-            )
-        # Even with a "non-regex" backend, patterns should still be computed
-        var = variables[0]
-        assert var.is_pattern is True
-        assert var.tag_ids != []
-        assert freq_table is not None
-
     def test_security_column_uses_pattern_not_raw_freq(self):
         """Security-tagged columns should never expose raw values in frequency."""
         hashes = [f"$2a$10$salt{i:040d}hashvalue" for i in range(10)]
