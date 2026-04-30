@@ -15,6 +15,13 @@ from ..utils import make_id, sanitize_id
 _PERIOD_PATTERNS = [
     # Full date: 2024-03-15 or 2024_03_15
     (re.compile(r"((?:19|20)\d{2})[_-](\d{2})[_-](\d{2})"), "date"),
+    # Compact full date: 20240315
+    (
+        re.compile(
+            r"(?<!\d)((?:19|20)\d{2})(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])(?!\d)"
+        ),
+        "date_compact",
+    ),
     # Year-month: 2024-03 or 2024_03
     (re.compile(r"((?:19|20)\d{2})[_-](\d{2})(?![_-]?\d)"), "year_month"),
     # Year-month compact: 202403
@@ -83,6 +90,9 @@ def _extract_period_from_segment(
             original = match.group(0)
 
             if pattern_type == "date":
+                year, month, day = match.groups()
+                info = PeriodInfo(int(year), int(month), int(day), original)
+            elif pattern_type == "date_compact":
                 year, month, day = match.groups()
                 info = PeriodInfo(int(year), int(month), int(day), original)
             elif pattern_type == "year_month":

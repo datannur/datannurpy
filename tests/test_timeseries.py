@@ -80,6 +80,13 @@ class TestPeriodExtraction:
         assert period is not None
         assert period.to_string() == "2024/03/15"
 
+    def test_full_date_compact(self):
+        """Extract compact full date (YYYYMMDD)."""
+        path = Path("log_20240315.csv")
+        period = extract_period(path)
+        assert period is not None
+        assert period.to_string() == "2024/03/15"
+
     def test_period_in_folder(self):
         """Extract period from folder path."""
         path = Path("2024/data.csv")
@@ -296,6 +303,24 @@ class TestGroupTimeSeries:
         assert sorted(group.id_suffix or "" for group in series) == [
             "quarterly",
             "yearly",
+        ]
+
+    def test_compact_dates_in_folder_form_series(self, tmp_path: Path):
+        """Compact YYYYMMDD folder segments should form a time series."""
+        files = [
+            (tmp_path / "dataset" / "segment" / "20210325" / "file.ext", 1000),
+            (tmp_path / "dataset" / "segment" / "20211214" / "file.ext", 2000),
+            (tmp_path / "dataset" / "segment" / "20240925" / "file.ext", 3000),
+        ]
+
+        series, singles = group_time_series(files, tmp_path)
+
+        assert len(series) == 1
+        assert len(singles) == 0
+        assert [period for period, _ in series[0].files] == [
+            "2021/03/25",
+            "2021/12/14",
+            "2024/09/25",
         ]
 
 
@@ -1100,6 +1125,20 @@ class TestGroupTableTimeSeries:
         assert sorted(group.id_suffix or "" for group in series) == [
             "quarterly",
             "yearly",
+        ]
+
+    def test_compact_dates_tables_group(self):
+        """Compact YYYYMMDD table names should form a time series."""
+        tables = ["data_20210325", "data_20211214", "data_20240925"]
+
+        series, singles = group_table_time_series(tables)
+
+        assert len(series) == 1
+        assert len(singles) == 0
+        assert [period for period, _ in series[0].tables] == [
+            "2021/03/25",
+            "2021/12/14",
+            "2024/09/25",
         ]
 
     def test_refine_subgroup_with_single_table_becomes_single(self):
