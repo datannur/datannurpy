@@ -62,10 +62,10 @@ from .scanner.timeseries import (
 )
 from .utils.db_enrich import (
     apply_metadata_to_new_vars,
+    collect_cached_var_changes,
     collect_fk_refs,
     ensure_db_tags,
     resolve_foreign_keys,
-    update_cached_metadata,
 )
 
 if TYPE_CHECKING:
@@ -280,6 +280,9 @@ def _add_database_impl(
         ensure_auto_tags(catalog)
     raw_fk_refs: list[tuple[str, str | None, str, str]] = []
     table_to_dataset_id: dict[tuple[str | None, str], str] = {}
+    # Variables mutated by `collect_cached_var_changes` are accumulated and
+    # flushed once per `add_database` call to avoid per-table rebuilds.
+    cached_changed_vars: list[Variable] = []
 
     # Process each schema
     scan_errors = 0
@@ -389,10 +392,10 @@ def _add_database_impl(
                     seen_ids.append(existing_dataset.id)
                     if do_introspect:
                         meta = schema_meta[table_name]
-                        update_cached_metadata(
-                            catalog,
-                            existing_dataset.id,
-                            meta,
+                        cached_changed_vars.extend(
+                            collect_cached_var_changes(
+                                catalog, existing_dataset.id, meta
+                            )
                         )
                         table_to_dataset_id[(schema_name, table_name)] = (
                             existing_dataset.id
@@ -486,10 +489,8 @@ def _add_database_impl(
                 if not do_refresh and data_unchanged:
                     seen_ids.append(existing_dataset.id)
                     meta = schema_meta[table_name]
-                    update_cached_metadata(
-                        catalog,
-                        existing_dataset.id,
-                        meta,
+                    cached_changed_vars.extend(
+                        collect_cached_var_changes(catalog, existing_dataset.id, meta)
                     )
                     table_to_dataset_id[(schema_name, table_name)] = existing_dataset.id
                     collect_fk_refs(meta.fks, existing_dataset.id, raw_fk_refs)
@@ -601,6 +602,12 @@ def _add_database_impl(
                 sample_size=sample_size if resolved_depth == "value" else None,
                 quiet=q,
             )
+
+        # Flush batched cached-metadata updates (single rebuild)
+        if cached_changed_vars:
+            catalog.variable.remove_all([v.id for v in cached_changed_vars])
+            catalog.variable.add_all(cached_changed_vars)
+            cached_changed_vars.clear()
 
         # Resolve FK refs
         resolve_foreign_keys(catalog, raw_fk_refs, table_to_dataset_id)

@@ -17,6 +17,7 @@
 - perf: incremental scan indexes datasets by `_match_path` once per scan
 - perf: `finalize` removes unseen datasets in a single batch instead of per-dataset cascade
 - perf: orphan-tag detection reads `tag_ids` directly from polars columns instead of instantiating one dataclass per row
+- perf: `add_database` introspection re-applies cached metadata across all unchanged tables in a single batch instead of per-table
 - fix: `include`/`exclude` passed as a bare string (e.g. `include="*.csv"`) no longer iterates over characters and scans each file multiple times
 
 ## 0.21.0 (2026-04-27)
