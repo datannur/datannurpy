@@ -3,72 +3,60 @@
 from __future__ import annotations
 
 import ibis
+import pyarrow as pa
 
 from datannurpy.scanner.pattern import (
-    _build_pattern_expr,
+    _build_pattern_array,
     _classify_string,
-    _prepare_table,
     compute_pattern_freqs,
 )
 
 
-class TestBuildPatternExpr:
-    """Test _build_pattern_expr transformation."""
+def _pattern(value: str) -> str:
+    out = _build_pattern_array(pa.array([value], type=pa.string()))
+    return out[0].as_py()
+
+
+class TestBuildPatternArray:
+    """Test _build_pattern_array transformation."""
 
     def test_phone_number(self):
-        t = ibis.memtable({"v": ["022 832 55 33"]})
-        r = t.select(_build_pattern_expr(t.v).name("p")).to_pyarrow().to_pylist()
-        assert r[0]["p"] == "999 999 99 99"
+        assert _pattern("022 832 55 33") == "999 999 99 99"
 
     def test_code_with_letters_and_digits(self):
-        t = ibis.memtable({"v": ["GE-1234"]})
-        r = t.select(_build_pattern_expr(t.v).name("p")).to_pyarrow().to_pylist()
-        assert r[0]["p"] == "aa-9999"
+        assert _pattern("GE-1234") == "aa-9999"
 
     def test_email(self):
-        t = ibis.memtable({"v": ["john.doe@gmail.com"]})
-        r = t.select(_build_pattern_expr(t.v).name("p")).to_pyarrow().to_pylist()
-        assert r[0]["p"] == "aaaa.aaa@aaaaa.aaa"
+        assert _pattern("john.doe@gmail.com") == "aaaa.aaa@aaaaa.aaa"
 
     def test_name_with_space(self):
-        t = ibis.memtable({"v": ["Jean Dupont"]})
-        r = t.select(_build_pattern_expr(t.v).name("p")).to_pyarrow().to_pylist()
-        assert r[0]["p"] == "aaaa aaaaaa"
+        assert _pattern("Jean Dupont") == "aaaa aaaaaa"
 
     def test_unicode_letters(self):
-        t = ibis.memtable({"v": ["café", "Zürich", "日本語"]})
-        r = t.select(_build_pattern_expr(t.v).name("p")).to_pyarrow().to_pylist()
-        assert r[0]["p"] == "aaaa"
-        assert r[1]["p"] == "aaaaaa"
-        assert r[2]["p"] == "aaa"
+        assert _pattern("café") == "aaaa"
+        assert _pattern("Zürich") == "aaaaaa"
+        assert _pattern("日本語") == "aaa"
 
     def test_preserved_separators(self):
-        t = ibis.memtable({"v": ["a/b_c-d.e @f"]})
-        r = t.select(_build_pattern_expr(t.v).name("p")).to_pyarrow().to_pylist()
-        assert r[0]["p"] == "a/a_a-a.a @a"
+        assert _pattern("a/b_c-d.e @f") == "a/a_a-a.a @a"
 
     def test_unknown_chars_become_question_mark(self):
-        t = ibis.memtable({"v": ["#$%&"]})
-        r = t.select(_build_pattern_expr(t.v).name("p")).to_pyarrow().to_pylist()
-        assert r[0]["p"] == "????"
+        assert _pattern("#$%&") == "????"
 
-    def test_ascii_fallback(self):
-        """Without ASCII fallback, accented chars are handled by DuckDB \\p{L}."""
-        t = ibis.memtable({"v": ["café"]})
-        r = t.select(_build_pattern_expr(t.v).name("p")).to_pyarrow().to_pylist()
-        assert r[0]["p"] == "aaaa"
+    def test_accented_letters(self):
+        assert _pattern("café") == "aaaa"
 
     def test_hyphen_preserved(self):
-        t = ibis.memtable({"v": ["a-b", "1-2", "-"]})
-        r = t.select(_build_pattern_expr(t.v).name("p")).to_pyarrow().to_pylist()
-        assert r[0]["p"] == "a-a"
-        assert r[1]["p"] == "9-9"
-        assert r[2]["p"] == "-"
+        assert _pattern("a-b") == "a-a"
+        assert _pattern("1-2") == "9-9"
+        assert _pattern("-") == "-"
 
     def test_null_bytes_stripped(self):
-        t = ibis.memtable({"v": ["MARLY\x00\x00\x00\x00\x00"]})
-        r = t.select(_build_pattern_expr(t.v).name("p")).to_pyarrow().to_pylist()
-        assert r[0]["p"] == "aaaaa"
+        assert _pattern("MARLY\x00\x00\x00\x00\x00") == "aaaaa"
+
+    def test_cast_from_non_string(self):
+        out = _build_pattern_array(pa.array([42, 7], type=pa.int64()))
+        assert out.to_pylist() == ["99", "9"]
 
 
 class TestClassifyString:
@@ -94,56 +82,6 @@ class TestClassifyString:
 
     def test_zero_total(self):
         assert _classify_string([10], 0) == "auto---free-text"
-
-
-class TestPrepareTable:
-    """Test _prepare_table probe + materialization."""
-
-    def test_duckdb_returns_same_table(self):
-        t = ibis.memtable({"a": ["hello"], "b": [1]})
-        result = _prepare_table(t, ["a"])
-        assert result is t
-
-    def test_materializes_when_no_unicode_regex(self, monkeypatch):
-        t = ibis.memtable({"a": ["hello", "world"], "b": [1, 2]})
-        orig_select = ibis.expr.types.relations.Table.select
-
-        def failing_select(self, *args, **kwargs):
-            str_args = str(args)
-            if "_t" in str_args:
-                raise Exception("no regex support")
-            return orig_select(self, *args, **kwargs)
-
-        monkeypatch.setattr("ibis.expr.types.relations.Table.select", failing_select)
-        result = _prepare_table(t, ["a"])
-        assert result is not t
-        assert list(result.columns) == ["a"]
-        assert result.count().execute() == 2
-
-    def test_materializes_when_probe_returns_unicode_unchanged(self, monkeypatch):
-        """Backend (e.g. Oracle) accepts \\p{L} syntactically but leaves 'é' as-is.
-
-        Regression: previously the probe only checked for absence of an
-        exception, so Unicode letters later collapsed to '?' in the output.
-        """
-        import pyarrow as pa
-
-        t = ibis.memtable({"a": ["hello"], "b": [1]})
-        # Force the probe to return the original "é" instead of "a"
-        bad_probe = pa.table({"_t": pa.array(["é"], type=pa.string())})
-        orig_to_pyarrow = ibis.expr.types.relations.Table.to_pyarrow
-
-        def fake_to_pyarrow(self, *args, **kwargs):
-            if "_t" in self.columns:
-                return bad_probe
-            return orig_to_pyarrow(self, *args, **kwargs)
-
-        monkeypatch.setattr(
-            "ibis.expr.types.relations.Table.to_pyarrow", fake_to_pyarrow
-        )
-        result = _prepare_table(t, ["a"])
-        assert result is not t
-        assert list(result.columns) == ["a"]
 
 
 class TestComputePatternFreqs:
@@ -177,12 +115,14 @@ class TestComputePatternFreqs:
         t = ibis.memtable({"code": values})
         freq_table, classes = compute_pattern_freqs(t, ["code"])
         assert classes["code"] == "auto---semi-structured"
+        assert freq_table is not None
 
     def test_free_text_column(self):
         values = ["x" * i for i in range(1, 201)]
         t = ibis.memtable({"desc": values})
         freq_table, classes = compute_pattern_freqs(t, ["desc"])
         assert classes["desc"] == "auto---free-text"
+        assert freq_table is not None
 
     def test_all_null_column(self):
         t = ibis.memtable({"val": [None, None, None]}).cast({"val": "string"})

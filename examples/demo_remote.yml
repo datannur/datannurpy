@@ -15,7 +15,7 @@ add:
       key_filename: ${SFTP_KEY}
 
   - database: ${SFTP_URL}/photovoltaik.gpkg
-    folder:
+    metadata:
       id: photovoltaik
       name: Grandes installations photovoltaïques
       description: >

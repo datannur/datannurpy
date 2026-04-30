@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata
 from datannurpy.scanner.timeseries import (
     PERIOD_PLACEHOLDER,
+    build_series_dataset_id,
     build_series_dataset_name,
     compute_variable_periods,
     extract_period,
@@ -75,6 +76,13 @@ class TestPeriodExtraction:
     def test_full_date(self):
         """Extract full date from filename."""
         path = Path("log_2024-03-15.csv")
+        period = extract_period(path)
+        assert period is not None
+        assert period.to_string() == "2024/03/15"
+
+    def test_full_date_compact(self):
+        """Extract compact full date (YYYYMMDD)."""
+        path = Path("log_20240315.csv")
         period = extract_period(path)
         assert period is not None
         assert period.to_string() == "2024/03/15"
@@ -236,6 +244,85 @@ class TestGroupTimeSeries:
         assert len(series) == 0
         assert len(singles) == 2
 
+    def test_same_bucket_without_year_becomes_singles(self, tmp_path: Path):
+        """Two no-year file candidates in the same bucket must remain singles."""
+        files = [
+            (tmp_path / "data_11.csv", 1000),
+            (tmp_path / "data_12.csv", 2000),
+        ]
+
+        series, singles = group_time_series(files, tmp_path)
+
+        assert series == []
+        assert [path.name for path, _ in singles] == ["data_11.csv", "data_12.csv"]
+
+    def test_group_year_not_confused_with_constant_two_digit_token(
+        self,
+        tmp_path: Path,
+    ):
+        """A constant token like _22_ must not collide with year 2022."""
+        files = [
+            (tmp_path / "dataset_2020_segment_22_suffix.csv", 1000),
+            (tmp_path / "dataset_2021_segment_22_suffix.csv", 2000),
+            (tmp_path / "dataset_2022_segment_22_suffix.csv", 3000),
+            (tmp_path / "dataset_2023_segment_22_suffix.csv", 4000),
+            (tmp_path / "dataset_2024_segment_22_suffix.csv", 5000),
+        ]
+        series, singles = group_time_series(files, tmp_path)
+
+        assert len(series) == 1
+        assert len(singles) == 0
+        assert [period for period, _ in series[0].files] == [
+            "2020",
+            "2021",
+            "2022",
+            "2023",
+            "2024",
+        ]
+
+    def test_mixed_yearly_and_quarterly_files_split_by_granularity(
+        self,
+        tmp_path: Path,
+    ):
+        """Yearly and quarterly files with the same base name must not merge."""
+        files = [
+            (tmp_path / "data_2021.csv", 1000),
+            (tmp_path / "data_2021Q1.csv", 2000),
+            (tmp_path / "data_2021Q2.csv", 3000),
+            (tmp_path / "data_2022.csv", 4000),
+        ]
+
+        series, singles = group_time_series(files, tmp_path)
+
+        assert len(series) == 2
+        assert len(singles) == 0
+        assert sorted([period for period, _ in group.files] for group in series) == [
+            ["2021", "2022"],
+            ["2021Q1", "2021Q2"],
+        ]
+        assert sorted(group.id_suffix or "" for group in series) == [
+            "quarterly",
+            "yearly",
+        ]
+
+    def test_compact_dates_in_folder_form_series(self, tmp_path: Path):
+        """Compact YYYYMMDD folder segments should form a time series."""
+        files = [
+            (tmp_path / "dataset" / "segment" / "20210325" / "file.ext", 1000),
+            (tmp_path / "dataset" / "segment" / "20211214" / "file.ext", 2000),
+            (tmp_path / "dataset" / "segment" / "20240925" / "file.ext", 3000),
+        ]
+
+        series, singles = group_time_series(files, tmp_path)
+
+        assert len(series) == 1
+        assert len(singles) == 0
+        assert [period for period, _ in series[0].files] == [
+            "2021/03/25",
+            "2021/12/14",
+            "2024/09/25",
+        ]
+
 
 class TestGroupLevelPeriodDetection:
     """Test group-level period detection (constant vs variable positions)."""
@@ -341,7 +428,7 @@ class TestGroupLevelPeriodDetection:
 
         matches = _extract_period_from_segment("old_2024_08")
         assert len(matches) == 1
-        original, info = matches[0]
+        _, original, info = matches[0]
         assert original == "2024_08"
         assert info.year == 2024
         assert info.sub_period == 8
@@ -352,8 +439,8 @@ class TestGroupLevelPeriodDetection:
 
         matches = _extract_period_from_segment("rapport_2024Q1")
         assert len(matches) == 1
-        assert matches[0][1].year == 2024
-        assert matches[0][1].sub_period == 13
+        assert matches[0][2].year == 2024
+        assert matches[0][2].sub_period == 13
 
     def test_subgroup_singles_become_singles(self, tmp_path: Path):
         """Sub-groups with only 1 file become singles."""
@@ -461,15 +548,64 @@ class TestBuildSeriesDatasetName:
         name = build_series_dataset_name(normalized, ["2020", "2021"])
         assert name == "enquete"
 
+    def test_build_series_dataset_id_keeps_regular_ids_stable(self):
+        """Regular series IDs should keep the historical normalized-path form."""
+        normalized = f"data_{PERIOD_PLACEHOLDER}.csv"
+        assert (
+            build_series_dataset_id(normalized, "root")
+            == "root---data_---PERIOD---_csv"
+        )
+
+    def test_dataset_id_suffix_covers_series_and_daily_cases(self):
+        """The internal series suffix helper should cover empty and daily cases."""
+        from datannurpy.scanner.timeseries import _series_id_suffix
+
+        assert _series_id_suffix([]) == "series"
+        assert _series_id_suffix(["2024/03/15", "2024/03/16"]) == "daily"
+
+    def test_series_id_suffix_helper_covers_month_and_quarter(self):
+        """The internal series suffix helper should cover month and quarter cases."""
+        from datannurpy.scanner.timeseries import _series_id_suffix
+
+        assert _series_id_suffix(["2024/03", "2024/04"]) == "monthly"
+        assert _series_id_suffix(["2024Q1", "2024Q2"]) == "quarterly"
+
 
 class TestAddFolderTimeSeries:
     """Integration tests for add_folder with time series."""
+
+    def test_mixed_granularities_create_distinct_datasets(self, tmp_path: Path):
+        """Yearly and quarterly files with the same base name must create two datasets."""
+        for name in (
+            "data_2021.csv",
+            "data_2021Q1.csv",
+            "data_2021Q2.csv",
+            "data_2022.csv",
+        ):
+            (tmp_path / name).write_text("id,value\n1,10\n")
+
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(
+            tmp_path,
+            metadata=EntityMetadata(id="root", name="Root"),
+            quiet=True,
+        )
+
+        datasets = sorted(catalog.dataset.all(), key=lambda dataset: dataset.name or "")
+        assert len(datasets) == 2
+        assert len({dataset.id for dataset in datasets}) == 2
+        assert [dataset.name for dataset in datasets] == [
+            "data_[YYYY]",
+            "data_[YYYY]Q[N]",
+        ]
 
     def test_yearly_series_creates_single_dataset(self):
         """Yearly series creates one dataset instead of multiple."""
         catalog = Catalog()
         catalog.add_folder(
-            TIMESERIES_DIR / "yearly", Folder(id="yearly", name="Yearly"), quiet=True
+            TIMESERIES_DIR / "yearly",
+            metadata=EntityMetadata(id="yearly", name="Yearly"),
+            quiet=True,
         )
 
         datasets = catalog.dataset.all()
@@ -484,7 +620,7 @@ class TestAddFolderTimeSeries:
         catalog = Catalog()
         catalog.add_folder(
             TIMESERIES_DIR / "quarterly",
-            Folder(id="quarterly", name="Quarterly"),
+            metadata=EntityMetadata(id="quarterly", name="Quarterly"),
             quiet=True,
         )
 
@@ -499,7 +635,7 @@ class TestAddFolderTimeSeries:
         catalog = Catalog()
         catalog.add_folder(
             TIMESERIES_DIR / "schema_evolution",
-            Folder(id="evolution", name="Evolution"),
+            metadata=EntityMetadata(id="evolution", name="Evolution"),
             quiet=True,
         )
 
@@ -526,7 +662,9 @@ class TestAddFolderTimeSeries:
         """Multiple series in same folder are grouped separately."""
         catalog = Catalog()
         catalog.add_folder(
-            TIMESERIES_DIR / "mixed", Folder(id="mixed", name="Mixed"), quiet=True
+            TIMESERIES_DIR / "mixed",
+            metadata=EntityMetadata(id="mixed", name="Mixed"),
+            quiet=True,
         )
 
         datasets = catalog.dataset.all()
@@ -542,7 +680,7 @@ class TestAddFolderTimeSeries:
         catalog = Catalog()
         catalog.add_folder(
             TIMESERIES_DIR / "yearly",
-            Folder(id="yearly", name="Yearly"),
+            metadata=EntityMetadata(id="yearly", name="Yearly"),
             time_series=False,
             quiet=True,
         )
@@ -557,7 +695,7 @@ class TestAddFolderTimeSeries:
         catalog = Catalog()
         catalog.add_folder(
             TIMESERIES_DIR / "schema_evolution",
-            Folder(id="evolution", name="Evolution"),
+            metadata=EntityMetadata(id="evolution", name="Evolution"),
             quiet=True,
         )
 
@@ -572,7 +710,7 @@ class TestAddFolderTimeSeries:
         catalog = Catalog()
         catalog.add_folder(
             TIMESERIES_DIR / "yearly",
-            Folder(id="yearly", name="Yearly"),
+            metadata=EntityMetadata(id="yearly", name="Yearly"),
             depth="dataset",
             quiet=True,
         )
@@ -590,7 +728,7 @@ class TestAddFolderTimeSeries:
         catalog = Catalog()
         catalog.add_folder(
             TIMESERIES_DIR / "schema_evolution",
-            Folder(id="evolution", name="Evolution"),
+            metadata=EntityMetadata(id="evolution", name="Evolution"),
             depth="variable",
             quiet=True,
         )
@@ -610,7 +748,11 @@ class TestAddFolderTimeSeries:
             )
 
         catalog = Catalog(quiet=True)
-        catalog.add_folder(ts_dir, Folder(id="ts", name="TS"), sample_size=100)
+        catalog.add_folder(
+            ts_dir,
+            metadata=EntityMetadata(id="ts", name="TS"),
+            sample_size=100,
+        )
 
         dataset = catalog.dataset.all()[0]
         assert dataset.nb_row == 240
@@ -619,6 +761,25 @@ class TestAddFolderTimeSeries:
 
 class TestPeriodEdgeCases:
     """Edge case tests for period extraction and sorting."""
+
+    def test_period_granularity_signature_distinguishes_all_supported_kinds(self):
+        """Granularity signatures must distinguish year, quarter, month, date, and no-year placeholders."""
+        from datannurpy.scanner.timeseries import (
+            PeriodInfo,
+            _period_granularity_signature,
+        )
+
+        signature = _period_granularity_signature(
+            [
+                PeriodInfo(2024, 0, 0, "2024"),
+                PeriodInfo(2024, 13, 0, "2024Q1"),
+                PeriodInfo(2024, 3, 0, "2024/03"),
+                PeriodInfo(2024, 3, 15, "2024/03/15"),
+                PeriodInfo(0, 0, 0, "QX"),
+            ]
+        )
+
+        assert signature == (1, 2, 3, 4, 0)
 
     def test_period_sort_key_with_period_info(self):
         """period_sort_key works with PeriodInfo objects."""
@@ -791,7 +952,11 @@ class TestTimeSeriesRescan:
 
         # First scan
         catalog = Catalog()
-        catalog.add_folder(ts_dir, Folder(id="test", name="Test"), quiet=True)
+        catalog.add_folder(
+            ts_dir,
+            metadata=EntityMetadata(id="test", name="Test"),
+            quiet=True,
+        )
         datasets = catalog.dataset.all()
         assert len(datasets) == 1
         assert datasets[0].nb_resources == 2
@@ -802,7 +967,10 @@ class TestTimeSeriesRescan:
 
         # Rescan same catalog (refresh=True to force rescan)
         catalog.add_folder(
-            ts_dir, Folder(id="test", name="Test"), quiet=True, refresh=True
+            ts_dir,
+            metadata=EntityMetadata(id="test", name="Test"),
+            quiet=True,
+            refresh=True,
         )
         datasets2 = catalog.dataset.all()
         assert len(datasets2) == 1
@@ -819,7 +987,11 @@ class TestTimeSeriesRescan:
         (ts_dir / "data_2021.csv").write_text("id,value\n")
 
         catalog = Catalog()
-        catalog.add_folder(ts_dir, Folder(id="test", name="Test"), quiet=True)
+        catalog.add_folder(
+            ts_dir,
+            metadata=EntityMetadata(id="test", name="Test"),
+            quiet=True,
+        )
 
         datasets = catalog.dataset.all()
         assert len(datasets) == 1
@@ -833,7 +1005,11 @@ class TestTimeSeriesRescan:
         (tmp_path / "report_2021.csv").write_text("id,value\n2,200\n")
 
         catalog = Catalog()
-        catalog.add_folder(tmp_path, Folder(id="root", name="Root"), quiet=True)
+        catalog.add_folder(
+            tmp_path,
+            metadata=EntityMetadata(id="root", name="Root"),
+            quiet=True,
+        )
 
         # Should have one grouped dataset
         datasets = catalog.dataset.all()
@@ -922,8 +1098,17 @@ class TestGroupTableTimeSeries:
         assert series == []
         assert sorted(singles) == sorted(tables)
 
+    def test_same_bucket_without_year_tables_become_singles(self):
+        """Two no-year table candidates in the same bucket must remain singles."""
+        tables = ["stats_11", "stats_12"]
+
+        series, singles = group_table_time_series(tables)
+
+        assert series == []
+        assert singles == ["stats_11", "stats_12"]
+
     def test_constant_prefix_digit_not_treated_as_period(self):
-        """Constant digits in prefix (e.g. '03' in 'PREFIX03') must not be period components."""
+        """Constant digits in prefix must not hide a mixed-granularity split."""
         tables = [
             "PREFIX03_DATA2010",
             "PREFIX03_DATA2014",
@@ -932,11 +1117,12 @@ class TestGroupTableTimeSeries:
         ]
         series, singles = group_table_time_series(tables)
         assert len(series) == 1
-        assert len(singles) == 0
+        assert singles == ["PREFIX03_DATA201607"]
         # '03' is constant across all tables → must NOT be a period placeholder
         assert "PREFIX03_DATA" in series[0].normalized_name
-        # Only the varying year/month part should be the period
+        # Only the varying yearly part should be the period in the grouped series
         assert series[0].normalized_name.count(PERIOD_PLACEHOLDER) == 1
+        assert [p for p, _ in series[0].tables] == ["2010", "2014", "2017"]
 
     def test_position_order_matches_placeholders(self):
         """Period positions list must align with placeholder order in normalized name."""
@@ -950,6 +1136,37 @@ class TestGroupTableTimeSeries:
         # The varying part is the year, not '03'
         periods = [p for p, _ in series[0].tables]
         assert periods == ["2010", "2014", "2017"]
+
+    def test_mixed_yearly_and_quarterly_tables_split_by_granularity(self):
+        """Yearly and quarterly tables with the same base name must not merge."""
+        tables = ["data_2021", "data_2021Q1", "data_2021Q2", "data_2022"]
+
+        series, singles = group_table_time_series(tables)
+
+        assert len(series) == 2
+        assert len(singles) == 0
+        assert sorted([period for period, _ in group.tables] for group in series) == [
+            ["2021", "2022"],
+            ["2021Q1", "2021Q2"],
+        ]
+        assert sorted(group.id_suffix or "" for group in series) == [
+            "quarterly",
+            "yearly",
+        ]
+
+    def test_compact_dates_tables_group(self):
+        """Compact YYYYMMDD table names should form a time series."""
+        tables = ["data_20210325", "data_20211214", "data_20240925"]
+
+        series, singles = group_table_time_series(tables)
+
+        assert len(series) == 1
+        assert len(singles) == 0
+        assert [period for period, _ in series[0].tables] == [
+            "2021/03/25",
+            "2021/12/14",
+            "2024/09/25",
+        ]
 
     def test_refine_subgroup_with_single_table_becomes_single(self):
         """When _refine_group sub-groups and one group has <2 tables, it becomes a single."""

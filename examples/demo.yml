@@ -9,7 +9,7 @@ add:
   - database: sqlite:///../data/company.db
 
   - database: sqlite:///../data/photovoltaik.gpkg
-    folder:
+    metadata:
       id: photovoltaik
       name: Grandes installations photovoltaïques
       description: >

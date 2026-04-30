@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import pyarrow as pa
 import pytest
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata
 
 from .base import BaseDatabaseTests, BaseSchemaTests
 from .conftest import create_test_tables
@@ -82,7 +82,7 @@ class TestDuckDBIncrementalScan:
         catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_database(
             duckdb_with_schemas,
-            Folder(id="db", name="Database"),
+            metadata=EntityMetadata(id="db", name="Database"),
         )
         catalog1.export_db()
 
@@ -94,7 +94,7 @@ class TestDuckDBIncrementalScan:
         catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_database(
             duckdb_with_schemas,
-            Folder(id="db", name="Database"),
+            metadata=EntityMetadata(id="db", name="Database"),
         )
         catalog2.finalize()
 
@@ -118,8 +118,12 @@ class TestDuckDBSeparateSchemas:
         con.create_table("shared_table", pa.table({"id": [2]}), database="schema_b")
 
         catalog = Catalog(quiet=True)
-        catalog.add_database(con, Folder(id="db", name="DB"), schema="schema_a")
-        catalog.add_database(con, Folder(id="db", name="DB"), schema="schema_b")
+        catalog.add_database(
+            con, metadata=EntityMetadata(id="db", name="DB"), schema="schema_a"
+        )
+        catalog.add_database(
+            con, metadata=EntityMetadata(id="db", name="DB"), schema="schema_b"
+        )
 
         datasets = catalog.dataset.all()
         assert len(datasets) == 2

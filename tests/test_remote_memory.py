@@ -11,7 +11,7 @@ import uuid
 import fsspec
 import pytest
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata, Folder
 from datannurpy.errors import ConfigError
 from datannurpy.scanner.filesystem import FileSystem
 
@@ -120,7 +120,9 @@ class TestCatalogWithMemoryFS:
         memory_fs.pipe(f"{memory_root}/sales.csv", b"id,amount\n1,100\n2,200\n3,300")
 
         catalog = Catalog(quiet=True)
-        catalog.add_folder(f"memory://{memory_root}", Folder(id="test"))
+        catalog.add_folder(
+            f"memory://{memory_root}", metadata=EntityMetadata(id="test")
+        )
 
         assert len(catalog.dataset.all()) == 1
         ds = catalog.dataset.all()[0]
@@ -136,7 +138,9 @@ class TestCatalogWithMemoryFS:
         memory_fs.pipe(f"{memory_root}/file2.csv", b"x,y,z\n1,2,3")
 
         catalog = Catalog(quiet=True)
-        catalog.add_folder(f"memory://{memory_root}", Folder(id="multi"))
+        catalog.add_folder(
+            f"memory://{memory_root}", metadata=EntityMetadata(id="multi")
+        )
 
         assert len(catalog.dataset.all()) == 2
         # 2 + 3 = 5 variables total
@@ -154,7 +158,9 @@ class TestCatalogWithMemoryFS:
 
         catalog = Catalog(quiet=True)
         catalog.add_folder(
-            f"memory://{memory_root}", Folder(id="nested"), recursive=True
+            f"memory://{memory_root}",
+            metadata=EntityMetadata(id="nested"),
+            recursive=True,
         )
 
         assert len(catalog.dataset.all()) == 3
@@ -168,7 +174,9 @@ class TestCatalogWithMemoryFS:
 
         catalog = Catalog(quiet=True)
         catalog.add_folder(
-            f"memory://{memory_root}", Folder(id="filtered"), include=["*.csv"]
+            f"memory://{memory_root}",
+            metadata=EntityMetadata(id="filtered"),
+            include=["*.csv"],
         )
 
         assert len(catalog.dataset.all()) == 1
@@ -190,12 +198,14 @@ class TestCatalogWithMemoryFS:
     def test_add_dataset_memory_with_folder(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
     ) -> None:
-        """add_dataset should accept folder with memory:// path."""
+        """add_dataset should link to a pre-created folder with memory:// path."""
         memory_fs.pipe(f"{memory_root}/file.csv", b"x\n1")
 
         catalog = Catalog(quiet=True)
+        catalog.folder.add(Folder(id="myfolder"))
         catalog.add_dataset(
-            f"memory://{memory_root}/file.csv", folder=Folder(id="myfolder")
+            f"memory://{memory_root}/file.csv",
+            metadata=EntityMetadata(parent_id="myfolder"),
         )
 
         assert len(catalog.folder.where("id", "!=", "_enumerations")) == 1
@@ -211,7 +221,9 @@ class TestCatalogWithMemoryFS:
         memory_fs.pipe(f"{memory_root}/file.csv", b"a,b,c\n1,2,3")
 
         catalog = Catalog(quiet=True, depth="dataset")
-        catalog.add_folder(f"memory://{memory_root}", Folder(id="struct"))
+        catalog.add_folder(
+            f"memory://{memory_root}", metadata=EntityMetadata(id="struct")
+        )
 
         assert len(catalog.dataset.all()) == 1
         assert len(catalog.variable.all()) == 0  # No variables at structure depth
@@ -223,7 +235,9 @@ class TestCatalogWithMemoryFS:
         memory_fs.pipe(f"{memory_root}/file.csv", b"a,b\n1,2\n3,4")
 
         catalog = Catalog(quiet=True, depth="variable")
-        catalog.add_folder(f"memory://{memory_root}", Folder(id="schema"))
+        catalog.add_folder(
+            f"memory://{memory_root}", metadata=EntityMetadata(id="schema")
+        )
 
         assert len(catalog.dataset.all()) == 1
         ds = catalog.dataset.all()[0]
@@ -257,7 +271,7 @@ class TestCatalogWithMemoryFS:
         memory_fs.pipe(f"{memory_root}/data.parquet", buffer.getvalue())
 
         catalog = Catalog(quiet=True)
-        catalog.add_folder(f"memory://{memory_root}", Folder(id="pq"))
+        catalog.add_folder(f"memory://{memory_root}", metadata=EntityMetadata(id="pq"))
 
         assert len(catalog.dataset.all()) == 1
         ds = catalog.dataset.all()[0]
@@ -289,7 +303,9 @@ class TestCatalogWithMemoryFS:
         memory_fs.pipe(f"{memory_root}/data/year=2025/part.parquet", buffer2.getvalue())
 
         catalog = Catalog(quiet=True)
-        catalog.add_folder(f"memory://{memory_root}", Folder(id="hive"))
+        catalog.add_folder(
+            f"memory://{memory_root}", metadata=EntityMetadata(id="hive")
+        )
 
         # Should detect as single Hive-partitioned dataset
         assert len(catalog.dataset.all()) == 1
@@ -341,7 +357,9 @@ class TestSchemaOnlyRemoteOptimizations:
 
         catalog = Catalog(quiet=True)
         catalog.add_folder(
-            f"memory://{memory_root}", Folder(id="test"), depth="variable"
+            f"memory://{memory_root}",
+            metadata=EntityMetadata(id="test"),
+            depth="variable",
         )
 
         assert len(catalog.dataset.all()) == 1
@@ -366,7 +384,9 @@ class TestSchemaOnlyRemoteOptimizations:
 
         catalog = Catalog(quiet=True)
         catalog.add_folder(
-            f"memory://{memory_root}", Folder(id="hive"), depth="variable"
+            f"memory://{memory_root}",
+            metadata=EntityMetadata(id="hive"),
+            depth="variable",
         )
 
         assert len(catalog.dataset.all()) == 1
@@ -396,7 +416,9 @@ class TestSchemaOnlyRemoteOptimizations:
 
             catalog = Catalog(quiet=True)
             catalog.add_folder(
-                f"memory://{memory_root}", Folder(id="excel"), depth="variable"
+                f"memory://{memory_root}",
+                metadata=EntityMetadata(id="excel"),
+                depth="variable",
             )
 
             assert len(catalog.dataset.all()) == 1

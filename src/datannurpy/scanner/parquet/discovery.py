@@ -8,7 +8,13 @@ from enum import Enum
 from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Sequence
 
-from ..utils import find_files
+from ..utils import (
+    find_files,
+    safe_glob_fs,
+    safe_glob_local,
+    safe_iterdir_fs,
+    safe_iterdir_local,
+)
 
 if TYPE_CHECKING:
     from ..filesystem import FileSystem
@@ -49,14 +55,14 @@ def is_delta_table(path: PurePath | str, fs: FileSystem | None = None) -> bool:
     if fs is not None:
         path_str = str(path)
         delta_log = f"{path_str}/_delta_log"
-        return fs.isdir(delta_log) and bool(fs.glob(f"{delta_log}/*.json"))
+        return fs.isdir(delta_log) and bool(safe_glob_fs(fs, f"{delta_log}/*.json"))
     # Local path fallback
     path_obj = Path(path) if isinstance(path, str) else path
     assert isinstance(path_obj, Path)
     delta_log_path = path_obj / "_delta_log"
     if not delta_log_path.is_dir():
         return False
-    return any(delta_log_path.glob("*.json"))
+    return bool(safe_glob_local(delta_log_path, "*.json"))
 
 
 def is_iceberg_table(path: PurePath | str, fs: FileSystem | None = None) -> bool:
@@ -66,8 +72,8 @@ def is_iceberg_table(path: PurePath | str, fs: FileSystem | None = None) -> bool
         metadata_dir = f"{path_str}/metadata"
         if not fs.isdir(metadata_dir):
             return False
-        return bool(fs.glob(f"{metadata_dir}/*.metadata.json")) or bool(
-            fs.glob(f"{metadata_dir}/v*.metadata.json")
+        return bool(safe_glob_fs(fs, f"{metadata_dir}/*.metadata.json")) or bool(
+            safe_glob_fs(fs, f"{metadata_dir}/v*.metadata.json")
         )
     # Local path fallback
     path_obj = Path(path) if isinstance(path, str) else path
@@ -75,8 +81,8 @@ def is_iceberg_table(path: PurePath | str, fs: FileSystem | None = None) -> bool
     metadata_dir_path = path_obj / "metadata"
     if not metadata_dir_path.is_dir():
         return False
-    return any(metadata_dir_path.glob("*.metadata.json")) or any(
-        metadata_dir_path.glob("v*.metadata.json")
+    return bool(safe_glob_local(metadata_dir_path, "*.metadata.json")) or bool(
+        safe_glob_local(metadata_dir_path, "v*.metadata.json")
     )
 
 
@@ -86,11 +92,11 @@ def is_hive_partitioned(path: PurePath | str, fs: FileSystem | None = None) -> b
         path_str = str(path)
         if not fs.isdir(path_str):
             return False
-        for child_path in fs.iterdir(path_str):
+        for child_path in safe_iterdir_fs(fs, path_str):
             child_name = child_path.rsplit("/", 1)[-1]
             if fs.isdir(child_path) and _HIVE_PARTITION_PATTERN.match(child_name):
-                if fs.glob(f"{child_path}/**/*.parquet") or fs.glob(
-                    f"{child_path}/**/*.pq"
+                if safe_glob_fs(fs, f"{child_path}/**/*.parquet") or safe_glob_fs(
+                    fs, f"{child_path}/**/*.pq"
                 ):
                     return True
         return False
@@ -99,9 +105,11 @@ def is_hive_partitioned(path: PurePath | str, fs: FileSystem | None = None) -> b
     assert isinstance(path_obj, Path)
     if not path_obj.is_dir():
         return False
-    for child in path_obj.iterdir():
+    for child in safe_iterdir_local(path_obj):
         if child.is_dir() and _HIVE_PARTITION_PATTERN.match(child.name):
-            if list(child.rglob("*.parquet")) or list(child.rglob("*.pq")):
+            if safe_glob_local(child, "**/*.parquet") or safe_glob_local(
+                child, "**/*.pq"
+            ):
                 return True
     return False
 
@@ -165,11 +173,13 @@ def discover_parquet_datasets(
         """Get all parquet files in a directory, using fs.glob for remote."""
         if is_remote and fs is not None:
             dir_str = directory.as_posix()
-            pq_files = fs.glob(f"{dir_str}/**/*.parquet")
-            pq_files += fs.glob(f"{dir_str}/**/*.pq")
+            pq_files = safe_glob_fs(fs, f"{dir_str}/**/*.parquet")
+            pq_files += safe_glob_fs(fs, f"{dir_str}/**/*.pq")
             return [PurePosixPath(f) for f in pq_files]
         assert isinstance(directory, Path)
-        result = list(directory.rglob("*.parquet")) + list(directory.rglob("*.pq"))
+        result = safe_glob_local(directory, "**/*.parquet") + safe_glob_local(
+            directory, "**/*.pq"
+        )
         return result  # type: ignore[return-value]  # Path is PurePath
 
     # First pass: detect Delta Lake tables

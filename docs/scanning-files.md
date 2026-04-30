@@ -153,6 +153,75 @@ Avoid the UTF-8 temp copy when files are already local and UTF-8 (auto-fallback 
 csv_skip_copy: true
 ```
 
+## Remote storage
+
+Scan files on SFTP servers or cloud storage (S3, Azure, GCS). The `storage_options` dict is passed directly to [fsspec](https://filesystem-spec.readthedocs.io/) — see provider docs for available options:
+
+- [SFTP](https://filesystem-spec.readthedocs.io/en/latest/api.html#fsspec.implementations.sftp.SFTPFileSystem)
+- [S3](https://s3fs.readthedocs.io/en/latest/)
+- [Azure](https://github.com/fsspec/adlfs)
+- [GCS](https://gcsfs.readthedocs.io/en/latest/)
+
+```yaml
+env_file: .env               # SFTP_PASSWORD, AWS_KEY, AWS_SECRET, etc.
+```
+
+### SFTP
+
+Paramiko is included by default.
+
+```yaml
+add:
+  - folder: sftp://user@host/path/to/data
+    storage_options:
+      password: ${SFTP_PASSWORD}   # or key_filename: /path/to/key
+```
+
+### Amazon S3
+
+Requires `pip install datannurpy[s3]`.
+
+```yaml
+add:
+  - folder: s3://my-bucket/data
+    storage_options:
+      key: ${AWS_KEY}
+      secret: ${AWS_SECRET}
+```
+
+### Azure Blob
+
+Requires `pip install datannurpy[azure]`.
+
+```yaml
+add:
+  - folder: az://container/data
+    storage_options:
+      account_name: ${AZURE_ACCOUNT}
+      account_key: ${AZURE_KEY}
+```
+
+### Google Cloud Storage
+
+Requires `pip install datannurpy[gcs]`.
+
+```yaml
+add:
+  - folder: gs://my-bucket/data
+    storage_options:
+      token: /path/to/credentials.json
+```
+
+### Single remote file
+
+```yaml
+add:
+  - dataset: s3://my-bucket/data/sales.parquet
+    storage_options:
+      key: ${AWS_KEY}
+      secret: ${AWS_SECRET}
+```
+
 ## Sampling
 
 

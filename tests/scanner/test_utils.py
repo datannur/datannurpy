@@ -399,6 +399,169 @@ class TestBuildVariables:
         assert v.type == "float"
         assert v.nb_distinct is not None
 
+    def test_materializes_remote_table_for_freq(self, tmp_path):
+        """A file-backed view should be materialized once before per-column passes."""
+        import pyarrow as pa
+        import pyarrow.csv as pa_csv
+        from ibis.expr.operations import InMemoryTable, PhysicalTable
+
+        csv_path = tmp_path / "small.csv"
+        pa_csv.write_csv(
+            pa.table({"a": ["x", "y", "x"], "b": ["p", "p", "q"]}),
+            csv_path,
+        )
+        con = ibis.duckdb.connect()
+        table = con.read_csv(str(csv_path))
+        # Sanity: starts as a file-backed (non in-memory) view.
+        assert any(
+            not isinstance(p, InMemoryTable) for p in table.op().find(PhysicalTable)
+        )
+        variables, freq = build_variables(
+            table, nb_rows=3, dataset_id="test", freq_threshold=10
+        )
+        assert freq is not None
+        assert {v.name for v in variables} == {"a", "b"}
+        # column "a" has 2 distinct values, column "b" has 2 distinct values
+        assert freq.num_rows == 4
+
+    def test_materialization_falls_back_through_pandas_for_decimals(self):
+        """Remote materialization should survive Decimal columns when Arrow export fails."""
+        from decimal import Decimal
+        from unittest.mock import patch
+
+        import pandas as pd
+        import pyarrow as pa
+
+        con = ibis.duckdb.connect()
+        try:
+            con.raw_sql(
+                "CREATE OR REPLACE TABLE remote_decimal AS "
+                "SELECT * FROM (VALUES "
+                "(CAST(100 AS DECIMAL(10,0)), 'a'), "
+                "(CAST(200 AS DECIMAL(10,0)), 'b'), "
+                "(CAST(NULL AS DECIMAL(10,0)), 'a')) AS t(amount, kind)"
+            )
+            table = con.table("remote_decimal")
+            orig_to_pyarrow = type(table).to_pyarrow
+            orig_execute = type(table).execute
+            execute_calls = 0
+
+            def patched_to_pyarrow(self_expr, **kw):  # type: ignore[no-untyped-def]
+                if tuple(self_expr.schema().names) == ("amount", "kind"):
+                    raise pa.ArrowInvalid("Could not convert Decimal('100')")
+                return orig_to_pyarrow(self_expr, **kw)
+
+            def patched_execute(self_expr, **kw):  # type: ignore[no-untyped-def]
+                nonlocal execute_calls
+                if tuple(self_expr.schema().names) == ("amount", "kind"):
+                    execute_calls += 1
+                    return pd.DataFrame(
+                        {
+                            "amount": [Decimal("100"), Decimal("200"), None],
+                            "kind": ["a", "b", "a"],
+                        }
+                    )
+                return orig_execute(self_expr, **kw)
+
+            with patch.object(type(table), "to_pyarrow", patched_to_pyarrow):
+                with patch.object(type(table), "execute", patched_execute):
+                    variables, freq = build_variables(
+                        table, nb_rows=3, dataset_id="test", freq_threshold=10
+                    )
+
+            assert execute_calls >= 1
+            assert freq is not None
+            assert freq.num_rows == 4
+            assert {v.name for v in variables} == {"amount", "kind"}
+        finally:
+            con.disconnect()
+
+    def test_table_to_arrow_reuses_arrow_execute_result(self):
+        """_table_to_arrow should reuse a PyArrow table returned by execute()."""
+        from unittest.mock import patch
+
+        import pyarrow as pa
+
+        from datannurpy.scanner.utils import _table_to_arrow
+
+        table = ibis.memtable({"a": [1, 2]})
+        arrow = pa.table({"a": [1, 2]})
+
+        def patched_to_pyarrow(self_expr, **kw):  # type: ignore[no-untyped-def]
+            raise pa.ArrowInvalid("boom")
+
+        def patched_execute(self_expr, **kw):  # type: ignore[no-untyped-def]
+            return arrow
+
+        with patch.object(type(table), "to_pyarrow", patched_to_pyarrow):
+            with patch.object(type(table), "execute", patched_execute):
+                result = _table_to_arrow(table)
+
+        assert result is arrow
+
+    def test_skips_materialization_above_threshold(self, monkeypatch):
+        """Tables larger than the materialization threshold are left untouched."""
+        from datannurpy.scanner import utils as scanner_utils
+
+        monkeypatch.setattr(scanner_utils, "_MATERIALIZE_MAX_ROWS", 1)
+        table = ibis.memtable({"a": ["x", "y", "x"]})
+        # Even though nb_rows exceeds the threshold we still get correct results
+        # (memtable path is unaffected by the materialization gate).
+        variables, freq = build_variables(
+            table, nb_rows=3, dataset_id="test", freq_threshold=10
+        )
+        assert freq is not None
+        assert variables[0].nb_distinct == 2
+
+    def test_warns_above_threshold_on_remote_source(
+        self, monkeypatch, tmp_path, capsys
+    ):
+        """Above the materialization cap on a remote source, emit a warning."""
+        import pyarrow as pa
+        import pyarrow.csv as pa_csv
+
+        from datannurpy.scanner import utils as scanner_utils
+
+        monkeypatch.setattr(scanner_utils, "_MATERIALIZE_MAX_ROWS", 1)
+        csv_path = tmp_path / "small.csv"
+        pa_csv.write_csv(pa.table({"a": ["x", "y", "x"]}), csv_path)
+        con = ibis.duckdb.connect()
+        table = con.read_csv(str(csv_path))
+        variables, freq = build_variables(
+            table, nb_rows=3, dataset_id="bigds", freq_threshold=10
+        )
+        captured = capsys.readouterr()
+        assert "bigds" in captured.err
+        assert "sample_size" in captured.err
+        # Frequency results are still produced (slow path, but correct).
+        assert freq is not None
+
+    def test_freq_skips_unhashable_column_type(self):
+        """Columns whose Arrow type isn't hashable by value_counts are skipped."""
+        import pyarrow as pa
+
+        # list<int64> isn't supported by ``Array.value_counts``; the
+        # corresponding column should be silently skipped, while a sibling
+        # string column still gets its frequency computed.
+        arrow_tbl = pa.table(
+            {
+                "tags": pa.array(
+                    [[1, 2], [3], [1, 2]],
+                    type=pa.list_(pa.int64()),
+                ),
+                "kind": pa.array(["a", "b", "a"]),
+            }
+        )
+        table = ibis.memtable(arrow_tbl)
+        variables, freq = build_variables(
+            table, nb_rows=3, dataset_id="test", freq_threshold=10
+        )
+        assert freq is not None
+        var_ids = set(freq.column("variable_id").to_pylist())
+        assert var_ids == {"kind"}
+        # Both columns still appear in variables (skip is for freq only)
+        assert {v.name for v in variables} == {"tags", "kind"}
+
 
 class TestGetDirDataSize:
     """Test get_dir_data_size with remote filesystem."""
@@ -497,35 +660,6 @@ class TestPatternFrequencyIntegration:
         assert variables[0].is_pattern is True
         assert "auto---free-text" in variables[0].tag_ids
 
-    def test_pattern_works_with_non_regex_backend(self):
-        """Pattern computation should materialize to memtable if backend lacks regex."""
-        from unittest.mock import patch
-
-        values = [f"AB-{i:04d}" for i in range(50)]
-        table = ibis.memtable({"code": values})
-
-        # Simulate a backend where _prepare_table materializes
-        def fake_prepare(t, cols):
-            arrow = t.select(*cols).to_pyarrow()
-            return ibis.memtable(arrow)
-
-        with patch(
-            "datannurpy.scanner.pattern._prepare_table",
-            side_effect=fake_prepare,
-        ):
-            variables, freq_table = build_variables(
-                table,
-                nb_rows=50,
-                dataset_id="test",
-                infer_stats=True,
-                freq_threshold=10,
-            )
-        # Even with a "non-regex" backend, patterns should still be computed
-        var = variables[0]
-        assert var.is_pattern is True
-        assert var.tag_ids != []
-        assert freq_table is not None
-
     def test_security_column_uses_pattern_not_raw_freq(self):
         """Security-tagged columns should never expose raw values in frequency."""
         hashes = [f"$2a$10$salt{i:040d}hashvalue" for i in range(10)]
@@ -542,3 +676,38 @@ class TestPatternFrequencyIntegration:
         pw_freqs = [r for r in freq_table.to_pylist() if r["variable_id"] == "password"]
         for row in pw_freqs:
             assert not row["value"].startswith("$2a$")
+
+
+class TestFindFilesNormalization:
+    """find_files should normalize str patterns and deduplicate matches."""
+
+    def test_include_as_string_does_not_iterate_chars(self, tmp_path):
+        from pathlib import Path as _Path
+
+        from datannurpy.scanner.utils import find_files
+
+        (tmp_path / "data.csv").write_text("a,b\n1,2\n")
+        # Passing a bare str (not a list) used to iterate over chars and
+        # produce duplicates; it should now be treated as a single pattern.
+        result = find_files(tmp_path, "*.csv", None, recursive=True)
+        assert [_Path(p).name for p in result] == ["data.csv"]
+
+    def test_exclude_as_string(self, tmp_path):
+        from pathlib import Path as _Path
+
+        from datannurpy.scanner.utils import find_files
+
+        (tmp_path / "keep.csv").write_text("a\n1\n")
+        (tmp_path / "drop.csv").write_text("a\n1\n")
+        result = find_files(tmp_path, ["*.csv"], "drop.csv", recursive=True)
+        assert [_Path(p).name for p in result] == ["keep.csv"]
+
+    def test_overlapping_patterns_are_deduplicated(self, tmp_path):
+        from pathlib import Path as _Path
+
+        from datannurpy.scanner.utils import find_files
+
+        (tmp_path / "data.csv").write_text("a\n1\n")
+        # Both patterns match the same file; result should contain it once.
+        result = find_files(tmp_path, ["*.csv", "data.*"], None, recursive=True)
+        assert [_Path(p).name for p in result] == ["data.csv"]

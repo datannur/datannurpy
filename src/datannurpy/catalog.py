@@ -17,6 +17,7 @@ from .schema import Config, DatannurDB
 from .utils import EnumerationManager, configure_logging
 from .utils.ids import compute_runtime_ids
 from .utils.params import validate_params
+from .utils.schema_columns import ensure_schema_columns
 
 if TYPE_CHECKING:
     from .add_metadata import LoadedDatasetRef
@@ -78,6 +79,13 @@ class Catalog(DatannurDB):
                 super().__init__(None)
             else:
                 raise
+
+        # Ensure all schema columns exist on loaded tables
+        if load_path is not None:
+            for table in self._tables.values():
+                table._df = ensure_schema_columns(
+                    table._df, table._entity_type, skip=table.runtime_fields
+                )
 
         # Config
         self.depth: Depth = depth
@@ -142,14 +150,9 @@ class Catalog(DatannurDB):
         # rows override it with their resolved absolute scan path before any
         # incremental discovery runs.
         if not self.dataset.is_empty:
-            if "data_path" in self.dataset._df.columns:
-                self.dataset._df = self.dataset._df.with_columns(
-                    pl.col("data_path").alias("_match_path")
-                )
-            else:
-                self.dataset._df = self.dataset._df.with_columns(
-                    pl.lit(None, dtype=pl.String).alias("_match_path")
-                )
+            self.dataset._df = self.dataset._df.with_columns(
+                pl.col("data_path").alias("_match_path")
+            )
 
             if metadata_path is not None and "id" in self.dataset._df.columns:
                 from .add_metadata import _build_dataset_match_paths_by_id

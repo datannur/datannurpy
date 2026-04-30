@@ -8,8 +8,13 @@ from unittest.mock import patch
 
 import pytest
 
-from datannurpy import run_config
-from datannurpy.config.config import _expand_vars, _resolve_path, _resolve_script
+from datannurpy import EntityMetadata, run_config
+from datannurpy.config.config import (
+    _expand_vars,
+    _normalize_metadata,
+    _resolve_path,
+    _resolve_script,
+)
 from datannurpy.errors import ConfigError
 
 
@@ -27,7 +32,7 @@ quiet: true
 add:
   - type: folder
     path: {data_dir / "csv"}
-    folder:
+    metadata:
       id: test_csv
       name: Test CSV
 """)
@@ -48,8 +53,9 @@ quiet: true
 add:
   - type: dataset
     path: {data_dir / "csv" / "employees.csv"}
-    name: Custom Name
-    description: Custom description
+    metadata:
+      name: Custom Name
+      description: Custom description
 """)
         catalog = run_config(config_file)
 
@@ -78,7 +84,7 @@ quiet: true
 add:
   - type: database
     uri: sqlite:///{db_path}
-    folder:
+    metadata:
       id: test_db
       name: Test Database
 """)
@@ -290,7 +296,7 @@ add:
         catalog = run_config(config_file)
 
         assert len(catalog.dataset.all()) == 1
-        # app_path implies export → output should be created relative to config file
+        # app_path implies export -> output should be created relative to config file
         assert (config_dir / "output" / "data" / "db").exists()
 
     def test_run_config_log_file_relative_to_yaml(self, tmp_path: Path):
@@ -362,6 +368,46 @@ add:
         catalog = run_config(config_file)
 
         assert len(catalog.dataset.all()) == 1
+
+
+class TestNormalizeMetadata:
+    """Test YAML metadata normalization into EntityMetadata."""
+
+    def test_entitymetadata_instance_is_kept(self) -> None:
+        """An explicit EntityMetadata instance is accepted as-is."""
+        metadata = EntityMetadata(id="root", name="Root")
+
+        normalized = _normalize_metadata("folder", {"metadata": metadata})
+
+        assert normalized["metadata"] == metadata
+
+    def test_metadata_with_top_level_keys_raises(self) -> None:
+        """Cannot mix explicit metadata with flat top-level keys."""
+        with pytest.raises(ConfigError, match="Cannot specify both metadata"):
+            _normalize_metadata("folder", {"metadata": {"id": "root"}, "name": "Root"})
+
+    def test_invalid_metadata_type_raises(self) -> None:
+        """metadata must be a mapping or EntityMetadata instance."""
+        with pytest.raises(ConfigError, match="'metadata' must be a mapping"):
+            _normalize_metadata("folder", {"metadata": "root"})
+
+    def test_dataset_legacy_folder_with_id_maps_to_parent_id(self) -> None:
+        """Legacy dataset folder.id should become metadata.parent_id."""
+        normalized = _normalize_metadata("dataset", {"folder": {"id": "source"}})
+
+        assert normalized["metadata"] == EntityMetadata(parent_id="source")
+
+    def test_dataset_legacy_folder_without_id_is_ignored(self) -> None:
+        """Dataset legacy folder metadata without id should not create metadata."""
+        normalized = _normalize_metadata("dataset", {"folder": {"name": "Parent"}})
+
+        assert "metadata" not in normalized
+
+    def test_folder_id_maps_to_parent_id(self) -> None:
+        """folder_id is normalized into metadata.parent_id for datasets."""
+        normalized = _normalize_metadata("dataset", {"folder_id": "source"})
+
+        assert normalized["metadata"] == EntityMetadata(parent_id="source")
 
 
 class TestResolvePath:
@@ -773,7 +819,7 @@ add:
         assert len(catalog.dataset.all()) > 0
 
     def test_folder_shorthand_with_kwargs(self, tmp_path: Path, data_dir: Path):
-        """Shorthand folder entry with id/name/description."""
+        """Shorthand folder entry with folder metadata kwargs."""
         config_file = tmp_path / "catalog.yml"
         config_file.write_text(f"""
 app_path: {tmp_path / "output"}
@@ -785,6 +831,7 @@ add:
     id: my_csv
     name: My CSV Data
     description: Test description
+    license: ODbL-1.0
 """)
         catalog = run_config(config_file)
         folders = catalog.folder.all()
@@ -792,6 +839,7 @@ add:
         f = next(f for f in folders if f.id == "my_csv")
         assert f.name == "My CSV Data"
         assert f.description == "Test description"
+        assert f.license == "ODbL-1.0"
 
     def test_database_shorthand(self, tmp_path: Path):
         """Shorthand database entry scans correctly."""
@@ -817,7 +865,7 @@ add:
         assert any(d.name == "items" for d in catalog.dataset.all())
 
     def test_database_shorthand_with_kwargs(self, tmp_path: Path):
-        """Shorthand database entry with id/name/description."""
+        """Shorthand database entry with folder metadata kwargs."""
         import sqlite3
 
         db_path = tmp_path / "test.db"
@@ -837,6 +885,7 @@ add:
     id: my_db
     name: My Database
     description: Test DB
+    license: CC-BY-4.0
 """)
         catalog = run_config(config_file)
         folders = catalog.folder.all()
@@ -844,6 +893,7 @@ add:
         f = next(f for f in folders if f.id == "my_db")
         assert f.name == "My Database"
         assert f.description == "Test DB"
+        assert f.license == "CC-BY-4.0"
 
     def test_dataset_shorthand(self, tmp_path: Path, data_dir: Path):
         """Shorthand dataset entry scans correctly."""

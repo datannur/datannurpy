@@ -3,7 +3,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata
 
 load_dotenv()
 
@@ -24,7 +24,7 @@ catalog.add_folder(REMOTE, storage_options=AUTH)
 catalog.add_database(f"{REMOTE}/company.db", storage_options=AUTH)
 catalog.add_database(
     f"{REMOTE}/photovoltaik.gpkg",
-    folder=Folder(
+    metadata=EntityMetadata(
         id="photovoltaik",
         name="Grandes installations photovoltaïques",
         description="Installations photovoltaïques de haute altitude en Suisse. "

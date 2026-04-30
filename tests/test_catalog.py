@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata, Folder
 from datannurpy.errors import ConfigError
 
 
@@ -252,6 +252,38 @@ class TestCatalogExportDbDefault:
         assert not (db_dir / "folder.json").exists()
         assert (other_dir / "folder.json").exists()
 
+    def test_export_db_supports_copy_assets(self, tmp_path: Path):
+        """export_db() can copy additional assets via the public API."""
+        source = tmp_path / "assets"
+        source.mkdir()
+        (source / "guide.md").write_text("guide")
+
+        catalog = Catalog()
+        catalog.export_db(
+            tmp_path / "output",
+            copy_assets=[{"from": "assets", "to": "doc"}],
+            base_dir=tmp_path,
+            quiet=True,
+        )
+
+        assert (tmp_path / "output" / "doc" / "guide.md").read_text() == "guide"
+
+    def test_export_app_supports_copy_assets(self, tmp_path: Path):
+        """export_app() can copy additional assets via the public API."""
+        source = tmp_path / "assets"
+        source.mkdir()
+        (source / "guide.md").write_text("guide")
+
+        app_dir = tmp_path / "app"
+        catalog = Catalog(app_path=app_dir, quiet=True)
+        catalog.export_app(
+            copy_assets=[{"from": "assets", "to": "data/doc"}],
+            base_dir=tmp_path,
+            quiet=True,
+        )
+
+        assert (app_dir / "data" / "doc" / "guide.md").read_text() == "guide"
+
     def test_full_workflow_with_app_path(self, tmp_path: Path):
         """Full workflow: create, export, reload, modify, export."""
         app_dir = tmp_path / "app"
@@ -262,7 +294,7 @@ class TestCatalogExportDbDefault:
 
         # First run: scan and export
         catalog1 = Catalog(app_path=app_dir)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
         assert (db_dir / "folder.json").exists()
@@ -291,7 +323,7 @@ class TestCatalogDepth:
 
         # First run: full scan with low freq_threshold to create frequency entries
         catalog1 = Catalog(app_path=app_dir, depth="value", freq_threshold=2)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
         # Verify we have data in all tables

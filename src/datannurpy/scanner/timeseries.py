@@ -15,6 +15,13 @@ from ..utils import make_id, sanitize_id
 _PERIOD_PATTERNS = [
     # Full date: 2024-03-15 or 2024_03_15
     (re.compile(r"((?:19|20)\d{2})[_-](\d{2})[_-](\d{2})"), "date"),
+    # Compact full date: 20240315
+    (
+        re.compile(
+            r"(?<!\d)((?:19|20)\d{2})(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])(?!\d)"
+        ),
+        "date_compact",
+    ),
     # Year-month: 2024-03 or 2024_03
     (re.compile(r"((?:19|20)\d{2})[_-](\d{2})(?![_-]?\d)"), "year_month"),
     # Year-month compact: 202403
@@ -60,12 +67,14 @@ class PeriodInfo:
         return str(self.year)
 
 
-def _extract_period_from_segment(segment: str) -> list[tuple[str, PeriodInfo]]:
+def _extract_period_from_segment(
+    segment: str,
+) -> list[tuple[tuple[int, int], str, PeriodInfo]]:
     """Extract all period matches from a path segment.
 
     Returns only the most specific match for each segment position.
     """
-    matches: list[tuple[str, PeriodInfo]] = []
+    matches: list[tuple[tuple[int, int], str, PeriodInfo]] = []
     matched_ranges: list[tuple[int, int]] = []
 
     def _overlaps(start: int, end: int) -> bool:
@@ -81,6 +90,9 @@ def _extract_period_from_segment(segment: str) -> list[tuple[str, PeriodInfo]]:
             original = match.group(0)
 
             if pattern_type == "date":
+                year, month, day = match.groups()
+                info = PeriodInfo(int(year), int(month), int(day), original)
+            elif pattern_type == "date_compact":
                 year, month, day = match.groups()
                 info = PeriodInfo(int(year), int(month), int(day), original)
             elif pattern_type == "year_month":
@@ -109,12 +121,10 @@ def _extract_period_from_segment(segment: str) -> list[tuple[str, PeriodInfo]]:
                 year = match.group(1)
                 info = PeriodInfo(int(year), 0, 0, original)
 
-            matches.append((original, info))
+            matches.append(((start, end), original, info))
             matched_ranges.append((start, end))
 
-    # Sort by string position so matches[i] corresponds to the i-th placeholder
-    matches = [m for _, m in sorted(zip(matched_ranges, matches))]
-    return matches
+    return sorted(matches, key=lambda match: match[0][0])
 
 
 def _combine_periods(periods: list[PeriodInfo]) -> PeriodInfo | None:
@@ -165,23 +175,16 @@ def _extract_file_info(
 
         # Build normalized segment (replace from end to preserve indices)
         normalized_segment = segment
-        sorted_matches = sorted(
-            matches,
-            key=lambda m: segment.find(m[0]),
-            reverse=True,
-        )
-        for original, _ in sorted_matches:
-            idx = normalized_segment.find(original)
-            assert idx >= 0
+        for (start, end), _, _ in sorted(matches, key=lambda m: m[0][0], reverse=True):
             normalized_segment = (
-                normalized_segment[:idx]
+                normalized_segment[:start]
                 + PERIOD_PLACEHOLDER
-                + normalized_segment[idx + len(original) :]
+                + normalized_segment[end:]
             )
         normalized_parts.append(normalized_segment)
 
         # Collect period positions (in order)
-        for _, info in matches:
+        for _, _, info in matches:
             positions.append(info)
 
     return "/".join(normalized_parts), positions
@@ -246,6 +249,7 @@ class TimeSeriesGroup:
     normalized_path: str
     files: list[tuple[str, PurePath]]  # [(period_string, path), ...]
     max_mtime: int
+    id_suffix: str | None = None
 
 
 def _period_granularity(info: PeriodInfo) -> int:
@@ -257,6 +261,38 @@ def _period_granularity(info: PeriodInfo) -> int:
     if info.year > 0:
         return 1
     return 0
+
+
+def _period_granularity_signature(positions: Sequence[PeriodInfo]) -> tuple[int, ...]:
+    """Return a grouping signature that distinguishes year, quarter, month, and date."""
+    signature: list[int] = []
+    for info in positions:
+        if info.day > 0:
+            signature.append(4)
+        elif info.sub_period > 12:
+            signature.append(2)
+        elif info.sub_period > 0:
+            signature.append(3)
+        elif info.year > 0:
+            signature.append(1)
+        else:
+            signature.append(0)
+    return tuple(signature)
+
+
+def _series_id_suffix(periods: Sequence[str]) -> str:
+    """Return a stable suffix for series IDs based on period granularity."""
+    if not periods:
+        return "series"
+
+    first = periods[0]
+    if re.match(r"\d{4}/\d{2}/\d{2}$", first):
+        return "daily"
+    if re.match(r"\d{4}Q\d$", first):
+        return "quarterly"
+    if re.match(r"\d{4}/\d{2}$", first):
+        return "monthly"
+    return "yearly"
 
 
 def _refine_normalized_path(
@@ -400,10 +436,11 @@ def group_time_series(
         - time_series_groups: groups with ≥2 files
         - single_files: files that don't form a series
     """
-    # Extract info once per file, group by normalized path
-    raw_groups: dict[str, list[tuple[PurePath, int, list[PeriodInfo]]]] = defaultdict(
-        list
-    )
+    # Extract info once per file, group by normalized path and period granularity.
+    raw_groups: dict[
+        tuple[str, tuple[int, ...]], list[tuple[PurePath, int, list[PeriodInfo]]]
+    ] = defaultdict(list)
+    signatures_by_normalized: dict[str, set[tuple[int, ...]]] = defaultdict(set)
     no_period: list[tuple[PurePath, int]] = []
 
     for path, mtime in files:
@@ -411,13 +448,16 @@ def group_time_series(
         if not positions:
             no_period.append((path, mtime))
             continue
-        raw_groups[normalized].append((path, mtime, positions))
+        signature = _period_granularity_signature(positions)
+        signatures_by_normalized[normalized].add(signature)
+        raw_groups[(normalized, signature)].append((path, mtime, positions))
 
     # Refine groups with group-level period detection
     time_series: list[TimeSeriesGroup] = []
     singles: list[tuple[PurePath, int]] = list(no_period)
 
-    for normalized, file_list in raw_groups.items():
+    for (normalized, _signature), file_list in raw_groups.items():
+        is_ambiguous = len(signatures_by_normalized[normalized]) > 1
         if len(file_list) < 2:
             for path, mtime, _ in file_list:
                 singles.append((path, mtime))
@@ -444,6 +484,11 @@ def group_time_series(
                         normalized_path=refined_path,
                         files=[(period, path) for period, path, _ in sorted_files],
                         max_mtime=max_mtime,
+                        id_suffix=(
+                            _series_id_suffix([period for period, _, _ in sorted_files])
+                            if is_ambiguous
+                            else None
+                        ),
                     )
                 )
             else:
@@ -459,6 +504,7 @@ class TableSeriesGroup:
 
     normalized_name: str  # e.g., "stats_---PERIOD---"
     tables: list[tuple[str, str]]  # [(period_str, table_name), ...] sorted
+    id_suffix: str | None = None
 
 
 def group_table_time_series(
@@ -468,7 +514,10 @@ def group_table_time_series(
 
     Returns (series_groups, single_tables).
     """
-    raw_groups: dict[str, list[tuple[str, list[PeriodInfo]]]] = defaultdict(list)
+    raw_groups: dict[
+        tuple[str, tuple[int, ...]], list[tuple[str, list[PeriodInfo]]]
+    ] = defaultdict(list)
+    signatures_by_normalized: dict[str, set[tuple[int, ...]]] = defaultdict(set)
     no_period: list[str] = []
 
     for name in table_names:
@@ -479,13 +528,8 @@ def group_table_time_series(
 
         # Build normalized name (replace temporal parts with placeholder)
         normalized = name
-        for original, _ in sorted(matches, key=lambda m: name.find(m[0]), reverse=True):
-            idx = normalized.find(original)
-            normalized = (
-                normalized[:idx]
-                + PERIOD_PLACEHOLDER
-                + normalized[idx + len(original) :]
-            )
+        for (start, end), _, _ in sorted(matches, key=lambda m: m[0][0], reverse=True):
+            normalized = normalized[:start] + PERIOD_PLACEHOLDER + normalized[end:]
 
         # Skip if entire name is consumed by temporal pattern (e.g. "t1", "t2")
         base = normalized.replace(PERIOD_PLACEHOLDER, "").strip("_- ")
@@ -493,12 +537,16 @@ def group_table_time_series(
             no_period.append(name)
             continue
 
-        raw_groups[normalized].append((name, [info for _, info in matches]))
+        positions = [info for _, _, info in matches]
+        signature = _period_granularity_signature(positions)
+        signatures_by_normalized[normalized].add(signature)
+        raw_groups[(normalized, signature)].append((name, positions))
 
     series: list[TableSeriesGroup] = []
     singles: list[str] = list(no_period)
 
-    for normalized, table_list in raw_groups.items():
+    for (normalized, _signature), table_list in raw_groups.items():
+        is_ambiguous = len(signatures_by_normalized[normalized]) > 1
         if len(table_list) < 2:
             singles.append(table_list[0][0])
             continue
@@ -527,6 +575,11 @@ def group_table_time_series(
                 TableSeriesGroup(
                     normalized_name=refined_name,
                     tables=[(p, path.name) for p, path, _ in sorted_files],
+                    id_suffix=(
+                        _series_id_suffix([period for period, _, _ in sorted_files])
+                        if is_ambiguous
+                        else None
+                    ),
                 )
             )
 
@@ -539,10 +592,21 @@ def get_series_folder_parts(normalized_path: str) -> list[str]:
     return [p for p in parent_parts if PERIOD_PLACEHOLDER not in p]
 
 
+def _build_series_dataset_id_with_suffix(
+    normalized_path: str,
+    prefix: str,
+    suffix: str | None = None,
+) -> str:
+    """Build dataset ID from normalized path with an optional suffix."""
+    parts = [sanitize_id(p) for p in PurePosixPath(normalized_path).parts]
+    if suffix:
+        parts[-1] = f"{parts[-1]}_{suffix}"
+    return make_id(prefix, *parts)
+
+
 def build_series_dataset_id(normalized_path: str, prefix: str) -> str:
     """Build dataset ID from normalized path."""
-    parts = [sanitize_id(p) for p in PurePosixPath(normalized_path).parts]
-    return make_id(prefix, *parts)
+    return _build_series_dataset_id_with_suffix(normalized_path, prefix)
 
 
 def build_series_dataset_name(

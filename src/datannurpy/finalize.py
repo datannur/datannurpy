@@ -26,9 +26,13 @@ def finalize(catalog: Catalog) -> None:
         catalog.folder.remove_all(removed_folder_ids)
 
     # 2. Remove unseen datasets (cascade: variables, frequencies)
-    unseen_datasets = catalog.dataset.where("_seen", "==", False)
-    for dataset in unseen_datasets:
-        remove_dataset_cascade(catalog, dataset)
+    unseen_dataset_ids = catalog.dataset.ids_where("_seen", "==", False)
+    if unseen_dataset_ids:
+        var_ids = catalog.variable.ids_where("dataset_id", "in", unseen_dataset_ids)
+        if var_ids:
+            catalog.variable.remove_all(var_ids)
+            catalog.frequency.remove_where("variable_id", "in", var_ids)
+        catalog.dataset.remove_all(unseen_dataset_ids)
 
     # 3. Remove unseen enumerations
     removed_enumeration_ids = catalog.enumeration.ids_where("_seen", "==", False)
@@ -74,14 +78,17 @@ def remove_dataset_cascade(self: Catalog, dataset: Dataset) -> None:
 def _collect_referenced_tag_ids(catalog: Catalog) -> set[str]:
     """Collect all tag IDs referenced by any entity."""
     referenced: set[str] = set()
-    for entity in catalog.variable.all():
-        referenced.update(entity.tag_ids)
-    for entity in catalog.dataset.all():
-        referenced.update(entity.tag_ids)
-    for entity in catalog.folder.all():
-        referenced.update(entity.tag_ids)
-    for entity in catalog.organization.all():
-        referenced.update(entity.tag_ids)
+    for table in (
+        catalog.variable,
+        catalog.dataset,
+        catalog.folder,
+        catalog.organization,
+    ):
+        df = table.df
+        if not df.is_empty() and "tag_ids" in df.columns:
+            for tag_list in df["tag_ids"].drop_nulls().to_list():
+                if tag_list:
+                    referenced.update(tag_list)
     return referenced
 
 

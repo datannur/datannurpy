@@ -2,112 +2,96 @@
   {
     "id": "auto",
     "parent_id": "scan",
-    "doc_ids": "",
     "name": "Auto-detected",
     "description": "Tags detected automatically by content analysis"
   },
   {
     "id": "auto---email",
     "parent_id": "auto---format",
-    "doc_ids": "",
     "name": "Email",
     "description": "Values matching email address format"
   },
   {
     "id": "auto---format",
     "parent_id": "auto",
-    "doc_ids": "",
     "name": "Format",
     "description": "Recognized data formats"
   },
   {
     "id": "auto---free-text",
     "parent_id": "auto---text",
-    "doc_ids": "",
     "name": "Free text",
     "description": "No dominant pattern detected"
   },
   {
     "id": "auto---natural-text",
     "parent_id": "auto---free-text",
-    "doc_ids": "",
     "name": "Natural text",
     "description": "Multi-word natural language text"
   },
   {
     "id": "auto---text",
     "parent_id": "auto",
-    "doc_ids": "",
     "name": "Text",
     "description": "Text content classification"
   },
   {
     "id": "db",
     "parent_id": "scan",
-    "doc_ids": "",
     "name": "Database",
     "description": null
   },
   {
     "id": "db---auto-increment",
     "parent_id": "db",
-    "doc_ids": "",
     "name": "Auto-increment",
     "description": null
   },
   {
     "id": "db---indexed",
     "parent_id": "db",
-    "doc_ids": "",
     "name": "Indexed",
     "description": null
   },
   {
     "id": "db---not-null",
     "parent_id": "db",
-    "doc_ids": "",
     "name": "Not Null",
     "description": null
   },
   {
     "id": "db---unique",
     "parent_id": "db",
-    "doc_ids": "",
     "name": "Unique",
     "description": null
   },
   {
     "id": "finance",
     "parent_id": null,
-    "doc_ids": "",
     "name": "Finance",
     "description": "Données financières"
   },
   {
     "id": "policy",
     "parent_id": "scan",
-    "doc_ids": "",
     "name": "Policy",
     "description": "User-defined scan policies"
   },
   {
     "id": "policy---frequency-hidden",
     "parent_id": "policy",
-    "doc_ids": "",
     "name": "Frequencies hidden",
     "description": "Hide all frequency and enumeration data for this variable"
   },
   {
     "id": "rh",
     "parent_id": null,
-    "doc_ids": "",
     "name": "RH",
     "description": "Ressources humaines"
   },
   {
     "id": "scan",
     "parent_id": null,
-    "doc_ids": "",
     "name": "Scan",
     "description": "Tags generated automatically during scanning"
   }

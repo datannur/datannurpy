@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata
 from datannurpy.scanner.database import connect
 from datannurpy.scanner.db_introspect import (
     TableMetadata,
@@ -139,7 +139,8 @@ def sqlite_catalog(sqlite_with_constraints: Path) -> Catalog:
     """Catalog populated from SQLite DB with constraints."""
     catalog = Catalog()
     catalog.add_database(
-        f"sqlite:////{sqlite_with_constraints}", Folder(id="db", name="Test DB")
+        f"sqlite:////{sqlite_with_constraints}",
+        metadata=EntityMetadata(id="db", name="Test DB"),
     )
     return catalog
 
@@ -784,7 +785,10 @@ class TestCatalogDatabaseIntrospection:
 
     def test_duckdb_comments(self, duckdb_with_constraints) -> None:
         catalog = Catalog()
-        catalog.add_database(duckdb_with_constraints, Folder(id="db", name="Test DB"))
+        catalog.add_database(
+            duckdb_with_constraints,
+            metadata=EntityMetadata(id="db", name="Test DB"),
+        )
         dept = next(d for d in catalog.dataset.all() if d.name == "departments")
         assert dept.description == "Company departments"
         dv = {v.name: v for v in catalog.variable.all() if v.dataset_id == dept.id}
@@ -795,7 +799,7 @@ class TestCatalogDatabaseIntrospection:
         catalog = Catalog(depth="dataset")
         catalog.add_database(
             f"sqlite:////{sqlite_with_constraints}",
-            Folder(id="db", name="Test DB"),
+            metadata=EntityMetadata(id="db", name="Test DB"),
         )
         assert catalog.tag.count == 0
         assert catalog.variable.count == 0
@@ -804,7 +808,7 @@ class TestCatalogDatabaseIntrospection:
         catalog = Catalog(depth="variable")
         catalog.add_database(
             f"sqlite:////{sqlite_with_constraints}",
-            Folder(id="db", name="Test DB"),
+            metadata=EntityMetadata(id="db", name="Test DB"),
         )
         assert catalog.tag.count > 0
         assert _emp_vars(catalog)["id"].key == 1
@@ -819,15 +823,15 @@ class TestCatalogIncrementalIntrospection:
         tmp_path: Path,
     ) -> None:
         conn_str = f"sqlite:////{sqlite_with_constraints}"
-        folder = Folder(id="db", name="Test DB")
+        metadata = EntityMetadata(id="db", name="Test DB")
 
         cat1 = Catalog(app_path=tmp_path, quiet=True)
-        cat1.add_database(conn_str, folder)
+        cat1.add_database(conn_str, metadata=metadata)
         cat1.export_db()
         assert _emp_vars(cat1)["id"].key == 1
 
         cat2 = Catalog(app_path=tmp_path, quiet=True)
-        cat2.add_database(conn_str, folder)
+        cat2.add_database(conn_str, metadata=metadata)
         v = _emp_vars(cat2)
         assert v["id"].key == 1
         assert "db---not-null" in v["name"].tag_ids
@@ -839,14 +843,14 @@ class TestCatalogIncrementalIntrospection:
     ) -> None:
         """Schema-depth cache hit still refreshes introspection metadata."""
         conn_str = f"sqlite:////{sqlite_with_constraints}"
-        folder = Folder(id="db", name="Test DB")
+        metadata = EntityMetadata(id="db", name="Test DB")
 
         cat1 = Catalog(app_path=tmp_path, depth="variable", quiet=True)
-        cat1.add_database(conn_str, folder)
+        cat1.add_database(conn_str, metadata=metadata)
         cat1.export_db()
 
         cat2 = Catalog(app_path=tmp_path, depth="variable", quiet=True)
-        cat2.add_database(conn_str, folder)
+        cat2.add_database(conn_str, metadata=metadata)
         v = _emp_vars(cat2)
         assert v["id"].key == 1
         assert "db---not-null" in v["name"].tag_ids
@@ -859,7 +863,7 @@ class TestCatalogIncrementalIntrospection:
         cat = Catalog(app_path=tmp_path, quiet=True)
         cat.add_database(
             f"sqlite:////{sqlite_with_constraints}",
-            Folder(id="db", name="Test DB"),
+            metadata=EntityMetadata(id="db", name="Test DB"),
         )
         cat.finalize()
         tag_ids = {t.id for t in cat.tag.all()}
@@ -877,7 +881,7 @@ class TestCatalogIncrementalIntrospection:
             catalog = Catalog()
             catalog.add_database(
                 f"sqlite:////{sqlite_with_constraints}",
-                Folder(id="db", name="Test DB"),
+                metadata=EntityMetadata(id="db", name="Test DB"),
             )
         v = _emp_vars(catalog)
         assert v["id"].key is None
@@ -889,13 +893,13 @@ class TestCatalogIncrementalIntrospection:
         tmp_path: Path,
     ) -> None:
         """Table comment should propagate to cached datasets."""
-        folder = Folder(id="db", name="Test DB")
+        metadata = EntityMetadata(id="db", name="Test DB")
         cat1 = Catalog(app_path=tmp_path, quiet=True)
-        cat1.add_database(duckdb_with_constraints, folder)
+        cat1.add_database(duckdb_with_constraints, metadata=metadata)
         cat1.export_db()
 
         cat2 = Catalog(app_path=tmp_path, quiet=True)
-        cat2.add_database(duckdb_with_constraints, folder)
+        cat2.add_database(duckdb_with_constraints, metadata=metadata)
         dept = next(d for d in cat2.dataset.all() if d.name == "departments")
         assert dept.description == "Company departments"
 
@@ -906,10 +910,10 @@ class TestCatalogIncrementalIntrospection:
     ) -> None:
         """If a column is no longer PK, key should be cleared on rescan."""
         conn_str = f"sqlite:////{sqlite_with_constraints}"
-        folder = Folder(id="db", name="Test DB")
+        metadata = EntityMetadata(id="db", name="Test DB")
 
         cat1 = Catalog(app_path=tmp_path, quiet=True)
-        cat1.add_database(conn_str, folder)
+        cat1.add_database(conn_str, metadata=metadata)
         emp = [
             v
             for v in cat1.variable.all()
@@ -919,7 +923,7 @@ class TestCatalogIncrementalIntrospection:
         cat1.export_db()
 
         cat2 = Catalog(app_path=tmp_path, quiet=True)
-        cat2.add_database(conn_str, folder)
+        cat2.add_database(conn_str, metadata=metadata)
         assert _emp_vars(cat2)["salary"].key is None
 
     def test_unresolvable_fk_ignored(self, tmp_path: Path) -> None:
@@ -941,7 +945,7 @@ class TestCatalogIncrementalIntrospection:
         catalog = Catalog()
         catalog.add_database(
             f"sqlite:////{db_path}",
-            Folder(id="db", name="Test DB"),
+            metadata=EntityMetadata(id="db", name="Test DB"),
             include=["child"],
         )
         v = {v.name: v for v in catalog.variable.all()}

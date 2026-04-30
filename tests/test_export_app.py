@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata
 from datannurpy.errors import ConfigError
 from datannurpy import exporter
 
@@ -17,7 +17,9 @@ def _employees_catalog() -> Catalog:
     """Scan employees.csv once, reuse across export_app tests."""
     catalog = Catalog()
     catalog.add_folder(
-        DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+        DATA_DIR,
+        metadata=EntityMetadata(id="test", name="Test"),
+        include=["employees.csv"],
     )
     return catalog
 
@@ -88,7 +90,9 @@ class TestExportApp:
 
         catalog = Catalog(app_path=app_dir, quiet=True)
         catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+            DATA_DIR,
+            metadata=EntityMetadata(id="test", name="Test"),
+            include=["employees.csv"],
         )
         catalog.export_app()
 
@@ -99,7 +103,9 @@ class TestExportApp:
         """export_app() without args and no app_path should raise."""
         catalog = Catalog(quiet=True)
         catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+            DATA_DIR,
+            metadata=EntityMetadata(id="test", name="Test"),
+            include=["employees.csv"],
         )
 
         with pytest.raises(ConfigError, match="output_dir is required"):
@@ -109,7 +115,9 @@ class TestExportApp:
         """export_app should write config.json in data/db/."""
         catalog = Catalog(app_config={"contact_email": "x@y.com", "banner": "Hi"})
         catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+            DATA_DIR,
+            metadata=EntityMetadata(id="test", name="Test"),
+            include=["employees.csv"],
         )
         catalog.export_app(tmp_path, quiet=True)
 
@@ -130,7 +138,9 @@ class TestExportApp:
         # First pass: scan + export
         cat1 = Catalog(app_path=app_dir, quiet=True)
         cat1.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["employees.csv"]
+            DATA_DIR,
+            metadata=EntityMetadata(id="test", name="Test"),
+            include=["employees.csv"],
         )
         cat1.export_app()
 

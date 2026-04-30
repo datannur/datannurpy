@@ -1,5 +1,23 @@
 # datannurpy
 
+## 0.22.0 (2026-04-30)
+
+- change: `export_db` / `export_app` omit columns that are entirely null/empty from the exported JSON files
+- add: public `copy_assets()` helper and `copy_assets` / `base_dir` parameters on `export_db()` / `export_app()`
+- add: `license` fields on folders and datasets, with matching kwargs and export support
+- change: scan APIs now use shared `EntityMetadata` via `metadata=` in Python and YAML
+- add: warning when a remote scan exceeds the materialization cap (suggests `sample_size`)
+- fix: folder discovery skips unreadable subdirectories (e.g. SFTP ACLs) instead of aborting
+- fix: `add_folder(depth="dataset")` logs each dataset like other depth modes
+- fix: time series detection — recognizes compact `YYYYMMDD`, handles 4-digit years sharing a constant 2-digit token, and splits mixed yearly/quarterly/monthly/daily granularities
+- fix: `include`/`exclude` as a bare string no longer iterates character-by-character
+- perf: `depth: value` materializes the source once (≤1M rows) and shares it across autotag, frequency, and pattern passes
+- perf: frequency value counts via PyArrow (~27× on wide datasets); cleaner float/timestamp formatting
+- perf: pattern frequency fully vectorized in PyArrow (~1.2×)
+- perf: incremental scan batched — `_seen` updates, `mark_datasets_seen`, `_match_path` index, `finalize` cascade, orphan-tag detection, and `last_update_date` from cached mtime
+- perf: `add_database` re-applies cached metadata for unchanged tables in one batch
+- perf: enumeration assignment from frequencies looks up columns in O(1)
+
 ## 0.21.0 (2026-04-27)
 
 - add: `copy_assets` export option — copy local files or directories into the exported catalog with optional `include` filters and `clean` cleanup

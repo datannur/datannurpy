@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata
 from datannurpy.scanner.database import connect, list_schemas, list_tables, scan_table
 
 if TYPE_CHECKING:
@@ -195,7 +195,9 @@ class BaseDatabaseTests(ABC):
         con, _, _ = db_with_employees
         catalog = Catalog()
         catalog.add_database(
-            con, folder=Folder(id="testdb", name="Test DB"), sample_size=100
+            con,
+            metadata=EntityMetadata(id="testdb", name="Test DB"),
+            sample_size=100,
         )
         emp = next(d for d in catalog.dataset.all() if d.name == "employees")
         assert emp.nb_row == 5
@@ -208,7 +210,7 @@ class BaseDatabaseTests(ABC):
         con, _, delivery_format = db_with_employees
 
         catalog = Catalog()
-        catalog.add_database(con, folder=Folder(id="testdb", name="Test DB"))
+        catalog.add_database(con, metadata=EntityMetadata(id="testdb", name="Test DB"))
 
         # Should have datasets
         assert len(catalog.dataset.all()) >= 2
@@ -233,7 +235,7 @@ class BaseDatabaseTests(ABC):
         catalog = Catalog()
         catalog.add_database(
             con,
-            folder=Folder(id="testdb", name="Test DB"),
+            metadata=EntityMetadata(id="testdb", name="Test DB"),
             group_by_prefix=False,
         )
 
@@ -250,7 +252,7 @@ class BaseDatabaseTests(ABC):
         catalog = Catalog()
         catalog.add_database(
             con,
-            folder=Folder(id="testdb", name="Test DB"),
+            metadata=EntityMetadata(id="testdb", name="Test DB"),
             include=["employees"],
         )
 
@@ -266,7 +268,7 @@ class BaseDatabaseTests(ABC):
         catalog = Catalog()
         catalog.add_database(
             con,
-            folder=Folder(id="testdb", name="Test DB"),
+            metadata=EntityMetadata(id="testdb", name="Test DB"),
             exclude=["departments", "empty_table"],
         )
 
@@ -372,8 +374,7 @@ class BaseSchemaTests(ABC):
         con, _ = db_with_schemas
         catalog = Catalog()
         catalog.add_database(
-            con,
-            folder=Folder(id="mydb", name="My Database"),
+            con, metadata=EntityMetadata(id="mydb", name="My Database")
         )
 
         # Should have root folder + schema folders
@@ -399,7 +400,7 @@ class BaseSchemaTests(ABC):
         catalog = Catalog()
         catalog.add_database(
             con,
-            folder=Folder(id="sales_db", name="Sales DB"),
+            metadata=EntityMetadata(id="sales_db", name="Sales DB"),
             schema="sales",
         )
 

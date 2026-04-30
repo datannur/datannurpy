@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import errno
+import os
 from collections.abc import Sequence
 from datetime import datetime, timezone
 from pathlib import Path, PurePath, PurePosixPath
@@ -11,8 +13,11 @@ import ibis
 import ibis.expr.datatypes as dt
 
 from ..schema import Variable
+from ..utils.log import log_warn
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     import pyarrow as pa
 
     from .filesystem import FileSystem
@@ -30,6 +35,26 @@ def _round6(val: Any) -> float | None:
     if val is None:
         return None
     return round(float(val), 6)
+
+
+def _table_to_arrow(table: ibis.Table) -> pa.Table:
+    """Convert an Ibis table to Arrow, falling back through pandas when needed."""
+    import pyarrow as pa
+
+    try:
+        return table.to_pyarrow()
+    except Exception:
+        result = table.execute()
+        if isinstance(result, pa.Table):
+            return result
+        return pa.Table.from_pandas(result, preserve_index=False)
+
+
+# Maximum row count above which a remote/file-backed table is *not*
+# materialized into memory before per-column value-level passes (autotag,
+# frequency, pattern). Below this threshold materialization avoids re-scanning
+# the source once per column, which dominates wall time on wide datasets.
+_MATERIALIZE_MAX_ROWS = 1_000_000
 
 
 # Supported file formats: suffix -> delivery_format
@@ -62,6 +87,92 @@ DEFAULT_EXCLUDE_DIRS = {
 DEFAULT_EXCLUDE_PREFIXES = ("~$", ".~lock.")  # Office/LibreOffice temp/lock files
 
 
+# ---------------------------------------------------------------------------
+# Permission-tolerant traversal helpers
+#
+# Directory listings can fail on directories the user can `stat`/traverse but
+# not list (typical on SFTP with restrictive ACLs, or on local filesystems
+# with `chmod 0`). The helpers below log a warning and skip the offending
+# path instead of letting `PermissionError` propagate and abort the scan.
+# ---------------------------------------------------------------------------
+
+
+def _is_permission_error(exc: BaseException) -> bool:
+    """Return True for errors that mean 'cannot list this directory'."""
+    if isinstance(exc, PermissionError):
+        return True
+    if isinstance(exc, OSError) and exc.errno in (errno.EACCES, errno.EPERM):
+        return True
+    return False
+
+
+def _warn_permission(path: Any, exc: BaseException) -> None:
+    """Emit a warning that a path was skipped because it is not listable."""
+    log_warn(f"{path}: skipped (permission denied: {exc})", quiet=False)
+
+
+def safe_iterdir_fs(fs: FileSystem, path: str) -> Iterator[str]:
+    """Iterate over `fs.iterdir(path)`, skipping with a warning on EACCES."""
+    try:
+        yield from fs.iterdir(path)
+    except OSError as exc:
+        if _is_permission_error(exc):
+            _warn_permission(path, exc)
+            return
+        raise
+
+
+def safe_iterdir_local(path: Path) -> Iterator[Path]:
+    """Iterate over `path.iterdir()`, skipping with a warning on EACCES."""
+    try:
+        yield from path.iterdir()
+    except OSError as exc:
+        if _is_permission_error(exc):
+            _warn_permission(path, exc)
+            return
+        raise
+
+
+def safe_glob_fs(fs: FileSystem, pattern: str) -> list[str]:
+    """`fs.glob(pattern)` returning [] with a warning on EACCES."""
+    try:
+        return fs.glob(pattern)
+    except OSError as exc:
+        if _is_permission_error(exc):
+            _warn_permission(pattern, exc)
+            return []
+        raise
+
+
+def safe_walk_local(root: Path) -> Iterator[Path]:
+    """Yield every file under `root`, skipping unreadable subtrees."""
+
+    def _onerror(exc: OSError) -> None:
+        if _is_permission_error(exc):
+            _warn_permission(getattr(exc, "filename", None) or root, exc)
+            return
+        raise exc
+
+    for dirpath, dirnames, filenames in os.walk(root, onerror=_onerror):
+        # Filter out always-excluded directories in-place so os.walk skips them.
+        dirnames[:] = [d for d in dirnames if d not in DEFAULT_EXCLUDE_DIRS]
+        for name in filenames:
+            yield Path(dirpath) / name
+
+
+def safe_glob_local(root: Path, pattern: str) -> list[Path]:
+    """`root.glob(pattern)` returning partial results with a warning on EACCES."""
+    results: list[Path] = []
+    try:
+        results.extend(root.glob(pattern))
+    except OSError as exc:
+        if _is_permission_error(exc):
+            _warn_permission(root, exc)
+            return results
+        raise
+    return results
+
+
 def get_mtime_iso(path: PurePath, fs: FileSystem | None = None) -> str:
     """Get file modification time as YYYY/MM/DD."""
     if fs is not None:
@@ -75,6 +186,11 @@ def get_mtime_iso(path: PurePath, fs: FileSystem | None = None) -> str:
         mtime = path.stat().st_mtime
     dt_obj = datetime.fromtimestamp(mtime, tz=timezone.utc)
     return dt_obj.strftime("%Y/%m/%d")
+
+
+def mtime_iso_from_timestamp(ts: int) -> str:
+    """Format a Unix mtime timestamp as YYYY/MM/DD (UTC)."""
+    return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y/%m/%d")
 
 
 def get_mtime_timestamp(path: PurePath, fs: FileSystem | None = None) -> int:
@@ -104,10 +220,12 @@ def get_dir_data_size(path: PurePath, fs: FileSystem | None = None) -> int:
     """Get total size of parquet files in a directory tree."""
     if fs is not None:
         path_str = str(path)
-        files = fs.glob(f"{path_str}/**/*.parquet") + fs.glob(f"{path_str}/**/*.pq")
+        files = safe_glob_fs(fs, f"{path_str}/**/*.parquet") + safe_glob_fs(
+            fs, f"{path_str}/**/*.pq"
+        )
         return sum(int(fs.info(f).get("size", 0)) for f in files)
     assert isinstance(path, Path)
-    files = list(path.rglob("*.parquet")) + list(path.rglob("*.pq"))
+    files = safe_glob_local(path, "**/*.parquet") + safe_glob_local(path, "**/*.pq")
     return sum(f.stat().st_size for f in files)
 
 
@@ -119,16 +237,29 @@ def find_files(
     fs: FileSystem | None = None,
 ) -> list[PurePath]:
     """Find files matching include/exclude patterns."""
+    # Normalize str → [str] to avoid iterating over characters
+    if isinstance(include, str):
+        include = [include]
+    if isinstance(exclude, str):
+        exclude = [exclude]
     # Use FileSystem if provided, otherwise use pathlib directly
     if fs is not None:
         return _find_files_with_fs(fs, root, include, exclude, recursive)
     assert isinstance(root, Path)
 
     if include is None:
-        pattern = "**/*" if recursive else "*"
-        candidates = [
-            f for f in root.glob(pattern) if f.suffix.lower() in SUPPORTED_FORMATS
-        ]
+        if recursive:
+            candidates = [
+                f
+                for f in safe_walk_local(root)
+                if f.suffix.lower() in SUPPORTED_FORMATS
+            ]
+        else:
+            candidates = [
+                f
+                for f in safe_glob_local(root, "*")
+                if f.suffix.lower() in SUPPORTED_FORMATS
+            ]
     else:
         candidates = []
         for pat in include:
@@ -136,12 +267,14 @@ def find_files(
             if pat.endswith("/**"):
                 base = pat[:-3]  # Remove /**
                 # Match files in the directory and subdirectories
-                candidates.extend(root.glob(f"{base}/*"))
-                candidates.extend(root.glob(f"{base}/**/*"))
+                candidates.extend(safe_glob_local(root, f"{base}/*"))
+                candidates.extend(safe_glob_local(root, f"{base}/**/*"))
             elif recursive and "**" not in pat:
-                candidates.extend(root.glob(f"**/{pat}"))
+                candidates.extend(safe_glob_local(root, f"**/{pat}"))
             else:
-                candidates.extend(root.glob(pat))
+                candidates.extend(safe_glob_local(root, pat))
+        # Deduplicate while preserving order (a file may match multiple patterns)
+        candidates = list(dict.fromkeys(candidates))
 
     candidates = [f for f in candidates if f.is_file()]
 
@@ -165,7 +298,7 @@ def find_files(
                         excluded.add(f.resolve())
             # Otherwise use glob for patterns with wildcards
             elif "*" in pat:
-                for f in root.glob(f"**/{pat}" if recursive else pat):
+                for f in safe_glob_local(root, f"**/{pat}" if recursive else pat):
                     excluded.add(f.resolve())
             # Exact file match
             elif target.is_file():
@@ -187,7 +320,7 @@ def _find_files_with_fs(
 
     if include is None:
         pattern = "**/*" if recursive else "*"
-        all_paths = fs.glob(f"{root_str}/{pattern}")
+        all_paths = safe_glob_fs(fs, f"{root_str}/{pattern}")
         candidates = [
             p for p in all_paths if PurePosixPath(p).suffix.lower() in SUPPORTED_FORMATS
         ]
@@ -196,12 +329,12 @@ def _find_files_with_fs(
         for pat in include:
             if pat.endswith("/**"):
                 base = pat[:-3]
-                candidates_set.update(fs.glob(f"{root_str}/{base}/*"))
-                candidates_set.update(fs.glob(f"{root_str}/{base}/**/*"))
+                candidates_set.update(safe_glob_fs(fs, f"{root_str}/{base}/*"))
+                candidates_set.update(safe_glob_fs(fs, f"{root_str}/{base}/**/*"))
             elif recursive and "**" not in pat:
-                candidates_set.update(fs.glob(f"{root_str}/**/{pat}"))
+                candidates_set.update(safe_glob_fs(fs, f"{root_str}/**/{pat}"))
             else:
-                candidates_set.update(fs.glob(f"{root_str}/{pat}"))
+                candidates_set.update(safe_glob_fs(fs, f"{root_str}/{pat}"))
         candidates = list(candidates_set)
 
     # Filter to files only and supported formats
@@ -231,7 +364,7 @@ def _find_files_with_fs(
                         excluded.add(f)
             elif "*" in pat:
                 pattern = f"{root_str}/**/{pat}" if recursive else f"{root_str}/{pat}"
-                for f in fs.glob(pattern):
+                for f in safe_glob_fs(fs, pattern):
                     excluded.add(f)
             elif fs.isfile(target):
                 excluded.add(target)
@@ -497,6 +630,36 @@ def build_variables(
                 else:
                     raise
 
+    # Materialize a file/DB-backed table to an in-memory Arrow buffer before the
+    # per-column value-level passes (autotag, frequency, pattern). Each of these
+    # phases issues one aggregation per eligible column; on a remote view (e.g.
+    # ``con.read_csv`` / ``con.read_parquet`` / a database table) this would
+    # otherwise re-scan the source N times — catastrophic for wide datasets.
+    # Bounded by ``_MATERIALIZE_MAX_ROWS`` to keep RAM usage predictable.
+    if freq_threshold is not None and nb_rows > 0:
+        from ibis.expr.operations import InMemoryTable, PhysicalTable
+
+        physical = list(table.op().find(PhysicalTable))
+        is_remote = bool(physical) and not all(
+            isinstance(p, InMemoryTable) for p in physical
+        )
+        if is_remote and nb_rows <= _MATERIALIZE_MAX_ROWS:
+            try:
+                table = ibis.memtable(_table_to_arrow(table))
+            except Exception:  # pragma: no cover - fall back to remote table
+                pass
+        elif is_remote:
+            # Above the materialization cap on a remote source: per-column
+            # passes will re-scan the source once per eligible column. Surface
+            # a warning so users can configure ``sample_size`` if desired.
+            log_warn(
+                f"{dataset_id}: {nb_rows} rows exceeds the in-memory frequency "
+                f"materialization cap ({_MATERIALIZE_MAX_ROWS}); per-column "
+                f"frequency passes will re-scan the source. Configure "
+                f"sample_size to bound this cost.",
+                quiet=False,
+            )
+
     # Auto-tag string columns BEFORE frequency (security tags suppress raw frequency values)
     auto_tag_map: dict[str, str] = {}
     security_cols: set[str] = set()
@@ -522,25 +685,47 @@ def build_variables(
             if 0 <= nb_distinct <= freq_threshold and col not in security_cols
         ]
         if eligible_cols:
-            freq_tables: list[ibis.Table] = []
-            for col in eligible_cols:
-                # Value counts: group by column, count occurrences (nulls excluded)
-                non_null = table.filter(table[col].notnull())
-                grouped = non_null.group_by(col).agg(frequency=non_null.count())
-                vc = grouped.select(
-                    ibis.literal(col).name("variable_id"),
-                    grouped[col].cast("string").name("value"),
-                    grouped["frequency"],
-                )
-                freq_tables.append(vc)
-            # Try server-side UNION first (fast on DuckDB/SQLite), fall back to
-            # individual materialization if it fails (MySQL mixed collations).
-            try:
-                freq_table = ibis.union(*freq_tables).to_pyarrow()
-            except Exception:
-                import pyarrow as pa
+            # Compute value counts via PyArrow directly on the in-memory Arrow
+            # buffer. The previous Ibis-union path issued one DuckDB query per
+            # column even when the table was already an in-memory memtable —
+            # gratuitous SQL round-trips. PyArrow's vectorised value_counts on
+            # the same buffer is ~25× faster on wide datasets.
+            import pyarrow as pa
+            import pyarrow.compute as pc
+            import pyarrow.types as pat
 
-                freq_table = pa.concat_tables([ft.to_pyarrow() for ft in freq_tables])
+            arrow_buf = _table_to_arrow(table.select(eligible_cols))
+            parts: list[pa.Table] = []
+            for col in eligible_cols:
+                arr = arrow_buf.column(col).combine_chunks().drop_null()
+                if len(arr) == 0:
+                    continue
+                try:
+                    vc = arr.value_counts()
+                except (pa.ArrowNotImplementedError, pa.ArrowInvalid):
+                    # Skip types value_counts can't hash (nested, etc.).
+                    continue
+                raw_values = vc.field("values")
+                values = raw_values.cast(pa.string())
+                if pat.is_timestamp(raw_values.type) or pat.is_time(raw_values.type):
+                    # PyArrow always renders timestamps/times with their full
+                    # sub-second precision (``...000000`` or ``...000000000``);
+                    # trim trailing zero fractional parts for a cleaner UI.
+                    values = pc.replace_substring_regex(values, r"\.0+$", "")  # pyright: ignore[reportAttributeAccessIssue]
+                counts = vc.field("counts")
+                n = len(values)
+                parts.append(
+                    pa.table(
+                        {
+                            "variable_id": pa.array([col] * n, type=pa.string()),
+                            "value": values,
+                            "frequency": counts,
+                        }
+                    )
+                )
+            freq_table = (
+                pa.concat_tables(parts, promote_options="default") if parts else None
+            )
 
         # Pattern frequency for high-cardinality string columns + security-tagged columns
         pattern_cols = [

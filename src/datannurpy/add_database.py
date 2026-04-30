@@ -4,11 +4,15 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path, PurePosixPath
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 import ibis
 
+from .entity_metadata import (
+    EntityMetadata,
+    folder_from_metadata,
+)
 from .scanner.database import _encode_uri_credentials
 from .utils import (
     build_variable_ids,
@@ -27,7 +31,6 @@ from .utils import (
     upsert_folder,
 )
 from .utils.params import _UNSET, validate_params
-from .errors import ConfigError
 from .scanner.filesystem import FileSystem
 from .scanner.utils import get_mtime_iso
 from .finalize import remove_dataset_cascade
@@ -53,6 +56,7 @@ from .scanner.database import (
 
 from .scanner.db_introspect import TableMetadata, introspect_schema
 from .scanner.timeseries import (
+    _build_series_dataset_id_with_suffix,
     PERIOD_PLACEHOLDER,
     TableSeriesGroup,
     build_series_dataset_name,
@@ -61,10 +65,10 @@ from .scanner.timeseries import (
 )
 from .utils.db_enrich import (
     apply_metadata_to_new_vars,
+    collect_cached_var_changes,
     collect_fk_refs,
     ensure_db_tags,
     resolve_foreign_keys,
-    update_cached_metadata,
 )
 
 if TYPE_CHECKING:
@@ -75,7 +79,7 @@ if TYPE_CHECKING:
 def add_database(
     catalog: Catalog,
     connection: str | ibis.BaseBackend,
-    folder: Folder | None = None,
+    metadata: EntityMetadata | None = None,
     *,
     depth: Depth | None = None,
     schema: str | Sequence[str] | None = None,
@@ -90,31 +94,8 @@ def add_database(
     storage_options: dict[str, str] | None = None,
     oracle_client_path: str | None = None,
     ssh_tunnel: dict[str, str | int] | None = None,
-    id: str | None = None,
-    name: str | None = None,
-    description: str | None = None,
-    manager_id: str | None = None,
-    owner_id: str | None = None,
 ) -> None:
     """Scan a database and add its tables to the catalog."""
-    if (
-        id is not None
-        or name is not None
-        or description is not None
-        or manager_id is not None
-        or owner_id is not None
-    ):
-        if folder is not None:
-            raise ConfigError(
-                "Cannot specify both folder and id/name/description/manager_id/owner_id"
-            )
-        folder = Folder(
-            id=id or "",
-            name=name,
-            description=description,
-            manager_id=manager_id,
-            owner_id=owner_id,
-        )
     if isinstance(schema, list):
         kwargs = {k: v for k, v in locals().items() if k not in ("catalog", "schema")}
         for s in schema:
@@ -134,7 +115,7 @@ def add_database(
             _add_database_impl(
                 catalog,
                 f"sqlite:///{local_path}",
-                folder,
+                metadata,
                 depth=depth,
                 schema=schema,
                 include=include,
@@ -155,7 +136,7 @@ def add_database(
             _add_database_impl(
                 catalog,
                 tunneled_uri,
-                folder,
+                metadata,
                 depth=depth,
                 schema=schema,
                 include=include,
@@ -174,7 +155,7 @@ def add_database(
     _add_database_impl(
         catalog,
         connection,
-        folder,
+        metadata,
         depth=depth,
         schema=schema,
         include=include,
@@ -193,7 +174,7 @@ def add_database(
 def _add_database_impl(
     catalog: Catalog,
     connection: str | ibis.BaseBackend,
-    folder: Folder | None,
+    metadata: EntityMetadata | None,
     *,
     depth: Depth | None,
     schema: str | None,
@@ -236,15 +217,15 @@ def _add_database_impl(
     schemas_to_scan = get_schemas_to_scan(con, schema, backend_name)
 
     # Create root folder for database
-    if folder is None:
+    if metadata is None:
         root_folder_id = sanitize_id(db_name)
         folder = Folder(id=root_folder_id, name=db_name)
-    elif not folder.id:
-        root_folder_id = sanitize_id(db_name)
-        folder.id = root_folder_id
-        if folder.name is None:
-            folder.name = db_name
     else:
+        folder = folder_from_metadata(
+            metadata,
+            default_id=sanitize_id(db_name),
+            default_name=db_name,
+        )
         root_folder_id = folder.id
 
     # Set data_path: use remote_path if remote, otherwise local path
@@ -262,7 +243,7 @@ def _add_database_impl(
             folder.last_update_date = get_mtime_iso(Path(folder.data_path))
         else:
             folder.last_update_date = None
-    folder.type = backend_name
+    folder.type = folder.type or backend_name
 
     # Add or update root folder
     upsert_folder(catalog, folder)
@@ -279,6 +260,9 @@ def _add_database_impl(
         ensure_auto_tags(catalog)
     raw_fk_refs: list[tuple[str, str | None, str, str]] = []
     table_to_dataset_id: dict[tuple[str | None, str], str] = {}
+    # Variables mutated by `collect_cached_var_changes` are accumulated and
+    # flushed once per `add_database` call to avoid per-table rebuilds.
+    cached_changed_vars: list[Variable] = []
 
     # Process each schema
     scan_errors = 0
@@ -365,6 +349,10 @@ def _add_database_impl(
                     ),
                 )
 
+        seen_ids: list[str] = []
+        existing_by_path: dict[str, Any] = {
+            ds._match_path: ds for ds in catalog.dataset.all() if ds._match_path
+        }
         for table_name in tables:
             if table_name in series_table_names:
                 continue
@@ -376,18 +364,18 @@ def _add_database_impl(
             )
 
             # Check if table exists in cache
-            existing_dataset = catalog.dataset.get_by("_match_path", table_data_path)
+            existing_dataset = existing_by_path.get(table_data_path)
 
             # Structure/Variable mode: no signature, no row count, no incremental check
             if resolved_depth not in ("stat", "value"):
                 if existing_dataset is not None and not do_refresh:
-                    catalog.dataset.update(existing_dataset.id, _seen=True)
+                    seen_ids.append(existing_dataset.id)
                     if do_introspect:
                         meta = schema_meta[table_name]
-                        update_cached_metadata(
-                            catalog,
-                            existing_dataset.id,
-                            meta,
+                        cached_changed_vars.extend(
+                            collect_cached_var_changes(
+                                catalog, existing_dataset.id, meta
+                            )
                         )
                         table_to_dataset_id[(schema_name, table_name)] = (
                             existing_dataset.id
@@ -479,13 +467,10 @@ def _add_database_impl(
                 )
 
                 if not do_refresh and data_unchanged:
-                    catalog.dataset.update(existing_dataset.id, _seen=True)
-                    catalog.enumeration_manager.mark_dataset_seen(existing_dataset.id)
+                    seen_ids.append(existing_dataset.id)
                     meta = schema_meta[table_name]
-                    update_cached_metadata(
-                        catalog,
-                        existing_dataset.id,
-                        meta,
+                    cached_changed_vars.extend(
+                        collect_cached_var_changes(catalog, existing_dataset.id, meta)
                     )
                     table_to_dataset_id[(schema_name, table_name)] = existing_dataset.id
                     collect_fk_refs(meta.fks, existing_dataset.id, raw_fk_refs)
@@ -571,6 +556,10 @@ def _add_database_impl(
 
             log_done(f"{table_name} ({nb_row:,} rows, {len(table_vars)} vars)", q, t0)
 
+        if seen_ids:
+            catalog.dataset.update_many(seen_ids, _seen=True)
+            catalog.enumeration_manager.mark_datasets_seen(seen_ids)
+
         # Process time series groups
         for group in series_groups:
             table_prefix: str | None = None
@@ -593,6 +582,12 @@ def _add_database_impl(
                 sample_size=sample_size if resolved_depth == "value" else None,
                 quiet=q,
             )
+
+        # Flush batched cached-metadata updates (single rebuild)
+        if cached_changed_vars:
+            catalog.variable.remove_all([v.id for v in cached_changed_vars])
+            catalog.variable.add_all(cached_changed_vars)
+            cached_changed_vars.clear()
 
         # Resolve FK refs
         resolve_foreign_keys(catalog, raw_fk_refs, table_to_dataset_id)
@@ -628,7 +623,11 @@ def _scan_table_series(
     normalized = group.normalized_name
 
     dataset_name = build_series_dataset_name(normalized, periods)
-    dataset_id = make_id(folder_id, sanitize_id(normalized))
+    dataset_id = _build_series_dataset_id_with_suffix(
+        normalized,
+        folder_id,
+        group.id_suffix,
+    )
     data_path = build_table_data_path(backend_name, db_name, schema_name, last_table)
 
     # Remove existing dataset if present

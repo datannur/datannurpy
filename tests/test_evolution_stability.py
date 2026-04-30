@@ -4,7 +4,7 @@ import json
 import sqlite3
 from pathlib import Path
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata
 
 
 class TestEvolutionStability:
@@ -22,7 +22,7 @@ class TestEvolutionStability:
 
         # Run 1
         catalog1 = Catalog(app_path=app_dir)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
         # No evolution on first run
@@ -30,7 +30,7 @@ class TestEvolutionStability:
 
         # Run 2 - identical (no file changes)
         catalog2 = Catalog(app_path=app_dir)
-        catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog2.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog2.export_db()
 
         # Still no evolution (no changes)
@@ -38,7 +38,7 @@ class TestEvolutionStability:
 
         # Run 3 - just to be sure
         catalog3 = Catalog(app_path=app_dir)
-        catalog3.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog3.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog3.export_db()
 
         assert not (db_dir / "evolution.json").exists()
@@ -65,7 +65,9 @@ class TestEvolutionStability:
 
         # Run 1
         catalog1 = Catalog(app_path=app_dir)
-        catalog1.add_database(conn_str, Folder(id="mydb", name="My Database"))
+        catalog1.add_database(
+            conn_str, metadata=EntityMetadata(id="mydb", name="My Database")
+        )
         catalog1.export_db()
 
         # No evolution on first run
@@ -73,7 +75,9 @@ class TestEvolutionStability:
 
         # Run 2 - identical (no database changes)
         catalog2 = Catalog(app_path=app_dir)
-        catalog2.add_database(conn_str, Folder(id="mydb", name="My Database"))
+        catalog2.add_database(
+            conn_str, metadata=EntityMetadata(id="mydb", name="My Database")
+        )
         catalog2.export_db()
 
         # Check if evolution was created
@@ -90,7 +94,9 @@ class TestEvolutionStability:
 
         # Run 3
         catalog3 = Catalog(app_path=app_dir)
-        catalog3.add_database(conn_str, Folder(id="mydb", name="My Database"))
+        catalog3.add_database(
+            conn_str, metadata=EntityMetadata(id="mydb", name="My Database")
+        )
         catalog3.export_db()
 
         if (db_dir / "evolution.json").exists():
@@ -122,7 +128,9 @@ class TestEvolutionStability:
 
         for i in range(5):
             catalog = Catalog(app_path=app_dir)
-            catalog.add_database(conn_str, Folder(id="db", name="Database"))
+            catalog.add_database(
+                conn_str, metadata=EntityMetadata(id="db", name="Database")
+            )
             catalog.export_db()
 
             if (db_dir / "evolution.json").exists():
@@ -159,7 +167,7 @@ class TestEvolutionStability:
 
         # Run 1 - creates enumerations and _enumerations folder
         catalog1 = Catalog(app_path=app_dir, refresh=True)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
         # Verify _enumerations folder exists
@@ -173,7 +181,7 @@ class TestEvolutionStability:
 
         # Run 2 - with refresh=True, _enumerations folder should NOT be deleted
         catalog2 = Catalog(app_path=app_dir, refresh=True)
-        catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog2.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog2.export_db()
 
         # Check evolution - should NOT contain delete of _enumerations

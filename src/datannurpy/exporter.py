@@ -10,6 +10,8 @@ import webbrowser
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import polars as pl
+
 from .utils.log import _write_log
 from .utils.params import validate_params
 
@@ -18,6 +20,29 @@ if TYPE_CHECKING:
 
 from .add_metadata import ensure_metadata_applied
 from .errors import ConfigError
+
+
+def _drop_empty_columns(catalog: Catalog) -> None:
+    """Drop all-null/empty columns from catalog tables in place before export."""
+    for table in catalog._tables.values():
+        df = table._df
+        if df.is_empty():
+            continue
+        keep = table.runtime_fields | {"id"}
+        cols = [c for c in df.columns if c in keep or not _is_empty_column(df[c])]
+        if len(cols) != len(df.columns):
+            table._df = df.select(cols)
+
+
+def _is_empty_column(col: pl.Series) -> bool:
+    """Return True if every value is null, empty string or empty list."""
+    if col.null_count() == col.len():
+        return True
+    if isinstance(col.dtype, pl.List):
+        return bool(col.list.len().fill_null(0).sum() == 0)
+    if col.dtype == pl.Utf8:
+        return bool((col.drop_nulls().str.len_chars() == 0).all())
+    return False
 
 
 def _normalize_copy_assets(copy_assets: Any) -> list[dict[str, Any]]:
@@ -152,11 +177,11 @@ def _clean_copy_target(target_root: Path, expected_files: set[Path]) -> int:
     return removed
 
 
-def copy_assets(
-    copy_assets: Any, output_dir: Path, *, base_dir: Path, quiet: bool
+def _copy_assets_impl(
+    rules_config: Any, output_dir: Path, *, base_dir: Path, quiet: bool
 ) -> None:
     """Copy configured assets into an export directory."""
-    rules = _normalize_copy_assets(copy_assets)
+    rules = _normalize_copy_assets(rules_config)
     for rule in rules:
         source = _resolve_copy_source(rule["from"], base_dir)
         target_root = _resolve_copy_target(rule["to"], output_dir)
@@ -198,12 +223,38 @@ def copy_assets(
             )
 
 
+def _resolve_copy_base_dir(base_dir: str | Path | None) -> Path:
+    """Return the base directory used for relative copy_assets sources."""
+    if base_dir is None:
+        return Path.cwd().resolve()
+    return Path(base_dir).resolve()
+
+
+@validate_params
+def copy_assets(
+    output_dir: str | Path,
+    rules: Any,
+    *,
+    base_dir: str | Path | None = None,
+    quiet: bool = False,
+) -> None:
+    """Copy local files or directories into an export directory."""
+    _copy_assets_impl(
+        rules,
+        Path(output_dir),
+        base_dir=_resolve_copy_base_dir(base_dir),
+        quiet=quiet,
+    )
+
+
 @validate_params
 def export_db(
     catalog: Catalog,
     output_dir: str | Path | None = None,
     *,
     track_evolution: bool = True,
+    copy_assets: Any = None,
+    base_dir: str | Path | None = None,
     quiet: bool | None = None,
 ) -> None:
     """Write all catalog entities to JSON files."""
@@ -224,12 +275,24 @@ def export_db(
         "frequency": "variable",
         "value": "enumeration",
     }
+    _drop_empty_columns(catalog)
     catalog.save(
         path,
         track_evolution=track_evolution,
         timestamp=catalog._now,
         parent_relations=parent_relations,
     )
+
+    if copy_assets is not None:
+        export_dir = Path(path)
+        copy_assets_base_dir = _resolve_copy_base_dir(base_dir)
+        q = quiet if quiet is not None else catalog.quiet
+        _copy_assets_impl(
+            copy_assets,
+            export_dir,
+            base_dir=copy_assets_base_dir,
+            quiet=q,
+        )
 
 
 def _get_app_path() -> Path:
@@ -266,6 +329,8 @@ def export_app(
     *,
     open_browser: bool = False,
     track_evolution: bool = True,
+    copy_assets: Any = None,
+    base_dir: str | Path | None = None,
     quiet: bool | None = None,
 ) -> None:
     """Export a standalone datannur visualization app with catalog data."""
@@ -295,6 +360,15 @@ def export_app(
     # Write to data/db/
     db_dir = output_dir / "data" / "db"
     catalog.export_db(db_dir, quiet=True, track_evolution=track_evolution)
+
+    if copy_assets is not None:
+        copy_assets_base_dir = _resolve_copy_base_dir(base_dir)
+        _copy_assets_impl(
+            copy_assets,
+            output_dir,
+            base_dir=copy_assets_base_dir,
+            quiet=q,
+        )
 
     elapsed = time.perf_counter() - start_time
     index_uri = (output_dir / "index.html").resolve().as_uri()

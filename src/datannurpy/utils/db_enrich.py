@@ -86,18 +86,22 @@ def apply_metadata_to_new_vars(
             var.tag_ids = list(dict.fromkeys(var.tag_ids + db_tags))
 
 
-def update_cached_metadata(
+def collect_cached_var_changes(
     catalog: Catalog,
     dataset_id: str,
     meta: TableMetadata,
-) -> None:
-    """Apply introspection results to cached (existing) variables and dataset."""
+) -> list[Variable]:
+    """Apply introspection results to cached dataset and return mutated variables.
+
+    Variables are mutated in place but NOT yet removed/re-added — the caller is
+    responsible for batching `variable.remove_all` + `variable.add_all` once.
+    The dataset description (rare path) is updated immediately.
+    """
     if meta.table_comment:
         ds = catalog.dataset.get(dataset_id)
         if ds and not ds.description:
             catalog.dataset.update(dataset_id, description=meta.table_comment)
 
-    # Fetch all variables of the dataset in one polars pass
     dataset_vars = catalog.variable.having.dataset(dataset_id)
     all_db_tag_ids = set(_DB_CONSTRAINT_TAGS.keys())
     changed: list[Variable] = []
@@ -129,6 +133,16 @@ def update_cached_metadata(
         if dirty:
             changed.append(var)
 
+    return changed
+
+
+def update_cached_metadata(
+    catalog: Catalog,
+    dataset_id: str,
+    meta: TableMetadata,
+) -> None:
+    """Apply introspection results to cached (existing) variables and dataset."""
+    changed = collect_cached_var_changes(catalog, dataset_id, meta)
     if changed:
         catalog.variable.remove_all([v.id for v in changed])
         catalog.variable.add_all(changed)

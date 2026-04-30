@@ -6,6 +6,10 @@ from collections.abc import Sequence
 from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Any, Literal
 
+from .entity_metadata import (
+    EntityMetadata,
+    folder_from_metadata,
+)
 from .utils import (
     build_dataset_id_name,
     build_variable_ids,
@@ -29,12 +33,16 @@ from .schema import Dataset, Folder
 from .scanner.discovery import DatasetInfo, compute_scan_plan, discover_datasets
 from .scanner.filesystem import FileSystem, is_remote_url
 from .scanner.timeseries import (
-    build_series_dataset_id,
+    _build_series_dataset_id_with_suffix,
     build_series_dataset_name,
     compute_variable_periods,
     get_series_folder_parts,
 )
-from .scanner.utils import get_data_size, get_dir_data_size, get_mtime_iso
+from .scanner.utils import (
+    get_data_size,
+    get_dir_data_size,
+    mtime_iso_from_timestamp,
+)
 from .scanner.parquet.discovery import (
     is_delta_table,
     is_hive_partitioned,
@@ -92,7 +100,7 @@ def _resolve_ids_from_peek(
 def add_folder(
     catalog: Catalog,
     path: str | Path | Sequence[str | Path],
-    folder: Folder | None = None,
+    metadata: EntityMetadata | None = None,
     *,
     depth: Depth | None = None,
     include: Sequence[str] | None = None,
@@ -107,35 +115,11 @@ def add_folder(
     storage_options: dict[str, Any] | None = None,
     create_folders: bool = True,
     on_unmatched: OnUnmatched = "warn",
-    id: str | None = None,
-    name: str | None = None,
-    description: str | None = None,
-    manager_id: str | None = None,
-    owner_id: str | None = None,
 ) -> None:
     """Scan a folder and add its contents to the catalog."""
-    if (
-        id is not None
-        or name is not None
-        or description is not None
-        or manager_id is not None
-        or owner_id is not None
-    ):
-        if folder is not None:
-            raise ConfigError(
-                "Cannot specify both folder and id/name/description/manager_id/owner_id"
-            )
-        folder = Folder(
-            id=id or "",
-            name=name,
-            description=description,
-            manager_id=manager_id,
-            owner_id=owner_id,
-        )
-    if not create_folders and folder is not None:
+    if not create_folders and metadata is not None:
         raise ConfigError(
-            "create_folders=False is incompatible with folder/id/name/"
-            "description/manager_id/owner_id (no folder is created)"
+            "create_folders=False is incompatible with metadata= (no folder is created)"
         )
     if isinstance(path, list):
         kwargs = {k: v for k, v in locals().items() if k not in ("catalog", "path")}
@@ -195,16 +179,18 @@ def add_folder(
 
     if create_folders:
         # Create default folder from directory name if not provided
-        if folder is None:
+        if metadata is None:
             folder = Folder(id=sanitize_id(root_name), name=root_name)
-        elif not folder.id:
-            folder.id = sanitize_id(root_name)
-            if folder.name is None:
-                folder.name = root_name
+        else:
+            folder = folder_from_metadata(
+                metadata,
+                default_id=sanitize_id(root_name),
+                default_name=root_name,
+            )
 
         # Set data_path for root folder
         folder.data_path = str(root)
-        folder.type = "filesystem"
+        folder.type = folder.type or "filesystem"
 
         # Add or update root folder
         upsert_folder(catalog, folder)
@@ -268,15 +254,20 @@ def add_folder(
     # Structure-only mode: create/update datasets without scanning
     if resolved_depth == "dataset":
         # Skip unchanged datasets
+        skip_seen_ids: list[str] = []
         for info in plan.to_skip:
-            existing = catalog.dataset.get_by("_match_path", str(info.path))
+            existing = plan.existing_by_path.get(str(info.path))
             assert existing is not None
-            catalog.dataset.update(existing.id, _seen=True)
+            skip_seen_ids.append(existing.id)
+            log_skip(info.path.name, q)
+        if skip_seen_ids:
+            catalog.dataset.update_many(skip_seen_ids, _seen=True)
 
         # Create or update modified datasets
         for info in plan.to_scan:
+            t0 = log_start(info.path.name, q)
             data_path_str = str(info.path)
-            existing = catalog.dataset.get_by("_match_path", data_path_str)
+            existing = plan.existing_by_path.get(data_path_str)
             if existing:
                 # Update metadata for modified dataset
                 data_size = (
@@ -286,11 +277,12 @@ def add_folder(
                 )
                 catalog.dataset.update(
                     existing.id,
-                    last_update_date=get_mtime_iso(info.path, fs=fs),
+                    last_update_date=mtime_iso_from_timestamp(info.mtime),
                     last_update_timestamp=info.mtime,
                     data_size=data_size,
                     _seen=True,
                 )
+                log_done(info.path.name, q, t0)
                 continue
 
             # Metadata-first peek: reuse pre-loaded id/folder_id if available.
@@ -308,7 +300,11 @@ def add_folder(
                 nb_resources = len(info.series_files)
                 start_date = periods[0]
                 end_date = periods[-1]
-                fallback_id = build_series_dataset_id(normalized, prefix)
+                fallback_id = _build_series_dataset_id_with_suffix(
+                    normalized,
+                    prefix,
+                    info.series_id_suffix,
+                )
                 fallback_folder_id = _build_series_folder_id(normalized, prefix)
             else:
                 fallback_id, dataset_name = build_dataset_id_name(
@@ -328,7 +324,7 @@ def add_folder(
                 name=dataset_name,
                 folder_id=folder_id,
                 data_path=data_path_str,
-                last_update_date=get_mtime_iso(info.path, fs=fs),
+                last_update_date=mtime_iso_from_timestamp(info.mtime),
                 last_update_timestamp=info.mtime,
                 delivery_format=info.format,
                 nb_resources=nb_resources,
@@ -343,18 +339,22 @@ def add_folder(
                 _match_path=data_path_str,
             )
             catalog.dataset.add(dataset)
+            log_done(dataset_name, q, t0)
 
         datasets_added = catalog.dataset.count - datasets_before
         log_summary(datasets_added, 0, q, start_time)
         return
 
     # Handle skipped datasets (mark as seen)
+    skip_seen_ids: list[str] = []
     for info in plan.to_skip:
-        existing = catalog.dataset.get_by("_match_path", str(info.path))
+        existing = plan.existing_by_path.get(str(info.path))
         assert existing is not None  # compute_scan_plan guarantees this
-        catalog.dataset.update(existing.id, _seen=True)
-        catalog.enumeration_manager.mark_dataset_seen(existing.id)
+        skip_seen_ids.append(existing.id)
         log_skip(info.path.name, q)
+    if skip_seen_ids:
+        catalog.dataset.update_many(skip_seen_ids, _seen=True)
+        catalog.enumeration_manager.mark_datasets_seen(skip_seen_ids)
 
     # Process datasets to scan
     schema_only = resolved_depth == "variable"
@@ -436,7 +436,7 @@ def add_folder(
             continue
 
         # Remove old dataset only after successful scan
-        existing = catalog.dataset.get_by("_match_path", data_path_str)
+        existing = plan.existing_by_path.get(data_path_str)
         if existing:
             remove_dataset_cascade(catalog, existing)
 
@@ -446,7 +446,7 @@ def add_folder(
             name=result.name or dataset_name,
             folder_id=folder_id,
             data_path=data_path_str,
-            last_update_date=get_mtime_iso(info.path, fs=fs),
+            last_update_date=mtime_iso_from_timestamp(info.mtime),
             last_update_timestamp=info.mtime,
             delivery_format=info.format,
             description=result.description,
@@ -511,7 +511,11 @@ def _scan_time_series(
 
     # Build dataset ID using normalized path
     normalized = info.series_normalized_path
-    fallback_id = build_series_dataset_id(normalized, prefix)
+    fallback_id = _build_series_dataset_id_with_suffix(
+        normalized,
+        prefix,
+        info.series_id_suffix,
+    )
     # Build dataset name from normalized path
     dataset_name = build_series_dataset_name(normalized, periods)
 
@@ -574,7 +578,7 @@ def _scan_time_series(
         name=result.name or dataset_name,
         folder_id=folder_id,
         data_path=str(last_path),
-        last_update_date=get_mtime_iso(last_path, fs=fs),
+        last_update_date=mtime_iso_from_timestamp(info.mtime),
         last_update_timestamp=info.mtime,
         delivery_format=info.format,
         description=result.description,

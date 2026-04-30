@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import pyarrow as pa
 import pytest
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata
 from datannurpy.scanner.database import connect, list_tables, scan_table
 
 from .base import BaseDatabaseTests
@@ -73,7 +73,7 @@ class TestSQLiteIncrementalScan:
         catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_database(
             conn_str,
-            Folder(id="db", name="Database"),
+            metadata=EntityMetadata(id="db", name="Database"),
             group_by_prefix=True,
             prefix_min_tables=2,
         )
@@ -87,7 +87,7 @@ class TestSQLiteIncrementalScan:
         catalog2 = Catalog(app_path=app_dir, quiet=True)
         catalog2.add_database(
             conn_str,
-            Folder(id="db", name="Database"),
+            metadata=EntityMetadata(id="db", name="Database"),
             group_by_prefix=True,
             prefix_min_tables=2,
         )
@@ -125,7 +125,7 @@ class TestDatabaseTimeSeries:
         catalog = Catalog(quiet=True)
         catalog.add_database(
             f"sqlite:////{ts_sqlite_db}",
-            Folder(id="db", name="DB"),
+            metadata=EntityMetadata(id="db", name="DB"),
             group_by_prefix=False,
         )
         datasets = {d.name: d for d in catalog.dataset.all()}
@@ -144,7 +144,7 @@ class TestDatabaseTimeSeries:
         catalog = Catalog(quiet=True)
         catalog.add_database(
             f"sqlite:////{ts_sqlite_db}",
-            Folder(id="db", name="DB"),
+            metadata=EntityMetadata(id="db", name="DB"),
             group_by_prefix=False,
         )
         series = [d for d in catalog.dataset.all() if d.nb_resources is not None]
@@ -165,7 +165,7 @@ class TestDatabaseTimeSeries:
         catalog = Catalog(quiet=True)
         catalog.add_database(
             f"sqlite:////{ts_sqlite_db}",
-            Folder(id="db", name="DB"),
+            metadata=EntityMetadata(id="db", name="DB"),
             time_series=False,
             group_by_prefix=False,
         )
@@ -177,7 +177,7 @@ class TestDatabaseTimeSeries:
         catalog = Catalog(quiet=True)
         catalog.add_database(
             f"sqlite:////{ts_sqlite_db}",
-            Folder(id="db", name="DB"),
+            metadata=EntityMetadata(id="db", name="DB"),
             depth="dataset",
             group_by_prefix=False,
         )
@@ -192,7 +192,7 @@ class TestDatabaseTimeSeries:
         catalog = Catalog(quiet=True)
         catalog.add_database(
             f"sqlite:////{ts_sqlite_db}",
-            Folder(id="db", name="DB"),
+            metadata=EntityMetadata(id="db", name="DB"),
             depth="variable",
             group_by_prefix=False,
         )
@@ -228,7 +228,7 @@ class TestDatabaseTimeSeries:
         catalog = Catalog(quiet=True)
         catalog.add_database(
             f"sqlite:////{db_path}",
-            Folder(id="db", name="DB"),
+            metadata=EntityMetadata(id="db", name="DB"),
             group_by_prefix=True,
             prefix_min_tables=2,
         )
@@ -255,12 +255,12 @@ class TestDatabaseTimeSeries:
         catalog = Catalog(quiet=True)
         catalog.add_database(
             conn_str,
-            Folder(id="db", name="DB"),
+            metadata=EntityMetadata(id="db", name="DB"),
             group_by_prefix=False,
         )
         catalog.add_database(
             conn_str,
-            Folder(id="db", name="DB"),
+            metadata=EntityMetadata(id="db", name="DB"),
             group_by_prefix=False,
             refresh=True,
         )
@@ -296,7 +296,7 @@ class TestDatabaseTimeSeries:
         with patch("datannurpy.add_database.scan_table", side_effect=fail_on_full):
             catalog.add_database(
                 f"sqlite:////{db_path}",
-                Folder(id="db", name="DB"),
+                metadata=EntityMetadata(id="db", name="DB"),
                 group_by_prefix=False,
             )
         # Series dataset should not be created (error during full scan)
@@ -323,7 +323,7 @@ class TestDatabaseTimeSeries:
         with patch("datannurpy.add_database.scan_table", side_effect=fail_all):
             catalog.add_database(
                 f"sqlite:////{db_path}",
-                Folder(id="db", name="DB"),
+                metadata=EntityMetadata(id="db", name="DB"),
                 depth="variable",
                 group_by_prefix=False,
             )
@@ -359,7 +359,7 @@ class TestDatabaseTimeSeries:
         with patch("datannurpy.add_database.scan_table", side_effect=fail_first):
             catalog.add_database(
                 f"sqlite:////{db_path}",
-                Folder(id="db", name="DB"),
+                metadata=EntityMetadata(id="db", name="DB"),
                 group_by_prefix=False,
             )
         # Series should still be created (partial schema data)

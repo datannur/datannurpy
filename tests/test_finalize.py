@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata, Folder
 from datannurpy.schema import Doc, Enumeration, Organization, Tag, Value, Variable
 from datannurpy.utils.ids import build_value_id
 
@@ -21,12 +21,12 @@ class TestFinalizeIdempotent:
 
         # Create catalog with db_path
         catalog = Catalog(app_path=app_dir, quiet=True)
-        catalog.add_folder(data_dir, Folder(id="test", name="Test"))
+        catalog.add_folder(data_dir, metadata=EntityMetadata(id="test", name="Test"))
         catalog.export_db()
 
         # Reload catalog
         catalog2 = Catalog(app_path=app_dir, quiet=True)
-        catalog2.add_folder(data_dir, Folder(id="test", name="Test"))
+        catalog2.add_folder(data_dir, metadata=EntityMetadata(id="test", name="Test"))
 
         catalog2.finalize()
         count_after_first = len(catalog2.folder.all()) + len(catalog2.dataset.all())
@@ -62,7 +62,7 @@ class TestFinalizeUnseenFolders:
 
         # First scan - add_folder marks everything as seen
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
         # Reload without scanning - entities loaded with _seen=False
@@ -83,12 +83,12 @@ class TestFinalizeUnseenFolders:
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
         # Reload and rescan - add_folder marks as seen
         catalog2 = Catalog(app_path=app_dir, quiet=True)
-        catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog2.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
 
         initial_count = len([f for f in catalog2.folder.all() if f.id == "src"])
         catalog2.finalize()
@@ -105,7 +105,7 @@ class TestFinalizeUnseenFolders:
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
 
         # Verify before export
         assert len(catalog1.dataset.all()) >= 1
@@ -133,7 +133,7 @@ class TestFinalizeUnseenDatasets:
 
         # First scan with both files
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
 
         assert len(catalog1.dataset.all()) == 2
         catalog1.export_db()
@@ -142,7 +142,7 @@ class TestFinalizeUnseenDatasets:
         (data_dir / "remove.csv").unlink()
 
         catalog2 = Catalog(app_path=app_dir, quiet=True)
-        catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog2.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog2.finalize()
 
         assert len([ds for ds in catalog2.dataset.all() if ds.folder_id == "src"]) == 1
@@ -157,7 +157,7 @@ class TestFinalizeUnseenDatasets:
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
 
         assert len(catalog1.variable.all()) >= 1
         catalog1.export_db()
@@ -166,7 +166,7 @@ class TestFinalizeUnseenDatasets:
         (data_dir / "test.csv").unlink()
 
         catalog2 = Catalog(app_path=app_dir, quiet=True)
-        catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog2.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog2.finalize()
 
         # No datasets from src folder
@@ -176,6 +176,15 @@ class TestFinalizeUnseenDatasets:
             len([v for v in catalog2.variable.all() if v.dataset_id.startswith("src")])
             == 0
         )
+
+    def test_unseen_dataset_without_variables(self, tmp_path: Path):
+        """Cascade should remove the dataset even when it has no variables."""
+        from datannurpy.schema import Dataset
+
+        catalog = Catalog(app_path=tmp_path, quiet=True)
+        catalog.dataset.add(Dataset(id="ds1", name="DS", _seen=False))
+        catalog.finalize()
+        assert catalog.dataset.get("ds1") is None
 
 
 class TestFinalizeUnseenEnumerations:
@@ -268,7 +277,7 @@ class TestFinalizeEnumerationsWithoutFolder:
 
         # First scan - creates an enumeration but we'll remove the _enumerations folder
         catalog1 = Catalog(app_path=app_dir, quiet=True)
-        catalog1.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
         # Reload and rescan
@@ -282,7 +291,7 @@ class TestFinalizeEnumerationsWithoutFolder:
             catalog2.folder.remove(ENUMERATIONS_FOLDER_ID)
 
         # Now rescan - should not crash even without _enumerations folder
-        catalog2.add_folder(data_dir, Folder(id="src", name="Source"))
+        catalog2.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog2.finalize()
 
         # Enumerations should still be present
@@ -510,7 +519,7 @@ class TestFinalizeCalledByExport:
 
         # Create catalog with scan
         catalog = Catalog(app_path=app_dir, quiet=True)
-        catalog.add_folder(data_dir, folder=Folder(id="test"))
+        catalog.add_folder(data_dir, metadata=EntityMetadata(id="test"))
         catalog.export_db()
 
         assert catalog._finalized is True
@@ -547,3 +556,9 @@ class TestFinalizeCalledByExport:
         )
         catalog.enumeration_manager.mark_dataset_seen("ds1")
         # Should not raise — enumeration simply not found
+
+    def test_mark_datasets_seen_empty_variable_table(self, tmp_path: Path):
+        """mark_datasets_seen is a no-op when no variables exist."""
+        catalog = Catalog(app_path=tmp_path, quiet=True)
+        catalog.enumeration_manager.mark_datasets_seen(["ds1"])
+        catalog.enumeration_manager.mark_datasets_seen([])

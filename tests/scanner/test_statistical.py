@@ -10,7 +10,7 @@ import pandas as pd
 import pyreadstat
 import pytest
 
-from datannurpy import Catalog, Folder
+from datannurpy import Catalog, EntityMetadata
 from datannurpy.scanner import read_statistical
 from datannurpy.scanner.statistical import scan_statistical
 
@@ -128,7 +128,9 @@ class TestScanSasFiles:
         """add_folder should scan SAS files (.sas7bdat extension)."""
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["cars.sas7bdat"]
+            DATA_DIR,
+            metadata=EntityMetadata(id="test", name="Test"),
+            include=["cars.sas7bdat"],
         )
         assert len(catalog.dataset.all()) == 1
         assert catalog.dataset.all()[0].delivery_format == "sas"
@@ -138,7 +140,9 @@ class TestScanSasFiles:
         """add_folder should extract metadata from SAS files."""
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["cars.sas7bdat"]
+            DATA_DIR,
+            metadata=EntityMetadata(id="test", name="Test"),
+            include=["cars.sas7bdat"],
         )
         assert catalog.dataset.all()[0].description == "Written by SAS"
         var_by_name = {v.name: v for v in catalog.variable.all()}
@@ -149,7 +153,9 @@ class TestScanSasFiles:
         """add_folder should convert SAS float columns with integer values to integer type."""
         catalog = Catalog()
         catalog.add_folder(
-            DATA_DIR, Folder(id="test", name="Test"), include=["cars.sas7bdat"]
+            DATA_DIR,
+            metadata=EntityMetadata(id="test", name="Test"),
+            include=["cars.sas7bdat"],
         )
         var_by_name = {v.name: v for v in catalog.variable.all()}
         # CYL contains only integers (3, 4, 5, 6, 8)

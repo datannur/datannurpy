@@ -12,11 +12,28 @@ import yaml
 from dotenv import load_dotenv
 
 from ..catalog import Catalog
+from ..entity_metadata import EntityMetadata
 from ..errors import ConfigError
-from ..exporter import copy_assets as export_copy_assets
-from ..schema import Folder
 
 VALID_TYPES = {"folder", "dataset", "database"}
+METADATA_KEYS = {
+    "id",
+    "parent_id",
+    "manager_id",
+    "owner_id",
+    "tag_ids",
+    "doc_ids",
+    "name",
+    "description",
+    "license",
+    "type",
+    "link",
+    "localisation",
+    "start_date",
+    "end_date",
+    "updating_each",
+    "no_more_update",
+}
 RESERVED_KEYS = {
     "add",
     "copy_assets",
@@ -41,7 +58,6 @@ def _normalize_entry(
 
     # New format: type key carries the primary value (path or URI)
     type_keys = VALID_TYPES & item.keys()
-    # Exclude 'folder' when its value is a dict (it's a Folder metadata, not a type)
     if "folder" in type_keys and isinstance(item.get("folder"), dict):
         type_keys.discard("folder")
     if type_keys:
@@ -68,6 +84,54 @@ def _normalize_entry(
         valid = ", ".join(sorted(VALID_TYPES))
         raise ConfigError(f"Unknown type '{item_type}' in config. Valid types: {valid}")
     return item_type, item, None
+
+
+def _normalize_metadata(item_type: str, item: dict[str, Any]) -> dict[str, Any]:
+    """Translate YAML metadata forms into a single metadata=EntityMetadata input."""
+    item = dict(item)
+
+    explicit_metadata = item.pop("metadata", None)
+    explicit_flat_keys = {key for key in METADATA_KEYS if key in item}
+    has_folder_id = "folder_id" in item
+    legacy_folder = item.get("folder")
+
+    if explicit_metadata is not None and (explicit_flat_keys or has_folder_id):
+        raise ConfigError("Cannot specify both metadata and top-level keys/folder_id")
+    if isinstance(legacy_folder, dict) and (explicit_flat_keys or has_folder_id):
+        raise ConfigError(
+            "Cannot specify both folder/metadata and top-level keys/folder_id"
+        )
+
+    if explicit_metadata is None:
+        metadata_data: dict[str, Any] = {}
+    elif isinstance(explicit_metadata, EntityMetadata):
+        metadata_data = explicit_metadata.__dict__.copy()
+    elif isinstance(explicit_metadata, dict):
+        metadata_data = dict(explicit_metadata)
+    else:
+        raise ConfigError("'metadata' must be a mapping")
+
+    if isinstance(legacy_folder, dict):
+        item.pop("folder")
+        if item_type == "dataset":
+            legacy_parent_id = legacy_folder.get("id")
+            if legacy_parent_id is not None:
+                metadata_data.setdefault("parent_id", legacy_parent_id)
+        else:
+            for key, value in legacy_folder.items():
+                metadata_data.setdefault(key, value)
+
+    if "folder_id" in item:
+        metadata_data.setdefault("parent_id", item.pop("folder_id"))
+
+    for key in tuple(METADATA_KEYS):
+        if key in item:
+            metadata_data[key] = item.pop(key)
+
+    if metadata_data:
+        item["metadata"] = EntityMetadata(**metadata_data)
+
+    return item
 
 
 def _expand_vars(obj: Any) -> Any:
@@ -201,8 +265,7 @@ def run_config(path: str | Path) -> Catalog:
     entries = config.get("add", [])
     for raw_item in entries:
         item_type, item, primary_value = _normalize_entry(raw_item)
-        if "folder" in item and isinstance(item["folder"], dict):
-            item["folder"] = Folder(**item["folder"])
+        item = _normalize_metadata(item_type, item)
 
         if item_type == "folder":
             if primary_value is not None:
@@ -232,19 +295,22 @@ def run_config(path: str | Path) -> Catalog:
             catalog.add_database(uri, **item)
 
     # Export: app_path implies app export, output_dir implies db-only export
-    export_dir: Path | None = None
     if output_dir:
-        catalog.export_db(output_dir, track_evolution=track_evolution)
-        export_dir = Path(output_dir)
-    elif catalog.app_path is not None:
-        catalog.export_app(open_browser=open_browser, track_evolution=track_evolution)
-        export_dir = Path(catalog.app_path)
-
-    if copy_assets is not None and export_dir is not None:
-        quiet = catalog_params.get("quiet", False)
-        export_copy_assets(
-            copy_assets, export_dir, base_dir=base_dir, quiet=bool(quiet)
+        catalog.export_db(
+            output_dir,
+            track_evolution=track_evolution,
+            copy_assets=copy_assets,
+            base_dir=base_dir,
         )
+    elif catalog.app_path is not None:
+        catalog.export_app(
+            open_browser=open_browser,
+            track_evolution=track_evolution,
+            copy_assets=copy_assets,
+            base_dir=base_dir,
+        )
+
+    export_dir = Path(output_dir) if output_dir else catalog.app_path
 
     if post_export and export_dir is not None:
         quiet = catalog_params.get("quiet", False)
