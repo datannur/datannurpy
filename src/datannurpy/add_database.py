@@ -366,6 +366,7 @@ def _add_database_impl(
                     ),
                 )
 
+        seen_ids: list[str] = []
         for table_name in tables:
             if table_name in series_table_names:
                 continue
@@ -382,7 +383,7 @@ def _add_database_impl(
             # Structure/Variable mode: no signature, no row count, no incremental check
             if resolved_depth not in ("stat", "value"):
                 if existing_dataset is not None and not do_refresh:
-                    catalog.dataset.update(existing_dataset.id, _seen=True)
+                    seen_ids.append(existing_dataset.id)
                     if do_introspect:
                         meta = schema_meta[table_name]
                         update_cached_metadata(
@@ -480,7 +481,7 @@ def _add_database_impl(
                 )
 
                 if not do_refresh and data_unchanged:
-                    catalog.dataset.update(existing_dataset.id, _seen=True)
+                    seen_ids.append(existing_dataset.id)
                     catalog.enumeration_manager.mark_dataset_seen(existing_dataset.id)
                     meta = schema_meta[table_name]
                     update_cached_metadata(
@@ -571,6 +572,9 @@ def _add_database_impl(
             catalog.variable.add_all(table_vars)
 
             log_done(f"{table_name} ({nb_row:,} rows, {len(table_vars)} vars)", q, t0)
+
+        if seen_ids:
+            catalog.dataset.update_many(seen_ids, _seen=True)
 
         # Process time series groups
         for group in series_groups:

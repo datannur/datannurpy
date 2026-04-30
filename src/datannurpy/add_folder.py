@@ -268,11 +268,14 @@ def add_folder(
     # Structure-only mode: create/update datasets without scanning
     if resolved_depth == "dataset":
         # Skip unchanged datasets
+        skip_seen_ids: list[str] = []
         for info in plan.to_skip:
             existing = catalog.dataset.get_by("_match_path", str(info.path))
             assert existing is not None
-            catalog.dataset.update(existing.id, _seen=True)
+            skip_seen_ids.append(existing.id)
             log_skip(info.path.name, q)
+        if skip_seen_ids:
+            catalog.dataset.update_many(skip_seen_ids, _seen=True)
 
         # Create or update modified datasets
         for info in plan.to_scan:
@@ -357,12 +360,15 @@ def add_folder(
         return
 
     # Handle skipped datasets (mark as seen)
+    skip_seen_ids: list[str] = []
     for info in plan.to_skip:
         existing = catalog.dataset.get_by("_match_path", str(info.path))
         assert existing is not None  # compute_scan_plan guarantees this
-        catalog.dataset.update(existing.id, _seen=True)
+        skip_seen_ids.append(existing.id)
         catalog.enumeration_manager.mark_dataset_seen(existing.id)
         log_skip(info.path.name, q)
+    if skip_seen_ids:
+        catalog.dataset.update_many(skip_seen_ids, _seen=True)
 
     # Process datasets to scan
     schema_only = resolved_depth == "variable"
