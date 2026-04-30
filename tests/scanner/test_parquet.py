@@ -473,7 +473,7 @@ class TestParquetSampling:
 
         captured = capsys.readouterr()
         assert "GeoParquet" in captured.err
-        assert "OGC:CRS84" in captured.err
+        assert "falling back to PyArrow" in captured.err
         ds = catalog.dataset.all()[0]
         assert ds.nb_row == 3
 
