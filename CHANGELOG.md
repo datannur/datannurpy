@@ -3,6 +3,7 @@
 ## 0.22.3 (2026-05-01)
 
 - improve: log prefix spacing is now consistent after leading icons across scan, metadata, export, and post-export output
+- fix: log_file now writes in UTF-8 in datannurpy.utils.log
 
 ## 0.22.2 (2026-04-30)
 

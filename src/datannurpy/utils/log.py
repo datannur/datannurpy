@@ -25,7 +25,7 @@ def configure_logging(
     _verbose = verbose
     if log_file is not None:
         _log_file_path = Path(log_file)
-        _log_file_path.write_text("")
+        _log_file_path.write_text("", encoding="utf-8")
     else:
         _log_file_path = None
 
@@ -33,7 +33,7 @@ def configure_logging(
 def _write_log(message: str) -> None:
     """Append a message to the log file if configured."""
     if _log_file_path is not None:
-        with open(_log_file_path, "a") as f:
+        with open(_log_file_path, "a", encoding="utf-8") as f:
             f.write(message + "\n")
 
 
@@ -114,7 +114,7 @@ def log_error(name: str, error: BaseException, quiet: bool) -> None:
     if _log_file_path is not None:
         buf = io.StringIO()
         traceback.print_exc(file=buf)
-        with open(_log_file_path, "a") as f:
+        with open(_log_file_path, "a", encoding="utf-8") as f:
             f.write(_redact(buf.getvalue()))
 
 
