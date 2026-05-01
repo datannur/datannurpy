@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from datannurpy.add_folder import _canonicalize_time_series_columns
 from datannurpy import Catalog, EntityMetadata
 from datannurpy.scanner.timeseries import (
     PERIOD_PLACEHOLDER,
@@ -574,6 +575,22 @@ class TestBuildSeriesDatasetName:
 class TestAddFolderTimeSeries:
     """Integration tests for add_folder with time series."""
 
+    def test_canonicalize_time_series_columns_handles_empty_input(self):
+        """Empty time-series column maps should stay empty."""
+        assert _canonicalize_time_series_columns({}) == {}
+
+    def test_canonicalize_time_series_columns_deduplicates_same_period_aliases(self):
+        """Aliases that sanitize identically should collapse within each period."""
+        columns_by_period = {
+            "2020": ["id", "canonical€label", "canonical_label"],
+            "2021": ["id", "canonical_label"],
+        }
+
+        assert _canonicalize_time_series_columns(columns_by_period) == {
+            "2020": ["id", "canonical_label"],
+            "2021": ["id", "canonical_label"],
+        }
+
     def test_mixed_granularities_create_distinct_datasets(self, tmp_path: Path):
         """Yearly and quarterly files with the same base name must create two datasets."""
         for name in (
@@ -704,6 +721,26 @@ class TestAddFolderTimeSeries:
 
         # Should have union of all columns
         assert var_names == {"id", "nom", "revenu", "email"}
+
+    def test_time_series_aliases_are_canonicalized_before_id_build(
+        self, tmp_path: Path
+    ):
+        """Header aliases that sanitize to the same ID should merge under the latest label."""
+        ts_dir = tmp_path / "aliases"
+        ts_dir.mkdir()
+        (ts_dir / "data_2020.csv").write_text("id,canonical€label\n1,foo\n")
+        (ts_dir / "data_2021.csv").write_text("id,canonical_label\n2,bar\n")
+
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(
+            ts_dir,
+            metadata=EntityMetadata(id="aliases", name="Aliases"),
+        )
+
+        variables = {v.name: v for v in catalog.variable.all()}
+        assert set(variables) == {"id", "canonical_label"}
+        assert variables["canonical_label"].start_date is None
+        assert variables["canonical_label"].end_date is None
 
     def test_dataset_mode_with_timeseries(self):
         """Structure mode works with time series."""

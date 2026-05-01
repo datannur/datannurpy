@@ -37,6 +37,7 @@ from .scanner.timeseries import (
     build_series_dataset_name,
     compute_variable_periods,
     get_series_folder_parts,
+    period_sort_key,
 )
 from .scanner.utils import (
     get_data_size,
@@ -87,6 +88,36 @@ def _display_dataset_label(info: DatasetInfo, root: PurePath) -> str:
     if info.series_files is None:
         return path_label
     return f"{path_label} ({len(info.series_files)} files)"
+
+
+def _canonicalize_time_series_columns(
+    columns_by_period: dict[str, list[str]],
+) -> dict[str, list[str]]:
+    """Merge time-series header aliases using the sanitized variable key."""
+    if not columns_by_period:
+        return columns_by_period
+
+    sorted_periods = sorted(columns_by_period, key=period_sort_key)
+    canonical_name_by_key: dict[str, str] = {}
+
+    # Keep the latest label seen for each sanitized key.
+    for period in sorted_periods:
+        for column_name in columns_by_period[period]:
+            canonical_name_by_key[sanitize_id(column_name)] = column_name
+
+    canonical_columns_by_period: dict[str, list[str]] = {}
+    for period in sorted_periods:
+        canonical_columns: list[str] = []
+        seen_columns: set[str] = set()
+        for column_name in columns_by_period[period]:
+            canonical_name = canonical_name_by_key[sanitize_id(column_name)]
+            if canonical_name in seen_columns:
+                continue
+            canonical_columns.append(canonical_name)
+            seen_columns.add(canonical_name)
+        canonical_columns_by_period[period] = canonical_columns
+
+    return canonical_columns_by_period
 
 
 def _handle_unmatched(
@@ -602,7 +633,9 @@ def _scan_time_series(
         columns_by_period[period] = [v.name for v in schema_result.variables]
 
     # Step 2: Compute variable periods (start_date/end_date)
-    var_periods = compute_variable_periods(columns_by_period)
+    var_periods = compute_variable_periods(
+        _canonicalize_time_series_columns(columns_by_period)
+    )
 
     # Step 3: Full scan on the latest file only (unless schema_only mode)
     result = scan_file(
