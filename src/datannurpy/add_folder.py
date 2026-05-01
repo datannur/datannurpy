@@ -66,6 +66,29 @@ def _build_series_folder_id(normalized: str, prefix: str) -> str:
     return prefix
 
 
+def _display_path(path: PurePath, root: PurePath) -> str:
+    """Return a log-friendly path relative to the scanned root when possible."""
+    try:
+        return path.relative_to(root).as_posix()
+    except ValueError:
+        return path.name
+
+
+def _display_dataset_path(info: DatasetInfo, root: PurePath) -> str:
+    """Return the path label to use in add_folder logs."""
+    if info.series_files is not None:
+        return _display_path(info.series_files[-1][1], root)
+    return _display_path(info.path, root)
+
+
+def _display_dataset_label(info: DatasetInfo, root: PurePath) -> str:
+    """Return the dataset log label used in folder scans."""
+    path_label = _display_dataset_path(info, root)
+    if info.series_files is None:
+        return path_label
+    return f"{path_label} ({len(info.series_files)} files)"
+
+
 def _handle_unmatched(
     path_label: str,
     on_unmatched: OnUnmatched,
@@ -250,6 +273,7 @@ def add_folder(
 
     # Compute scan plan (what to scan vs skip)
     plan = compute_scan_plan(discovery.datasets, catalog, do_refresh)
+    resource_count = sum(info.resource_count for info in discovery.datasets)
 
     # Structure-only mode: create/update datasets without scanning
     if resolved_depth == "dataset":
@@ -259,13 +283,14 @@ def add_folder(
             existing = plan.existing_by_path.get(str(info.path))
             assert existing is not None
             skip_seen_ids.append(existing.id)
-            log_skip(info.path.name, q)
+            log_skip(_display_dataset_label(info, root), q)
         if skip_seen_ids:
             catalog.dataset.update_many(skip_seen_ids, _seen=True)
 
         # Create or update modified datasets
         for info in plan.to_scan:
-            t0 = log_start(info.path.name, q)
+            display_label = _display_dataset_label(info, root)
+            t0 = log_start(display_label, q)
             data_path_str = str(info.path)
             existing = plan.existing_by_path.get(data_path_str)
             if existing:
@@ -282,13 +307,13 @@ def add_folder(
                     data_size=data_size,
                     _seen=True,
                 )
-                log_done(info.path.name, q, t0)
+                log_done(display_label, q, t0)
                 continue
 
             # Metadata-first peek: reuse pre-loaded id/folder_id if available.
             peek = find_loaded_dataset_by_match_path(catalog, data_path_str)
             if peek is None and not create_folders:
-                _handle_unmatched(info.path.name, on_unmatched, q)
+                _handle_unmatched(display_label, on_unmatched, q)
                 continue
 
             # Compute name and time-series fields (always needed)
@@ -339,10 +364,17 @@ def add_folder(
                 _match_path=data_path_str,
             )
             catalog.dataset.add(dataset)
-            log_done(dataset_name, q, t0)
+            log_done(display_label, q, t0)
 
         datasets_added = catalog.dataset.count - datasets_before
-        log_summary(datasets_added, 0, q, start_time)
+        log_summary(
+            datasets_added,
+            None,
+            q,
+            start_time,
+            resource_count=resource_count,
+            resource_label="files",
+        )
         return
 
     # Handle skipped datasets (mark as seen)
@@ -351,7 +383,7 @@ def add_folder(
         existing = plan.existing_by_path.get(str(info.path))
         assert existing is not None  # compute_scan_plan guarantees this
         skip_seen_ids.append(existing.id)
-        log_skip(info.path.name, q)
+        log_skip(_display_dataset_label(info, root), q)
     if skip_seen_ids:
         catalog.dataset.update_many(skip_seen_ids, _seen=True)
         catalog.enumeration_manager.mark_datasets_seen(skip_seen_ids)
@@ -376,6 +408,7 @@ def add_folder(
     scan_errors = 0
 
     for info in plan.to_scan:
+        display_path = _display_dataset_path(info, root)
         # Time series: special handling
         if info.series_files is not None:
             try:
@@ -395,19 +428,19 @@ def add_folder(
                     on_unmatched=on_unmatched,
                 )
             except Exception as exc:
-                log_error(info.path.name, exc, q)
+                log_error(display_path, exc, q)
                 scan_errors += 1
             continue
 
         # Single file: standard handling
         data_path_str = str(info.path)
 
-        t0 = log_start(info.path.name, q)
+        t0 = log_start(display_path, q)
 
         # Metadata-first peek: reuse pre-loaded id/folder_id if available.
         peek = find_loaded_dataset_by_match_path(catalog, data_path_str)
         if peek is None and not create_folders:
-            _handle_unmatched(info.path.name, on_unmatched, q)
+            _handle_unmatched(display_path, on_unmatched, q)
             continue
 
         fallback_id, dataset_name = build_dataset_id_name(info.path, root, prefix)
@@ -431,7 +464,7 @@ def add_folder(
                 quiet=q,
             )
         except Exception as exc:
-            log_error(info.path.name, exc, q)
+            log_error(display_path, exc, q)
             scan_errors += 1
             continue
 
@@ -471,23 +504,31 @@ def add_folder(
 
         # Log result
         if schema_only:
-            log_done(f"{info.path.name} ({len(result.variables)} vars)", q, t0)
+            log_done(f"{display_path} ({len(result.variables)} vars)", q, t0)
         elif result.nb_row is None:
             # Scanner already emitted a warning explaining why the file
             # could not be scanned (untreatable, malformed, etc.).
             pass
         elif result.nb_row > 0:
             log_done(
-                f"{info.path.name} ({result.nb_row:,} rows, {len(result.variables)} vars)",
+                f"{display_path} ({result.nb_row:,} rows, {len(result.variables)} vars)",
                 q,
                 t0,
             )
         else:
-            log_warn(f"{info.path.name}: empty file", q)
+            log_warn(f"{display_path}: empty file", q)
 
     datasets_added = catalog.dataset.count - datasets_before
     vars_added = catalog.variable.count - vars_before
-    log_summary(datasets_added, vars_added, q, start_time, scan_errors)
+    log_summary(
+        datasets_added,
+        vars_added,
+        q,
+        start_time,
+        scan_errors,
+        resource_count=resource_count,
+        resource_label="files",
+    )
 
 
 def _scan_time_series(
@@ -509,6 +550,7 @@ def _scan_time_series(
     assert info.series_files is not None
     assert info.series_normalized_path is not None
     series_files = info.series_files
+    display_path = _display_dataset_path(info, root)
     periods = [period for period, _ in series_files]
     first_period = periods[0]
     last_period, last_path = series_files[-1]
@@ -530,7 +572,7 @@ def _scan_time_series(
     # Time series match on the latest period (the canonical data_path).
     peek = find_loaded_dataset_by_match_path(catalog, str(last_path))
     if peek is None and not create_folders:
-        _handle_unmatched(dataset_name, on_unmatched, quiet)
+        _handle_unmatched(display_path, on_unmatched, quiet)
         return
 
     dataset_id, folder_id = _resolve_ids_from_peek(
@@ -542,7 +584,7 @@ def _scan_time_series(
     if existing:
         remove_dataset_cascade(catalog, existing)
 
-    t0 = log_start(f"{dataset_name} ({len(series_files)} files)", quiet)
+    t0 = log_start(f"{display_path} ({len(series_files)} files)", quiet)
 
     # Step 1: Schema-only scan on all files to get columns per period
     columns_by_period: dict[str, list[str]] = {}
@@ -633,12 +675,16 @@ def _scan_time_series(
 
     # Log result
     if schema_only:
-        log_done(f"{dataset_name} ({len(result.variables)} vars)", quiet, t0)
+        log_done(
+            f"{display_path} ({len(result.variables)} vars, {len(series_files)} files)",
+            quiet,
+            t0,
+        )
     elif result.nb_row and result.nb_row > 0:
         log_done(
-            f"{dataset_name} ({result.nb_row:,} rows, {len(result.variables)} vars, {len(series_files)} files)",
+            f"{display_path} ({result.nb_row:,} rows, {len(result.variables)} vars, {len(series_files)} files)",
             quiet,
             t0,
         )
     else:
-        log_warn(f"{dataset_name}: empty file", quiet)
+        log_warn(f"{display_path}: empty file", quiet)

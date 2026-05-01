@@ -119,11 +119,22 @@ def log_error(name: str, error: BaseException, quiet: bool) -> None:
 
 
 def log_summary(
-    datasets: int, variables: int, quiet: bool, start_time: float, errors: int = 0
+    datasets: int,
+    variables: int | None,
+    quiet: bool,
+    start_time: float,
+    errors: int = 0,
+    resource_count: int | None = None,
+    resource_label: str | None = None,
 ) -> None:
     """Log final summary with elapsed time."""
     elapsed = time.perf_counter() - start_time
-    parts = [f"{datasets} datasets", f"{variables} variables"]
+    parts: list[str] = []
+    if resource_count is not None and resource_label is not None:
+        parts.append(f"{resource_count} {resource_label}")
+    parts.append(f"{datasets} datasets")
+    if variables is not None:
+        parts.append(f"{variables} variables")
     if errors:
         parts.append(f"{errors} errors")
     text = f"\n  →{_ICON_SPACING}{', '.join(parts)} in {elapsed:.1f}s"

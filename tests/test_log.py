@@ -56,6 +56,22 @@ def test_log_summary_without_errors(capsys):
     assert "errors" not in capsys.readouterr().err
 
 
+def test_log_summary_with_resource_count_and_no_variables(capsys):
+    """log_summary should show resources first and omit variables when unset."""
+    log_summary(
+        13,
+        None,
+        quiet=False,
+        start_time=time.perf_counter(),
+        resource_count=141,
+        resource_label="files",
+    )
+    err = capsys.readouterr().err
+    assert "141 files" in err
+    assert "13 datasets" in err
+    assert "variables" not in err
+
+
 def test_verbose_shows_traceback(capsys):
     """log_error with verbose should print traceback to stderr."""
     configure_logging(verbose=True)
@@ -210,7 +226,14 @@ def test_log_icon_spacing_exact(capsys, tmp_path):
         log_skip("skip.csv", quiet=False)
         log_folder("folder", quiet=False)
         log_debug("debug.csv", quiet=False)
-        log_summary(1, 2, quiet=False, start_time=start)
+        log_summary(
+            1,
+            2,
+            quiet=False,
+            start_time=start,
+            resource_count=3,
+            resource_label="files",
+        )
         try:
             raise ValueError("boom")
         except Exception as exc:
@@ -225,7 +248,7 @@ def test_log_icon_spacing_exact(capsys, tmp_path):
     assert "  ⏭  skip.csv (unchanged)" in err
     assert "\n  📁  folder" in err
     assert "\r  ·  debug.csv" in err
-    assert "\n  →  1 datasets, 2 variables in " in err
+    assert "\n  →  3 files, 1 datasets, 2 variables in " in err
     assert "\r  ✗  error.csv — ValueError: boom" in err
 
     content = log_path.read_text()
@@ -234,5 +257,5 @@ def test_log_icon_spacing_exact(capsys, tmp_path):
     assert "  ⏭  skip.csv (unchanged)" in content
     assert "\n  📁  folder" in content
     assert "  ·  debug.csv" in content
-    assert "\n  →  1 datasets, 2 variables in " in content
+    assert "\n  →  3 files, 1 datasets, 2 variables in " in content
     assert "  ✗  error.csv — ValueError: boom" in content

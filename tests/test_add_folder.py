@@ -7,8 +7,10 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from datannurpy.add_folder import _display_dataset_label
 from datannurpy import Catalog, EntityMetadata
 from datannurpy.errors import ConfigError
+from datannurpy.scanner.discovery import DatasetInfo
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 CSV_DIR = DATA_DIR / "csv"
@@ -220,6 +222,37 @@ class TestAddFolderStats:
 
 class TestAddFolderOther:
     """Test other add_folder features."""
+
+    def test_display_dataset_label_uses_relative_path_for_single_file(self):
+        """Single-file datasets should keep the root-relative path as log label."""
+        root = Path("/tmp/root")
+        info = DatasetInfo(path=root / "subdir" / "file.csv", format="csv", mtime=0)
+
+        assert _display_dataset_label(info, root) == "subdir/file.csv"
+
+    def test_display_dataset_label_falls_back_to_name_outside_root(self):
+        """Paths outside the scan root should fall back to the file name."""
+        root = Path("/tmp/root")
+        info = DatasetInfo(path=Path("/tmp/elsewhere/file.csv"), format="csv", mtime=0)
+
+        assert _display_dataset_label(info, root) == "file.csv"
+
+    def test_display_dataset_label_appends_file_count_for_time_series(self):
+        """Time-series datasets should keep the path and append the file count."""
+        root = Path("/tmp/root")
+        info = DatasetInfo(
+            path=root / "timeseries" / "budget_2024.csv",
+            format="csv",
+            mtime=0,
+            series_files=[
+                ("2023", root / "timeseries" / "budget_2023.csv"),
+                ("2024", root / "timeseries" / "budget_2024.csv"),
+            ],
+        )
+
+        assert (
+            _display_dataset_label(info, root) == "timeseries/budget_2024.csv (2 files)"
+        )
 
     def test_add_folder_ignores_unknown_formats(self, tmp_path: Path):
         """add_folder should skip files with unknown extensions when using include."""

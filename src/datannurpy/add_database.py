@@ -266,6 +266,7 @@ def _add_database_impl(
 
     # Process each schema
     scan_errors = 0
+    resource_count = 0
     for schema_name in schemas_to_scan:
         # Determine folder for this schema
         if schema_name is not None:
@@ -288,6 +289,7 @@ def _add_database_impl(
 
         # Get tables
         tables = list_tables(con, schema_name, include, exclude, backend_name)
+        resource_count += len(tables)
 
         # Group tables by time series if enabled
         series_table_names: set[str] = set()
@@ -598,7 +600,15 @@ def _add_database_impl(
 
     datasets_added = catalog.dataset.count - datasets_before
     vars_added = catalog.variable.count - vars_before
-    log_summary(datasets_added, vars_added, q, start_time, scan_errors)
+    log_summary(
+        datasets_added,
+        None if resolved_depth == "dataset" else vars_added,
+        q,
+        start_time,
+        scan_errors,
+        resource_count=resource_count,
+        resource_label="tables",
+    )
 
 
 def _scan_table_series(
