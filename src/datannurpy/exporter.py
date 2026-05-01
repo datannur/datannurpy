@@ -217,7 +217,7 @@ def _copy_assets_impl(
         )
         if not quiet:
             print(
-                f"  → copy_assets: {rule['from']} -> {rule['to']} "
+                f"  →  copy_assets: {rule['from']} -> {rule['to']} "
                 f"({copied} copied, {removed} removed)",
                 file=sys.stderr,
             )
@@ -372,7 +372,7 @@ def export_app(
 
     elapsed = time.perf_counter() - start_time
     index_uri = (output_dir / "index.html").resolve().as_uri()
-    summary = f"\n  → exported in {elapsed:.1f}s: {index_uri}"
+    summary = f"\n  →  exported in {elapsed:.1f}s: {index_uri}"
     if not q:
         print(summary, file=sys.stderr)
     _write_log(summary)

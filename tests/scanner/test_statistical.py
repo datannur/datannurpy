@@ -75,7 +75,7 @@ class TestReadStatistical:
 
         result = read_statistical(sas_path, quiet=False)
         captured = capsys.readouterr()
-        assert "✗ corrupted.sas7bdat" in captured.err
+        assert "✗  corrupted.sas7bdat" in captured.err
         assert result is None
 
 
@@ -102,7 +102,7 @@ class TestScanStatisticalExceptions:
         catalog.add_dataset(sas_file, quiet=False)
 
         captured = capsys.readouterr()
-        assert "✗ corrupted.sas7bdat" in captured.err
+        assert "✗  corrupted.sas7bdat" in captured.err
 
         assert len(catalog.dataset.all()) == 1
         assert catalog.dataset.all()[0].nb_row == 0
@@ -210,7 +210,7 @@ class TestScanStatisticalEdgeCases:
                 spss_file, dataset_id="ds", quiet=False
             )
         captured = capsys.readouterr()
-        assert "✗ ok.sav" in captured.err
+        assert "✗  ok.sav" in captured.err
         assert variables == []
         assert row_count == 0
 

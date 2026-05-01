@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.22.3 (2026-05-01)
+
+- improve: log prefix spacing is now consistent after leading icons across scan, metadata, export, and post-export output
+
 ## 0.22.2 (2026-04-30)
 
 - fix: non-tabular and malformed CSVs are now skipped cleanly as untreatable (pre-flight check, `strict_mode=false` retry, targeted DuckDB catch) instead of crashing or being mislabeled as empty

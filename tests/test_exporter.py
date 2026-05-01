@@ -306,7 +306,7 @@ class TestCopyAssets:
             quiet=False,
         )
 
-        assert "copy_assets: assets -> data/doc" in capsys.readouterr().err
+        assert "  →  copy_assets: assets -> data/doc" in capsys.readouterr().err
 
     def test_run_copy_assets_accepts_single_rule_mapping(self, tmp_path: Path):
         """The public API accepts a single rule mapping."""

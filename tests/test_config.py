@@ -1151,7 +1151,7 @@ add:
       id: test
 """)
         run_config(config_file)
-        assert "post_export: hook.py" in capsys.readouterr().err
+        assert "  →  post_export: hook.py" in capsys.readouterr().err
 
     def test_post_export_list(self, tmp_path: Path, data_dir: Path):
         """post_export accepts a list of scripts."""

@@ -828,6 +828,6 @@ def log_summary_metadata(
         return
     elapsed = time.perf_counter() - start_time
     print(
-        f"  → {created} created, {updated} updated in {elapsed:.1f}s",
+        f"  →  {created} created, {updated} updated in {elapsed:.1f}s",
         file=sys.stderr,
     )
