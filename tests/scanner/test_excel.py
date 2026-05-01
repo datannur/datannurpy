@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import codecs
 from pathlib import Path
 
 import pandas as pd
@@ -147,6 +148,21 @@ class TestIsValidExcelDataset:
 class TestScanExcelValidation:
     """Integration tests: invalid Excel files are skipped in scan."""
 
+    def test_read_excel_detects_html_xls_with_bom(self, tmp_path: Path, capsys):
+        """HTML renamed to .xls should still be detected after a BOM."""
+        from datannurpy.scanner.excel import read_excel
+
+        xls_path = tmp_path / "report.xls"
+        xls_path.write_bytes(
+            codecs.BOM_UTF8 + b"\n\n<!DOCTYPE html><html><body>report</body></html>"
+        )
+
+        result = read_excel(xls_path, quiet=False)
+
+        captured = capsys.readouterr()
+        assert result is None
+        assert "HTML content detected" in captured.err
+
     def test_xlsx_with_title_row_skipped(self, tmp_path: Path, capsys):
         """xlsx with a title row should be skipped."""
         _write_xlsx(
@@ -273,6 +289,20 @@ class TestScanExcelValidation:
         assert "bad.xls" in captured.err
         assert len(catalog.variable.all()) == 0
 
+    def test_xls_html_report_skipped_with_clear_message(self, tmp_path: Path, capsys):
+        """HTML content renamed to .xls should be classified as untreatable."""
+        (tmp_path / "report.xls").write_bytes(
+            b"<!DOCTYPE html><html><body>report</body></html>"
+        )
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, quiet=False)
+
+        captured = capsys.readouterr()
+        assert "HTML content detected" in captured.err
+        assert "skipped as untreatable" in captured.err
+        assert len(catalog.variable.all()) == 0
+
     def test_xls_invalid_header_skipped(self, tmp_path: Path, monkeypatch):
         """xls with numeric columns should be skipped via post-read validation."""
         from datannurpy.scanner import excel as excel_mod
@@ -315,6 +345,17 @@ class TestScanExcelValidation:
 
         assert len(catalog.variable.all()) == 0
 
+    def test_schema_mode_xls_html_report_skipped(self, tmp_path: Path, capsys):
+        """Schema-only scan should skip HTML reports renamed to .xls."""
+        (tmp_path / "report.xls").write_bytes(b"<html><body>report</body></html>")
+
+        catalog = Catalog(depth="variable")
+        catalog.add_folder(tmp_path, quiet=False)
+
+        captured = capsys.readouterr()
+        assert "HTML content detected" in captured.err
+        assert len(catalog.variable.all()) == 0
+
 
 class TestScanExcelSchemaRemote:
     """Test remote schema-only Excel validation."""
@@ -352,3 +393,92 @@ class TestScanExcelSchemaRemote:
 
         assert len(result.variables) == 0
         assert result.nb_row is None
+
+    def test_remote_xls_html_schema_skipped_without_download(self, capsys):
+        """Remote HTML renamed to .xls should be skipped before full download."""
+        from io import BytesIO
+        from unittest.mock import MagicMock
+
+        from datannurpy.scanner.scan import scan_file
+
+        mock_fs = MagicMock()
+        mock_fs.is_local = False
+        mock_fs.open.return_value.__enter__ = MagicMock(
+            return_value=BytesIO(b"<!DOCTYPE html><html><body>report</body></html>")
+        )
+        mock_fs.open.return_value.__exit__ = MagicMock(return_value=None)
+
+        result = scan_file(
+            Path("/remote/report.xls"),
+            "excel",
+            dataset_id="test---report_xls",
+            schema_only=True,
+            fs=mock_fs,
+        )
+
+        captured = capsys.readouterr()
+        assert result.variables == []
+        assert result.nb_row is None
+        mock_fs.ensure_local.assert_not_called()
+        assert "HTML content detected" in captured.err
+
+    def test_remote_xls_html_full_scan_skipped_without_download(self, capsys):
+        """Remote HTML renamed to .xls should be skipped before full download."""
+        from io import BytesIO
+        from unittest.mock import MagicMock
+
+        from datannurpy.scanner.scan import scan_file
+
+        mock_fs = MagicMock()
+        mock_fs.is_local = False
+        mock_fs.open.return_value.__enter__ = MagicMock(
+            return_value=BytesIO(b"<html><body>report</body></html>")
+        )
+        mock_fs.open.return_value.__exit__ = MagicMock(return_value=None)
+
+        result = scan_file(
+            Path("/remote/report.xls"),
+            "excel",
+            dataset_id="test---report_xls",
+            fs=mock_fs,
+            quiet=False,
+        )
+
+        captured = capsys.readouterr()
+        assert result.variables == []
+        assert result.nb_row is None
+        mock_fs.ensure_local.assert_not_called()
+        assert "HTML content detected" in captured.err
+
+    def test_remote_xls_non_html_uses_download_path(self, monkeypatch):
+        """Remote .xls files that are not HTML should continue to the local scan path."""
+        from io import BytesIO
+        from unittest.mock import MagicMock
+
+        from datannurpy.scanner import scan as scan_mod
+
+        mock_fs = MagicMock()
+        mock_fs.is_local = False
+        mock_fs.open.return_value.__enter__ = MagicMock(
+            return_value=BytesIO(b"not html")
+        )
+        mock_fs.open.return_value.__exit__ = MagicMock(return_value=None)
+
+        local_path = Path("/tmp/local.xls")
+        ensure_local_ctx = MagicMock()
+        ensure_local_ctx.__enter__.return_value = local_path
+        ensure_local_ctx.__exit__.return_value = None
+        mock_fs.ensure_local.return_value = ensure_local_ctx
+
+        expected = scan_mod.ScanResult(variables=[], nb_row=0)
+        monkeypatch.setattr(scan_mod, "_scan_local", lambda *args, **kwargs: expected)
+
+        result = scan_mod.scan_file(
+            Path("/remote/report.xls"),
+            "excel",
+            dataset_id="test---report_xls",
+            fs=mock_fs,
+        )
+
+        assert result == expected
+        mock_fs.ensure_local.assert_called_once()

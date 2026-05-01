@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import codecs
 from collections.abc import Sequence
 from datetime import time as dt_time
 from pathlib import Path
@@ -20,6 +21,34 @@ if TYPE_CHECKING:
 _MIDNIGHT = dt_time(0, 0)
 
 _MAX_PREVIEW_ROWS = 10
+_XLS_SNIFF_BYTES = 256
+_HTML_XLS_MESSAGE = (
+    "invalid .xls file: HTML content detected; likely an export/report renamed .xls"
+)
+
+
+def _looks_like_html_xls_content(header_bytes: bytes) -> bool:
+    """Detect HTML content in a file mislabeled with the .xls extension."""
+    probe = header_bytes.replace(b"\x00", b"").lstrip(b" \t\r\n")
+    for bom in (codecs.BOM_UTF8, codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE):
+        if probe.startswith(bom):
+            probe = probe[len(bom) :]
+            break
+    probe = probe.lstrip(b" \t\r\n").lower()
+    return probe.startswith(
+        (b"<!doctype html", b"<html", b"<head", b"<body", b"<table")
+    )
+
+
+def _read_file_header(path: str | Path, max_bytes: int = _XLS_SNIFF_BYTES) -> bytes:
+    """Read the first bytes of a local file for lightweight format sniffing."""
+    with open(path, "rb") as f:
+        return f.read(max_bytes)
+
+
+def _warn_html_xls(file_name: str, quiet: bool) -> None:
+    """Emit a clear warning for HTML reports renamed with the .xls extension."""
+    log_warn(f"{file_name}: {_HTML_XLS_MESSAGE}; skipped as untreatable", quiet)
 
 
 def is_valid_tabular_dataset(rows: Sequence[tuple[object, ...]]) -> tuple[bool, str]:
@@ -81,6 +110,10 @@ def read_excel(
 
     engine = "xlrd" if suffix == ".xls" else "openpyxl"
 
+    if suffix == ".xls" and _looks_like_html_xls_content(_read_file_header(file_path)):
+        _warn_html_xls(file_path.name, quiet)
+        return None
+
     try:
         import pandas as pd
 
@@ -119,6 +152,10 @@ def scan_excel(
     """Scan an Excel file and return (variables, row_count, freq_table)."""
     file_path = Path(path)
     suffix = file_path.suffix.lower()
+
+    if suffix == ".xls" and _looks_like_html_xls_content(_read_file_header(file_path)):
+        _warn_html_xls(file_path.name, quiet)
+        return [], None, None
 
     # Pre-read validation for .xlsx (streaming, avoids full read if invalid)
     if suffix != ".xls":

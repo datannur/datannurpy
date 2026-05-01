@@ -6,6 +6,7 @@
 - fix: log_file now writes in UTF-8 in datannurpy.utils.log
 - improve: folder and database scan logs now use clearer resource labels and summaries, with root-relative paths for folder scans and file/table counts shown before dataset totals
 - fix: time-series scans now canonicalize header aliases before variable ID build, avoiding duplicate variable IDs from encoding-damaged column names
+- fix: `.xls` files that are actually HTML reports are now detected early and skipped cleanly as untreatable, including in schema-only and remote scans
 
 ## 0.22.2 (2026-04-30)
 
