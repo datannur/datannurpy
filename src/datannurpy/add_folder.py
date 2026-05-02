@@ -6,10 +6,6 @@ from collections.abc import Sequence
 from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Any, Literal
 
-from .entity_metadata import (
-    EntityMetadata,
-    folder_from_metadata,
-)
 from .utils import (
     build_dataset_id_name,
     build_variable_ids,
@@ -29,7 +25,7 @@ from .utils.params import _UNSET, validate_params
 from .add_metadata import LoadedDatasetRef, find_loaded_dataset_by_match_path
 from .errors import ConfigError
 from .finalize import remove_dataset_cascade
-from .schema import Dataset, Folder
+from .schema import Dataset, EntityMetadata, Folder, folder_from_metadata
 from .scanner.discovery import DatasetInfo, compute_scan_plan, discover_datasets
 from .scanner.filesystem import FileSystem, is_remote_url
 from .scanner.timeseries import (

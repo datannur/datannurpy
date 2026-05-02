@@ -6,7 +6,6 @@ from collections.abc import Sequence
 from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Any, cast
 
-from .entity_metadata import EntityMetadata
 from .utils import (
     build_variable_ids,
     log_done,
@@ -18,7 +17,7 @@ from .utils import (
 from .utils.params import _UNSET, validate_params
 from .errors import ConfigError
 from .finalize import remove_dataset_cascade
-from .schema import Dataset
+from .schema import Dataset, EntityMetadata
 from .scanner.filesystem import FileSystem, is_remote_url
 from .scanner.utils import (
     SUPPORTED_FORMATS,

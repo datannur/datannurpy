@@ -5,11 +5,10 @@ from importlib.metadata import version
 __version__ = version("datannurpy")
 
 from .catalog import Catalog
-from .entity_metadata import EntityMetadata
 from .config import run_config
 from .errors import ConfigError
 from .exporter import copy_assets
-from .schema import Folder
+from .schema import EntityMetadata, Folder
 from .utils.ids import build_dataset_id, build_variable_id, sanitize_id
 
 __all__ = [

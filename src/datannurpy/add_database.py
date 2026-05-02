@@ -9,10 +9,6 @@ from urllib.parse import urlparse
 
 import ibis
 
-from .entity_metadata import (
-    EntityMetadata,
-    folder_from_metadata,
-)
 from .scanner.database import _encode_uri_credentials
 from .utils import (
     build_variable_ids,
@@ -34,7 +30,7 @@ from .utils.params import _UNSET, validate_params
 from .scanner.filesystem import FileSystem
 from .scanner.utils import get_mtime_iso
 from .finalize import remove_dataset_cascade
-from .schema import Dataset, Folder, Variable
+from .schema import Dataset, EntityMetadata, Folder, Variable, folder_from_metadata
 from .scanner.database import (
     batch_table_data_size,
     batch_table_row_count,

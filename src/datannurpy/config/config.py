@@ -12,8 +12,8 @@ import yaml
 from dotenv import load_dotenv
 
 from ..catalog import Catalog
-from ..entity_metadata import EntityMetadata
 from ..errors import ConfigError
+from ..schema import EntityMetadata
 
 VALID_TYPES = {"folder", "dataset", "database"}
 METADATA_KEYS = {
