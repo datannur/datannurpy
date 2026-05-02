@@ -28,7 +28,7 @@ Catalog(
 | refresh        | bool                              | Force full rescan ignoring cache (default: False)  |
 | freq_threshold | int                               | Max distinct values for frequency/enumeration detection. Strings above this threshold get pattern frequencies instead |
 | csv_encoding   | str \| None                       | Default CSV encoding (utf-8, cp1252, etc.)         |
-| sample_size    | int \| None                       | Default sample size for stats (default: 100_000)   |
+| sample_size    | int \| None                       | Default sample size for frequency/enumeration detection (default: 100_000) |
 | csv_skip_copy      | bool                              | Skip UTF-8 temp copy for local CSV (default: False)|
 | app_config     | dict[str, str] \| None            | Key-value config for the web app                   |
 | quiet          | bool                              | Suppress progress logging (default: False)         |
@@ -78,7 +78,7 @@ catalog.add_folder(
 | exclude         | list[str] \| None                         | None     | Glob patterns to exclude                      |
 | recursive       | bool                                      | True     | Scan subdirectories                           |
 | csv_encoding    | str \| None                               | None     | Override CSV encoding                         |
-| sample_size     | int \| None                               | None     | Sample rows for stats (overrides catalog)     |
+| sample_size     | int \| None                               | None     | Sample rows for frequency/enumeration detection (overrides catalog) |
 | csv_skip_copy       | bool \| None                              | None     | Skip UTF-8 temp copy (overrides catalog)      |
 | storage_options | dict \| None                              | None     | Options for remote storage (passed to fsspec) |
 | refresh         | bool \| None                              | None     | Force rescan (overrides catalog setting)      |
@@ -110,7 +110,7 @@ catalog.add_dataset(
 | metadata        | EntityMetadata \| None                    | None     | Dataset identity, parent linkage, and metadata |
 | depth           | "dataset" \| "variable" \| "stat" \| "value" \| None | None     | Scan depth (uses catalog.depth if None)       |
 | csv_encoding    | str \| None                               | None     | Override CSV encoding                         |
-| sample_size     | int \| None                               | None     | Sample rows for stats (overrides catalog)     |
+| sample_size     | int \| None                               | None     | Sample rows for frequency/enumeration detection (overrides catalog) |
 | csv_skip_copy       | bool \| None                              | None     | Skip UTF-8 temp copy (overrides catalog)      |
 | storage_options | dict \| None                              | None     | Options for remote storage (passed to fsspec) |
 | refresh         | bool \| None                              | None     | Force rescan (overrides catalog setting)      |
@@ -147,7 +147,7 @@ catalog.add_database(
 | schema             | str \| list[str] \| None                         | None     | Schema(s) to scan                          |
 | include            | list[str] \| None                               | None     | Table name patterns to include             |
 | exclude            | list[str] \| None                               | None     | Table name patterns to exclude             |
-| sample_size        | int \| None                                     | None     | Sample rows for stats (overrides catalog)  |
+| sample_size        | int \| None                                     | None     | Sample rows for frequency/enumeration detection (overrides catalog) |
 | group_by_prefix    | bool \| str                                     | True     | Group tables by prefix into subfolders     |
 | prefix_min_tables  | int                                             | 2        | Min tables to form a prefix group          |
 | time_series        | bool                                            | True     | Detect temporal table patterns             |
