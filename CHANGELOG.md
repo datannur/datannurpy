@@ -2,6 +2,7 @@
 
 ## 0.22.3 (2026-05-01)
 
+- add: non-quiet exports now print a per-table size report for `.json`, `.json.js`, and gzipped `.json` output
 - improve: log prefix spacing is now consistent after leading icons across scan, metadata, export, and post-export output
 - fix: log_file now writes in UTF-8 in datannurpy.utils.log
 - improve: folder and database scan logs now use clearer resource labels and summaries, with root-relative paths for folder scans and file/table counts shown before dataset totals

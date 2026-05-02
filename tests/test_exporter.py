@@ -9,14 +9,48 @@ import pytest
 
 from datannurpy.errors import ConfigError
 from datannurpy.exporter import (
+    _build_export_size_report,
     _clean_copy_target,
+    _format_percent,
+    _format_size,
     _normalize_copy_assets,
+    _print_export_size_report,
     _resolve_copy_base_dir,
     _resolve_copy_source,
     _resolve_copy_target,
     _should_copy_asset,
     copy_assets,
 )
+
+
+class TestExportSizeReportHelpers:
+    """Test export size report helper functions."""
+
+    def test_format_helpers_cover_edge_cases(self):
+        """Size and percentage helpers format edge cases."""
+        assert _format_size(12) == "12 B"
+        assert _format_size(2048) == "2.0 KB"
+        assert _format_size(2 * 1024 * 1024 * 1024) == "2.0 GB"
+        assert _format_percent(42, 0) == "0.0%"
+
+    def test_empty_export_directory_has_no_report(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        """Empty export directories do not produce a report."""
+        assert _build_export_size_report(tmp_path) == ""
+
+        _print_export_size_report(tmp_path, quiet=False)
+
+        assert capsys.readouterr().err == ""
+
+    def test_total_percent_is_zero_for_missing_format(self, tmp_path: Path):
+        """Missing export formats should not show a misleading total percent."""
+        (tmp_path / "dataset.json").write_text("[]")
+
+        report = _build_export_size_report(tmp_path)
+
+        total_line = report.splitlines()[-1]
+        assert "  0 B   0.0%" in total_line
 
 
 class TestCopyAssetsHelpers:

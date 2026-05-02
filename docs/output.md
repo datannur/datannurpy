@@ -12,6 +12,8 @@ open_browser: true
 output_dir: ./output
 ```
 
+When exports are not run in quiet mode, datannurpy prints a size report by table after writing the database. The report includes raw `.json`, raw `.json.js`, and estimated gzipped `.json` sizes with percentages, which helps identify the tables that dominate catalog weight.
+
 ## Incremental scan
 
 
