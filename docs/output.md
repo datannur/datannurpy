@@ -18,9 +18,9 @@ When exports are not run in quiet mode, datannurpy prints a size report by table
 
 Large catalogs are usually dominated by `frequency` and `value`, because those tables store repeated values for many variables. Use the export size report to check which tables matter before changing scan settings.
 
-If the export is larger than expected, the main levers are scan depth, frequency generation, and sampling. `depth: stat` keeps variable statistics without writing frequency tables or enumerations; `depth: variable` keeps only schema-level metadata; `freq_threshold` controls when high-cardinality string columns switch from value frequencies to pattern frequencies; `sample_size` limits the rows used for frequency counts and enumeration detection while keeping core statistics on the full dataset. For specific sensitive or noisy variables, assign `policy---frequency-hidden` in `variable.csv` to suppress frequency and enumeration data while keeping stats visible.
+If the export is larger than expected, the main levers are scan depth, frequency generation, and sampling. `depth: stat` keeps variable statistics without writing frequency tables or enumerations; `depth: variable` keeps only schema-level metadata; `freq_threshold` controls when high-cardinality string columns switch from value frequencies to pattern frequencies; `sample_size` limits the rows used for frequency counts and enumeration detection while keeping core statistics on the full dataset.
 
-The `.json.gz` estimate is useful for HTTP transfer size, but it does not represent browser parsing cost or in-memory size. For local files, network shares, or static app loading, raw `.json.js` size can still matter even when gzip looks small.
+`.json.js` reflects local or shared-folder usage (`file://`), `.json` reflects uncompressed HTTP, and `.json.gz` reflects HTTP served with gzip.
 
 ## Incremental scan
 
