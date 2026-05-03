@@ -103,7 +103,7 @@ add:
 
 ### Time series detection
 
-When `time_series: true` (default), files with temporal patterns in their names are automatically grouped into a single dataset:
+When `time_series: true` (default), files with temporal patterns in their names or parent folders are automatically grouped into a single dataset:
 
 ```
 data/
@@ -113,15 +113,11 @@ data/
 └── reference.csv       ─→ Separate dataset "reference"
 ```
 
-Detected patterns: year (`2024`), quarter (`2024Q1`, `2024T2`), month (`2024-03`, `202403`), date (`2024-03-15`).
-
-The resulting dataset includes:
-
-- `nb_resources`: number of resources in the series
-- `start_date` / `end_date`: temporal coverage
-- Variables track their own `start_date` / `end_date` based on presence across periods
+The resulting dataset includes `nb_resources`, `start_date`, and `end_date`. Variables track their own `start_date` and `end_date` when their presence changes across periods.
 
 Set `time_series: false` to treat each file as a separate dataset.
+
+See [Time series grouping](/time-series) for supported patterns, database table grouping, schema evolution, and false-positive rules.
 
 ## Parquet formats
 

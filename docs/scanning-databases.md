@@ -53,6 +53,20 @@ add:
     prefix_min_tables: 2        # minimum tables to form a group
 ```
 
+## Time series detection
+
+When `time_series: true` (default), tables whose names differ only by a temporal pattern are grouped into a single dataset after `include` and `exclude` filters are applied:
+
+```text
+sales_fact_202401
+sales_fact_202402
+sales_fact_202403
+```
+
+This creates one dataset named `sales_fact_[YYYY/MM]` with `nb_resources=3`. Set `time_series: false` to treat each table as a separate dataset.
+
+See [Time series grouping](/time-series) for supported patterns, file grouping, schema evolution, and false-positive rules.
+
 ## Multiple schemas
 
 ```yaml

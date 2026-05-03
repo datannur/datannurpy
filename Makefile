@@ -1,4 +1,4 @@
-.PHONY: test lint typecheck check download-app coverage test-cov update-snapshots test-db test-db-all test-db-oracle18 test-db-setup test-db-up test-db-down audit demo demo-setup demo-publish demo-configs-init
+.PHONY: test lint typecheck check check-py39 download-app coverage test-cov update-snapshots test-db test-db-all test-db-oracle18 test-db-setup test-db-up test-db-down audit demo demo-setup demo-publish demo-configs-init
 
 DEMO_CONFIG   := examples/demo_editorial.yml
 DEMO_OUT      := examples/output_editorial
@@ -29,6 +29,9 @@ check:
 	wait $$LINT_PID || exit 1; \
 	wait $$TYPE_PID || exit 1
 	uv run pytest --cov=src/datannurpy --cov-report=term-missing --cov-report=xml --cov-report=html --cov-fail-under=100
+
+check-py39:
+	UV_PYTHON=python3.9 $(MAKE) check
 
 download-app:
 	uv run python scripts/download_app.py
