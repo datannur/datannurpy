@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
+from datannurpy.add_folder import _canonicalize_time_series_columns
 from datannurpy import Catalog, EntityMetadata
 from datannurpy.scanner.timeseries import (
     PERIOD_PLACEHOLDER,
@@ -19,6 +22,66 @@ from datannurpy.scanner.timeseries import (
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 TIMESERIES_DIR = DATA_DIR / "timeseries"
+
+
+def _input_files(root: Path, names: list[str]) -> list[tuple[Path, int]]:
+    """Build deterministic file inputs from relative paths."""
+    return [(root / name, idx * 1000) for idx, name in enumerate(names, start=1)]
+
+
+def _file_series_output(
+    series,
+    root: Path,
+) -> list[tuple[str, tuple[str, ...], str | None]]:
+    """Summarize file groups as normalized path, periods, suffix."""
+    _ = root
+    return sorted(
+        (
+            group.normalized_path,
+            tuple(period for period, _ in group.files),
+            group.id_suffix,
+        )
+        for group in series
+    )
+
+
+def _single_file_output(singles, root: Path) -> list[str]:
+    """Summarize single files as sorted relative paths."""
+    return sorted(str(path.relative_to(root)) for path, _ in singles)
+
+
+def _table_series_output(series) -> list[tuple[str, tuple[str, ...], str | None]]:
+    """Summarize table groups as normalized name, periods, suffix."""
+    return sorted(
+        (
+            group.normalized_name,
+            tuple(period for period, _ in group.tables),
+            group.id_suffix,
+        )
+        for group in series
+    )
+
+
+def _series_case(
+    normalized: str,
+    periods: tuple[str, ...],
+    suffix: str | None = None,
+) -> tuple[str, tuple[str, ...], str | None]:
+    """Build an expected series snapshot."""
+    return (normalized, periods, suffix)
+
+
+def _single_series_case(
+    names: list[str],
+    normalized: str,
+    periods: tuple[str, ...],
+) -> tuple[
+    list[str],
+    list[tuple[str, tuple[str, ...], str | None]],
+    list[str],
+]:
+    """Build a parameter case where all inputs form one series."""
+    return (names, [_series_case(normalized, periods)], [])
 
 
 class TestPeriodExtraction:
@@ -324,6 +387,247 @@ class TestGroupTimeSeries:
         ]
 
 
+class TestRealisticFileTimeSeriesCases:
+    """Realistic file layouts expressed as input → output snapshots."""
+
+    @pytest.mark.parametrize(
+        ("names", "expected_series", "expected_singles"),
+        [
+            _single_series_case(
+                [
+                    "published/2024-12-31/data_20240101.csv",
+                    "published/2024-12-31/data_20240102.csv",
+                    "published/2024-12-31/data_20240103.csv",
+                ],
+                f"published/2024-12-31/data_{PERIOD_PLACEHOLDER}.csv",
+                ("2024/01/01", "2024/01/02", "2024/01/03"),
+            ),
+            _single_series_case(
+                [
+                    "delivery/20240215/sales_202401.csv",
+                    "delivery/20240215/sales_202402.csv",
+                    "delivery/20240215/sales_202403.csv",
+                ],
+                f"delivery/20240215/sales_{PERIOD_PLACEHOLDER}.csv",
+                ("2024/01", "2024/02", "2024/03"),
+            ),
+            _single_series_case(
+                [
+                    "delivery/20240215/votants_2020.csv",
+                    "delivery/20240215/votants_2021.csv",
+                    "delivery/20240215/votants_2022.csv",
+                ],
+                f"delivery/20240215/votants_{PERIOD_PLACEHOLDER}.csv",
+                ("2020", "2021", "2022"),
+            ),
+            _single_series_case(
+                [
+                    "survey_2024/results_Q1.csv",
+                    "survey_2024/results_Q2.csv",
+                    "survey_2024/results_Q3.csv",
+                ],
+                f"survey_2024/results_{PERIOD_PLACEHOLDER}.csv",
+                ("2024Q1", "2024Q2", "2024Q3"),
+            ),
+            _single_series_case(
+                [
+                    "2024/results_Q1.csv",
+                    "2024/results_Q2.csv",
+                    "2024/results_Q3.csv",
+                ],
+                f"2024/results_{PERIOD_PLACEHOLDER}.csv",
+                ("2024Q1", "2024Q2", "2024Q3"),
+            ),
+            (
+                [
+                    "extracts/2024/01/region_A.csv",
+                    "extracts/2024/02/region_A.csv",
+                    "extracts/2024/01/region_B.csv",
+                    "extracts/2024/02/region_B.csv",
+                ],
+                [
+                    _series_case(
+                        f"extracts/2024/{PERIOD_PLACEHOLDER}/region_A.csv",
+                        ("2024/01", "2024/02"),
+                    ),
+                    _series_case(
+                        f"extracts/2024/{PERIOD_PLACEHOLDER}/region_B.csv",
+                        ("2024/01", "2024/02"),
+                    ),
+                ],
+                [],
+            ),
+            (
+                [
+                    "archive/20071021/VOTANTS_01.xls",
+                    "archive/20081130/VOTANTS_01.xls",
+                    "archive/20090927/VOTANTS_04.xls",
+                    "archive/20100926/VOTANTS_04.xls",
+                    "archive/20110313/VOTANTS_06.xls",
+                ],
+                [
+                    _series_case(
+                        f"archive/{PERIOD_PLACEHOLDER}/VOTANTS_01.xls",
+                        ("2007/10/21", "2008/11/30"),
+                    ),
+                    _series_case(
+                        f"archive/{PERIOD_PLACEHOLDER}/VOTANTS_04.xls",
+                        ("2009/09/27", "2010/09/26"),
+                    ),
+                ],
+                ["archive/20110313/VOTANTS_06.xls"],
+            ),
+            (
+                [
+                    "archive/20071021/VOTANTS_01_part_01.xls",
+                    "archive/20081130/VOTANTS_01_part_01.xls",
+                    "archive/20090927/VOTANTS_04_part_02.xls",
+                    "archive/20100926/VOTANTS_04_part_02.xls",
+                ],
+                [
+                    _series_case(
+                        f"archive/{PERIOD_PLACEHOLDER}/VOTANTS_01_part_01.xls",
+                        ("2007/10/21", "2008/11/30"),
+                    ),
+                    _series_case(
+                        f"archive/{PERIOD_PLACEHOLDER}/VOTANTS_04_part_02.xls",
+                        ("2009/09/27", "2010/09/26"),
+                    ),
+                ],
+                [],
+            ),
+            (
+                [
+                    "archive/20071021/VOTANTS_01.xls",
+                    "archive/20081130/VOTANTS_02.xls",
+                ],
+                [],
+                [
+                    "archive/20071021/VOTANTS_01.xls",
+                    "archive/20081130/VOTANTS_02.xls",
+                ],
+            ),
+            (
+                [
+                    "archive/20071021/VOTANTS_01.xls",
+                    "archive/20081130/ELECTEURS_01.xls",
+                ],
+                [],
+                [
+                    "archive/20071021/VOTANTS_01.xls",
+                    "archive/20081130/ELECTEURS_01.xls",
+                ],
+            ),
+            _single_series_case(
+                [
+                    "snapshot_2024/data/01/day15.json",
+                    "snapshot_2024/data/01/day16.json",
+                    "snapshot_2024/data/01/day17.json",
+                ],
+                f"snapshot_2024/data/01/day{PERIOD_PLACEHOLDER}.json",
+                ("2024/01/15", "2024/01/16", "2024/01/17"),
+            ),
+            _single_series_case(
+                [
+                    "2024-01/day15.csv",
+                    "2024-01/day16.csv",
+                ],
+                f"2024-01/day{PERIOD_PLACEHOLDER}.csv",
+                ("2024/01/15", "2024/01/16"),
+            ),
+            _single_series_case(
+                [
+                    "202401/day15.csv",
+                    "202401/day16.csv",
+                ],
+                f"202401/day{PERIOD_PLACEHOLDER}.csv",
+                ("2024/01/15", "2024/01/16"),
+            ),
+            (
+                [
+                    "published/2024-12-31/report_01.csv",
+                    "published/2024-12-31/report_02.csv",
+                ],
+                [],
+                [
+                    "published/2024-12-31/report_01.csv",
+                    "published/2024-12-31/report_02.csv",
+                ],
+            ),
+            (
+                [
+                    "snapshot_2024/data/day15.json",
+                    "snapshot_2024/data/day16.json",
+                    "snapshot_2024/data/day17.json",
+                ],
+                [],
+                [
+                    "snapshot_2024/data/day15.json",
+                    "snapshot_2024/data/day16.json",
+                    "snapshot_2024/data/day17.json",
+                ],
+            ),
+            _single_series_case(
+                [
+                    "archive_2021/result_2020.csv",
+                    "archive_2022/result_2021.csv",
+                    "archive_2023/result_2022.csv",
+                ],
+                f"archive_{PERIOD_PLACEHOLDER}/result_{PERIOD_PLACEHOLDER}.csv",
+                ("2020", "2021", "2022"),
+            ),
+            (
+                [
+                    "archive_2021/result_2020/revision_2018.csv",
+                    "archive_2021/result_2022/revision_2020.csv",
+                    "archive_2022/result_2021/revision_2019.csv",
+                    "archive_2022/result_2023/revision_2021.csv",
+                ],
+                [
+                    _series_case(
+                        f"archive_{PERIOD_PLACEHOLDER}/"
+                        f"result_{PERIOD_PLACEHOLDER}/"
+                        f"revision_{PERIOD_PLACEHOLDER}.csv",
+                        ("2018", "2019", "2020", "2021"),
+                    ),
+                ],
+                [],
+            ),
+            (
+                [
+                    "archive_2021/result_2020/revision_2018.csv",
+                    "archive_2021/result_2020/revision_2019.csv",
+                    "archive_2022/result_2021/revision_2020.csv",
+                    "archive_2022/result_2021/revision_2021.csv",
+                ],
+                [
+                    _series_case(
+                        f"archive_2021/result_2020/revision_{PERIOD_PLACEHOLDER}.csv",
+                        ("2018", "2019"),
+                    ),
+                    _series_case(
+                        f"archive_2022/result_2021/revision_{PERIOD_PLACEHOLDER}.csv",
+                        ("2020", "2021"),
+                    ),
+                ],
+                [],
+            ),
+        ],
+    )
+    def test_file_time_series_layouts(
+        self,
+        tmp_path: Path,
+        names: list[str],
+        expected_series: list[tuple[str, tuple[str, ...], str | None]],
+        expected_singles: list[str],
+    ):
+        """Group realistic layouts into deterministic series and singles."""
+        series, singles = group_time_series(_input_files(tmp_path, names), tmp_path)
+
+        assert _file_series_output(series, tmp_path) == expected_series
+        assert _single_file_output(singles, tmp_path) == expected_singles
+
+
 class TestGroupLevelPeriodDetection:
     """Test group-level period detection (constant vs variable positions)."""
 
@@ -574,6 +878,22 @@ class TestBuildSeriesDatasetName:
 class TestAddFolderTimeSeries:
     """Integration tests for add_folder with time series."""
 
+    def test_canonicalize_time_series_columns_handles_empty_input(self):
+        """Empty time-series column maps should stay empty."""
+        assert _canonicalize_time_series_columns({}) == {}
+
+    def test_canonicalize_time_series_columns_deduplicates_same_period_aliases(self):
+        """Aliases that sanitize identically should collapse within each period."""
+        columns_by_period = {
+            "2020": ["id", "canonical€label", "canonical_label"],
+            "2021": ["id", "canonical_label"],
+        }
+
+        assert _canonicalize_time_series_columns(columns_by_period) == {
+            "2020": ["id", "canonical_label"],
+            "2021": ["id", "canonical_label"],
+        }
+
     def test_mixed_granularities_create_distinct_datasets(self, tmp_path: Path):
         """Yearly and quarterly files with the same base name must create two datasets."""
         for name in (
@@ -704,6 +1024,26 @@ class TestAddFolderTimeSeries:
 
         # Should have union of all columns
         assert var_names == {"id", "nom", "revenu", "email"}
+
+    def test_time_series_aliases_are_canonicalized_before_id_build(
+        self, tmp_path: Path
+    ):
+        """Header aliases that sanitize to the same ID should merge under the latest label."""
+        ts_dir = tmp_path / "aliases"
+        ts_dir.mkdir()
+        (ts_dir / "data_2020.csv").write_text("id,canonical€label\n1,foo\n")
+        (ts_dir / "data_2021.csv").write_text("id,canonical_label\n2,bar\n")
+
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(
+            ts_dir,
+            metadata=EntityMetadata(id="aliases", name="Aliases"),
+        )
+
+        variables = {v.name: v for v in catalog.variable.all()}
+        assert set(variables) == {"id", "canonical_label"}
+        assert variables["canonical_label"].start_date is None
+        assert variables["canonical_label"].end_date is None
 
     def test_dataset_mode_with_timeseries(self):
         """Structure mode works with time series."""
@@ -874,18 +1214,16 @@ class TestPeriodEdgeCases:
         assert result is not None
         assert result.to_string() == "2024/03/15"
 
-    def test_context_year_month_not_used_as_context(self, tmp_path: Path):
-        """Constant year_month position should NOT be used as year context."""
-        # Only pure year (granularity 1) should be picked as context
+    def test_month_without_year_context_is_not_grouped(self, tmp_path: Path):
+        """A final period without a real year should not become a series."""
         files = [
             (tmp_path / "old_2024_08" / "data_01.csv", 1000),
             (tmp_path / "old_2024_08" / "data_02.csv", 2000),
         ]
         series, singles = group_time_series(files, tmp_path)
-        # The month-only position varies (01 vs 02), the year_month is constant
-        # year_month has granularity 2, should NOT be used as context
-        # So period should be just the month number (no year context available)
-        assert len(series) == 1
+
+        assert series == []
+        assert [path.name for path, _ in singles] == ["data_01.csv", "data_02.csv"]
 
     def test_period_granularity_day(self):
         """_period_granularity returns 3 for day-level info."""
@@ -1021,6 +1359,86 @@ class TestTimeSeriesRescan:
         assert "root" in folder_ids
         # No subfolders like "2020" or "2021" should exist
         assert not any(f.id.startswith("root---") for f in catalog.folder.all())
+
+
+class TestRealisticTableTimeSeriesCases:
+    """Realistic table layouts expressed as input → output snapshots."""
+
+    @pytest.mark.parametrize(
+        ("tables", "expected_series", "expected_singles"),
+        [
+            _single_series_case(
+                ["sales_fact_202401", "sales_fact_202402", "sales_fact_202403"],
+                f"sales_fact_{PERIOD_PLACEHOLDER}",
+                ("2024/01", "2024/02", "2024/03"),
+            ),
+            _single_series_case(
+                [
+                    "survey_2024_results_Q1",
+                    "survey_2024_results_Q2",
+                    "survey_2024_results_Q3",
+                ],
+                f"survey_2024_results_{PERIOD_PLACEHOLDER}",
+                ("2024Q1", "2024Q2", "2024Q3"),
+            ),
+            _single_series_case(
+                [
+                    "published_20241231_data_20240101",
+                    "published_20241231_data_20240102",
+                    "published_20241231_data_20240103",
+                ],
+                f"published_20241231_data_{PERIOD_PLACEHOLDER}",
+                ("2024/01/01", "2024/01/02", "2024/01/03"),
+            ),
+            (
+                [
+                    "published_20241231_report_01",
+                    "published_20241231_report_02",
+                ],
+                [],
+                [
+                    "published_20241231_report_01",
+                    "published_20241231_report_02",
+                ],
+            ),
+            (
+                [
+                    "archive_20071021_VOTANTS_01",
+                    "archive_20081130_VOTANTS_01",
+                    "archive_20090927_VOTANTS_04",
+                    "archive_20100926_VOTANTS_04",
+                    "archive_20110313_VOTANTS_06",
+                ],
+                [
+                    _series_case(
+                        f"archive_{PERIOD_PLACEHOLDER}_VOTANTS_01",
+                        ("2007/10/21", "2008/11/30"),
+                    ),
+                    _series_case(
+                        f"archive_{PERIOD_PLACEHOLDER}_VOTANTS_04",
+                        ("2009/09/27", "2010/09/26"),
+                    ),
+                ],
+                ["archive_20110313_VOTANTS_06"],
+            ),
+            (
+                ["dim_age_01", "dim_age_02", "dim_age_03"],
+                [],
+                ["dim_age_01", "dim_age_02", "dim_age_03"],
+            ),
+        ],
+    )
+    def test_table_time_series_layouts(
+        self,
+        tables: list[str],
+        expected_series: list[tuple[str, tuple[str, ...], str | None]],
+        expected_singles: list[str],
+    ):
+        """Group realistic table names into deterministic series and singles."""
+        series, singles = group_table_time_series(tables)
+
+        assert _table_series_output(series) == expected_series
+        assert sorted(singles) == expected_singles
 
 
 class TestGroupTableTimeSeries:

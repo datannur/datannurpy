@@ -7,6 +7,7 @@ import shutil
 import sys
 import time
 import webbrowser
+import zlib
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -20,6 +21,8 @@ if TYPE_CHECKING:
 
 from .add_metadata import ensure_metadata_applied
 from .errors import ConfigError
+
+_GZIP_CHUNK_SIZE = 1024 * 1024
 
 
 def _drop_empty_columns(catalog: Catalog) -> None:
@@ -43,6 +46,95 @@ def _is_empty_column(col: pl.Series) -> bool:
     if col.dtype == pl.Utf8:
         return bool((col.drop_nulls().str.len_chars() == 0).all())
     return False
+
+
+def _format_size(size: int) -> str:
+    """Return a compact human-readable byte size."""
+    if size < 1024:
+        return f"{size} B"
+    value = float(size) / 1024
+    for unit in ["KB", "MB"]:
+        if value < 1024:
+            return f"{value:.1f} {unit}"
+        value /= 1024
+    return f"{value:.1f} GB"
+
+
+def _format_percent(size: int, total: int) -> str:
+    """Return a compact percentage of total size."""
+    if total <= 0:
+        return "0.0%"
+    return f"{(size / total) * 100:.1f}%"
+
+
+def _gzip_estimated_size(path: Path) -> int:
+    """Return gzip-compressed size without writing a .gz file."""
+    compressor = zlib.compressobj(level=9, wbits=31)
+    total = 0
+    with path.open("rb") as file:
+        while chunk := file.read(_GZIP_CHUNK_SIZE):
+            total += len(compressor.compress(chunk))
+    total += len(compressor.flush())
+    return total
+
+
+def _table_name_from_jsonjs(path: Path) -> str:
+    """Return table name from a .json.js filename."""
+    return path.name[: -len(".json.js")]
+
+
+def _build_export_size_report(path: Path) -> str:
+    """Build a size report for exported json/json.js files."""
+    names = {p.stem for p in path.glob("*.json") if p.is_file()}
+    names.update(
+        _table_name_from_jsonjs(p) for p in path.glob("*.json.js") if p.is_file()
+    )
+    if not names:
+        return ""
+
+    rows: list[tuple[str, int, int, int]] = []
+    for name in sorted(names):
+        json_path = path / f"{name}.json"
+        jsonjs_path = path / f"{name}.json.js"
+        json_size = json_path.stat().st_size if json_path.exists() else 0
+        jsonjs_size = jsonjs_path.stat().st_size if jsonjs_path.exists() else 0
+        gzip_size = _gzip_estimated_size(json_path) if json_path.exists() else 0
+        rows.append((name, json_size, jsonjs_size, gzip_size))
+
+    rows.sort(key=lambda row: row[1] + row[2], reverse=True)
+    total_json = sum(row[1] for row in rows)
+    total_jsonjs = sum(row[2] for row in rows)
+    total_gzip = sum(row[3] for row in rows)
+
+    lines = [
+        "\n  →  export size by table",
+        "     table             json      %   json.js      %   json.gz      %",
+    ]
+    for name, json_size, jsonjs_size, gzip_size in rows:
+        lines.append(
+            f"     {name[:16]:<16} "
+            f"{_format_size(json_size):>8} {_format_percent(json_size, total_json):>6} "
+            f"{_format_size(jsonjs_size):>9} {_format_percent(jsonjs_size, total_jsonjs):>6} "
+            f"{_format_size(gzip_size):>9} {_format_percent(gzip_size, total_gzip):>6}"
+        )
+    lines.append(
+        f"     {'total':<16} "
+        f"{_format_size(total_json):>8} {_format_percent(total_json, total_json):>6} "
+        f"{_format_size(total_jsonjs):>9} {_format_percent(total_jsonjs, total_jsonjs):>6} "
+        f"{_format_size(total_gzip):>9} {_format_percent(total_gzip, total_gzip):>6}"
+    )
+    return "\n".join(lines)
+
+
+def _print_export_size_report(path: Path, *, quiet: bool) -> None:
+    """Print and log export size report when not quiet."""
+    if quiet:
+        return
+    report = _build_export_size_report(path)
+    if not report:
+        return
+    print(report, file=sys.stderr)
+    _write_log(report)
 
 
 def _normalize_copy_assets(copy_assets: Any) -> list[dict[str, Any]]:
@@ -217,7 +309,7 @@ def _copy_assets_impl(
         )
         if not quiet:
             print(
-                f"  → copy_assets: {rule['from']} -> {rule['to']} "
+                f"  →  copy_assets: {rule['from']} -> {rule['to']} "
                 f"({copied} copied, {removed} removed)",
                 file=sys.stderr,
             )
@@ -267,6 +359,7 @@ def export_db(
     if path is None:
         msg = "output_dir is required when app_path was not set at init"
         raise ConfigError(msg)
+    q = quiet if quiet is not None else catalog.quiet
 
     # Parent relations for cascade suppression in evolution tracking
     parent_relations = {
@@ -282,11 +375,11 @@ def export_db(
         timestamp=catalog._now,
         parent_relations=parent_relations,
     )
+    _print_export_size_report(Path(path), quiet=q)
 
     if copy_assets is not None:
         export_dir = Path(path)
         copy_assets_base_dir = _resolve_copy_base_dir(base_dir)
-        q = quiet if quiet is not None else catalog.quiet
         _copy_assets_impl(
             copy_assets,
             export_dir,
@@ -360,6 +453,7 @@ def export_app(
     # Write to data/db/
     db_dir = output_dir / "data" / "db"
     catalog.export_db(db_dir, quiet=True, track_evolution=track_evolution)
+    _print_export_size_report(db_dir, quiet=q)
 
     if copy_assets is not None:
         copy_assets_base_dir = _resolve_copy_base_dir(base_dir)
@@ -372,7 +466,7 @@ def export_app(
 
     elapsed = time.perf_counter() - start_time
     index_uri = (output_dir / "index.html").resolve().as_uri()
-    summary = f"\n  → exported in {elapsed:.1f}s: {index_uri}"
+    summary = f"\n  →  exported in {elapsed:.1f}s: {index_uri}"
     if not q:
         print(summary, file=sys.stderr)
     _write_log(summary)

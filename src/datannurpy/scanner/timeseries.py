@@ -7,6 +7,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import PurePath, PurePosixPath
+from typing import Literal, Union
 
 from ..utils import make_id, sanitize_id
 
@@ -41,6 +42,29 @@ _PERIOD_PATTERNS = [
 # Placeholder used in normalized paths (valid for IDs)
 PERIOD_PLACEHOLDER = "---PERIOD---"
 
+_SORT_DATE_RE = re.compile(r"(\d{4})/(\d{2})/(\d{2})$")
+_SORT_QUARTER_RE = re.compile(r"(\d{4})Q([1-4])$")
+_SORT_MONTH_RE = re.compile(r"(\d{4})/(\d{2})$")
+_SORT_COMPACT_MONTH_RE = re.compile(r"(\d{4})(0[1-9]|1[0-2])$")
+_SORT_YEAR_RE = re.compile(r"(\d{4})$")
+_SORT_FALLBACK_YEAR_RE = re.compile(r"((?:19|20)\d{2})")
+
+_DATE_PATTERN_TYPES = {"date", "date_compact"}
+_YEAR_MONTH_PATTERN_TYPES = {"year_month", "year_month_compact"}
+
+PeriodFrequency = Literal["daily", "quarterly", "monthly", "yearly"]
+SeriesIdSuffix = Union[PeriodFrequency, Literal["series"]]
+PeriodSortKey = tuple[int, int, int]
+PeriodGroupKey = tuple[PeriodSortKey, ...]
+PeriodSignature = tuple[int, ...]
+
+_PERIOD_NAME_PATTERNS: dict[PeriodFrequency, str] = {
+    "daily": "[YYYY/MM/DD]",
+    "quarterly": "[YYYY]Q[N]",
+    "monthly": "[YYYY/MM]",
+    "yearly": "[YYYY]",
+}
+
 
 @dataclass
 class PeriodInfo:
@@ -51,7 +75,7 @@ class PeriodInfo:
     day: int  # 0=none
     original: str  # Original matched string
 
-    def to_sort_key(self) -> tuple[int, int, int]:
+    def to_sort_key(self) -> PeriodSortKey:
         """Convert to sortable tuple (year, sub_period, day)."""
         return (self.year, self.sub_period, self.day)
 
@@ -67,14 +91,21 @@ class PeriodInfo:
         return str(self.year)
 
 
+PeriodMatch = tuple[tuple[int, int], str, PeriodInfo]
+RefineInput = tuple[PurePath, int, list[PeriodInfo]]
+IndexedRefineInput = tuple[int, PurePath, int]
+RefinedFile = tuple[str, PurePath, int]
+RefinedGroup = tuple[str, list[RefinedFile]]
+
+
 def _extract_period_from_segment(
     segment: str,
-) -> list[tuple[tuple[int, int], str, PeriodInfo]]:
+) -> list[PeriodMatch]:
     """Extract all period matches from a path segment.
 
     Returns only the most specific match for each segment position.
     """
-    matches: list[tuple[tuple[int, int], str, PeriodInfo]] = []
+    matches: list[PeriodMatch] = []
     matched_ranges: list[tuple[int, int]] = []
 
     def _overlaps(start: int, end: int) -> bool:
@@ -89,16 +120,10 @@ def _extract_period_from_segment(
 
             original = match.group(0)
 
-            if pattern_type == "date":
+            if pattern_type in _DATE_PATTERN_TYPES:
                 year, month, day = match.groups()
                 info = PeriodInfo(int(year), int(month), int(day), original)
-            elif pattern_type == "date_compact":
-                year, month, day = match.groups()
-                info = PeriodInfo(int(year), int(month), int(day), original)
-            elif pattern_type == "year_month":
-                year, month = match.groups()
-                info = PeriodInfo(int(year), int(month), 0, original)
-            elif pattern_type == "year_month_compact":
+            elif pattern_type in _YEAR_MONTH_PATTERN_TYPES:
                 year, month = match.groups()
                 info = PeriodInfo(int(year), int(month), 0, original)
             elif pattern_type == "quarter":
@@ -125,6 +150,19 @@ def _extract_period_from_segment(
             matched_ranges.append((start, end))
 
     return sorted(matches, key=lambda match: match[0][0])
+
+
+def _normalize_segment(segment: str, matches: Sequence[PeriodMatch]) -> str:
+    """Replace matched temporal ranges in a segment with the period placeholder."""
+    normalized = segment
+    for (start, end), _, _ in reversed(matches):
+        normalized = normalized[:start] + PERIOD_PLACEHOLDER + normalized[end:]
+    return normalized
+
+
+def _match_positions(matches: Sequence[PeriodMatch]) -> list[PeriodInfo]:
+    """Return period info values in match order."""
+    return [info for _, _, info in matches]
 
 
 def _combine_periods(periods: list[PeriodInfo]) -> PeriodInfo | None:
@@ -172,20 +210,12 @@ def _extract_file_info(
 
     for segment in rel_path.parts:
         matches = _extract_period_from_segment(segment)
+        if not matches:
+            normalized_parts.append(segment)
+            continue
 
-        # Build normalized segment (replace from end to preserve indices)
-        normalized_segment = segment
-        for (start, end), _, _ in sorted(matches, key=lambda m: m[0][0], reverse=True):
-            normalized_segment = (
-                normalized_segment[:start]
-                + PERIOD_PLACEHOLDER
-                + normalized_segment[end:]
-            )
-        normalized_parts.append(normalized_segment)
-
-        # Collect period positions (in order)
-        for _, _, info in matches:
-            positions.append(info)
+        normalized_parts.append(_normalize_segment(segment, matches))
+        positions.extend(_match_positions(matches))
 
     return "/".join(normalized_parts), positions
 
@@ -202,7 +232,7 @@ def normalize_path(path: PurePath, root: PurePath | None = None) -> str:
     return normalized
 
 
-def period_sort_key(period: str | PeriodInfo) -> tuple[int, int, int]:
+def period_sort_key(period: str | PeriodInfo) -> PeriodSortKey:
     """Convert a period string or PeriodInfo to a sortable tuple (year, sub_period, day)."""
     if isinstance(period, PeriodInfo):
         return period.to_sort_key()
@@ -211,32 +241,32 @@ def period_sort_key(period: str | PeriodInfo) -> tuple[int, int, int]:
     period = period.strip()
 
     # Try full date: 2024/03/15
-    if match := re.match(r"(\d{4})/(\d{2})/(\d{2})$", period):
+    if match := _SORT_DATE_RE.match(period):
         year, month, day = match.groups()
         return (int(year), int(month), int(day))
 
     # Try quarter: 2024Q1
-    if match := re.match(r"(\d{4})Q([1-4])$", period):
+    if match := _SORT_QUARTER_RE.match(period):
         year, quarter = match.groups()
         return (int(year), int(quarter) + 12, 0)  # 13-16 for quarters
 
     # Try month: 2024/03
-    if match := re.match(r"(\d{4})/(\d{2})$", period):
+    if match := _SORT_MONTH_RE.match(period):
         year, month = match.groups()
         return (int(year), int(month), 0)
 
     # Try compact month: 202403
-    if match := re.match(r"(\d{4})(0[1-9]|1[0-2])$", period):
+    if match := _SORT_COMPACT_MONTH_RE.match(period):
         year, month = match.groups()
         return (int(year), int(month), 0)
 
     # Try year only: 2024
-    if match := re.match(r"(\d{4})$", period):
+    if match := _SORT_YEAR_RE.match(period):
         year = match.group(1)
         return (int(year), 0, 0)
 
     # Fallback: try to extract year
-    if match := re.search(r"((?:19|20)\d{2})", period):
+    if match := _SORT_FALLBACK_YEAR_RE.search(period):
         return (int(match.group(1)), 0, 0)
 
     return (0, 0, 0)
@@ -249,7 +279,7 @@ class TimeSeriesGroup:
     normalized_path: str
     files: list[tuple[str, PurePath]]  # [(period_string, path), ...]
     max_mtime: int
-    id_suffix: str | None = None
+    id_suffix: PeriodFrequency | None = None
 
 
 def _period_granularity(info: PeriodInfo) -> int:
@@ -263,7 +293,7 @@ def _period_granularity(info: PeriodInfo) -> int:
     return 0
 
 
-def _period_granularity_signature(positions: Sequence[PeriodInfo]) -> tuple[int, ...]:
+def _period_granularity_signature(positions: Sequence[PeriodInfo]) -> PeriodSignature:
     """Return a grouping signature that distinguishes year, quarter, month, and date."""
     signature: list[int] = []
     for info in positions:
@@ -280,19 +310,57 @@ def _period_granularity_signature(positions: Sequence[PeriodInfo]) -> tuple[int,
     return tuple(signature)
 
 
-def _series_id_suffix(periods: Sequence[str]) -> str:
+def _series_id_suffix(periods: Sequence[str]) -> SeriesIdSuffix:
     """Return a stable suffix for series IDs based on period granularity."""
     if not periods:
         return "series"
 
-    first = periods[0]
-    if re.match(r"\d{4}/\d{2}/\d{2}$", first):
+    return _period_frequency(periods[0])
+
+
+def _period_frequency(period: str) -> PeriodFrequency:
+    """Return the dataset frequency label implied by a period string."""
+    if _SORT_DATE_RE.match(period):
         return "daily"
-    if re.match(r"\d{4}Q\d$", first):
+    if _SORT_QUARTER_RE.match(period):
         return "quarterly"
-    if re.match(r"\d{4}/\d{2}$", first):
+    if _SORT_MONTH_RE.match(period):
         return "monthly"
     return "yearly"
+
+
+def _sorted_valid_refined_files(
+    result_files: Sequence[RefinedFile],
+) -> list[RefinedFile] | None:
+    """Return sorted refined files when they form a valid final series."""
+    if len(result_files) < 2:
+        return None
+
+    keyed_files: list[tuple[PeriodSortKey, RefinedFile]] = []
+    for file in result_files:
+        period = file[0]
+        sort_key = period_sort_key(period)
+        year, sub_period, day = sort_key
+        if year <= 0 or (day > 0 and not 1 <= sub_period <= 12):
+            return None
+        keyed_files.append((sort_key, file))
+
+    return [file for _, file in sorted(keyed_files, key=lambda item: item[0])]
+
+
+def _ambiguous_id_suffix(
+    is_ambiguous: bool,
+    sorted_files: Sequence[RefinedFile],
+) -> PeriodFrequency | None:
+    """Return the ID suffix needed to disambiguate mixed-frequency series."""
+    return _period_frequency(sorted_files[0][0]) if is_ambiguous else None
+
+
+def _has_year_position(
+    file_list: Sequence[RefineInput],
+) -> bool:
+    """Return True when any extracted position includes a real year."""
+    return any(info.year > 0 for _, _, positions in file_list for info in positions)
 
 
 def _refine_normalized_path(
@@ -304,17 +372,17 @@ def _refine_normalized_path(
     parts = normalized_path.split(PERIOD_PLACEHOLDER)
     if len(parts) != len(positions) + 1:
         return normalized_path
-    result = parts[0]
+    result = [parts[0]]
     for i, info in enumerate(positions):
-        result += PERIOD_PLACEHOLDER if is_period[i] else info.original
-        result += parts[i + 1]
-    return result
+        result.append(PERIOD_PLACEHOLDER if is_period[i] else info.original)
+        result.append(parts[i + 1])
+    return "".join(result)
 
 
 def _refine_group(
     normalized_path: str,
-    file_list: Sequence[tuple[PurePath, int, list[PeriodInfo]]],
-) -> list[tuple[str, list[tuple[str, PurePath, int]]]]:
+    file_list: Sequence[RefineInput],
+) -> list[RefinedGroup]:
     """Classify period positions as variable/constant and build refined periods.
 
     For each PERIOD_PLACEHOLDER position, compare values across all files:
@@ -327,7 +395,8 @@ def _refine_group(
     Returns list of (refined_normalized_path, [(period_str, path, mtime), ...]).
     """
     all_positions = [positions for _, _, positions in file_list]
-    n_positions = len(all_positions[0]) if all_positions else 0
+    reference_positions = all_positions[0] if all_positions else []
+    n_positions = len(reference_positions)
 
     if n_positions == 0:
         return [(normalized_path, [("", p, m) for p, m, _ in file_list])]
@@ -348,8 +417,9 @@ def _refine_group(
         is_variable = [True] * n_positions
 
     # --- Check temporal order among variable positions ---
-    # Valid: YYYY → MM/Q → DD (increasing granularity)
-    # Violation (e.g. YYYY_MM → YYYY): preceding positions become sub-group axes
+    # Valid: YYYY → MM/Q → DD (increasing granularity).
+    # A lower-granularity token with its own year starts a new period candidate;
+    # a lower-granularity token without a year is treated as a sub-group suffix.
     period_indices: list[int] = []
     subgroup_indices: list[int] = []
 
@@ -358,26 +428,74 @@ def _refine_group(
     else:
         prev_gran = 0
         for idx in variable_indices:
-            gran = _period_granularity(all_positions[0][idx])
-            if prev_gran > 0 and gran <= prev_gran:
-                subgroup_indices.extend(period_indices)
-                period_indices = [idx]
+            info = reference_positions[idx]
+            gran = _period_granularity(info)
+            if subgroup_indices and info.year == 0:
+                subgroup_indices.append(idx)
+            elif prev_gran > 0 and gran <= prev_gran:
+                if info.year == 0:
+                    subgroup_indices.append(idx)
+                else:
+                    subgroup_indices.extend(period_indices)
+                    period_indices = [idx]
             else:
                 period_indices.append(idx)
             prev_gran = gran
 
+    indexed = [(fi, p, m) for fi, (p, m, _) in enumerate(file_list)]
+
+    # If a left-side year varies one-to-one with the chosen right-side period,
+    # keeping it as a sub-group would turn an otherwise valid series into only
+    # singletons. Preserve its placeholder instead of restoring an arbitrary year.
+    neutralized_indices: set[int] = set()
+    if subgroup_indices:
+        subgroup_counts: dict[PeriodGroupKey, int] = defaultdict(int)
+        for fi, _, _ in indexed:
+            key = tuple(all_positions[fi][j].to_sort_key() for j in subgroup_indices)
+            subgroup_counts[key] += 1
+
+        subgroup_has_only_years = all(
+            all_positions[fi][idx].year > 0
+            for fi, _, _ in indexed
+            for idx in subgroup_indices
+        )
+        selected_periods = {
+            tuple(all_positions[fi][j].to_sort_key() for j in period_indices)
+            for fi, _, _ in indexed
+        }
+        if (
+            subgroup_counts
+            and all(count == 1 for count in subgroup_counts.values())
+            and subgroup_has_only_years
+            and len(selected_periods) > 1
+        ):
+            neutralized_indices.update(subgroup_indices)
+            subgroup_indices = []
+
     # --- Include constant year context if period has no year ---
     # Example: 2024/data_01.csv → month varies, year is constant but needed for "2024/01"
     context_indices: list[int] = []
-    has_year = any(all_positions[0][i].year > 0 for i in period_indices)
+    subgroup_set = set(subgroup_indices)
+    has_year = any(reference_positions[i].year > 0 for i in period_indices)
     if not has_year:
-        sg_set = set(subgroup_indices)
         for i in range(n_positions):
-            if not is_variable[i] and i not in sg_set:
-                if (
-                    all_positions[0][i].year > 0
-                    and _period_granularity(all_positions[0][i]) == 1
-                ):
+            if not is_variable[i] and i not in subgroup_set:
+                info = reference_positions[i]
+                if info.year > 0 and _period_granularity(info) == 1:
+                    context_indices.append(i)
+                    break
+
+    # Example: 2024/01/day15.csv → day varies, constant year/month are needed
+    # for "2024/01/15" instead of "2024/00/15".
+    has_day = any(reference_positions[i].day > 0 for i in period_indices)
+    has_sub_period = any(
+        reference_positions[i].sub_period > 0 for i in context_indices + period_indices
+    )
+    if has_day and not has_sub_period:
+        for i in range(n_positions):
+            if not is_variable[i] and i not in subgroup_set and i not in period_indices:
+                info = reference_positions[i]
+                if 0 < info.sub_period <= 12 and info.day == 0:
                     context_indices.append(i)
                     break
 
@@ -385,9 +503,9 @@ def _refine_group(
     period_set = set(period_indices)
 
     def _build_result_files(
-        indexed_files: list[tuple[int, PurePath, int]],
-    ) -> list[tuple[str, PurePath, int]]:
-        result: list[tuple[str, PurePath, int]] = []
+        indexed_files: list[IndexedRefineInput],
+    ) -> list[RefinedFile]:
+        result: list[RefinedFile] = []
         for fi, path, mtime in indexed_files:
             infos = [all_positions[fi][j] for j in all_period_indices]
             period = _combine_periods(infos) if infos else None
@@ -395,24 +513,23 @@ def _refine_group(
         return result
 
     # --- Build results (with or without sub-grouping) ---
-    indexed = [(fi, p, m) for fi, (p, m, _) in enumerate(file_list)]
-    is_period_marker = [i in period_set for i in range(n_positions)]
+    is_period_marker = [
+        i in period_set or i in neutralized_indices for i in range(n_positions)
+    ]
 
     if not subgroup_indices:
         refined = _refine_normalized_path(
-            normalized_path, all_positions[0], is_period_marker
+            normalized_path, reference_positions, is_period_marker
         )
         return [(refined, _build_result_files(indexed))]
 
     # Sub-group by subgroup positions (order violation case)
-    subgroups: dict[
-        tuple[tuple[int, int, int], ...], list[tuple[int, PurePath, int]]
-    ] = defaultdict(list)
+    subgroups: dict[PeriodGroupKey, list[IndexedRefineInput]] = defaultdict(list)
     for fi, path, mtime in indexed:
         key = tuple(all_positions[fi][j].to_sort_key() for j in subgroup_indices)
         subgroups[key].append((fi, path, mtime))
 
-    results: list[tuple[str, list[tuple[str, PurePath, int]]]] = []
+    results: list[RefinedGroup] = []
     for _key, sub_indexed in subgroups.items():
         rep_idx = sub_indexed[0][0]
         refined = _refine_normalized_path(
@@ -437,10 +554,8 @@ def group_time_series(
         - single_files: files that don't form a series
     """
     # Extract info once per file, group by normalized path and period granularity.
-    raw_groups: dict[
-        tuple[str, tuple[int, ...]], list[tuple[PurePath, int, list[PeriodInfo]]]
-    ] = defaultdict(list)
-    signatures_by_normalized: dict[str, set[tuple[int, ...]]] = defaultdict(set)
+    raw_groups: dict[tuple[str, PeriodSignature], list[RefineInput]] = defaultdict(list)
+    signatures_by_normalized: dict[str, set[PeriodSignature]] = defaultdict(set)
     no_period: list[tuple[PurePath, int]] = []
 
     for path, mtime in files:
@@ -459,41 +574,31 @@ def group_time_series(
     for (normalized, _signature), file_list in raw_groups.items():
         is_ambiguous = len(signatures_by_normalized[normalized]) > 1
         if len(file_list) < 2:
-            for path, mtime, _ in file_list:
-                singles.append((path, mtime))
+            singles.extend((path, mtime) for path, mtime, _ in file_list)
             continue
 
         # Require at least one full 4-digit year somewhere in the path/name;
         # otherwise partial fragments (e.g. trailing "12"/"13") would form a
         # bogus series. See group_table_time_series for the same guard.
-        has_year = any(
-            info.year > 0 for _, _, positions in file_list for info in positions
-        )
-        if not has_year:
-            for path, mtime, _ in file_list:
-                singles.append((path, mtime))
+        if not _has_year_position(file_list):
+            singles.extend((path, mtime) for path, mtime, _ in file_list)
             continue
 
         # Classify variable/constant positions and potentially sub-group
         for refined_path, result_files in _refine_group(normalized, file_list):
-            if len(result_files) >= 2:
-                sorted_files = sorted(result_files, key=lambda x: period_sort_key(x[0]))
+            sorted_files = _sorted_valid_refined_files(result_files)
+            if sorted_files:
                 max_mtime = max(m for _, _, m in sorted_files)
                 time_series.append(
                     TimeSeriesGroup(
                         normalized_path=refined_path,
                         files=[(period, path) for period, path, _ in sorted_files],
                         max_mtime=max_mtime,
-                        id_suffix=(
-                            _series_id_suffix([period for period, _, _ in sorted_files])
-                            if is_ambiguous
-                            else None
-                        ),
+                        id_suffix=_ambiguous_id_suffix(is_ambiguous, sorted_files),
                     )
                 )
             else:
-                for _, path, mtime in result_files:
-                    singles.append((path, mtime))
+                singles.extend((path, mtime) for _, path, mtime in result_files)
 
     return time_series, singles
 
@@ -504,7 +609,7 @@ class TableSeriesGroup:
 
     normalized_name: str  # e.g., "stats_---PERIOD---"
     tables: list[tuple[str, str]]  # [(period_str, table_name), ...] sorted
-    id_suffix: str | None = None
+    id_suffix: PeriodFrequency | None = None
 
 
 def group_table_time_series(
@@ -515,9 +620,9 @@ def group_table_time_series(
     Returns (series_groups, single_tables).
     """
     raw_groups: dict[
-        tuple[str, tuple[int, ...]], list[tuple[str, list[PeriodInfo]]]
+        tuple[str, PeriodSignature], list[tuple[str, list[PeriodInfo]]]
     ] = defaultdict(list)
-    signatures_by_normalized: dict[str, set[tuple[int, ...]]] = defaultdict(set)
+    signatures_by_normalized: dict[str, set[PeriodSignature]] = defaultdict(set)
     no_period: list[str] = []
 
     for name in table_names:
@@ -526,10 +631,7 @@ def group_table_time_series(
             no_period.append(name)
             continue
 
-        # Build normalized name (replace temporal parts with placeholder)
-        normalized = name
-        for (start, end), _, _ in sorted(matches, key=lambda m: m[0][0], reverse=True):
-            normalized = normalized[:start] + PERIOD_PLACEHOLDER + normalized[end:]
+        normalized = _normalize_segment(name, matches)
 
         # Skip if entire name is consumed by temporal pattern (e.g. "t1", "t2")
         base = normalized.replace(PERIOD_PLACEHOLDER, "").strip("_- ")
@@ -537,7 +639,7 @@ def group_table_time_series(
             no_period.append(name)
             continue
 
-        positions = [info for _, _, info in matches]
+        positions = _match_positions(matches)
         signature = _period_granularity_signature(positions)
         signatures_by_normalized[normalized].add(signature)
         raw_groups[(normalized, signature)].append((name, positions))
@@ -557,29 +659,20 @@ def group_table_time_series(
         ]
         # Require at least one full 4-digit year; otherwise partial digits
         # like "MONTH12"/"MONTH13" would be falsely grouped as a series.
-        has_year = any(
-            info.year > 0 for _, _, positions in file_list for info in positions
-        )
-        if not has_year:
-            for path, _, _ in file_list:
-                singles.append(path.name)
+        if not _has_year_position(file_list):
+            singles.extend(path.name for path, _, _ in file_list)
             continue
 
         for refined_name, result_files in _refine_group(normalized, file_list):
-            if len(result_files) < 2:
-                for _, path, _ in result_files:
-                    singles.append(path.name)
+            sorted_files = _sorted_valid_refined_files(result_files)
+            if not sorted_files:
+                singles.extend(path.name for _, path, _ in result_files)
                 continue
-            sorted_files = sorted(result_files, key=lambda x: period_sort_key(x[0]))
             series.append(
                 TableSeriesGroup(
                     normalized_name=refined_name,
                     tables=[(p, path.name) for p, path, _ in sorted_files],
-                    id_suffix=(
-                        _series_id_suffix([period for period, _, _ in sorted_files])
-                        if is_ambiguous
-                        else None
-                    ),
+                    id_suffix=_ambiguous_id_suffix(is_ambiguous, sorted_files),
                 )
             )
 
@@ -623,20 +716,11 @@ def build_series_dataset_name(
 
     # Check if period is in the filename
     if PERIOD_PLACEHOLDER in stem:
-        # Determine pattern from first period
-        if periods:
-            first = periods[0]
-            if re.match(r"\d{4}/\d{2}/\d{2}$", first):
-                pattern = "[YYYY/MM/DD]"
-            elif re.match(r"\d{4}Q\d$", first):
-                pattern = "[YYYY]Q[N]"
-            elif re.match(r"\d{4}/\d{2}$", first):
-                pattern = "[YYYY/MM]"
-            else:
-                pattern = "[YYYY]"
-        else:
-            pattern = "[YYYY]"
-
+        pattern = (
+            _PERIOD_NAME_PATTERNS[_period_frequency(periods[0])]
+            if periods
+            else "[YYYY]"
+        )
         return stem.replace(PERIOD_PLACEHOLDER, pattern)
 
     # Period only in folder path

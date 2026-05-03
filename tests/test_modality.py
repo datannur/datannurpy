@@ -247,6 +247,30 @@ class TestEnumerationExport:
         # description should be null when not set
         assert all(v.get("description") is None for v in data)
 
+    def test_export_size_report_printed(self, tmp_path: Path, capsys):
+        """export_db should print a size report when not quiet."""
+        (tmp_path / "data.csv").write_text("color\nred\nblue\n")
+
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(tmp_path)
+        catalog.export_db(tmp_path / "output", quiet=False)
+
+        captured = capsys.readouterr()
+        assert "export size by table" in captured.err
+        assert "json.gz" in captured.err
+        assert "total" in captured.err
+
+    def test_export_size_report_quiet(self, tmp_path: Path, capsys):
+        """export_db should not print a size report when quiet."""
+        (tmp_path / "data.csv").write_text("color\nred\nblue\n")
+
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(tmp_path)
+        catalog.export_db(tmp_path / "output", quiet=True)
+
+        captured = capsys.readouterr()
+        assert "export size by table" not in captured.err
+
     def test_variable_json_has_enumeration_ids(self, tmp_path: Path):
         """variable.json should include enumeration_ids."""
         (tmp_path / "data.csv").write_text("color\nred\nblue\n")

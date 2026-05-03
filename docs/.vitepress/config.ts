@@ -38,6 +38,7 @@ export default defineConfig({
       { text: "Getting Started", link: "/" },
       { text: "Scanning files", link: "/scanning-files" },
       { text: "Scanning databases", link: "/scanning-databases" },
+      { text: "Time series grouping", link: "/time-series" },
       { text: "Metadata & configuration", link: "/metadata" },
       { text: "Output & exports", link: "/output" },
       { text: "Python API", link: "/python-api" },

@@ -15,8 +15,12 @@ from ..schema import Variable
 from .csv import scan_csv
 from .excel import (
     _MAX_PREVIEW_ROWS as _EXCEL_PREVIEW_ROWS,
+    _XLS_SNIFF_BYTES,
+    _read_file_header,
     _read_preview_rows,
+    _warn_html_xls,
     is_valid_tabular_dataset,
+    _looks_like_html_xls_content,
     scan_excel,
 )
 from .parquet import scan_parquet
@@ -63,7 +67,14 @@ def scan_file(
     """
     # Schema-only mode: read metadata without scanning data
     if schema_only:
-        return _scan_schema_only(path, delivery_format, dataset_id, csv_encoding, fs=fs)
+        return _scan_schema_only(
+            path,
+            delivery_format,
+            dataset_id,
+            csv_encoding,
+            fs=fs,
+            quiet=quiet,
+        )
 
     # Remote filesystem: use ensure_local for all formats
     if fs is not None and not fs.is_local:
@@ -187,6 +198,11 @@ def _scan_with_ensure_local(
 ) -> ScanResult:
     """Download remote file/directory and scan locally."""
     _DIR_FORMATS = ("delta", "hive", "iceberg")
+    if delivery_format == "excel" and PurePath(path).suffix.lower() == ".xls":
+        with fs.open(str(path), "rb") as f:
+            if _looks_like_html_xls_content(f.read(_XLS_SNIFF_BYTES)):
+                _warn_html_xls(PurePath(path).name, quiet)
+                return ScanResult(variables=[], nb_row=None)
     ctx = fs.ensure_local_dir if delivery_format in _DIR_FORMATS else fs.ensure_local
     with ctx(str(path)) as local_path:
         return _scan_local(
@@ -207,12 +223,13 @@ def _scan_schema_only(
     dataset_id: str,
     csv_encoding: str | None = None,
     fs: FileSystem | None = None,
+    quiet: bool = False,
 ) -> ScanResult:
     """Read schema only without scanning data (for depth='schema' mode)."""
     # Remote filesystem: use optimized partial downloads
     if fs is not None and not fs.is_local:
         return _scan_schema_only_remote(
-            path, delivery_format, dataset_id, csv_encoding, fs
+            path, delivery_format, dataset_id, csv_encoding, fs, quiet
         )
 
     # Local: read schema directly
@@ -236,7 +253,9 @@ def _scan_schema_only(
         variables = build_variables_from_schema(schema, dataset_id)
         return ScanResult(variables=variables, nb_row=None)
 
-    return _scan_schema_only_local(path, delivery_format, dataset_id, csv_encoding)
+    return _scan_schema_only_local(
+        path, delivery_format, dataset_id, csv_encoding, quiet
+    )
 
 
 def _scan_stat_schema_stream(
@@ -324,6 +343,7 @@ def _scan_schema_only_remote(
     dataset_id: str,
     csv_encoding: str | None,
     fs: FileSystem,
+    quiet: bool = False,
 ) -> ScanResult:
     """Optimized schema-only scan for remote files - minimal downloads."""
     # Parquet: PyArrow reads footer natively via fsspec (no full download)
@@ -410,9 +430,13 @@ def _scan_schema_only_remote(
     suffix = PurePath(path).suffix.lower()
     if suffix != ".xls":
         return _scan_excel_schema_stream(path, dataset_id, fs)
+    with fs.open(str(path), "rb") as f:
+        if _looks_like_html_xls_content(f.read(_XLS_SNIFF_BYTES)):
+            _warn_html_xls(PurePath(path).name, quiet)
+            return ScanResult(variables=[], nb_row=None)
     with fs.ensure_local(str(path)) as local_path:
         return _scan_schema_only_local(
-            local_path, delivery_format, dataset_id, csv_encoding
+            local_path, delivery_format, dataset_id, csv_encoding, quiet
         )
 
 
@@ -443,6 +467,7 @@ def _scan_schema_only_local(
     delivery_format: str,
     dataset_id: str,
     csv_encoding: str | None = None,
+    quiet: bool = False,
 ) -> ScanResult:
     """Schema-only scan for local files."""
     if delivery_format == "csv":
@@ -471,6 +496,9 @@ def _scan_schema_only_local(
                 return ScanResult(variables=[], nb_row=None)
             headers = [str(c) for c in rows[0] if c is not None]
         else:
+            if _looks_like_html_xls_content(_read_file_header(file_path)):
+                _warn_html_xls(file_path.name, quiet)
+                return ScanResult(variables=[], nb_row=None)
             import pandas as pd
 
             engine = "xlrd"

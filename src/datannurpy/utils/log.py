@@ -13,6 +13,9 @@ from pathlib import Path
 _verbose: bool = False
 _log_file_path: Path | None = None
 
+_ICON_SPACING = "  "
+_LOADING_SPACING = " "
+
 
 def configure_logging(
     *, verbose: bool = False, log_file: str | Path | None = None
@@ -22,7 +25,7 @@ def configure_logging(
     _verbose = verbose
     if log_file is not None:
         _log_file_path = Path(log_file)
-        _log_file_path.write_text("")
+        _log_file_path.write_text("", encoding="utf-8")
     else:
         _log_file_path = None
 
@@ -30,14 +33,14 @@ def configure_logging(
 def _write_log(message: str) -> None:
     """Append a message to the log file if configured."""
     if _log_file_path is not None:
-        with open(_log_file_path, "a") as f:
+        with open(_log_file_path, "a", encoding="utf-8") as f:
             f.write(message + "\n")
 
 
 def log_start(msg: str, quiet: bool) -> float:
     """Log start of an operation (with ... suffix, no newline). Returns start time."""
     if not quiet:
-        print(f"  ⏳{msg}...", end="", flush=True, file=sys.stderr)
+        print(f"  ⏳{_LOADING_SPACING}{msg}...", end="", flush=True, file=sys.stderr)
     return time.perf_counter()
 
 
@@ -45,9 +48,9 @@ def log_done(msg: str, quiet: bool, start_time: float | None = None) -> None:
     """Log completion (replaces the 'start' line)."""
     if start_time is not None:
         elapsed = time.perf_counter() - start_time
-        text = f"✓ {msg} in {elapsed:.1f}s"
+        text = f"✓{_ICON_SPACING}{msg} in {elapsed:.1f}s"
     else:
-        text = f"✓ {msg}"
+        text = f"✓{_ICON_SPACING}{msg}"
     if not quiet:
         print(f"\r  {text}", file=sys.stderr)
     _write_log(f"  {text}")
@@ -56,22 +59,22 @@ def log_done(msg: str, quiet: bool, start_time: float | None = None) -> None:
 def log_warn(msg: str, quiet: bool) -> None:
     """Log a warning (replaces the 'start' line)."""
     if not quiet:
-        print(f"\r  ⚠ {msg}", file=sys.stderr)
-    _write_log(f"  ⚠ {msg}")
+        print(f"\r  ⚠{_ICON_SPACING}{msg}", file=sys.stderr)
+    _write_log(f"  ⚠{_ICON_SPACING}{msg}")
 
 
 def log_debug(msg: str, quiet: bool) -> None:
     """Log a debug message (only printed when verbose; always written to log file)."""
     if not quiet and _verbose:
-        print(f"\r  · {msg}", file=sys.stderr)
-    _write_log(f"  · {msg}")
+        print(f"\r  ·{_ICON_SPACING}{msg}", file=sys.stderr)
+    _write_log(f"  ·{_ICON_SPACING}{msg}")
 
 
 def log_skip(msg: str, quiet: bool) -> None:
     """Log a skipped item (unchanged, no rescan needed)."""
     if not quiet:
-        print(f"  ⏭ {msg} (unchanged)", file=sys.stderr)
-    _write_log(f"  ⏭ {msg} (unchanged)")
+        print(f"  ⏭{_ICON_SPACING}{msg} (unchanged)", file=sys.stderr)
+    _write_log(f"  ⏭{_ICON_SPACING}{msg} (unchanged)")
 
 
 def log_section(method: str, target: str, quiet: bool) -> float:
@@ -85,8 +88,8 @@ def log_section(method: str, target: str, quiet: bool) -> float:
 def log_folder(name: str, quiet: bool) -> None:
     """Log a folder/schema."""
     if not quiet:
-        print(f"\n  📁 {name}", file=sys.stderr)
-    _write_log(f"\n  📁 {name}")
+        print(f"\n  📁{_ICON_SPACING}{name}", file=sys.stderr)
+    _write_log(f"\n  📁{_ICON_SPACING}{name}")
 
 
 _CRED_RE = re.compile(r"://[^@/]+@")
@@ -100,28 +103,41 @@ def _redact(text: str) -> str:
 def log_error(name: str, error: BaseException, quiet: bool) -> None:
     """Log a scan error (replaces the 'start' line)."""
     msg = _redact(str(error).split("\n")[0])
-    header = f"\r  ✗ {name} — {type(error).__name__}: {msg}"
+    header = f"\r  ✗{_ICON_SPACING}{name} — {type(error).__name__}: {msg}"
     if not quiet or _verbose:
         print(header, file=sys.stderr)
     if _verbose:
         traceback.print_exc(file=sys.stderr)
-    _write_log(f"  ✗ {name} — {type(error).__name__}: {_redact(str(error))}")
+    _write_log(
+        f"  ✗{_ICON_SPACING}{name} — {type(error).__name__}: {_redact(str(error))}"
+    )
     if _log_file_path is not None:
         buf = io.StringIO()
         traceback.print_exc(file=buf)
-        with open(_log_file_path, "a") as f:
+        with open(_log_file_path, "a", encoding="utf-8") as f:
             f.write(_redact(buf.getvalue()))
 
 
 def log_summary(
-    datasets: int, variables: int, quiet: bool, start_time: float, errors: int = 0
+    datasets: int,
+    variables: int | None,
+    quiet: bool,
+    start_time: float,
+    errors: int = 0,
+    resource_count: int | None = None,
+    resource_label: str | None = None,
 ) -> None:
     """Log final summary with elapsed time."""
     elapsed = time.perf_counter() - start_time
-    parts = [f"{datasets} datasets", f"{variables} variables"]
+    parts: list[str] = []
+    if resource_count is not None and resource_label is not None:
+        parts.append(f"{resource_count} {resource_label}")
+    parts.append(f"{datasets} datasets")
+    if variables is not None:
+        parts.append(f"{variables} variables")
     if errors:
         parts.append(f"{errors} errors")
-    text = f"\n  → {', '.join(parts)} in {elapsed:.1f}s"
+    text = f"\n  →{_ICON_SPACING}{', '.join(parts)} in {elapsed:.1f}s"
     if not quiet:
         print(text, file=sys.stderr)
     _write_log(text)

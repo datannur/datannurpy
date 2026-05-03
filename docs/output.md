@@ -12,6 +12,16 @@ open_browser: true
 output_dir: ./output
 ```
 
+When exports are not run in quiet mode, datannurpy prints a size report by table after writing the database. The report includes raw `.json`, raw `.json.js`, and estimated gzipped `.json` sizes with percentages, which helps identify the tables that dominate catalog weight.
+
+### Large exports
+
+Large catalogs are usually dominated by `frequency` and `value`, because those tables store repeated values for many variables. Use the export size report to check which tables matter before changing scan settings.
+
+If the export is larger than expected, the main levers are scan depth, frequency generation, and sampling. `depth: stat` keeps variable statistics without writing frequency tables or enumerations; `depth: variable` keeps only schema-level metadata; `freq_threshold` controls when high-cardinality string columns switch from value frequencies to pattern frequencies; `sample_size` limits the rows used for frequency counts and enumeration detection while keeping core statistics on the full dataset.
+
+`.json.js` reflects local or shared-folder usage (`file://`), `.json` reflects uncompressed HTTP, and `.json.gz` reflects HTTP served with gzip.
+
 ## Incremental scan
 
 

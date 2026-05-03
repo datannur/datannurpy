@@ -371,7 +371,7 @@ class TestReadJson:
 
         result = _read_json(json_path, quiet=False)
         captured = capsys.readouterr()
-        assert "✗ test.json" in captured.err
+        assert "✗  test.json" in captured.err
         assert result is None
 
     def test_non_array_json(self, tmp_path: Path):
@@ -455,7 +455,7 @@ class TestLoadTablesFromDatabase:
             "sqlite:///nonexistent/path/db.sqlite", ALL_ENTITIES, quiet=False
         )
         captured = capsys.readouterr()
-        assert "✗ database" in captured.err
+        assert "✗  database" in captured.err
         assert tables == {}
 
     def test_ignores_non_entity_tables(self, tmp_path: Path):
@@ -1055,7 +1055,7 @@ class TestEdgeCases:
             )
 
             captured = capsys.readouterr()
-            assert "✗ folder" in captured.err
+            assert "✗  folder" in captured.err
             assert "Table read error" in captured.err
             assert "folder" not in tables
 
@@ -1068,7 +1068,7 @@ class TestEdgeCases:
         add_metadata(catalog, tmp_path, quiet=False)
 
         captured = capsys.readouterr()
-        assert "0 created, 1 updated" in captured.err
+        assert "\n  →  0 created, 1 updated in " in captured.err
 
     def test_merge_entity_marks_seen(self):
         """_merge_entity should set _seen=True on entities with that attribute."""

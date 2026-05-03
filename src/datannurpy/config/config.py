@@ -12,8 +12,8 @@ import yaml
 from dotenv import load_dotenv
 
 from ..catalog import Catalog
-from ..entity_metadata import EntityMetadata
 from ..errors import ConfigError
+from ..schema import EntityMetadata
 
 VALID_TYPES = {"folder", "dataset", "database"}
 METADATA_KEYS = {
@@ -186,7 +186,7 @@ def _run_post_export(
         if not script.exists():
             raise ConfigError(f"post_export script not found: {script}")
         if not quiet:
-            print(f"  → post_export: {script.name}", file=sys.stderr)
+            print(f"  →  post_export: {script.name}", file=sys.stderr)
         try:
             subprocess.run(
                 [sys.executable, str(script)],

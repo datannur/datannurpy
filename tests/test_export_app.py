@@ -64,6 +64,16 @@ class TestExportApp:
 
         assert (tmp_path / "index.html").exists()
 
+    def test_export_app_prints_summary_when_not_quiet(
+        self, _employees_catalog, tmp_path, capsys: pytest.CaptureFixture[str]
+    ):
+        """export_app prints its arrow-prefixed summary when quiet is false."""
+        _employees_catalog.export_app(tmp_path, quiet=False)
+
+        err = capsys.readouterr().err
+        assert "\n  →  exported in " in err
+        assert "index.html" in err
+
     def test_export_app_open_browser(self, _employees_catalog, tmp_path, monkeypatch):
         """export_app with open_browser=True should open browser."""
         opened_urls = []

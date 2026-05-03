@@ -23,6 +23,7 @@ class DatasetInfo:
     path: PurePath
     format: str  # csv, parquet, delta, hive, iceberg, sas, spss, stata, excel
     mtime: int
+    resource_count: int = 1
     series_files: list[tuple[str, PurePath]] | None = None  # [(period, path), ...]
     series_normalized_path: str | None = None  # Refined normalized path from group
     series_id_suffix: str | None = None
@@ -67,6 +68,7 @@ def discover_datasets(
                 path=pq_info.path,
                 format=pq_info.type.value,
                 mtime=get_mtime_timestamp(pq_info.path, fs=fs),
+                resource_count=len(pq_info.files),
             )
         )
 
@@ -97,6 +99,7 @@ def discover_datasets(
                 path=file_path,
                 format=fmt,
                 mtime=get_mtime_timestamp(file_path, fs=fs),
+                resource_count=1,
             )
         )
 
@@ -152,6 +155,7 @@ def _apply_time_series_grouping(
                     path=last_path,
                     format=fmt,
                     mtime=group.max_mtime,
+                    resource_count=len(group.files),
                     series_files=group.files,
                     series_normalized_path=group.normalized_path,
                     series_id_suffix=group.id_suffix,
@@ -165,6 +169,7 @@ def _apply_time_series_grouping(
                     path=path,
                     format=fmt,
                     mtime=mtime,
+                    resource_count=1,
                 )
             )
 

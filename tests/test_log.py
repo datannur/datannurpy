@@ -37,7 +37,7 @@ def test_log_error_output(capsys):
     """log_error should show type, first line only."""
     log_error("f.csv", ValueError("line1\nline2"), quiet=False)
     err = capsys.readouterr().err
-    assert "✗ f.csv" in err
+    assert "✗  f.csv" in err
     assert "ValueError" in err
     assert "line1" in err
     assert "line2" not in err
@@ -56,6 +56,22 @@ def test_log_summary_without_errors(capsys):
     assert "errors" not in capsys.readouterr().err
 
 
+def test_log_summary_with_resource_count_and_no_variables(capsys):
+    """log_summary should show resources first and omit variables when unset."""
+    log_summary(
+        13,
+        None,
+        quiet=False,
+        start_time=time.perf_counter(),
+        resource_count=141,
+        resource_label="files",
+    )
+    err = capsys.readouterr().err
+    assert "141 files" in err
+    assert "13 datasets" in err
+    assert "variables" not in err
+
+
 def test_verbose_shows_traceback(capsys):
     """log_error with verbose should print traceback to stderr."""
     configure_logging(verbose=True)
@@ -68,7 +84,7 @@ def test_verbose_shows_traceback(capsys):
         configure_logging(verbose=False)
 
     err = capsys.readouterr().err
-    assert "✗ f.csv" in err
+    assert "✗  f.csv" in err
     assert "Traceback" in err
     assert "deep error" in err
 
@@ -85,7 +101,7 @@ def test_verbose_shows_errors_even_when_quiet(capsys):
         configure_logging(verbose=False)
 
     err = capsys.readouterr().err
-    assert "✗ f.csv" in err
+    assert "✗  f.csv" in err
     assert "Traceback" in err
 
 
@@ -137,10 +153,10 @@ def test_log_file_captures_all_levels(tmp_path):
 
     content = log_path.read_text()
     assert "[add_folder] /data" in content
-    assert "📁 subdir" in content
-    assert "✓ scanning file.csv" in content
-    assert "⚠ col has nulls" in content
-    assert "⏭ cached.csv (unchanged)" in content
+    assert "📁  subdir" in content
+    assert "✓  scanning file.csv" in content
+    assert "⚠  col has nulls" in content
+    assert "⏭  cached.csv (unchanged)" in content
     assert "2 datasets" in content
     assert "1 errors" in content
 
@@ -157,9 +173,9 @@ def test_log_file_captures_when_quiet(tmp_path):
         configure_logging()
 
     content = log_path.read_text()
-    assert "⚠ warning msg" in content
-    assert "⏭ skipped.csv" in content
-    assert "📁 dir" in content
+    assert "⚠  warning msg" in content
+    assert "⏭  skipped.csv" in content
+    assert "📁  dir" in content
 
 
 def test_configure_logging_defaults(capsys):
@@ -171,7 +187,7 @@ def test_configure_logging_defaults(capsys):
         log_error("f.csv", exc, quiet=False)
 
     err = capsys.readouterr().err
-    assert "✗ f.csv" in err
+    assert "✗  f.csv" in err
     assert "Traceback" not in err
 
 
@@ -185,7 +201,7 @@ def test_log_debug_silent_without_verbose(capsys, tmp_path):
         configure_logging()
 
     assert capsys.readouterr().err == ""
-    assert "· hidden detail" in log_path.read_text()
+    assert "·  hidden detail" in log_path.read_text()
 
 
 def test_log_debug_visible_with_verbose(capsys):
@@ -196,4 +212,50 @@ def test_log_debug_visible_with_verbose(capsys):
     finally:
         configure_logging(verbose=False)
 
-    assert "· shown detail" in capsys.readouterr().err
+    assert "·  shown detail" in capsys.readouterr().err
+
+
+def test_log_icon_spacing_exact(capsys, tmp_path):
+    """Leading log icons use one extra space after the prefix."""
+    log_path = tmp_path / "spacing.log"
+    configure_logging(verbose=True, log_file=log_path)
+    try:
+        start = log_start("loading.csv", quiet=False)
+        log_done("done.csv", quiet=False, start_time=start)
+        log_warn("warn.csv", quiet=False)
+        log_skip("skip.csv", quiet=False)
+        log_folder("folder", quiet=False)
+        log_debug("debug.csv", quiet=False)
+        log_summary(
+            1,
+            2,
+            quiet=False,
+            start_time=start,
+            resource_count=3,
+            resource_label="files",
+        )
+        try:
+            raise ValueError("boom")
+        except Exception as exc:
+            log_error("error.csv", exc, quiet=False)
+    finally:
+        configure_logging()
+
+    err = capsys.readouterr().err
+    assert "  ⏳ loading.csv..." in err
+    assert "\r  ✓  done.csv in " in err
+    assert "\r  ⚠  warn.csv" in err
+    assert "  ⏭  skip.csv (unchanged)" in err
+    assert "\n  📁  folder" in err
+    assert "\r  ·  debug.csv" in err
+    assert "\n  →  3 files, 1 datasets, 2 variables in " in err
+    assert "\r  ✗  error.csv — ValueError: boom" in err
+
+    content = log_path.read_text()
+    assert "  ✓  done.csv in " in content
+    assert "  ⚠  warn.csv" in content
+    assert "  ⏭  skip.csv (unchanged)" in content
+    assert "\n  📁  folder" in content
+    assert "  ·  debug.csv" in content
+    assert "\n  →  3 files, 1 datasets, 2 variables in " in content
+    assert "  ✗  error.csv — ValueError: boom" in content
