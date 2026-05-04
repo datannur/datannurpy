@@ -17,7 +17,7 @@ def _make_employees_catalog() -> Catalog:
     catalog.add_folder(
         CSV_DIR,
         metadata=EntityMetadata(id="test", name="Test", license="ODbL-1.0"),
-        include=["employees.csv"],
+        include=["**/employees.csv"],
     )
     catalog.dataset.update("test---employees_csv", license="CC-BY-4.0")
     return catalog

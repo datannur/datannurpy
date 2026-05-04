@@ -22,8 +22,11 @@ from datannurpy.scanner.utils import (
     get_dir_data_size,
     safe_glob_fs,
     safe_glob_local,
+    safe_is_dir_fs,
+    safe_is_file_fs,
     safe_iterdir_fs,
     safe_iterdir_local,
+    safe_walk_fs,
     safe_walk_local,
 )
 
@@ -157,6 +160,48 @@ class TestSafeIterdirLocal:
             list(safe_iterdir_local(tmp_path))
 
 
+class TestSafeFsTypeChecks:
+    """fs.isdir/fs.isfile wrappers."""
+
+    def test_safe_is_dir_fs_returns_result(self) -> None:
+        fs = MagicMock()
+        fs.isdir.return_value = True
+        assert safe_is_dir_fs(fs, "/data") is True
+
+    def test_safe_is_file_fs_returns_result(self) -> None:
+        fs = MagicMock()
+        fs.isfile.return_value = False
+        assert safe_is_file_fs(fs, "/data") is False
+
+    def test_safe_is_dir_fs_swallows_permission_error(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        fs = MagicMock()
+        fs.isdir.side_effect = PermissionError("denied")
+        assert safe_is_dir_fs(fs, "/locked") is False
+        assert "permission denied" in capsys.readouterr().err
+
+    def test_safe_is_file_fs_swallows_permission_error(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        fs = MagicMock()
+        fs.isfile.side_effect = PermissionError("denied")
+        assert safe_is_file_fs(fs, "/locked") is False
+        assert "permission denied" in capsys.readouterr().err
+
+    def test_safe_is_dir_fs_reraises_unrelated_error(self) -> None:
+        fs = MagicMock()
+        fs.isdir.side_effect = OSError(errno.ENOENT, "missing")
+        with pytest.raises(OSError):
+            safe_is_dir_fs(fs, "/missing")
+
+    def test_safe_is_file_fs_reraises_unrelated_error(self) -> None:
+        fs = MagicMock()
+        fs.isfile.side_effect = OSError(errno.ENOENT, "missing")
+        with pytest.raises(OSError):
+            safe_is_file_fs(fs, "/missing")
+
+
 class TestSafeGlobFs:
     """fs.glob wrapper."""
 
@@ -258,6 +303,26 @@ class TestSafeWalkLocal:
         monkeypatch.setattr(os, "walk", fake_walk)
         with pytest.raises(OSError):
             list(safe_walk_local(tmp_path))
+
+
+class TestSafeWalkFs:
+    """fs.iterdir-based recursive file iterator."""
+
+    def test_skips_directories_when_not_recursive(self) -> None:
+        fs = MagicMock()
+        fs.iterdir.return_value = ["/data/subdir", "/data/file.csv"]
+        fs.isdir.side_effect = lambda path: path.endswith("subdir")
+        fs.isfile.side_effect = lambda path: path.endswith("file.csv")
+
+        assert list(safe_walk_fs(fs, "/data", recursive=False)) == ["/data/file.csv"]
+
+    def test_skips_entries_that_are_neither_dir_nor_file(self) -> None:
+        fs = MagicMock()
+        fs.iterdir.return_value = ["/data/socket"]
+        fs.isdir.return_value = False
+        fs.isfile.return_value = False
+
+        assert list(safe_walk_fs(fs, "/data", recursive=True)) == []
 
 
 class TestFindFilesWithUnreadableDir:

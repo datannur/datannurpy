@@ -321,9 +321,67 @@ class TestFindFilesWithFileSystem:
         (subdir / "skip.csv").write_text("b")
 
         fs = FileSystem(tmp_path)
-        files = find_files(tmp_path, None, ["excluded"], True, fs=fs)
+        files = find_files(tmp_path, None, ["excluded/"], True, fs=fs)
         assert len(files) == 1
         assert files[0].name == "keep.csv"
+
+    def test_find_files_with_normalized_relative_patterns(self, tmp_path: Path) -> None:
+        """Patterns should match normalized relative paths."""
+        subdir = tmp_path / "subdir"
+        nested = subdir / "nested"
+        nested.mkdir(parents=True)
+        (tmp_path / "name.csv").write_text("a")
+        (subdir / "name.csv").write_text("b")
+        (subdir / "other.xlsx").write_text("c")
+        (nested / "deep.csv").write_text("d")
+
+        root_exact = find_files(tmp_path, ["/name.csv"], None, True)
+        rel_exact = find_files(tmp_path, ["./subdir/name.csv"], None, True)
+        wildcard_name = find_files(tmp_path, ["*.csv"], None, True)
+        direct_child = find_files(tmp_path, ["subdir/*.csv"], None, True)
+        windows_path = find_files(tmp_path, [r"subdir\nested\deep.csv"], None, True)
+
+        assert [Path(p).relative_to(tmp_path).as_posix() for p in root_exact] == [
+            "name.csv"
+        ]
+        assert [Path(p).relative_to(tmp_path).as_posix() for p in rel_exact] == [
+            "subdir/name.csv"
+        ]
+        assert sorted(Path(p).name for p in wildcard_name) == [
+            "deep.csv",
+            "name.csv",
+            "name.csv",
+        ]
+        assert [Path(p).relative_to(tmp_path).as_posix() for p in direct_child] == [
+            "subdir/name.csv"
+        ]
+        assert [Path(p).relative_to(tmp_path).as_posix() for p in windows_path] == [
+            "subdir/nested/deep.csv"
+        ]
+
+    def test_find_files_with_directory_patterns(self, tmp_path: Path) -> None:
+        """Trailing slash patterns should exclude directory subtrees lexically."""
+        (tmp_path / "keep.csv").write_text("a")
+        root_tmp = tmp_path / "tmp"
+        nested_tmp = tmp_path / "archive" / "tmp"
+        root_tmp.mkdir()
+        nested_tmp.mkdir(parents=True)
+        (root_tmp / "root.csv").write_text("b")
+        (nested_tmp / "nested.csv").write_text("c")
+
+        root_only = find_files(tmp_path, None, ["tmp/"], True)
+        any_depth = find_files(tmp_path, None, ["**/tmp/"], True)
+        empty_pattern = find_files(tmp_path, [""], None, True)
+        empty_dir_pattern = find_files(tmp_path, None, ["/"], True)
+
+        assert sorted(Path(p).name for p in root_only) == ["keep.csv", "nested.csv"]
+        assert sorted(Path(p).name for p in any_depth) == ["keep.csv"]
+        assert empty_pattern == []
+        assert sorted(Path(p).name for p in empty_dir_pattern) == [
+            "keep.csv",
+            "nested.csv",
+            "root.csv",
+        ]
 
     def test_find_files_with_fs_exclude_pattern(self, tmp_path: Path) -> None:
         """find_files() with fs should exclude by pattern."""

@@ -89,10 +89,7 @@ def discover_datasets(
         if in_excluded:
             continue
 
-        suffix = file_path.suffix.lower()
-        fmt = SUPPORTED_FORMATS.get(suffix)
-        if fmt is None:
-            continue  # Skip unknown file types (include pattern may match more)
+        fmt = SUPPORTED_FORMATS[file_path.suffix.lower()]
 
         result.append(
             DatasetInfo(

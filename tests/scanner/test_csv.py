@@ -179,6 +179,21 @@ class TestSampling:
         assert actual_sample is None
         assert frequency is None
 
+    def test_nested_csv_warning_uses_relative_path(self, tmp_path: Path, capsys):
+        """CSV validation warnings from add_folder should keep the relative path."""
+        nested = tmp_path / "folder" / "subfolder"
+        nested.mkdir(parents=True)
+        (nested / "report.csv").write_text(
+            "Annual report 2024\nCode,Name,Salary\n101,Alice,5000\n"
+        )
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, quiet=False)
+
+        captured = capsys.readouterr()
+        assert "folder/subfolder/report.csv" in captured.err
+        assert "⚠ report.csv:" not in captured.err
+
     def test_scan_csv_malformed_caught(self, tmp_path: Path, monkeypatch, capsys):
         """Malformed CSV that DuckDB rejects (even with strict_mode=False) is reported cleanly."""
         import duckdb

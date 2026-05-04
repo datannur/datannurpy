@@ -36,6 +36,7 @@ export default defineConfig({
 
     sidebar: [
       { text: "Getting Started", link: "/" },
+      { text: "Scan depth", link: "/scan-depth" },
       { text: "Scanning files", link: "/scanning-files" },
       { text: "Scanning databases", link: "/scanning-databases" },
       { text: "Time series grouping", link: "/time-series" },

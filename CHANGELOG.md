@@ -1,5 +1,13 @@
 # datannurpy
 
+## 0.22.4 (2026-05-04)
+
+- change: `include`/`exclude` filtering now uses documented glob semantics for folder paths and database table names
+- perf: `depth: variable` scans now avoid remote ZIP reads and redundant latest-file rescans for `.xlsx` time-series
+- doc: move scan depth into a dedicated cross-cutting guide and link it from file and database scanning docs
+- fix: scanner and metadata warnings now keep relative path labels instead of falling back to file basenames
+- fix: Excel parser diagnostics from openpyxl/xlrd are now captured as debug log details instead of leaking as raw terminal output
+
 ## 0.22.3 (2026-05-01)
 
 - add: non-quiet exports now print a per-table size report for `.json`, `.json.js`, and gzipped `.json` output

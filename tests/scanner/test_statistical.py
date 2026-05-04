@@ -108,6 +108,21 @@ class TestScanStatisticalExceptions:
         assert catalog.dataset.all()[0].nb_row == 0
         assert len(catalog.variable.all()) == 0
 
+    def test_nested_corrupted_file_warning_uses_relative_path(
+        self, tmp_path: Path, capsys
+    ):
+        """Statistical warnings from add_folder should keep the relative path."""
+        nested = tmp_path / "folder" / "subfolder"
+        nested.mkdir(parents=True)
+        (nested / "corrupted.sas7bdat").write_bytes(b"not a valid sas file")
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, quiet=False)
+
+        captured = capsys.readouterr()
+        assert "✗  folder/subfolder/corrupted.sas7bdat" in captured.err
+        assert "✗  corrupted.sas7bdat" not in captured.err
+
     def test_column_without_label(self, tmp_path: Path):
         """Statistical scan should handle columns without labels."""
         df = pd.DataFrame({"col_a": [1, 2], "col_b": ["x", "y"]})

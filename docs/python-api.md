@@ -145,8 +145,8 @@ catalog.add_database(
 | metadata           | EntityMetadata \| None                          | None     | Identity, parent linkage, and metadata for the root folder |
 | depth              | \"dataset\" \| \"variable\" \| \"stat\" \| \"value\" \| None | None     | Scan depth (uses catalog.depth if None)    |
 | schema             | str \| list[str] \| None                         | None     | Schema(s) to scan                          |
-| include            | list[str] \| None                               | None     | Table name patterns to include             |
-| exclude            | list[str] \| None                               | None     | Table name patterns to exclude             |
+| include            | list[str] \| None                               | None     | Glob patterns matched against table names to include |
+| exclude            | list[str] \| None                               | None     | Glob patterns matched against table names to exclude |
 | sample_size        | int \| None                                     | None     | Sample rows for frequency/enumeration detection (overrides catalog) |
 | group_by_prefix    | bool \| str                                     | True     | Group tables by prefix into subfolders     |
 | prefix_min_tables  | int                                             | 2        | Min tables to form a prefix group          |

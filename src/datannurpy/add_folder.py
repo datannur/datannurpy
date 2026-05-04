@@ -489,6 +489,7 @@ def add_folder(
                 csv_skip_copy=resolved_csv_skip_copy,
                 fs=fs,
                 quiet=q,
+                path_label=display_path,
             )
         except Exception as exc:
             log_error(display_path, exc, q)
@@ -615,7 +616,9 @@ def _scan_time_series(
 
     # Step 1: Schema-only scan on all files to get columns per period
     columns_by_period: dict[str, list[str]] = {}
+    latest_schema_result = None
     for period, file_path in series_files:
+        member_path_label = _display_path(file_path, root)
         schema_result = scan_file(
             file_path,
             info.format,
@@ -625,27 +628,35 @@ def _scan_time_series(
             csv_encoding=csv_encoding,
             fs=fs,
             quiet=quiet,
+            path_label=member_path_label,
         )
         columns_by_period[period] = [v.name for v in schema_result.variables]
+        if file_path == last_path:
+            latest_schema_result = schema_result
 
     # Step 2: Compute variable periods (start_date/end_date)
     var_periods = compute_variable_periods(
         _canonicalize_time_series_columns(columns_by_period)
     )
 
-    # Step 3: Full scan on the latest file only (unless schema_only mode)
-    result = scan_file(
-        last_path,
-        info.format,
-        dataset_id=dataset_id,
-        schema_only=schema_only,
-        freq_threshold=freq_threshold,
-        csv_encoding=csv_encoding,
-        sample_size=sample_size,
-        csv_skip_copy=csv_skip_copy,
-        fs=fs,
-        quiet=quiet,
-    )
+    # Step 3: Full scan on the latest file only (reuse schema scan in schema_only mode)
+    if schema_only:
+        assert latest_schema_result is not None
+        result = latest_schema_result
+    else:
+        result = scan_file(
+            last_path,
+            info.format,
+            dataset_id=dataset_id,
+            schema_only=schema_only,
+            freq_threshold=freq_threshold,
+            csv_encoding=csv_encoding,
+            sample_size=sample_size,
+            csv_skip_copy=csv_skip_copy,
+            fs=fs,
+            quiet=quiet,
+            path_label=_display_path(last_path, root),
+        )
 
     # Step 4: Create dataset
     dataset = Dataset(

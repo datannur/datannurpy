@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import errno
+import fnmatch
 import os
 from collections.abc import Sequence
 from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Any
 
@@ -133,6 +135,28 @@ def safe_iterdir_local(path: Path) -> Iterator[Path]:
         raise
 
 
+def safe_is_dir_fs(fs: FileSystem, path: str) -> bool:
+    """Return `fs.isdir(path)`, treating permission errors as not a directory."""
+    try:
+        return fs.isdir(path)
+    except OSError as exc:
+        if _is_permission_error(exc):
+            _warn_permission(path, exc)
+            return False
+        raise
+
+
+def safe_is_file_fs(fs: FileSystem, path: str) -> bool:
+    """Return `fs.isfile(path)`, treating permission errors as not a file."""
+    try:
+        return fs.isfile(path)
+    except OSError as exc:
+        if _is_permission_error(exc):
+            _warn_permission(path, exc)
+            return False
+        raise
+
+
 def safe_glob_fs(fs: FileSystem, pattern: str) -> list[str]:
     """`fs.glob(pattern)` returning [] with a warning on EACCES."""
     try:
@@ -160,6 +184,18 @@ def safe_walk_local(root: Path) -> Iterator[Path]:
             yield Path(dirpath) / name
 
 
+def safe_walk_fs(fs: FileSystem, root: str, recursive: bool) -> Iterator[str]:
+    """Yield files under `root`, skipping unreadable and default-excluded dirs."""
+    for entry in safe_iterdir_fs(fs, root):
+        name = PurePosixPath(entry).name
+        if safe_is_dir_fs(fs, entry):
+            if name in DEFAULT_EXCLUDE_DIRS or not recursive:
+                continue
+            yield from safe_walk_fs(fs, entry, recursive=True)
+        elif safe_is_file_fs(fs, entry):
+            yield entry
+
+
 def safe_glob_local(root: Path, pattern: str) -> list[Path]:
     """`root.glob(pattern)` returning partial results with a warning on EACCES."""
     results: list[Path] = []
@@ -171,6 +207,83 @@ def safe_glob_local(root: Path, pattern: str) -> list[Path]:
             return results
         raise
     return results
+
+
+def _normalize_scan_pattern(pattern: str) -> str:
+    """Normalize user include/exclude patterns to relative POSIX-like paths."""
+    normalized = pattern.replace("\\", "/")
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
+    normalized = normalized.lstrip("/")
+    return normalized
+
+
+def _has_glob_magic(pattern: str) -> bool:
+    """Return True when a pattern contains glob syntax."""
+    return any(char in pattern for char in "*?[")
+
+
+@lru_cache(maxsize=8192)
+def _match_segments(
+    pattern_parts: tuple[str, ...], path_parts: tuple[str, ...]
+) -> bool:
+    """Match POSIX path segments where `**` spans zero or more segments."""
+    if not pattern_parts:
+        return not path_parts
+    head = pattern_parts[0]
+    tail = pattern_parts[1:]
+    if head == "**":
+        return _match_segments(tail, path_parts) or bool(
+            path_parts and _match_segments(pattern_parts, path_parts[1:])
+        )
+    return bool(
+        path_parts
+        and fnmatch.fnmatchcase(path_parts[0], head)
+        and _match_segments(tail, path_parts[1:])
+    )
+
+
+def _match_file_pattern(rel_path: str, pattern: str) -> bool:
+    """Match a non-directory pattern against a normalized relative file path."""
+    if "/" not in pattern and _has_glob_magic(pattern):
+        return fnmatch.fnmatchcase(PurePosixPath(rel_path).name, pattern)
+    return _match_segments(tuple(pattern.split("/")), tuple(rel_path.split("/")))
+
+
+def _match_dir_pattern(rel_path: str, pattern: str) -> bool:
+    """Match a directory pattern against a file's containing directories."""
+    dir_pattern = pattern.rstrip("/")
+    pattern_parts = tuple(dir_pattern.split("/"))
+    parent_parts = tuple(PurePosixPath(rel_path).parent.parts)
+    for depth in range(1, len(parent_parts) + 1):
+        if _match_segments(pattern_parts, parent_parts[:depth]):
+            return True
+    return False
+
+
+def _match_scan_pattern(rel_path: str, pattern: str) -> bool:
+    """Match a user pattern against a normalized relative file path."""
+    normalized = _normalize_scan_pattern(pattern)
+    if not normalized:
+        return False
+    if normalized.endswith("/"):
+        return _match_dir_pattern(rel_path, normalized)
+    return _match_file_pattern(rel_path, normalized)
+
+
+def _matches_any_scan_pattern(rel_path: str, patterns: Sequence[str] | None) -> bool:
+    """Return True when any pattern matches a normalized relative path."""
+    return bool(patterns) and any(_match_scan_pattern(rel_path, p) for p in patterns)
+
+
+def _relative_local_path(root: Path, path: Path) -> str:
+    """Return a normalized POSIX relative path for a local file."""
+    return path.relative_to(root).as_posix()
+
+
+def _relative_fs_path(fs: FileSystem, path: str) -> str:
+    """Return a normalized POSIX relative path for a filesystem file."""
+    return fs.relative_to_root(path).replace("\\", "/").lstrip("/")
 
 
 def get_mtime_iso(path: PurePath, fs: FileSystem | None = None) -> str:
@@ -247,36 +360,16 @@ def find_files(
         return _find_files_with_fs(fs, root, include, exclude, recursive)
     assert isinstance(root, Path)
 
-    if include is None:
-        if recursive:
-            candidates = [
-                f
-                for f in safe_walk_local(root)
-                if f.suffix.lower() in SUPPORTED_FORMATS
-            ]
-        else:
-            candidates = [
-                f
-                for f in safe_glob_local(root, "*")
-                if f.suffix.lower() in SUPPORTED_FORMATS
-            ]
+    if recursive:
+        candidates = [
+            f for f in safe_walk_local(root) if f.suffix.lower() in SUPPORTED_FORMATS
+        ]
     else:
-        candidates = []
-        for pat in include:
-            # Handle patterns like "folder/**" - also match files directly in folder
-            if pat.endswith("/**"):
-                base = pat[:-3]  # Remove /**
-                # Match files in the directory and subdirectories
-                candidates.extend(safe_glob_local(root, f"{base}/*"))
-                candidates.extend(safe_glob_local(root, f"{base}/**/*"))
-            elif recursive and "**" not in pat:
-                candidates.extend(safe_glob_local(root, f"**/{pat}"))
-            else:
-                candidates.extend(safe_glob_local(root, pat))
-        # Deduplicate while preserving order (a file may match multiple patterns)
-        candidates = list(dict.fromkeys(candidates))
-
-    candidates = [f for f in candidates if f.is_file()]
+        candidates = [
+            f
+            for f in safe_iterdir_local(root)
+            if f.is_file() and f.suffix.lower() in SUPPORTED_FORMATS
+        ]
 
     # Apply default exclusions
     candidates = [
@@ -286,24 +379,19 @@ def find_files(
         and not any(d in f.parts for d in DEFAULT_EXCLUDE_DIRS)
     ]
 
+    if include is not None:
+        candidates = [
+            f
+            for f in candidates
+            if _matches_any_scan_pattern(_relative_local_path(root, f), include)
+        ]
+
     if exclude:
-        excluded = set()
-        for pat in exclude:
-            pat = pat.rstrip("/")
-            target = root / pat
-            # If it's a directory, exclude all files inside
-            if target.is_dir():
-                for f in candidates:
-                    if target.resolve() in f.resolve().parents:
-                        excluded.add(f.resolve())
-            # Otherwise use glob for patterns with wildcards
-            elif "*" in pat:
-                for f in safe_glob_local(root, f"**/{pat}" if recursive else pat):
-                    excluded.add(f.resolve())
-            # Exact file match
-            elif target.is_file():
-                excluded.add(target.resolve())
-        candidates = [f for f in candidates if f.resolve() not in excluded]
+        candidates = [
+            f
+            for f in candidates
+            if not _matches_any_scan_pattern(_relative_local_path(root, f), exclude)
+        ]
 
     return list(candidates)  # type: ignore[return-value]  # Path is PurePath
 
@@ -318,30 +406,10 @@ def _find_files_with_fs(
     """Find files using FileSystem abstraction (for remote storage support)."""
     root_str = root.as_posix()
 
-    if include is None:
-        pattern = "**/*" if recursive else "*"
-        all_paths = safe_glob_fs(fs, f"{root_str}/{pattern}")
-        candidates = [
-            p for p in all_paths if PurePosixPath(p).suffix.lower() in SUPPORTED_FORMATS
-        ]
-    else:
-        candidates_set: set[str] = set()
-        for pat in include:
-            if pat.endswith("/**"):
-                base = pat[:-3]
-                candidates_set.update(safe_glob_fs(fs, f"{root_str}/{base}/*"))
-                candidates_set.update(safe_glob_fs(fs, f"{root_str}/{base}/**/*"))
-            elif recursive and "**" not in pat:
-                candidates_set.update(safe_glob_fs(fs, f"{root_str}/**/{pat}"))
-            else:
-                candidates_set.update(safe_glob_fs(fs, f"{root_str}/{pat}"))
-        candidates = list(candidates_set)
-
-    # Filter to files only and supported formats
     candidates = [
         p
-        for p in candidates
-        if fs.isfile(p) and PurePosixPath(p).suffix.lower() in SUPPORTED_FORMATS
+        for p in safe_walk_fs(fs, root_str, recursive)
+        if PurePosixPath(p).suffix.lower() in SUPPORTED_FORMATS
     ]
 
     # Apply default exclusions
@@ -352,23 +420,19 @@ def _find_files_with_fs(
         and not any(d in PurePosixPath(p).parts for d in DEFAULT_EXCLUDE_DIRS)
     ]
 
+    if include is not None:
+        candidates = [
+            p
+            for p in candidates
+            if _matches_any_scan_pattern(_relative_fs_path(fs, p), include)
+        ]
+
     if exclude:
-        excluded: set[str] = set()
-        for pat in exclude:
-            pat = pat.rstrip("/")
-            target = f"{root_str}/{pat}"
-            if fs.isdir(target):
-                # Exclude all files inside this directory
-                for f in candidates:
-                    if f.startswith(target + "/"):
-                        excluded.add(f)
-            elif "*" in pat:
-                pattern = f"{root_str}/**/{pat}" if recursive else f"{root_str}/{pat}"
-                for f in safe_glob_fs(fs, pattern):
-                    excluded.add(f)
-            elif fs.isfile(target):
-                excluded.add(target)
-        candidates = [f for f in candidates if f not in excluded]
+        candidates = [
+            p
+            for p in candidates
+            if not _matches_any_scan_pattern(_relative_fs_path(fs, p), exclude)
+        ]
 
     # Use PurePosixPath to preserve forward slashes for remote paths
     return sorted(PurePosixPath(p) for p in candidates)

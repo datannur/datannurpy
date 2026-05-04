@@ -1,5 +1,7 @@
 # Scanning databases
 
+Use [Scan depth](/scan-depth) to choose how much metadata datannurpy extracts. The same `depth` setting applies to `add_database`, `add_folder`, and `add_dataset`, either globally or per `add` entry.
+
 ## Connection strings
 
 | Backend    | Format                                              |
@@ -52,6 +54,18 @@ add:
     group_by_prefix: true       # group tables by common prefix (default)
     prefix_min_tables: 2        # minimum tables to form a group
 ```
+
+  `include` and `exclude` are matched against table names after the optional `schema` filter has selected which schema(s) to scan. They use standard glob-style patterns (`*`, `?`, and character classes such as `[abc]`), not filesystem paths. Filtering first keeps tables that match at least one `include` pattern when `include` is set, then removes tables that match any `exclude` pattern.
+
+  Examples:
+
+  | Pattern | Meaning |
+  | ------- | ------- |
+  | `employees` | Exact table name |
+  | `sales_*` | Tables whose names start with `sales_` |
+  | `*_tmp` | Tables whose names end with `_tmp` |
+  | `fact_????` | Tables such as `fact_2024` |
+  | `[de]*` | Tables starting with `d` or `e` |
 
 ## Time series detection
 
@@ -119,7 +133,7 @@ See [Remote storage](/scanning-files#remote-storage) for the list of supported p
 
 ## Database metadata enrichment
 
-Requires `depth: variable` or higher.
+Requires [`depth: variable` or higher](/scan-depth).
 
 | Metadata                | Target field          | Backends           |
 | ----------------------- | --------------------- | ------------------ |

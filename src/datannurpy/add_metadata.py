@@ -187,23 +187,29 @@ def _is_database_connection(path: str) -> bool:
     }
 
 
-def _read_file(file_path: Path, *, quiet: bool = False) -> pd.DataFrame | None:
+def _read_file(
+    file_path: Path, *, quiet: bool = False, path_label: str | None = None
+) -> pd.DataFrame | None:
     """Read a file into a pandas DataFrame using existing scanners."""
     suffix = file_path.suffix.lower()
+    label = path_label or file_path.name
 
     if suffix == ".csv":
         return read_csv(file_path)
     elif suffix in {".xlsx", ".xls"}:
-        return read_excel(file_path, quiet=quiet)
+        return read_excel(file_path, quiet=quiet, path_label=label)
     elif suffix == ".json":
-        return _read_json(file_path, quiet=quiet)
+        return _read_json(file_path, quiet=quiet, path_label=label)
     elif suffix in {".sas7bdat", ".sav", ".dta"}:
-        return read_statistical(file_path, quiet=quiet)
+        return read_statistical(file_path, quiet=quiet, path_label=label)
     return None
 
 
-def _read_json(file_path: Path, *, quiet: bool = False) -> pd.DataFrame | None:
+def _read_json(
+    file_path: Path, *, quiet: bool = False, path_label: str | None = None
+) -> pd.DataFrame | None:
     """Read JSON file into pandas DataFrame."""
+    label = path_label or file_path.name
     try:
         with open(file_path, encoding="utf-8") as f:
             data = json.load(f)
@@ -222,8 +228,16 @@ def _read_json(file_path: Path, *, quiet: bool = False) -> pd.DataFrame | None:
 
         return pd.DataFrame(data)
     except Exception as e:
-        log_error(file_path.name, e, quiet)
+        log_error(label, e, quiet)
         return None
+
+
+def _metadata_file_label(file_path: Path, folder_path: Path) -> str:
+    """Return a metadata file label relative to the metadata source parent."""
+    try:
+        return file_path.relative_to(folder_path.parent).as_posix()
+    except ValueError:
+        return file_path.name
 
 
 def _load_tables_from_folder(
@@ -239,7 +253,8 @@ def _load_tables_from_folder(
         for ext in SUPPORTED_EXTENSIONS:
             file_path = folder_path / f"{entity_name}{ext}"
             if file_path.exists():
-                df = _read_file(file_path, quiet=quiet)
+                file_label = _metadata_file_label(file_path, folder_path)
+                df = _read_file(file_path, quiet=quiet, path_label=file_label)
                 if df is not None and not df.empty:
                     tables[entity_name] = (df, file_path.name)
                 break

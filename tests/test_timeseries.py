@@ -1077,6 +1077,39 @@ class TestAddFolderTimeSeries:
         var_names = {v.name for v in variables}
         assert var_names == {"id", "nom", "revenu", "email"}
 
+    def test_variable_mode_reuses_latest_schema_scan(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        """Schema mode should not rescan the latest time-series file."""
+        from datannurpy import add_folder as add_folder_mod
+
+        ts_dir = tmp_path / "series"
+        ts_dir.mkdir()
+        (ts_dir / "data_2023.csv").write_text("id,value\n1,100\n")
+        (ts_dir / "data_2024.csv").write_text("id,value\n2,200\n")
+
+        calls: list[tuple[str, bool | None]] = []
+        original_scan_file = add_folder_mod.scan_file
+
+        def counting_scan_file(*args, **kwargs):
+            calls.append((Path(args[0]).name, kwargs.get("schema_only")))
+            return original_scan_file(*args, **kwargs)
+
+        monkeypatch.setattr(add_folder_mod, "scan_file", counting_scan_file)
+
+        catalog = Catalog()
+        catalog.add_folder(
+            ts_dir,
+            metadata=EntityMetadata(id="series", name="Series"),
+            depth="variable",
+            quiet=True,
+        )
+
+        latest_calls = [
+            schema_only for name, schema_only in calls if name == "data_2024.csv"
+        ]
+        assert latest_calls == [True]
+
     def test_time_series_persists_effective_sample_size(self, tmp_path: Path):
         """Time series datasets should keep the latest scan effective sample_size."""
         ts_dir = tmp_path / "ts"

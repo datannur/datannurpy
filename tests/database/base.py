@@ -78,6 +78,22 @@ class BaseDatabaseTests(ABC):
         tables = list_tables(con, include=["dep*"])
         assert tables == ["departments"]
 
+    def test_list_tables_include_bracket_pattern(
+        self, db_with_employees: tuple[ibis.BaseBackend, str, str]
+    ) -> None:
+        """Test listing tables with bracket glob include."""
+        con, _, _ = db_with_employees
+        tables = list_tables(con, include=["department[sz]"])
+        assert tables == ["departments"]
+
+    def test_list_tables_include_as_string(
+        self, db_with_employees: tuple[ibis.BaseBackend, str, str]
+    ) -> None:
+        """Test listing tables with a bare string include filter."""
+        con, _, _ = db_with_employees
+        tables = list_tables(con, include="employees")
+        assert tables == ["employees"]
+
     def test_list_tables_exclude(
         self, db_with_employees: tuple[ibis.BaseBackend, str, str]
     ) -> None:
