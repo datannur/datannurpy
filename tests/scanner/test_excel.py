@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import codecs
+from io import BytesIO
 from pathlib import Path
+from xml.etree import ElementTree as ET
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import pandas as pd
+import pytest
 
 from datannurpy import Catalog
-from datannurpy.scanner.excel import is_valid_tabular_dataset
+from datannurpy.scanner.excel import _read_preview_rows, is_valid_tabular_dataset
 
 
 def _write_xlsx(path: Path, rows: list[list[object]]) -> None:
@@ -21,6 +25,88 @@ def _write_xlsx(path: Path, rows: list[list[object]]) -> None:
     for row in rows:
         ws.append(row)
     wb.save(path)
+
+
+def _write_shared_strings_xlsx(path: Path) -> None:
+    """Write a minimal xlsx using sharedStrings.xml."""
+    files = {
+        "xl/workbook.xml": (
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+            'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+            '<sheets><sheet name="Data" sheetId="1" r:id="rId1"/></sheets>'
+            "</workbook>"
+        ),
+        "xl/_rels/workbook.xml.rels": (
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            '<Relationship Id="rId1" '
+            'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" '
+            'Target="worksheets/sheet1.xml"/></Relationships>'
+        ),
+        "xl/worksheets/sheet1.xml": (
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+            '<sheetData><row r="1"><c r="A1" t="s"><v>0</v></c>'
+            '<c r="B1" t="s"><v>2</v></c></row><row r="2">'
+            '<c r="A2"><v>1</v></c><c r="B2" t="inlineStr">'
+            "<is><t>Alice</t></is></c></row></sheetData></worksheet>"
+        ),
+        "xl/sharedStrings.xml": (
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+            'count="3" uniqueCount="3"><si><t>id</t></si><si><t>unused</t></si>'
+            "<si><t>name</t></si></sst>"
+        ),
+    }
+    with ZipFile(path, "w", ZIP_DEFLATED) as zf:
+        for name, content in files.items():
+            zf.writestr(name, content)
+
+
+def _write_minimal_xlsx(
+    path: Path,
+    *,
+    workbook: str,
+    rels: str,
+    worksheet: str,
+    shared_strings: str | None = None,
+) -> None:
+    """Write minimal xlsx package parts for parser edge-case tests."""
+    with ZipFile(path, "w", ZIP_DEFLATED) as zf:
+        zf.writestr("xl/workbook.xml", workbook)
+        zf.writestr("xl/_rels/workbook.xml.rels", rels)
+        zf.writestr("xl/worksheets/sheet1.xml", worksheet)
+        if shared_strings is not None:
+            zf.writestr("xl/sharedStrings.xml", shared_strings)
+
+
+def _minimal_workbook(sheet_body: str) -> str:
+    """Build a minimal workbook XML document."""
+    return (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+        'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        f"<sheets>{sheet_body}</sheets></workbook>"
+    )
+
+
+def _minimal_rels(target: str = "worksheets/sheet1.xml") -> str:
+    """Build minimal workbook relationships XML."""
+    return (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        f'<Relationship Id="rId1" Target="{target}"/></Relationships>'
+    )
+
+
+def _minimal_worksheet(sheet_data: str) -> str:
+    """Build a minimal worksheet XML document."""
+    return (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        f"<sheetData>{sheet_data}</sheetData></worksheet>"
+    )
 
 
 class TestIsValidExcelDataset:
@@ -269,6 +355,159 @@ class TestScanExcelValidation:
 
         assert len(catalog.variable.all()) == 2
 
+    def test_schema_mode_xlsx_shared_strings_fast_path(self, tmp_path: Path):
+        """Schema-only xlsx preview should resolve shared strings locally."""
+        _write_shared_strings_xlsx(tmp_path / "shared.xlsx")
+
+        catalog = Catalog(depth="variable")
+        catalog.add_folder(tmp_path, quiet=True)
+
+        assert [v.name for v in catalog.variable.all()] == ["id", "name"]
+
+    def test_xlsx_preview_falls_back_to_openpyxl(self, tmp_path: Path, monkeypatch):
+        """Fast preview failures should fall back to openpyxl."""
+        xlsx_path = tmp_path / "valid.xlsx"
+        _write_xlsx(xlsx_path, [["id", "name"], [1, "Alice"]])
+
+        from datannurpy.scanner import excel as excel_mod
+
+        def fail_fast(_path: Path) -> list[tuple[object, ...]]:
+            raise ValueError("boom")
+
+        monkeypatch.setattr(excel_mod, "_read_xlsx_preview_rows_fast", fail_fast)
+
+        rows = _read_preview_rows(xlsx_path, quiet=True)
+
+        assert rows == [("id", "name"), (1, "Alice")]
+
+    def test_xlsx_preview_non_path_source_uses_openpyxl(self):
+        """Non-path xlsx sources should keep using openpyxl directly."""
+        import openpyxl
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        assert ws is not None
+        ws.append(["id", "name"])
+        ws.append([1, "Alice"])
+        buffer = BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+
+        rows = _read_preview_rows(buffer, quiet=True)
+
+        assert rows == [("id", "name"), (1, "Alice")]
+
+    def test_xlsx_fast_preview_sparse_and_scalar_values(self, tmp_path: Path):
+        """Fast preview should preserve sparse rows and scalar cell types."""
+        from datannurpy.scanner.excel import _read_xlsx_preview_rows_fast
+
+        xlsx_path = tmp_path / "sparse.xlsx"
+        _write_minimal_xlsx(
+            xlsx_path,
+            workbook=_minimal_workbook('<sheet name="Data" sheetId="1" r:id="rId1"/>'),
+            rels=_minimal_rels("/xl/worksheets/sheet1.xml"),
+            worksheet=_minimal_worksheet(
+                '<row r="2"><ext/><c r="A2" t="str"><v>id</v></c>'
+                '<c r="B2" t="b"><v>1</v></c><c r="C2"/>'
+                '<c r="D2"><v>3.5</v></c></row>'
+                '<row r="11"><c r="A11"><v>99</v></c></row>'
+            ),
+        )
+
+        assert _read_xlsx_preview_rows_fast(xlsx_path) == [(), ("id", True, None, 3.5)]
+
+    def test_xlsx_fast_preview_empty_sheet(self, tmp_path: Path):
+        """Fast preview should return no rows for an empty worksheet."""
+        from datannurpy.scanner.excel import _read_xlsx_preview_rows_fast
+
+        xlsx_path = tmp_path / "empty.xlsx"
+        _write_minimal_xlsx(
+            xlsx_path,
+            workbook=_minimal_workbook('<sheet name="Data" sheetId="1" r:id="rId1"/>'),
+            rels=_minimal_rels(),
+            worksheet=_minimal_worksheet(""),
+        )
+
+        assert _read_xlsx_preview_rows_fast(xlsx_path) == []
+
+    def test_xlsx_fast_preview_invalid_workbook_fails(self, tmp_path: Path):
+        """Malformed workbook relationships should fail fast for fallback."""
+        from datannurpy.scanner.excel import _read_xlsx_preview_rows_fast
+
+        rels = _minimal_rels()
+        worksheet = _minimal_worksheet("")
+
+        no_sheets = tmp_path / "no_sheets.xlsx"
+        _write_minimal_xlsx(
+            no_sheets,
+            workbook=_minimal_workbook(""),
+            rels=rels,
+            worksheet=worksheet,
+        )
+        with pytest.raises(ValueError, match="no sheets"):
+            _read_xlsx_preview_rows_fast(no_sheets)
+
+        no_rel_id = tmp_path / "no_rel_id.xlsx"
+        _write_minimal_xlsx(
+            no_rel_id,
+            workbook=_minimal_workbook('<sheet name="Data" sheetId="1"/>'),
+            rels=rels,
+            worksheet=worksheet,
+        )
+        with pytest.raises(ValueError, match="no relationship id"):
+            _read_xlsx_preview_rows_fast(no_rel_id)
+
+        missing_rel = tmp_path / "missing_rel.xlsx"
+        _write_minimal_xlsx(
+            missing_rel,
+            workbook=_minimal_workbook('<sheet name="Data" sheetId="1" r:id="rId2"/>'),
+            rels=rels,
+            worksheet=worksheet,
+        )
+        with pytest.raises(ValueError, match="relationship is missing"):
+            _read_xlsx_preview_rows_fast(missing_rel)
+
+    def test_xlsx_fast_preview_incomplete_shared_strings(self, tmp_path: Path):
+        """Incomplete sharedStrings should fail so openpyxl can handle fallback."""
+        from datannurpy.scanner.excel import _read_xlsx_preview_rows_fast
+
+        xlsx_path = tmp_path / "bad_shared.xlsx"
+        _write_minimal_xlsx(
+            xlsx_path,
+            workbook=_minimal_workbook('<sheet name="Data" sheetId="1" r:id="rId1"/>'),
+            rels=_minimal_rels(),
+            worksheet=_minimal_worksheet(
+                '<row r="1"><c r="A1" t="s"><v>1</v></c></row>'
+            ),
+            shared_strings=(
+                '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+                "<si><t>id</t></si></sst>"
+            ),
+        )
+
+        with pytest.raises(ValueError, match="incomplete"):
+            _read_xlsx_preview_rows_fast(xlsx_path)
+
+    def test_xlsx_parser_scalar_helpers(self):
+        """Small scalar helpers should cover non-file parser branches."""
+        from datannurpy.scanner import excel as excel_mod
+
+        inline_empty = ET.fromstring('<c t="inlineStr"><v>ignored</v></c>')
+        shared_indices: set[int] = set()
+
+        assert excel_mod._column_index(None, 7) == 7
+        assert excel_mod._column_index("AB", 7) == 28
+        assert excel_mod._coerce_xlsx_number("not-a-number") == "not-a-number"
+        assert excel_mod._xlsx_child_text(ET.fromstring("<c><x /></c>"), "v") is None
+        assert excel_mod._read_xlsx_cell_value(ET.fromstring("<c />"), set()) is None
+        assert excel_mod._read_xlsx_cell_value(inline_empty, shared_indices) == ""
+        assert (
+            excel_mod._read_xlsx_cell_value(
+                ET.fromstring('<c t="e"><v>#N/A</v></c>'), set()
+            )
+            == "#N/A"
+        )
+
     def test_xls_empty_file(self, tmp_path: Path):
         """Empty .xls file should produce no variables."""
         (tmp_path / "empty.xls").write_bytes(b"")
@@ -445,27 +684,25 @@ class TestScanExcelSchemaRemote:
     """Test remote schema-only Excel validation."""
 
     def test_remote_xlsx_invalid_skipped(self, tmp_path: Path):
-        """Remote invalid xlsx should return no variables in schema mode."""
-        from io import BytesIO
+        """Remote invalid xlsx should copy locally before schema scanning."""
         from unittest.mock import MagicMock
 
         import openpyxl
 
         from datannurpy.scanner.scan import scan_file
 
+        local_path = tmp_path / "pivot.xlsx"
         wb = openpyxl.Workbook()
         ws = wb.active
         assert ws is not None
         ws.append([2023, 2024, 2025])
         ws.append([100, 200, 150])
-        buf = BytesIO()
-        wb.save(buf)
-        buf.seek(0)
+        wb.save(local_path)
 
         mock_fs = MagicMock()
         mock_fs.is_local = False
-        mock_fs.open.return_value.__enter__ = MagicMock(return_value=buf)
-        mock_fs.open.return_value.__exit__ = MagicMock(return_value=None)
+        mock_fs.ensure_local.return_value.__enter__ = MagicMock(return_value=local_path)
+        mock_fs.ensure_local.return_value.__exit__ = MagicMock(return_value=None)
 
         result = scan_file(
             Path("/remote/pivot.xlsx"),
@@ -477,6 +714,7 @@ class TestScanExcelSchemaRemote:
 
         assert len(result.variables) == 0
         assert result.nb_row is None
+        mock_fs.ensure_local.assert_called_once_with("/remote/pivot.xlsx")
 
     def test_remote_xls_html_schema_skipped_without_download(self, capsys):
         """Remote HTML renamed to .xls should be skipped before full download."""

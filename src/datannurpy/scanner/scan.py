@@ -322,36 +322,6 @@ def _scan_stat_schema_stream(
     return ScanResult(variables=variables, nb_row=None, description=description)
 
 
-def _scan_excel_schema_stream(
-    path: PurePath,
-    dataset_id: str,
-    fs: FileSystem,
-    quiet: bool = False,
-    path_label: str | None = None,
-) -> ScanResult:
-    """Read xlsx headers via openpyxl streaming (avoids full file download)."""
-    with fs.open(str(path), "rb") as f:
-        rows = _read_preview_rows(
-            f, quiet=quiet, path_label=path_label or PurePath(path).name
-        )
-
-    valid, _reason = is_valid_tabular_dataset(rows)
-    if not valid:
-        return ScanResult(variables=[], nb_row=None)
-
-    headers = [str(c) for c in rows[0] if c is not None]
-
-    variables = [
-        Variable(
-            id=f"{dataset_id}---{name}",
-            name=name,
-            dataset_id=dataset_id,
-        )
-        for name in headers
-    ]
-    return ScanResult(variables=variables, nb_row=None)
-
-
 def _scan_schema_only_remote(
     path: PurePath,
     delivery_format: str,
@@ -361,7 +331,7 @@ def _scan_schema_only_remote(
     quiet: bool = False,
     path_label: str | None = None,
 ) -> ScanResult:
-    """Optimized schema-only scan for remote files - minimal downloads."""
+    """Optimized schema-only scan for remote files."""
     # Parquet: PyArrow reads footer natively via fsspec (no full download)
     if delivery_format == "parquet":
         pa_fs = pyarrow.fs.PyFileSystem(pyarrow.fs.FSSpecHandler(fs.fs))
@@ -443,11 +413,19 @@ def _scan_schema_only_remote(
         ]
         return ScanResult(variables=variables, nb_row=None)
 
-    # Excel xlsx: openpyxl read_only streams only headers (no full download)
+    # Excel xlsx: download first so ZIP/XML access stays local.
     # xls: must download full file (xlrd doesn't support streaming)
     suffix = PurePath(path).suffix.lower()
     if suffix != ".xls":
-        return _scan_excel_schema_stream(path, dataset_id, fs, quiet, path_label)
+        with fs.ensure_local(str(path)) as local_path:
+            return _scan_schema_only_local(
+                local_path,
+                delivery_format,
+                dataset_id,
+                csv_encoding,
+                quiet,
+                path_label,
+            )
     with fs.open(str(path), "rb") as f:
         if _looks_like_html_xls_content(f.read(_XLS_SNIFF_BYTES)):
             _warn_html_xls(path_label or PurePath(path).name, quiet)

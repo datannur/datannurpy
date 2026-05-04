@@ -397,7 +397,7 @@ class TestSchemaOnlyRemoteOptimizations:
     def test_schema_only_excel_remote_full_download(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
     ) -> None:
-        """depth='variable' for Excel xlsx should stream headers (no full download)."""
+        """depth='variable' for Excel xlsx should copy locally and read headers."""
         from io import BytesIO
 
         # Create synthetic Excel by using openpyxl
