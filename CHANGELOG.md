@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.22.4 (2026-05-04)
+
+- doc: move scan depth into a dedicated cross-cutting guide and link it from file and database scanning docs
+
 ## 0.22.3 (2026-05-01)
 
 - add: non-quiet exports now print a per-table size report for `.json`, `.json.js`, and gzipped `.json` output

@@ -1,5 +1,7 @@
 # Scanning databases
 
+Use [Scan depth](/scan-depth) to choose how much metadata datannurpy extracts. The same `depth` setting applies to `add_database`, `add_folder`, and `add_dataset`, either globally or per `add` entry.
+
 ## Connection strings
 
 | Backend    | Format                                              |
@@ -119,7 +121,7 @@ See [Remote storage](/scanning-files#remote-storage) for the list of supported p
 
 ## Database metadata enrichment
 
-Requires `depth: variable` or higher.
+Requires [`depth: variable` or higher](/scan-depth).
 
 | Metadata                | Target field          | Backends           |
 | ----------------------- | --------------------- | ------------------ |
