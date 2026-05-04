@@ -347,6 +347,75 @@ class TestScanExcelValidation:
         result = read_excel(xls_path)
         assert result is None
 
+    def test_read_excel_captures_openpyxl_warning_as_debug(
+        self, tmp_path: Path, monkeypatch, capsys
+    ):
+        """openpyxl parser warnings should not leak as raw terminal output."""
+        import warnings
+
+        from datannurpy.scanner.excel import read_excel
+        from datannurpy.utils import configure_logging
+
+        xlsx_path = tmp_path / "style.xlsx"
+        xlsx_path.write_bytes(b"dummy")
+        log_path = tmp_path / "scan.log"
+
+        def fake_read_excel(*_args, **_kwargs):
+            warnings.warn(
+                "Workbook contains no default style, apply openpyxl's default",
+                UserWarning,
+                stacklevel=2,
+            )
+            return pd.DataFrame({"id": [1]})
+
+        monkeypatch.setattr(pd, "read_excel", fake_read_excel)
+
+        configure_logging(verbose=False, log_file=log_path)
+        try:
+            result = read_excel(xlsx_path, quiet=False, path_label="folder/style.xlsx")
+        finally:
+            configure_logging()
+
+        captured = capsys.readouterr()
+        log_text = log_path.read_text()
+        assert result is not None
+        assert "Workbook contains no default style" not in captured.err
+        assert "folder/style.xlsx: Excel parser diagnostic" in log_text
+        assert "Workbook contains no default style" in log_text
+
+    def test_read_excel_captures_xlrd_stdout_as_debug(
+        self, tmp_path: Path, monkeypatch, capsys
+    ):
+        """xlrd stdout diagnostics should not leak as raw terminal output."""
+        from datannurpy.scanner.excel import read_excel
+        from datannurpy.utils import configure_logging
+
+        xls_path = tmp_path / "ole2.xls"
+        xls_path.write_bytes(b"not html")
+        log_path = tmp_path / "scan.log"
+
+        def fake_read_excel(*_args, **_kwargs):
+            print(
+                "WARNING *** OLE2 inconsistency: SSCS size is 0 but SSAT size is non-zero"
+            )
+            return pd.DataFrame({"id": [1]})
+
+        monkeypatch.setattr(pd, "read_excel", fake_read_excel)
+
+        configure_logging(verbose=False, log_file=log_path)
+        try:
+            result = read_excel(xls_path, quiet=False, path_label="folder/ole2.xls")
+        finally:
+            configure_logging()
+
+        captured = capsys.readouterr()
+        log_text = log_path.read_text()
+        assert result is not None
+        assert captured.out == ""
+        assert "OLE2 inconsistency" not in captured.err
+        assert "folder/ole2.xls: Excel parser diagnostic" in log_text
+        assert "OLE2 inconsistency" in log_text
+
     def test_schema_mode_xls_invalid_skipped(self, tmp_path: Path, monkeypatch):
         """Schema-only scan of .xls with invalid header returns no variables."""
         xls_path = tmp_path / "pivot.xls"

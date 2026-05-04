@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import codecs
+import io
+import warnings
 from collections.abc import Sequence
+from contextlib import contextmanager, redirect_stdout
 from datetime import time as dt_time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -12,10 +15,12 @@ import ibis
 import pyarrow as pa
 
 from ..schema import Variable
-from ..utils import log_error, log_warn
+from ..utils import log_debug, log_error, log_warn
 from .utils import build_variables
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     import pandas as pd
 
 _MIDNIGHT = dt_time(0, 0)
@@ -54,6 +59,22 @@ def _display_label(file_path: Path, path_label: str | None) -> str:
 def _warn_html_xls(file_name: str, quiet: bool) -> None:
     """Emit a clear warning for HTML reports renamed with the .xls extension."""
     log_warn(f"{file_name}: {_HTML_XLS_MESSAGE}; skipped as untreatable", quiet)
+
+
+@contextmanager
+def _capture_excel_diagnostics(label: str, quiet: bool) -> Iterator[None]:
+    """Capture third-party Excel parser diagnostics and log them as debug details."""
+    stdout = io.StringIO()
+    with warnings.catch_warnings(record=True) as captured_warnings:
+        warnings.simplefilter("always")
+        with redirect_stdout(stdout):
+            try:
+                yield
+            finally:
+                diagnostics = [str(w.message) for w in captured_warnings]
+                diagnostics.extend(stdout.getvalue().splitlines())
+                for message in filter(None, (d.strip() for d in diagnostics)):
+                    log_debug(f"{label}: Excel parser diagnostic: {message}", quiet)
 
 
 def is_valid_tabular_dataset(rows: Sequence[tuple[object, ...]]) -> tuple[bool, str]:
@@ -124,7 +145,8 @@ def read_excel(
     try:
         import pandas as pd
 
-        df = pd.read_excel(file_path, sheet_name=sheet_name, engine=engine)
+        with _capture_excel_diagnostics(label, quiet):
+            df = pd.read_excel(file_path, sheet_name=sheet_name, engine=engine)
         if df.empty:
             return None
         return df
@@ -133,11 +155,15 @@ def read_excel(
         return None
 
 
-def _read_preview_rows(source: Path | Any) -> list[tuple[object, ...]]:
+def _read_preview_rows(
+    source: Path | Any, *, quiet: bool = False, path_label: str | None = None
+) -> list[tuple[object, ...]]:
     """Read first rows from xlsx using openpyxl read-only streaming."""
     import openpyxl
 
-    wb = openpyxl.load_workbook(source, read_only=True, data_only=True)
+    label = path_label or getattr(source, "name", "excel file")
+    with _capture_excel_diagnostics(str(label), quiet):
+        wb = openpyxl.load_workbook(source, read_only=True, data_only=True)
     ws = wb.active
     rows: list[tuple[object, ...]] = []
     if ws is not None:  # pragma: no branch
@@ -169,7 +195,7 @@ def scan_excel(
     # Pre-read validation for .xlsx (streaming, avoids full read if invalid)
     if suffix != ".xls":
         try:
-            rows = _read_preview_rows(file_path)
+            rows = _read_preview_rows(file_path, quiet=quiet, path_label=label)
         except Exception as e:
             log_error(label, e, quiet)
             return [], None, None

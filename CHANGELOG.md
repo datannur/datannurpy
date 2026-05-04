@@ -4,6 +4,7 @@
 
 - doc: move scan depth into a dedicated cross-cutting guide and link it from file and database scanning docs
 - fix: scanner and metadata warnings now keep relative path labels instead of falling back to file basenames
+- fix: Excel parser diagnostics from openpyxl/xlrd are now captured as debug log details instead of leaking as raw terminal output
 
 ## 0.22.3 (2026-05-01)
 

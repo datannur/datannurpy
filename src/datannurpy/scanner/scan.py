@@ -326,10 +326,14 @@ def _scan_excel_schema_stream(
     path: PurePath,
     dataset_id: str,
     fs: FileSystem,
+    quiet: bool = False,
+    path_label: str | None = None,
 ) -> ScanResult:
     """Read xlsx headers via openpyxl streaming (avoids full file download)."""
     with fs.open(str(path), "rb") as f:
-        rows = _read_preview_rows(f)
+        rows = _read_preview_rows(
+            f, quiet=quiet, path_label=path_label or PurePath(path).name
+        )
 
     valid, _reason = is_valid_tabular_dataset(rows)
     if not valid:
@@ -443,7 +447,7 @@ def _scan_schema_only_remote(
     # xls: must download full file (xlrd doesn't support streaming)
     suffix = PurePath(path).suffix.lower()
     if suffix != ".xls":
-        return _scan_excel_schema_stream(path, dataset_id, fs)
+        return _scan_excel_schema_stream(path, dataset_id, fs, quiet, path_label)
     with fs.open(str(path), "rb") as f:
         if _looks_like_html_xls_content(f.read(_XLS_SNIFF_BYTES)):
             _warn_html_xls(path_label or PurePath(path).name, quiet)
@@ -505,7 +509,9 @@ def _scan_schema_only_local(
         suffix = file_path.suffix.lower()
 
         if suffix != ".xls":
-            rows = _read_preview_rows(file_path)
+            rows = _read_preview_rows(
+                file_path, quiet=quiet, path_label=path_label or file_path.name
+            )
             valid, _reason = is_valid_tabular_dataset(rows)
             if not valid:
                 return ScanResult(variables=[], nb_row=None)
@@ -517,7 +523,10 @@ def _scan_schema_only_local(
             import pandas as pd
 
             engine = "xlrd"
-            df = pd.read_excel(file_path, nrows=_EXCEL_PREVIEW_ROWS, engine=engine)
+            from .excel import _capture_excel_diagnostics
+
+            with _capture_excel_diagnostics(path_label or file_path.name, quiet):
+                df = pd.read_excel(file_path, nrows=_EXCEL_PREVIEW_ROWS, engine=engine)
             header_row = tuple(df.columns)
             data_rows = [tuple(row) for row in df.itertuples(index=False)]
             valid, _reason = is_valid_tabular_dataset([header_row, *data_rows])
