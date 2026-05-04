@@ -82,9 +82,12 @@ def convert_float_to_int(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def read_statistical(path: str | Path, *, quiet: bool = False) -> pd.DataFrame | None:
+def read_statistical(
+    path: str | Path, *, quiet: bool = False, path_label: str | None = None
+) -> pd.DataFrame | None:
     """Read a statistical file (SAS/SPSS/Stata) into a pandas DataFrame."""
     file_path = Path(path)
+    label = path_label or file_path.name
     try:
         reader = _get_reader(file_path.suffix.lower())
     except ImportError:
@@ -101,7 +104,7 @@ def read_statistical(path: str | Path, *, quiet: bool = False) -> pd.DataFrame |
         df, _ = reader(file_path)
         return convert_float_to_int(df)
     except Exception as e:
-        log_error(file_path.name, e, quiet)
+        log_error(label, e, quiet)
         return None
 
 
@@ -113,9 +116,11 @@ def scan_statistical(
     freq_threshold: int | None = None,
     sample_size: int | None = None,
     quiet: bool = False,
+    path_label: str | None = None,
 ) -> tuple[list[Variable], int, int | None, pa.Table | None, StatisticalMetadata]:
     """Scan a statistical file (SAS/SPSS/Stata) and return (variables, row_count, actual_sample_size, freq_table, metadata)."""
     file_path = Path(path)
+    label = path_label or file_path.name
     try:
         reader = _get_reader(file_path.suffix.lower())
     except ImportError as e:
@@ -129,7 +134,7 @@ def scan_statistical(
     try:
         _, meta = reader(file_path, metadataonly=True)
     except Exception as e:
-        log_error(file_path.name, e, quiet)
+        log_error(label, e, quiet)
         return [], 0, None, None, StatisticalMetadata()
 
     column_labels: dict[str, str | None] = meta.column_names_to_labels
@@ -158,7 +163,7 @@ def scan_statistical(
         _apply_labels(variables, column_labels)
         return variables, row_count, actual_sample_size, freq_table, stat_metadata
     except Exception as e:
-        log_error(file_path.name, e, quiet)
+        log_error(label, e, quiet)
         return [], 0, None, None, StatisticalMetadata()
 
 

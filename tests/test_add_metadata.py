@@ -25,6 +25,7 @@ from datannurpy.add_metadata import (
     _is_database_connection,
     _load_tables_from_database,
     _load_tables_from_folder,
+    _metadata_file_label,
     _merge_entity,
     _parse_list_field,
     _process_entity_table,
@@ -374,6 +375,20 @@ class TestReadJson:
         assert "✗  test.json" in captured.err
         assert result is None
 
+    def test_invalid_json_uses_path_label(self, tmp_path: Path, capsys):
+        """Metadata JSON warnings should use the supplied path label."""
+        json_path = tmp_path / "test.json"
+        json_path.write_text("not valid json")
+
+        result = _read_json(
+            json_path, quiet=False, path_label="metadata/source/test.json"
+        )
+
+        captured = capsys.readouterr()
+        assert "✗  metadata/source/test.json" in captured.err
+        assert "✗  test.json" not in captured.err
+        assert result is None
+
     def test_non_array_json(self, tmp_path: Path):
         """Should return None for JSON without array."""
         json_path = tmp_path / "test.json"
@@ -396,6 +411,25 @@ class TestLoadTablesFromFolder:
         assert "tag" in tables
         assert len(tables["variable"][0]) == 1
         assert tables["variable"][1] == "variable.csv"
+
+    def test_read_error_uses_metadata_relative_label(self, tmp_path: Path, capsys):
+        """Metadata read errors should include the metadata folder label."""
+        (tmp_path / "dataset.json").write_text("not valid json")
+
+        tables = _load_tables_from_folder(tmp_path, {"dataset"}, quiet=False)
+
+        captured = capsys.readouterr()
+        assert tables == {}
+        assert f"✗  {tmp_path.name}/dataset.json" in captured.err
+        assert "✗  dataset.json" not in captured.err
+
+    def test_metadata_file_label_falls_back_to_name(self):
+        """Should fall back to basename when paths cannot be relativized."""
+        label = _metadata_file_label(
+            Path("relative/dataset.json"), Path("/tmp/metadata")
+        )
+
+        assert label == "dataset.json"
 
     def test_ignores_non_entity_files(self, tmp_path: Path):
         """Should ignore files that don't match entity names."""

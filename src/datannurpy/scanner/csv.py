@@ -196,9 +196,11 @@ def scan_csv(
     sample_size: int | None = None,
     csv_skip_copy: bool = False,
     quiet: bool = False,
+    path_label: str | None = None,
 ) -> tuple[list[Variable], int | None, int | None, pa.Table | None]:
     """Scan a CSV file and return (variables, row_count, actual_sample_size, freq_table)."""
     file_path = Path(path)
+    label = path_label or file_path.name
 
     if file_path.stat().st_size == 0:
         return [], 0, None, None
@@ -217,7 +219,7 @@ def scan_csv(
                 valid, reason = is_valid_tabular_dataset(preview)
                 if not valid:
                     log_warn(
-                        f"{file_path.name}: not a valid tabular dataset "
+                        f"{label}: not a valid tabular dataset "
                         f"({reason}); skipped as untreatable",
                         quiet,
                     )
@@ -243,7 +245,7 @@ def scan_csv(
                         strict_mode = False
                     except _duckdb.InvalidInputException as exc:
                         log_warn(
-                            f"{file_path.name}: unscannable CSV "
+                            f"{label}: unscannable CSV "
                             f"({_short_csv_error(exc)}); skipped as untreatable",
                             quiet,
                         )
@@ -292,7 +294,7 @@ def scan_csv(
             finally:
                 con.disconnect()
     except Exception as e:
-        log_error(file_path.name, e, quiet)
+        log_error(label, e, quiet)
         return [], 0, None, None
 
     return variables, row_count, actual_sample_size, freq_table

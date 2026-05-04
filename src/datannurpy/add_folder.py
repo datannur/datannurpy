@@ -489,6 +489,7 @@ def add_folder(
                 csv_skip_copy=resolved_csv_skip_copy,
                 fs=fs,
                 quiet=q,
+                path_label=display_path,
             )
         except Exception as exc:
             log_error(display_path, exc, q)
@@ -616,6 +617,7 @@ def _scan_time_series(
     # Step 1: Schema-only scan on all files to get columns per period
     columns_by_period: dict[str, list[str]] = {}
     for period, file_path in series_files:
+        member_path_label = _display_path(file_path, root)
         schema_result = scan_file(
             file_path,
             info.format,
@@ -625,6 +627,7 @@ def _scan_time_series(
             csv_encoding=csv_encoding,
             fs=fs,
             quiet=quiet,
+            path_label=member_path_label,
         )
         columns_by_period[period] = [v.name for v in schema_result.variables]
 
@@ -645,6 +648,7 @@ def _scan_time_series(
         csv_skip_copy=csv_skip_copy,
         fs=fs,
         quiet=quiet,
+        path_label=_display_path(last_path, root),
     )
 
     # Step 4: Create dataset

@@ -303,6 +303,21 @@ class TestScanExcelValidation:
         assert "skipped as untreatable" in captured.err
         assert len(catalog.variable.all()) == 0
 
+    def test_nested_xls_html_warning_uses_relative_path(self, tmp_path: Path, capsys):
+        """HTML .xls warnings from add_folder should keep the relative path."""
+        nested = tmp_path / "folder" / "subfolder"
+        nested.mkdir(parents=True)
+        (nested / "report.xls").write_bytes(
+            b"<!DOCTYPE html><html><body>report</body></html>"
+        )
+
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, quiet=False)
+
+        captured = capsys.readouterr()
+        assert "folder/subfolder/report.xls" in captured.err
+        assert "⚠ report.xls:" not in captured.err
+
     def test_xls_invalid_header_skipped(self, tmp_path: Path, monkeypatch):
         """xls with numeric columns should be skipped via post-read validation."""
         from datannurpy.scanner import excel as excel_mod

@@ -46,6 +46,11 @@ def _read_file_header(path: str | Path, max_bytes: int = _XLS_SNIFF_BYTES) -> by
         return f.read(max_bytes)
 
 
+def _display_label(file_path: Path, path_label: str | None) -> str:
+    """Return the user-facing path label for scanner messages."""
+    return path_label or file_path.name
+
+
 def _warn_html_xls(file_name: str, quiet: bool) -> None:
     """Emit a clear warning for HTML reports renamed with the .xls extension."""
     log_warn(f"{file_name}: {_HTML_XLS_MESSAGE}; skipped as untreatable", quiet)
@@ -100,9 +105,11 @@ def read_excel(
     *,
     sheet_name: str | int = 0,
     quiet: bool = False,
+    path_label: str | None = None,
 ) -> pd.DataFrame | None:
     """Read an Excel file into a pandas DataFrame."""
     file_path = Path(path)
+    label = _display_label(file_path, path_label)
     suffix = file_path.suffix.lower()
 
     if file_path.stat().st_size == 0:
@@ -111,7 +118,7 @@ def read_excel(
     engine = "xlrd" if suffix == ".xls" else "openpyxl"
 
     if suffix == ".xls" and _looks_like_html_xls_content(_read_file_header(file_path)):
-        _warn_html_xls(file_path.name, quiet)
+        _warn_html_xls(label, quiet)
         return None
 
     try:
@@ -122,7 +129,7 @@ def read_excel(
             return None
         return df
     except Exception as e:
-        log_error(file_path.name, e, quiet)
+        log_error(label, e, quiet)
         return None
 
 
@@ -148,13 +155,15 @@ def scan_excel(
     infer_stats: bool = True,
     freq_threshold: int | None = None,
     quiet: bool = False,
+    path_label: str | None = None,
 ) -> tuple[list[Variable], int | None, pa.Table | None]:
     """Scan an Excel file and return (variables, row_count, freq_table)."""
     file_path = Path(path)
+    label = _display_label(file_path, path_label)
     suffix = file_path.suffix.lower()
 
     if suffix == ".xls" and _looks_like_html_xls_content(_read_file_header(file_path)):
-        _warn_html_xls(file_path.name, quiet)
+        _warn_html_xls(label, quiet)
         return [], None, None
 
     # Pre-read validation for .xlsx (streaming, avoids full read if invalid)
@@ -162,18 +171,18 @@ def scan_excel(
         try:
             rows = _read_preview_rows(file_path)
         except Exception as e:
-            log_error(file_path.name, e, quiet)
+            log_error(label, e, quiet)
             return [], None, None
         valid, reason = is_valid_tabular_dataset(rows)
         if not valid:
             log_warn(
-                f"{file_path.name}: not a valid tabular dataset ({reason}); "
+                f"{label}: not a valid tabular dataset ({reason}); "
                 "skipped as untreatable",
                 quiet,
             )
             return [], None, None
 
-    df = read_excel(path, sheet_name=sheet_name, quiet=quiet)
+    df = read_excel(path, sheet_name=sheet_name, quiet=quiet, path_label=label)
     if df is None:
         return [], 0, None
 
@@ -186,7 +195,7 @@ def scan_excel(
         valid, reason = is_valid_tabular_dataset([header_row, *data_rows])
         if not valid:
             log_warn(
-                f"{file_path.name}: not a valid tabular dataset ({reason}); "
+                f"{label}: not a valid tabular dataset ({reason}); "
                 "skipped as untreatable",
                 quiet,
             )

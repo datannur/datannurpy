@@ -3,6 +3,7 @@
 ## 0.22.4 (2026-05-04)
 
 - doc: move scan depth into a dedicated cross-cutting guide and link it from file and database scanning docs
+- fix: scanner and metadata warnings now keep relative path labels instead of falling back to file basenames
 
 ## 0.22.3 (2026-05-01)
 

@@ -245,6 +245,7 @@ def add_dataset(
         csv_skip_copy=resolved_csv_skip_copy,
         fs=fs,
         quiet=q,
+        path_label=path_name,
     )
 
     dataset = _create_dataset(

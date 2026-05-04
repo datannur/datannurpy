@@ -57,6 +57,7 @@ def scan_file(
     csv_skip_copy: bool = False,
     fs: FileSystem | None = None,
     quiet: bool = False,
+    path_label: str | None = None,
 ) -> ScanResult:
     """Scan a file and return variables, row count, and optional metadata.
 
@@ -74,6 +75,7 @@ def scan_file(
             csv_encoding,
             fs=fs,
             quiet=quiet,
+            path_label=path_label,
         )
 
     # Remote filesystem: use ensure_local for all formats
@@ -88,6 +90,7 @@ def scan_file(
             csv_skip_copy=csv_skip_copy,
             fs=fs,
             quiet=quiet,
+            path_label=path_label,
         )
 
     # Local path: concrete Path required for direct scanning
@@ -101,6 +104,7 @@ def scan_file(
         sample_size=sample_size,
         csv_skip_copy=csv_skip_copy,
         quiet=quiet,
+        path_label=path_label,
     )
 
 
@@ -114,6 +118,7 @@ def _scan_local(
     sample_size: int | None,
     csv_skip_copy: bool,
     quiet: bool = False,
+    path_label: str | None = None,
 ) -> ScanResult:
     """Dispatch to format-specific scanner and build ScanResult."""
     # Parquet-based formats (parquet, delta, hive, iceberg)
@@ -148,6 +153,7 @@ def _scan_local(
             freq_threshold=freq_threshold,
             sample_size=sample_size,
             quiet=quiet,
+            path_label=path_label,
         )
         return ScanResult(
             variables=variables,
@@ -166,6 +172,7 @@ def _scan_local(
             sample_size=sample_size,
             csv_skip_copy=csv_skip_copy,
             quiet=quiet,
+            path_label=path_label,
         )
         return ScanResult(
             variables=variables,
@@ -180,6 +187,7 @@ def _scan_local(
         dataset_id=dataset_id,
         freq_threshold=freq_threshold,
         quiet=quiet,
+        path_label=path_label,
     )
     return ScanResult(variables=variables, nb_row=nb_row, freq_table=freq_table)
 
@@ -195,13 +203,14 @@ def _scan_with_ensure_local(
     csv_skip_copy: bool,
     fs: FileSystem,
     quiet: bool = False,
+    path_label: str | None = None,
 ) -> ScanResult:
     """Download remote file/directory and scan locally."""
     _DIR_FORMATS = ("delta", "hive", "iceberg")
     if delivery_format == "excel" and PurePath(path).suffix.lower() == ".xls":
         with fs.open(str(path), "rb") as f:
             if _looks_like_html_xls_content(f.read(_XLS_SNIFF_BYTES)):
-                _warn_html_xls(PurePath(path).name, quiet)
+                _warn_html_xls(path_label or PurePath(path).name, quiet)
                 return ScanResult(variables=[], nb_row=None)
     ctx = fs.ensure_local_dir if delivery_format in _DIR_FORMATS else fs.ensure_local
     with ctx(str(path)) as local_path:
@@ -214,6 +223,7 @@ def _scan_with_ensure_local(
             sample_size=sample_size,
             csv_skip_copy=csv_skip_copy,
             quiet=quiet,
+            path_label=path_label,
         )
 
 
@@ -224,12 +234,13 @@ def _scan_schema_only(
     csv_encoding: str | None = None,
     fs: FileSystem | None = None,
     quiet: bool = False,
+    path_label: str | None = None,
 ) -> ScanResult:
     """Read schema only without scanning data (for depth='schema' mode)."""
     # Remote filesystem: use optimized partial downloads
     if fs is not None and not fs.is_local:
         return _scan_schema_only_remote(
-            path, delivery_format, dataset_id, csv_encoding, fs, quiet
+            path, delivery_format, dataset_id, csv_encoding, fs, quiet, path_label
         )
 
     # Local: read schema directly
@@ -254,7 +265,7 @@ def _scan_schema_only(
         return ScanResult(variables=variables, nb_row=None)
 
     return _scan_schema_only_local(
-        path, delivery_format, dataset_id, csv_encoding, quiet
+        path, delivery_format, dataset_id, csv_encoding, quiet, path_label
     )
 
 
@@ -344,6 +355,7 @@ def _scan_schema_only_remote(
     csv_encoding: str | None,
     fs: FileSystem,
     quiet: bool = False,
+    path_label: str | None = None,
 ) -> ScanResult:
     """Optimized schema-only scan for remote files - minimal downloads."""
     # Parquet: PyArrow reads footer natively via fsspec (no full download)
@@ -405,7 +417,9 @@ def _scan_schema_only_remote(
     # SPSS: must download full file (pd.read_spss wraps pyreadstat, no streaming)
     if delivery_format == "spss":
         with fs.ensure_local(str(path)) as local_path:
-            return _scan_schema_only_local(local_path, delivery_format, dataset_id)
+            return _scan_schema_only_local(
+                local_path, delivery_format, dataset_id, path_label=path_label
+            )
 
     # CSV: stream only the header line (readline guarantees a complete line)
     if delivery_format == "csv":
@@ -432,11 +446,11 @@ def _scan_schema_only_remote(
         return _scan_excel_schema_stream(path, dataset_id, fs)
     with fs.open(str(path), "rb") as f:
         if _looks_like_html_xls_content(f.read(_XLS_SNIFF_BYTES)):
-            _warn_html_xls(PurePath(path).name, quiet)
+            _warn_html_xls(path_label or PurePath(path).name, quiet)
             return ScanResult(variables=[], nb_row=None)
     with fs.ensure_local(str(path)) as local_path:
         return _scan_schema_only_local(
-            local_path, delivery_format, dataset_id, csv_encoding, quiet
+            local_path, delivery_format, dataset_id, csv_encoding, quiet, path_label
         )
 
 
@@ -468,6 +482,7 @@ def _scan_schema_only_local(
     dataset_id: str,
     csv_encoding: str | None = None,
     quiet: bool = False,
+    path_label: str | None = None,
 ) -> ScanResult:
     """Schema-only scan for local files."""
     if delivery_format == "csv":
@@ -497,7 +512,7 @@ def _scan_schema_only_local(
             headers = [str(c) for c in rows[0] if c is not None]
         else:
             if _looks_like_html_xls_content(_read_file_header(file_path)):
-                _warn_html_xls(file_path.name, quiet)
+                _warn_html_xls(path_label or file_path.name, quiet)
                 return ScanResult(variables=[], nb_row=None)
             import pandas as pd
 
@@ -522,7 +537,7 @@ def _scan_schema_only_local(
 
     # statistical formats
     variables, _, _, _, metadata = scan_statistical(
-        path, dataset_id=dataset_id, infer_stats=False
+        path, dataset_id=dataset_id, infer_stats=False, path_label=path_label
     )
     return ScanResult(
         variables=variables,
