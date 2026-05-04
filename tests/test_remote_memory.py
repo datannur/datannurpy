@@ -7,6 +7,7 @@ The memory:// filesystem is built into fsspec and works everywhere.
 from __future__ import annotations
 
 import uuid
+from pathlib import PurePosixPath
 
 import fsspec
 import pytest
@@ -14,6 +15,7 @@ import pytest
 from datannurpy import Catalog, EntityMetadata, Folder
 from datannurpy.errors import ConfigError
 from datannurpy.scanner.filesystem import FileSystem
+from datannurpy.scanner.utils import find_files
 
 
 @pytest.fixture
@@ -181,6 +183,28 @@ class TestCatalogWithMemoryFS:
 
         assert len(catalog.dataset.all()) == 1
         assert catalog.dataset.all()[0].id == "filtered---keep_csv"
+
+    def test_find_files_memory_uses_relative_pattern_contract(
+        self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
+    ) -> None:
+        """Remote files should use the same normalized relative matcher."""
+        memory_fs.pipe(f"{memory_root}/name.csv", b"a")
+        memory_fs.pipe(f"{memory_root}/subdir/name.csv", b"b")
+        memory_fs.pipe(f"{memory_root}/subdir/tmp/drop.csv", b"c")
+        memory_fs.pipe(f"{memory_root}/archive/tmp/drop.csv", b"d")
+
+        fs = FileSystem(f"memory://{memory_root}")
+
+        root = PurePosixPath(fs.root)
+        root_exact = find_files(root, ["/name.csv"], None, True, fs=fs)
+        wildcard = find_files(root, ["*.csv"], ["**/tmp/"], True, fs=fs)
+        direct_child = find_files(root, [r"subdir\name.csv"], None, True, fs=fs)
+
+        assert [path.name for path in root_exact] == ["name.csv"]
+        assert sorted(path.name for path in wildcard) == ["name.csv", "name.csv"]
+        assert [
+            path.as_posix().removeprefix(f"{memory_root}/") for path in direct_child
+        ] == ["subdir/name.csv"]
 
     def test_add_dataset_memory_csv(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str

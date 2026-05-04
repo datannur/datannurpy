@@ -2,6 +2,7 @@
 
 ## 0.22.4 (2026-05-04)
 
+- change: `include`/`exclude` filtering now uses documented glob semantics for folder paths and database table names
 - perf: `depth: variable` scans now avoid remote ZIP reads and redundant latest-file rescans for `.xlsx` time-series
 - doc: move scan depth into a dedicated cross-cutting guide and link it from file and database scanning docs
 - fix: scanner and metadata warnings now keep relative path labels instead of falling back to file basenames

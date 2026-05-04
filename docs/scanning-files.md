@@ -35,6 +35,22 @@ add:
       - ./data/products.csv
 ```
 
+### Filtering patterns
+
+`include` and `exclude` patterns are matched against normalized relative paths from the scanned folder. Paths use `/` separators on every platform, and leading `/` or `./` in patterns is ignored. Filtering first keeps files that match at least one `include` pattern when `include` is set, then removes files that match any `exclude` pattern.
+
+Examples:
+
+| Pattern | Meaning |
+| ------- | ------- |
+| `name.csv` | Exact file at the scanned folder root |
+| `subdir/name.csv` | Exact relative file path |
+| `*.csv` | Any CSV file at any depth |
+| `subdir/*.csv` | CSV files directly inside `subdir` |
+| `**/tmp/**` | Files under any `tmp` directory |
+| `tmp/` | Everything under the root `tmp` directory |
+| `**/tmp/` | Everything under any directory named `tmp` |
+
 ### Time series detection
 
 When `time_series: true` (default), files with temporal patterns in their names or parent folders are automatically grouped into a single dataset:

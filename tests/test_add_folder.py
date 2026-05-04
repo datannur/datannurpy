@@ -25,7 +25,7 @@ class TestAddFolderFormats:
         catalog.add_folder(
             DATA_DIR,
             metadata=EntityMetadata(id="test", name="Test"),
-            include=["employees.csv"],
+            include=["**/employees.csv"],
         )
         assert len(catalog.variable.all()) == 9
 
@@ -187,7 +187,7 @@ class TestAddFolderIds:
         catalog.add_folder(
             CSV_DIR,
             metadata=EntityMetadata(id="src", name="Source"),
-            include=["employees.csv"],
+            include=["**/employees.csv"],
         )
         assert catalog.dataset.all()[0].id == "src---employees_csv"
         assert catalog.variable.all()[0].id.startswith("src---employees_csv---")
@@ -202,7 +202,7 @@ class TestAddFolderStats:
         catalog.add_folder(
             CSV_DIR,
             metadata=EntityMetadata(id="test", name="Test"),
-            include=["employees.csv"],
+            include=["**/employees.csv"],
         )
         assert all(v.nb_distinct is not None for v in catalog.variable.all())
         assert all(v.nb_missing is not None for v in catalog.variable.all())
@@ -213,7 +213,7 @@ class TestAddFolderStats:
         catalog.add_folder(
             CSV_DIR,
             metadata=EntityMetadata(id="test", name="Test"),
-            include=["employees.csv"],
+            include=["**/employees.csv"],
             depth="variable",
         )
         assert all(v.nb_distinct is None for v in catalog.variable.all())
@@ -285,7 +285,7 @@ class TestAddFolderOther:
     def test_add_folder_default_folder(self):
         """add_folder without folder arg should use directory name."""
         catalog = Catalog()
-        catalog.add_folder(DATA_DIR, include=["employees.csv"])
+        catalog.add_folder(DATA_DIR, include=["**/employees.csv"])
         assert catalog.folder.all()[0].id == "data"
         assert catalog.folder.all()[0].name == "data"
 
@@ -467,7 +467,7 @@ class TestIncludeExclude:
         (archive / "old.csv").write_text("y\n2")
 
         catalog = Catalog()
-        catalog.add_folder(tmp_path, exclude=["archive"])
+        catalog.add_folder(tmp_path, exclude=["archive/"])
 
         assert len(catalog.dataset.all()) == 1
         assert catalog.dataset.all()[0].name == "data"
@@ -483,7 +483,7 @@ class TestIncludeExclude:
         (tmp / "old.csv").write_text("z\n3")
 
         catalog = Catalog()
-        catalog.add_folder(tmp_path, exclude=["archive/tmp"])
+        catalog.add_folder(tmp_path, exclude=["archive/tmp/"])
 
         assert len(catalog.dataset.all()) == 2
         names = {d.name for d in catalog.dataset.all()}

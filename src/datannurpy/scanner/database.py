@@ -552,15 +552,16 @@ def get_schemas_to_scan(
     return schemas
 
 
-def match_patterns(items: list[str], patterns: Sequence[str]) -> set[str]:
+def match_patterns(items: list[str], patterns: Sequence[str] | str) -> set[str]:
     """Match items against glob patterns."""
-    matched: set[str] = set()
-    for pattern in patterns:
-        if "*" in pattern or "?" in pattern:
-            matched.update(fnmatch.filter(items, pattern))
-        elif pattern in items:
-            matched.add(pattern)
-    return matched
+    if isinstance(patterns, str):
+        patterns = [patterns]
+    return {
+        item
+        for item in items
+        for pattern in patterns
+        if fnmatch.fnmatchcase(item, pattern)
+    }
 
 
 def _quote_ident(name: str, backend: str) -> str:
@@ -687,8 +688,8 @@ def batch_table_data_size(
 def list_tables(
     con: ibis.BaseBackend,
     schema: str | None = None,
-    include: Sequence[str] | None = None,
-    exclude: Sequence[str] | None = None,
+    include: Sequence[str] | str | None = None,
+    exclude: Sequence[str] | str | None = None,
     backend_name: str | None = None,
 ) -> list[str]:
     """List tables in a database, filtered by include/exclude patterns. Views excluded."""

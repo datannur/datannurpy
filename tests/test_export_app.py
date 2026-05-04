@@ -19,7 +19,7 @@ def _employees_catalog() -> Catalog:
     catalog.add_folder(
         DATA_DIR,
         metadata=EntityMetadata(id="test", name="Test"),
-        include=["employees.csv"],
+        include=["**/employees.csv"],
     )
     return catalog
 
@@ -102,7 +102,7 @@ class TestExportApp:
         catalog.add_folder(
             DATA_DIR,
             metadata=EntityMetadata(id="test", name="Test"),
-            include=["employees.csv"],
+            include=["**/employees.csv"],
         )
         catalog.export_app()
 
@@ -115,7 +115,7 @@ class TestExportApp:
         catalog.add_folder(
             DATA_DIR,
             metadata=EntityMetadata(id="test", name="Test"),
-            include=["employees.csv"],
+            include=["**/employees.csv"],
         )
 
         with pytest.raises(ConfigError, match="output_dir is required"):
@@ -127,7 +127,7 @@ class TestExportApp:
         catalog.add_folder(
             DATA_DIR,
             metadata=EntityMetadata(id="test", name="Test"),
-            include=["employees.csv"],
+            include=["**/employees.csv"],
         )
         catalog.export_app(tmp_path, quiet=True)
 
@@ -150,7 +150,7 @@ class TestExportApp:
         cat1.add_folder(
             DATA_DIR,
             metadata=EntityMetadata(id="test", name="Test"),
-            include=["employees.csv"],
+            include=["**/employees.csv"],
         )
         cat1.export_app()
 

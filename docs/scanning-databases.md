@@ -55,6 +55,18 @@ add:
     prefix_min_tables: 2        # minimum tables to form a group
 ```
 
+  `include` and `exclude` are matched against table names after the optional `schema` filter has selected which schema(s) to scan. They use standard glob-style patterns (`*`, `?`, and character classes such as `[abc]`), not filesystem paths. Filtering first keeps tables that match at least one `include` pattern when `include` is set, then removes tables that match any `exclude` pattern.
+
+  Examples:
+
+  | Pattern | Meaning |
+  | ------- | ------- |
+  | `employees` | Exact table name |
+  | `sales_*` | Tables whose names start with `sales_` |
+  | `*_tmp` | Tables whose names end with `_tmp` |
+  | `fact_????` | Tables such as `fact_2024` |
+  | `[de]*` | Tables starting with `d` or `e` |
+
 ## Time series detection
 
 When `time_series: true` (default), tables whose names differ only by a temporal pattern are grouped into a single dataset after `include` and `exclude` filters are applied:
