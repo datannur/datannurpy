@@ -1,6 +1,6 @@
 # datannurpy
 
-## 0.22.5 (2026-05-05)
+## 0.23.0 (2026-05-05)
 
 - add: export dataset previews as JSON and JSON-JS files, controlled by global and per-source `preview_rows`
 - add: datasets now expose `has_preview` when preview files are available
