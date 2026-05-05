@@ -12,6 +12,7 @@ Catalog(
     freq_threshold=100,
     csv_encoding=None,
     sample_size=100_000,
+    preview_rows=100,
     csv_skip_copy=False,
     app_config=None,
     quiet=False,
@@ -29,6 +30,7 @@ Catalog(
 | freq_threshold | int                               | Max distinct values for frequency/enumeration detection. Strings above this threshold get pattern frequencies instead |
 | csv_encoding   | str \| None                       | Default CSV encoding (utf-8, cp1252, etc.)         |
 | sample_size    | int \| None                       | Default sample size for frequency/enumeration detection (default: 100_000) |
+| preview_rows   | int \| Literal[False]             | Default max rows exported in dataset previews at `stat`/`value` depth (default: 100; 0 or false disables) |
 | csv_skip_copy      | bool                              | Skip UTF-8 temp copy for local CSV (default: False)|
 | app_config     | dict[str, str] \| None            | Key-value config for the web app                   |
 | quiet          | bool                              | Suppress progress logging (default: False)         |
@@ -59,6 +61,7 @@ catalog.add_folder(
     recursive=True,
     csv_encoding=None,
     sample_size=None,
+    preview_rows=None,
     csv_skip_copy=None,
     storage_options=None,
     refresh=None,
@@ -79,6 +82,7 @@ catalog.add_folder(
 | recursive       | bool                                      | True     | Scan subdirectories                           |
 | csv_encoding    | str \| None                               | None     | Override CSV encoding                         |
 | sample_size     | int \| None                               | None     | Sample rows for frequency/enumeration detection (overrides catalog) |
+| preview_rows    | int \| Literal[False] \| None              | None     | Max preview rows for datasets found in this folder (overrides catalog; 0 or false disables) |
 | csv_skip_copy       | bool \| None                              | None     | Skip UTF-8 temp copy (overrides catalog)      |
 | storage_options | dict \| None                              | None     | Options for remote storage (passed to fsspec) |
 | refresh         | bool \| None                              | None     | Force rescan (overrides catalog setting)      |
@@ -97,6 +101,7 @@ catalog.add_dataset(
     depth=None,
     csv_encoding=None,
     sample_size=None,
+    preview_rows=None,
     csv_skip_copy=None,
     storage_options=None,
     refresh=None,
@@ -111,6 +116,7 @@ catalog.add_dataset(
 | depth           | "dataset" \| "variable" \| "stat" \| "value" \| None | None     | Scan depth (uses catalog.depth if None)       |
 | csv_encoding    | str \| None                               | None     | Override CSV encoding                         |
 | sample_size     | int \| None                               | None     | Sample rows for frequency/enumeration detection (overrides catalog) |
+| preview_rows    | int \| Literal[False] \| None              | None     | Max preview rows for this dataset (overrides catalog; 0 or false disables) |
 | csv_skip_copy       | bool \| None                              | None     | Skip UTF-8 temp copy (overrides catalog)      |
 | storage_options | dict \| None                              | None     | Options for remote storage (passed to fsspec) |
 | refresh         | bool \| None                              | None     | Force rescan (overrides catalog setting)      |
@@ -128,6 +134,7 @@ catalog.add_database(
     include=None,
     exclude=None,
     sample_size=None,
+    preview_rows=None,
     group_by_prefix=True,
     prefix_min_tables=2,
     time_series=True,
@@ -148,6 +155,7 @@ catalog.add_database(
 | include            | list[str] \| None                               | None     | Glob patterns matched against table names to include |
 | exclude            | list[str] \| None                               | None     | Glob patterns matched against table names to exclude |
 | sample_size        | int \| None                                     | None     | Sample rows for frequency/enumeration detection (overrides catalog) |
+| preview_rows       | int \| Literal[False] \| None                    | None     | Max preview rows for scanned table datasets (overrides catalog; 0 or false disables) |
 | group_by_prefix    | bool \| str                                     | True     | Group tables by prefix into subfolders     |
 | prefix_min_tables  | int                                             | 2        | Min tables to form a prefix group          |
 | time_series        | bool                                            | True     | Detect temporal table patterns             |

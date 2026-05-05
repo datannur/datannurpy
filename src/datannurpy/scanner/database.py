@@ -14,9 +14,11 @@ from typing import TYPE_CHECKING, Any, NoReturn
 from urllib.parse import parse_qs, quote, unquote, urlparse, urlunparse
 
 import ibis
+import polars as pl
 import pyarrow as pa
 
 from ..errors import ConfigError
+from ..preview import preview_from_arrow, preview_from_ibis
 from ..schema import Variable
 from ._oracle import (
     ORACLE_SYSTEM_TABLE_PREFIXES,
@@ -966,9 +968,24 @@ def scan_table(
     infer_stats: bool = True,
     freq_threshold: int | None = None,
     sample_size: int | None = None,
+    preview_rows: int = 0,
+    return_preview: bool = False,
+    quiet: bool = False,
     row_count: int | None = None,
-) -> tuple[list[Variable], int | None, int | None, pa.Table | None]:
+) -> tuple[Any, ...]:
     """Scan a database table and return (variables, row_count, sample_size, freq_table)."""
+
+    def result(
+        variables: list[Variable],
+        nb_row: int | None,
+        actual_sample_size: int | None,
+        freq_table: pa.Table | None,
+        preview_df: pl.DataFrame | None,
+    ) -> tuple[Any, ...]:
+        if return_preview:
+            return variables, nb_row, actual_sample_size, freq_table, preview_df
+        return variables, nb_row, actual_sample_size, freq_table
+
     backend = get_backend_name(con)
 
     # Oracle: get schema + detect LOB columns in a single query
@@ -994,7 +1011,7 @@ def scan_table(
             dataset_id=dataset_id,
             infer_stats=False,
         )
-        return variables, None, None, None
+        return result(variables, None, None, None, None)
 
     # Get exact row count (use provided value or compute)
     if row_count is None:
@@ -1002,6 +1019,7 @@ def scan_table(
 
     # When sampling: materialize sample locally, compute streaming stats on full table
     actual_sample_size: int | None = None
+    preview_df = None
     if sample_size is not None and row_count > sample_size and infer_stats:
         fraction = sample_size / row_count
         if backend == "oracle":  # pragma: no cover
@@ -1031,6 +1049,9 @@ def scan_table(
             sample_arrow = sampled.to_pyarrow()
         actual_sample_size = len(sample_arrow)
         sample_table = ibis.memtable(sample_arrow)
+        preview_df = preview_from_arrow(
+            sample_arrow, preview_rows, label=table_name, quiet=quiet
+        )
 
         variables, freq_table = build_variables(
             sample_table,
@@ -1051,5 +1072,8 @@ def scan_table(
             freq_threshold=freq_threshold,
             skip_stats_columns=skip_stats_columns if skip_stats_columns else None,
         )
+        preview_df = preview_from_ibis(
+            table, preview_rows, label=table_name, quiet=quiet
+        )
 
-    return variables, row_count, actual_sample_size, freq_table
+    return result(variables, row_count, actual_sample_size, freq_table, preview_df)

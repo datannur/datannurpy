@@ -18,6 +18,7 @@ from zipfile import ZipFile
 import ibis
 import pyarrow as pa
 
+from ..preview import preview_from_pandas
 from ..schema import Variable
 from ..utils import log_debug, log_error, log_warn
 from .utils import build_variables
@@ -26,6 +27,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     import pandas as pd
+    import polars as pl
 
 _MIDNIGHT = dt_time(0, 0)
 
@@ -389,17 +391,29 @@ def scan_excel(
     dataset_id: str,
     infer_stats: bool = True,
     freq_threshold: int | None = None,
+    preview_rows: int = 0,
+    return_preview: bool = False,
     quiet: bool = False,
     path_label: str | None = None,
-) -> tuple[list[Variable], int | None, pa.Table | None]:
+) -> tuple[Any, ...]:
     """Scan an Excel file and return (variables, row_count, freq_table)."""
     file_path = Path(path)
     label = _display_label(file_path, path_label)
     suffix = file_path.suffix.lower()
 
+    def result(
+        variables: list[Variable],
+        nb_row: int | None,
+        freq_table: pa.Table | None,
+        preview_df: pl.DataFrame | None,
+    ) -> tuple[Any, ...]:
+        if return_preview:
+            return variables, nb_row, freq_table, preview_df
+        return variables, nb_row, freq_table
+
     if suffix == ".xls" and _looks_like_html_xls_content(_read_file_header(file_path)):
         _warn_html_xls(label, quiet)
-        return [], None, None
+        return result([], None, None, None)
 
     # Pre-read validation for .xlsx (streaming, avoids full read if invalid)
     if suffix != ".xls":
@@ -407,7 +421,7 @@ def scan_excel(
             rows = _read_preview_rows(file_path, quiet=quiet, path_label=label)
         except Exception as e:
             log_error(label, e, quiet)
-            return [], None, None
+            return result([], None, None, None)
         valid, reason = is_valid_tabular_dataset(rows)
         if not valid:
             log_warn(
@@ -415,11 +429,11 @@ def scan_excel(
                 "skipped as untreatable",
                 quiet,
             )
-            return [], None, None
+            return result([], None, None, None)
 
     df = read_excel(path, sheet_name=sheet_name, quiet=quiet, path_label=label)
     if df is None:
-        return [], 0, None
+        return result([], 0, None, None)
 
     # Post-read validation for .xls (no streaming available)
     if suffix == ".xls":
@@ -434,7 +448,7 @@ def scan_excel(
                 "skipped as untreatable",
                 quiet,
             )
-            return [], None, None
+            return result([], None, None, None)
 
     # Pandas reads Excel dates as datetime64 even for date-only cells.
     # Detect columns where all values are at midnight and convert to date.
@@ -464,7 +478,7 @@ def scan_excel(
             infer_stats=infer_stats,
             freq_threshold=freq_threshold,
         )
-        return variables, row_count, freq_table
+        preview_df = preview_from_pandas(df, preview_rows, label=label, quiet=quiet)
+        return result(variables, row_count, freq_table, preview_df)
     finally:
-        con.disconnect()
         con.disconnect()

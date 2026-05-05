@@ -51,11 +51,14 @@ add:
     include: ["sales_*"]
     exclude: ["*_tmp"]
     sample_size: 10000
+    preview_rows: 25
     group_by_prefix: true       # group tables by common prefix (default)
     prefix_min_tables: 2        # minimum tables to form a group
 ```
 
   `include` and `exclude` are matched against table names after the optional `schema` filter has selected which schema(s) to scan. They use standard glob-style patterns (`*`, `?`, and character classes such as `[abc]`), not filesystem paths. Filtering first keeps tables that match at least one `include` pattern when `include` is set, then removes tables that match any `exclude` pattern.
+
+  `sample_size` controls rows used for frequency and enumeration detection. `preview_rows` controls the maximum rows exported for each table preview at `stat` and `value` depth; the default is `100`, and `0` or `false` disables previews. Table-series datasets preview the latest period table, matching the statistics scan.
 
   Examples:
 

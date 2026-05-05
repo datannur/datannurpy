@@ -25,6 +25,12 @@ from .utils.params import _UNSET, validate_params
 from .add_metadata import LoadedDatasetRef, find_loaded_dataset_by_match_path
 from .errors import ConfigError
 from .finalize import remove_dataset_cascade
+from .preview import (
+    PreviewRows,
+    effective_preview_rows,
+    remember_preview,
+    resolve_preview_rows,
+)
 from .schema import Dataset, EntityMetadata, Folder, folder_from_metadata
 from .scanner.discovery import DatasetInfo, compute_scan_plan, discover_datasets
 from .scanner.filesystem import FileSystem, is_remote_url
@@ -66,9 +72,17 @@ def _build_series_folder_id(normalized: str, prefix: str) -> str:
 def _display_path(path: PurePath, root: PurePath) -> str:
     """Return a log-friendly path relative to the scanned root when possible."""
     try:
-        return path.relative_to(root).as_posix()
+        rel_path = path.relative_to(root).as_posix()
     except ValueError:
         return path.name
+    return "" if rel_path == "." else rel_path
+
+
+def _public_data_path(path: PurePath, root: PurePath, fs: FileSystem | None) -> str:
+    """Return the exported data_path while keeping local scan paths portable."""
+    if fs is not None and not fs.is_local:
+        return str(path)
+    return _display_path(path, root)
 
 
 def _display_dataset_path(info: DatasetInfo, root: PurePath) -> str:
@@ -159,6 +173,7 @@ def add_folder(
     time_series: bool = True,
     csv_encoding: str | None = None,
     sample_size: int | None = _UNSET,
+    preview_rows: PreviewRows = None,
     csv_skip_copy: bool | None = None,
     quiet: bool | None = None,
     refresh: bool | None = None,
@@ -186,6 +201,9 @@ def add_folder(
     q = quiet if quiet is not None else catalog.quiet
     do_refresh = refresh if refresh is not None else catalog.refresh
     resolved_depth = depth if depth is not None else catalog.depth
+    preview_limit = effective_preview_rows(
+        resolve_preview_rows(preview_rows, catalog.preview_rows), resolved_depth
+    )
 
     # Handle remote URLs vs local paths
     is_remote = is_remote_url(path)
@@ -239,7 +257,7 @@ def add_folder(
             )
 
         # Set data_path for root folder
-        folder.data_path = str(root)
+        folder.data_path = _public_data_path(root, root, fs)
         folder.type = folder.type or "filesystem"
 
         # Add or update root folder
@@ -289,7 +307,7 @@ def add_folder(
                     name=subdir.name,
                     parent_id=parent_id,
                     type="filesystem",
-                    data_path=str(subdir),
+                    data_path=_public_data_path(subdir, root, fs),
                 ),
             )
             subdir_ids[subdir] = folder_id
@@ -299,7 +317,7 @@ def add_folder(
         subdir_ids = {}
 
     # Compute scan plan (what to scan vs skip)
-    plan = compute_scan_plan(discovery.datasets, catalog, do_refresh)
+    plan = compute_scan_plan(discovery.datasets, catalog, do_refresh, root=root)
     resource_count = sum(info.resource_count for info in discovery.datasets)
 
     # Structure-only mode: create/update datasets without scanning
@@ -312,7 +330,11 @@ def add_folder(
             skip_seen_ids.append(existing.id)
             log_skip(_display_dataset_label(info, root), q)
         if skip_seen_ids:
-            catalog.dataset.update_many(skip_seen_ids, _seen=True)
+            catalog.dataset.update_many(skip_seen_ids, _seen=True, preview_rows=0)
+            for info in plan.to_skip:
+                existing = plan.existing_by_path.get(str(info.path))
+                assert existing is not None
+                catalog.dataset.update(existing.id, _match_path=str(info.path))
 
         # Create or update modified datasets
         for info in plan.to_scan:
@@ -332,7 +354,9 @@ def add_folder(
                     last_update_date=mtime_iso_from_timestamp(info.mtime),
                     last_update_timestamp=info.mtime,
                     data_size=data_size,
+                    preview_rows=0,
                     _seen=True,
+                    _match_path=data_path_str,
                 )
                 log_done(display_label, q, t0)
                 continue
@@ -375,11 +399,12 @@ def add_folder(
                 id=dataset_id,
                 name=dataset_name,
                 folder_id=folder_id,
-                data_path=data_path_str,
+                data_path=_public_data_path(info.path, root, fs),
                 last_update_date=mtime_iso_from_timestamp(info.mtime),
                 last_update_timestamp=info.mtime,
                 delivery_format=info.format,
                 nb_resources=nb_resources,
+                preview_rows=0,
                 data_size=(
                     get_dir_data_size(info.path, fs=fs)
                     if info.format in _DIR_FORMATS
@@ -412,7 +437,13 @@ def add_folder(
         skip_seen_ids.append(existing.id)
         log_skip(_display_dataset_label(info, root), q)
     if skip_seen_ids:
-        catalog.dataset.update_many(skip_seen_ids, _seen=True)
+        catalog.dataset.update_many(
+            skip_seen_ids, _seen=True, preview_rows=preview_limit
+        )
+        for info in plan.to_skip:
+            existing = plan.existing_by_path.get(str(info.path))
+            assert existing is not None
+            catalog.dataset.update(existing.id, _match_path=str(info.path))
         catalog.enumeration_manager.mark_datasets_seen(skip_seen_ids)
 
     # Process datasets to scan
@@ -448,6 +479,7 @@ def add_folder(
                     freq_threshold=freq_threshold,
                     csv_encoding=resolved_encoding,
                     sample_size=resolved_sample_size,
+                    preview_rows=preview_limit,
                     csv_skip_copy=resolved_csv_skip_copy,
                     quiet=q,
                     fs=fs,
@@ -486,6 +518,7 @@ def add_folder(
                 freq_threshold=freq_threshold,
                 csv_encoding=resolved_encoding,
                 sample_size=resolved_sample_size,
+                preview_rows=preview_limit,
                 csv_skip_copy=resolved_csv_skip_copy,
                 fs=fs,
                 quiet=q,
@@ -506,13 +539,14 @@ def add_folder(
             id=dataset_id,
             name=result.name or dataset_name,
             folder_id=folder_id,
-            data_path=data_path_str,
+            data_path=_public_data_path(info.path, root, fs),
             last_update_date=mtime_iso_from_timestamp(info.mtime),
             last_update_timestamp=info.mtime,
             delivery_format=info.format,
             description=result.description,
             nb_row=result.nb_row,
             sample_size=result.sample_size,
+            preview_rows=preview_limit,
             data_size=(
                 result.data_size
                 if info.format in _DIR_FORMATS
@@ -522,6 +556,7 @@ def add_folder(
             _match_path=data_path_str,
         )
         catalog.dataset.add(dataset)
+        remember_preview(catalog, dataset.id, result.preview, label=display_path)
 
         var_id_mapping = build_variable_ids(result.variables, dataset.id)
         if result.freq_table is not None:
@@ -568,6 +603,7 @@ def _scan_time_series(
     freq_threshold: int | None,
     csv_encoding: str | None,
     sample_size: int | None,
+    preview_rows: int,
     csv_skip_copy: bool,
     quiet: bool,
     fs: FileSystem | None,
@@ -608,7 +644,12 @@ def _scan_time_series(
     )
 
     # Remove old dataset if exists
-    existing = catalog.dataset.get_by("_match_path", str(last_path))
+    last_match_path = str(last_path)
+    existing = catalog.dataset.get_by("_match_path", last_match_path)
+    if existing is None:
+        existing = catalog.dataset.get_by(
+            "_match_path", _public_data_path(last_path, root, fs)
+        )
     if existing:
         remove_dataset_cascade(catalog, existing)
 
@@ -652,6 +693,7 @@ def _scan_time_series(
             freq_threshold=freq_threshold,
             csv_encoding=csv_encoding,
             sample_size=sample_size,
+            preview_rows=preview_rows,
             csv_skip_copy=csv_skip_copy,
             fs=fs,
             quiet=quiet,
@@ -663,21 +705,23 @@ def _scan_time_series(
         id=dataset_id,
         name=result.name or dataset_name,
         folder_id=folder_id,
-        data_path=str(last_path),
+        data_path=_public_data_path(last_path, root, fs),
         last_update_date=mtime_iso_from_timestamp(info.mtime),
         last_update_timestamp=info.mtime,
         delivery_format=info.format,
         description=result.description,
         nb_row=result.nb_row,
         sample_size=result.sample_size,
+        preview_rows=preview_rows,
         nb_resources=len(series_files),
         data_size=get_data_size(last_path, fs=fs),
         start_date=first_period,
         end_date=last_period,
         _seen=True,
-        _match_path=str(last_path),
+        _match_path=last_match_path,
     )
     catalog.dataset.add(dataset)
+    remember_preview(catalog, dataset.id, result.preview, label=display_path)
 
     # Step 5: Build variables with start_date/end_date from var_periods
     # Union all variables from all periods (some may not be in last file)

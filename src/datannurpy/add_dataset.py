@@ -17,6 +17,12 @@ from .utils import (
 from .utils.params import _UNSET, validate_params
 from .errors import ConfigError
 from .finalize import remove_dataset_cascade
+from .preview import (
+    PreviewRows,
+    effective_preview_rows,
+    remember_preview,
+    resolve_preview_rows,
+)
 from .schema import Dataset, EntityMetadata
 from .scanner.filesystem import FileSystem, is_remote_url
 from .scanner.utils import (
@@ -53,9 +59,11 @@ def _create_dataset(
     metadata: EntityMetadata | None,
     nb_row: int | None = None,
     sample_size: int | None = None,
+    preview_rows: int | None = None,
     data_size: int | None = None,
     scanned_description: str | None = None,
     fs: FileSystem | None = None,
+    match_path: str | None = None,
 ) -> Dataset:
     """Create Dataset with common fields."""
     resolved_metadata = metadata or EntityMetadata()
@@ -70,6 +78,7 @@ def _create_dataset(
         delivery_format=delivery_format,
         nb_row=nb_row,
         sample_size=sample_size,
+        preview_rows=preview_rows,
         data_size=data_size,
         description=resolved_metadata.description
         if resolved_metadata.description is not None
@@ -86,8 +95,17 @@ def _create_dataset(
         updating_each=resolved_metadata.updating_each,
         no_more_update=resolved_metadata.no_more_update,
         _seen=True,
-        _match_path=data_path,
+        _match_path=match_path or data_path,
     )
+
+
+def _public_data_path(
+    dataset_path: PurePath, path_name: str, fs: FileSystem | None
+) -> str:
+    """Return the exported data_path while keeping local scan paths portable."""
+    if fs is not None and not fs.is_local:
+        return str(dataset_path)
+    return PurePosixPath(path_name).as_posix()
 
 
 @validate_params
@@ -99,6 +117,7 @@ def add_dataset(
     depth: Depth | None = None,
     csv_encoding: str | None = None,
     sample_size: int | None = _UNSET,
+    preview_rows: PreviewRows = None,
     csv_skip_copy: bool | None = None,
     quiet: bool | None = None,
     refresh: bool | None = None,
@@ -144,6 +163,9 @@ def add_dataset(
     resolved_sample_size = (
         sample_size if sample_size is not _UNSET else catalog.sample_size
     )
+    preview_limit = effective_preview_rows(
+        resolve_preview_rows(preview_rows, catalog.preview_rows), resolved_depth
+    )
 
     # Check if it's a partitioned Parquet directory
     if fs:
@@ -159,6 +181,7 @@ def add_dataset(
             metadata,
             depth=resolved_depth,
             sample_size=resolved_sample_size,
+            preview_rows=preview_limit,
             quiet=q,
             refresh=do_refresh,
             start_time=start_time,
@@ -177,14 +200,22 @@ def add_dataset(
 
     # Get current mtime
     current_mtime = get_mtime_timestamp(dataset_path, fs=fs)
-    data_path_str = str(dataset_path)
+    match_path = str(dataset_path)
+    data_path_str = _public_data_path(dataset_path, path_name, fs)
 
     # Check for existing dataset (incremental scan)
-    existing = catalog.dataset.get_by("_match_path", data_path_str)
+    existing = catalog.dataset.get_by("_match_path", match_path)
+    if existing is None:
+        existing = catalog.dataset.get_by("_match_path", data_path_str)
     if existing is not None:
         if not do_refresh and existing.last_update_timestamp == current_mtime:
             # Unchanged - skip and mark as seen
-            catalog.dataset.update(existing.id, _seen=True)
+            catalog.dataset.update(
+                existing.id,
+                _seen=True,
+                _match_path=match_path,
+                preview_rows=preview_limit,
+            )
             catalog.enumeration_manager.mark_dataset_seen(existing.id)
             log_skip(path_name, q)
             return
@@ -221,8 +252,10 @@ def add_dataset(
             current_mtime,
             delivery_format,
             metadata,
+            preview_rows=0,
             data_size=get_data_size(dataset_path, fs=fs),
             fs=fs,
+            match_path=match_path,
         )
         catalog.dataset.add(dataset)
         log_done(path_name, q, start_time)
@@ -242,6 +275,7 @@ def add_dataset(
         freq_threshold=freq_threshold,
         csv_encoding=resolved_encoding,
         sample_size=sample_size_for_scan,
+        preview_rows=preview_limit,
         csv_skip_copy=resolved_csv_skip_copy,
         fs=fs,
         quiet=q,
@@ -259,11 +293,14 @@ def add_dataset(
         metadata,
         nb_row=result.nb_row,
         sample_size=result.sample_size,
+        preview_rows=preview_limit,
         data_size=get_data_size(dataset_path, fs=fs),
         scanned_description=result.description,
         fs=fs,
+        match_path=match_path,
     )
     catalog.dataset.add(dataset)
+    remember_preview(catalog, dataset.id, result.preview, label=path_name)
 
     var_id_mapping = build_variable_ids(result.variables, dataset.id)
     if result.freq_table is not None:
@@ -295,6 +332,7 @@ def _add_parquet_directory(
     *,
     depth: Depth,
     sample_size: int | None,
+    preview_rows: int = 0,
     quiet: bool,
     refresh: bool,
     start_time: float,
@@ -302,14 +340,22 @@ def _add_parquet_directory(
 ) -> None:
     """Add a partitioned Parquet directory (Delta, Hive, or Iceberg) to catalog."""
     current_mtime = get_mtime_timestamp(dir_path, fs=fs)
-    data_path_str = str(dir_path)
+    match_path = str(dir_path)
     dir_name = str(dir_path).rstrip("/").rsplit("/", 1)[-1]
+    data_path_str = _public_data_path(dir_path, dir_name, fs)
 
     # Check for existing dataset (incremental scan)
-    existing = catalog.dataset.get_by("_match_path", data_path_str)
+    existing = catalog.dataset.get_by("_match_path", match_path)
+    if existing is None:
+        existing = catalog.dataset.get_by("_match_path", data_path_str)
     if existing is not None:
         if not refresh and existing.last_update_timestamp == current_mtime:
-            catalog.dataset.update(existing.id, _seen=True)
+            catalog.dataset.update(
+                existing.id,
+                _seen=True,
+                _match_path=match_path,
+                preview_rows=preview_rows,
+            )
             catalog.enumeration_manager.mark_dataset_seen(existing.id)
             log_skip(dir_name, quiet)
             return
@@ -347,8 +393,10 @@ def _add_parquet_directory(
             current_mtime,
             delivery_format,
             metadata,
+            preview_rows=0,
             data_size=get_dir_data_size(dir_path, fs=fs),
             fs=fs,
+            match_path=match_path,
         )
         catalog.dataset.add(dataset)
         log_done(dir_name, quiet, start_time)
@@ -357,12 +405,15 @@ def _add_parquet_directory(
     # Variable/Stat/Value mode: scan the dataset
     schema_only = depth == "variable"
     parquet_info = ParquetDatasetInfo(path=dir_path, type=dataset_type)
-    variables, nb_row, freq_table, pq_meta = scan_parquet_dataset(
+    variables, nb_row, freq_table, pq_meta, preview = scan_parquet_dataset(
         parquet_info,
         dataset_id=dataset_id,
         infer_stats=not schema_only,
         freq_threshold=(catalog.freq_threshold if depth == "value" else None),
         sample_size=(sample_size if depth == "value" else None),
+        preview_rows=preview_rows,
+        return_preview=True,
+        quiet=quiet,
     )
 
     # Override default_name with parquet metadata if the caller did not set one.
@@ -382,13 +433,16 @@ def _add_parquet_directory(
         metadata,
         nb_row=nb_row,
         sample_size=pq_meta.sample_size,
+        preview_rows=preview_rows,
         data_size=pq_meta.data_size,
         scanned_description=scanned_desc,
         fs=fs,
+        match_path=match_path,
     )
     # Force the name (since _create_dataset uses meta.name or default_name)
     dataset.name = default_name
     catalog.dataset.add(dataset)
+    remember_preview(catalog, dataset.id, preview, label=dir_name)
 
     var_id_mapping = build_variable_ids(variables, dataset.id)
     if freq_table is not None:

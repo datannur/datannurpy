@@ -1,5 +1,12 @@
 # datannurpy
 
+## 0.23.0 (2026-05-05)
+
+- add: export dataset previews as JSON and JSON-JS files, controlled by global and per-source `preview_rows`
+- add: datasets now expose `has_preview` when preview files are available
+- fix: metadata `dataset._match_path` now strictly overrides `data_path` for scan matching, allowing exported `data_path` to remain a public URL
+- fix: local file scans now export portable `data_path` values while keeping absolute `_match_path` values for runtime matching
+
 ## 0.22.4 (2026-05-04)
 
 - change: `include`/`exclude` filtering now uses documented glob semantics for folder paths and database table names

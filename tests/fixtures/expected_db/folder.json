@@ -13,7 +13,7 @@
     "name": "company",
     "description": null,
     "type": "sqlite",
-    "data_path": "company.db"
+    "data_path": "sqlite://company"
   },
   {
     "id": "company---hr",
@@ -149,6 +149,6 @@
     "name": "Grandes installations photovoltaïques",
     "description": "Installations photovoltaïques de haute altitude en Suisse. Source: Office fédéral de l'énergie (OFEN) - opendata.swiss",
     "type": "sqlite",
-    "data_path": "photovoltaik.gpkg"
+    "data_path": "sqlite://photovoltaik"
   }
 ]

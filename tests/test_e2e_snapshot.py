@@ -208,6 +208,13 @@ class TestE2EStructural:
         assert pv_folder is not None
         assert pv_folder.name == "Grandes installations photovoltaïques"
 
+    def test_database_folder_data_path_is_public(self, catalog: Catalog) -> None:
+        """Local database root folders should not export absolute file paths."""
+        folders = {folder.id: folder for folder in catalog.folder.all()}
+
+        assert folders["company"].data_path == "sqlite://company"
+        assert folders["photovoltaik"].data_path == "sqlite://photovoltaik"
+
     def test_metadata_applied(self, catalog: Catalog) -> None:
         """Metadata from add_metadata should be merged."""
         # Check that some metadata file was applied

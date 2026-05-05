@@ -102,6 +102,8 @@ class Dataset:
     delivery_format: str | None = None
     nb_row: int | None = None
     sample_size: int | None = None
+    preview_rows: int | None = None
+    has_preview: int | None = None
     nb_resources: int | None = None  # Number of resources in series (>1 = time series)
     data_size: int | None = None  # Data size in bytes
     start_date: str | None = None
@@ -114,8 +116,7 @@ class Dataset:
     # Runtime fields (not persisted)
     _seen: bool = False
     # Absolute path used to match this dataset to a physical file/directory.
-    # Computed at scan time (= data_path) or when loading metadata
-    # (resolved relative to the metadata source directory).
+    # Kept separate from exported data_path, which may be relative/public.
     _match_path: str | None = None
 
 

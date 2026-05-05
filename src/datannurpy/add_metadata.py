@@ -259,11 +259,18 @@ def _load_tables_from_folder(
                     tables[entity_name] = (df, file_path.name)
                 break
 
-    # Resolve dataset.data_path → _match_path (absolute, used for scan↔metadata
-    # matching). data_path stays as-is in the export; _match_path is internal.
+    # Resolve the scan↔metadata match key. An explicit dataset._match_path is
+    # strict and overrides data_path for the whole table; data_path stays as-is
+    # in the export and is only used as the backward-compatible fallback.
     if "dataset" in tables:
         df, fname = tables["dataset"]
-        if "data_path" in df.columns:
+        if "_match_path" in df.columns:
+            df = df.copy()
+            df["_match_path"] = df["_match_path"].map(
+                lambda p: _resolve_match_path(p, folder_path)
+            )
+            tables["dataset"] = (df, fname)
+        elif "data_path" in df.columns:
             df = df.copy()
             df["_match_path"] = df["data_path"].map(
                 lambda p: _resolve_match_path(p, folder_path)

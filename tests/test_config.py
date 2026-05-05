@@ -115,6 +115,35 @@ add:
         assert output_dir.exists()
         assert (output_dir / "__table__.json").exists()
 
+    def test_run_config_preview_rows_global_and_override(self, tmp_path: Path):
+        """preview_rows works globally and per add entry in YAML."""
+        public_dir = tmp_path / "public"
+        private_dir = tmp_path / "private"
+        public_dir.mkdir()
+        private_dir.mkdir()
+        (public_dir / "public.csv").write_text("id\n1\n2\n")
+        (private_dir / "private.csv").write_text("id\n3\n4\n")
+
+        output_dir = tmp_path / "output"
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+output_dir: {output_dir}
+depth: stat
+preview_rows: 1
+refresh: true
+quiet: true
+
+add:
+  - folder: {public_dir}
+  - folder: {private_dir}
+    preview_rows: false
+""")
+        run_config(config_file)
+
+        preview_dir = output_dir / "preview"
+        assert (preview_dir / "public---public_csv.json").exists()
+        assert not (preview_dir / "private---private_csv.json").exists()
+
     def test_run_config_with_export_app(self, tmp_path: Path):
         """Config with app_path should create app files."""
         data_dir = tmp_path / "data"
