@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -191,6 +192,61 @@ class TestMetadataFirstE2E:
         ds_ids = [d.id for d in catalog.dataset.all()]
         assert "f---rel" in ds_ids
         assert csv.exists()
+
+    def test_explicit_match_path_overrides_remote_data_path(self, tmp_path: Path):
+        """Explicit _match_path matches scans while data_path remains public."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        csv = _write_csv(data_dir, "resource.csv")
+
+        meta_dir = tmp_path / "meta"
+        meta_dir.mkdir()
+        public_url = "https://example.admin.ch/resource.csv"
+        link_url = "https://example.admin.ch/dataset-info"
+        (meta_dir / "folder.csv").write_text("id,name\nf,F\n")
+        (meta_dir / "dataset.csv").write_text(
+            "id,name,folder_id,data_path,_match_path,link\n"
+            f"dataset-1,Dataset 1,f,{public_url},../data/resource.csv,{link_url}\n"
+        )
+
+        catalog = Catalog(metadata_path=meta_dir, quiet=True)
+        catalog.add_folder(data_dir, create_folders=False)
+
+        datasets = catalog.dataset.all()
+        assert len(datasets) == 1
+        assert datasets[0].id == "dataset-1"
+        assert datasets[0]._match_path == str(csv)
+
+        out_dir = tmp_path / "out"
+        catalog.export_db(out_dir, quiet=True)
+        with open(out_dir / "dataset.json") as f:
+            exported = json.load(f)
+
+        assert exported[0]["data_path"] == public_url
+        assert exported[0]["link"] == link_url
+        assert "_match_path" not in exported[0]
+
+    def test_explicit_empty_match_path_does_not_fall_back_to_data_path(
+        self, tmp_path: Path
+    ):
+        """Presence of _match_path strictly disables data_path matching."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        csv = _write_csv(data_dir, "local.csv")
+
+        meta_dir = tmp_path / "meta"
+        meta_dir.mkdir()
+        (meta_dir / "dataset.csv").write_text(
+            f"id,name,data_path,_match_path\nlocal,Local,{csv},\n"
+        )
+
+        catalog = Catalog(metadata_path=meta_dir, quiet=True)
+        from datannurpy.add_metadata import find_loaded_dataset_by_match_path
+
+        assert find_loaded_dataset_by_match_path(catalog, str(csv)) is None
+
+        catalog.add_folder(data_dir, create_folders=False, on_unmatched="skip")
+        assert len(catalog.dataset.all()) == 0
 
     def test_default_create_folders_true_unchanged_behavior(self, tmp_path: Path):
         """Without create_folders=False, existing behavior is preserved."""
