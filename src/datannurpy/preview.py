@@ -168,23 +168,22 @@ def sync_preview_exports(catalog: Catalog, output_dir: str | Path) -> set[str]:
     preview_ids: set[str] = set()
     for dataset_id in sorted(eligible_ids):
         preview = catalog._dataset_previews.get(dataset_id)
-        if preview is None:
-            if _preview_files_exist(preview_dir, dataset_id):
+        if preview is not None:
+            preview_dir.mkdir(parents=True, exist_ok=True)
+            dataset = datasets_by_id[dataset_id]
+            try:
+                write_table_json(preview, preview_dir / f"{dataset_id}.json")
+                write_table_jsonjs(
+                    preview, dataset_id, preview_dir / f"{dataset_id}.json.js"
+                )
                 preview_ids.add(dataset_id)
-            continue
-        preview_dir.mkdir(parents=True, exist_ok=True)
-        dataset = datasets_by_id[dataset_id]
-        try:
-            write_table_json(preview, preview_dir / f"{dataset_id}.json")
-            write_table_jsonjs(
-                preview, dataset_id, preview_dir / f"{dataset_id}.json.js"
-            )
+            except Exception as exc:  # pragma: no cover - filesystem/json edge cases
+                label = _preview_label(catalog, dataset)
+                log_warn(f"{label}: preview export skipped ({exc})", catalog.quiet)
+                (preview_dir / f"{dataset_id}.json").unlink(missing_ok=True)
+                (preview_dir / f"{dataset_id}.json.js").unlink(missing_ok=True)
+        elif _preview_files_exist(preview_dir, dataset_id):
             preview_ids.add(dataset_id)
-        except Exception as exc:  # pragma: no cover - filesystem/json edge cases
-            label = _preview_label(catalog, dataset)
-            log_warn(f"{label}: preview export skipped ({exc})", catalog.quiet)
-            (preview_dir / f"{dataset_id}.json").unlink(missing_ok=True)
-            (preview_dir / f"{dataset_id}.json.js").unlink(missing_ok=True)
 
     if preview_dir.exists() and not any(preview_dir.iterdir()):
         preview_dir.rmdir()
