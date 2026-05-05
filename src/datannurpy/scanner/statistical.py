@@ -13,6 +13,7 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from ..preview import preview_from_arrow, preview_from_ibis
 from ..schema import Variable
 from ..utils import log_error, log_warn
 from .utils import build_variables
@@ -21,6 +22,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
     import pandas as pd
+    import polars as pl
 
 
 @dataclass
@@ -115,12 +117,34 @@ def scan_statistical(
     infer_stats: bool = True,
     freq_threshold: int | None = None,
     sample_size: int | None = None,
+    preview_rows: int = 0,
+    return_preview: bool = False,
     quiet: bool = False,
     path_label: str | None = None,
-) -> tuple[list[Variable], int, int | None, pa.Table | None, StatisticalMetadata]:
+) -> tuple[Any, ...]:
     """Scan a statistical file (SAS/SPSS/Stata) and return (variables, row_count, actual_sample_size, freq_table, metadata)."""
     file_path = Path(path)
     label = path_label or file_path.name
+
+    def result(
+        variables: list[Variable],
+        nb_row: int,
+        actual_sample_size: int | None,
+        freq_table: pa.Table | None,
+        metadata: StatisticalMetadata,
+        preview_df: pl.DataFrame | None,
+    ) -> tuple[Any, ...]:
+        if return_preview:
+            return (
+                variables,
+                nb_row,
+                actual_sample_size,
+                freq_table,
+                metadata,
+                preview_df,
+            )
+        return variables, nb_row, actual_sample_size, freq_table, metadata
+
     try:
         reader = _get_reader(file_path.suffix.lower())
     except ImportError as e:
@@ -135,7 +159,7 @@ def scan_statistical(
         _, meta = reader(file_path, metadataonly=True)
     except Exception as e:
         log_error(label, e, quiet)
-        return [], 0, None, None, StatisticalMetadata()
+        return result([], 0, None, None, StatisticalMetadata(), None)
 
     column_labels: dict[str, str | None] = meta.column_names_to_labels
     stat_metadata = StatisticalMetadata(description=meta.file_label or None)
@@ -149,22 +173,34 @@ def scan_statistical(
         _apply_types(variables, meta.readstat_variable_types)
         row_count = meta.number_rows or 0
         if not infer_stats:
-            return variables, row_count, None, None, stat_metadata
-        return variables, 0, None, None, stat_metadata
+            return result(variables, row_count, None, None, stat_metadata, None)
+        return result(variables, 0, None, None, stat_metadata, None)
 
     try:
         with _stat_to_parquet(reader, file_path) as tmp_path:
-            variables, row_count, actual_sample_size, freq_table = _build_from_parquet(
-                tmp_path,
-                dataset_id=dataset_id,
-                freq_threshold=freq_threshold,
-                sample_size=sample_size,
+            variables, row_count, actual_sample_size, freq_table, preview_df = (
+                _build_from_parquet(
+                    tmp_path,
+                    dataset_id=dataset_id,
+                    freq_threshold=freq_threshold,
+                    sample_size=sample_size,
+                    preview_rows=preview_rows,
+                    label=label,
+                    quiet=quiet,
+                )
             )
         _apply_labels(variables, column_labels)
-        return variables, row_count, actual_sample_size, freq_table, stat_metadata
+        return result(
+            variables,
+            row_count,
+            actual_sample_size,
+            freq_table,
+            stat_metadata,
+            preview_df,
+        )
     except Exception as e:
         log_error(label, e, quiet)
-        return [], 0, None, None, StatisticalMetadata()
+        return result([], 0, None, None, StatisticalMetadata(), None)
 
 
 def _build_from_parquet(
@@ -173,7 +209,10 @@ def _build_from_parquet(
     dataset_id: str,
     freq_threshold: int | None,
     sample_size: int | None,
-) -> tuple[list[Variable], int, int | None, pa.Table | None]:
+    preview_rows: int,
+    label: str,
+    quiet: bool,
+) -> tuple[list[Variable], int, int | None, pa.Table | None, pl.DataFrame | None]:
     """Read temp Parquet with DuckDB, fix types, build variables."""
     con = ibis.duckdb.connect()
     try:
@@ -182,6 +221,7 @@ def _build_from_parquet(
         row_count = int(table.count().to_pyarrow().as_py())
 
         actual_sample_size: int | None = None
+        preview_df = None
         if sample_size is not None and row_count > sample_size:
             source = table.get_name()
             cursor: Any = con.raw_sql(
@@ -190,6 +230,9 @@ def _build_from_parquet(
             sample_arrow = cursor.fetch_arrow_table()
             actual_sample_size = len(sample_arrow)
             sample_table = ibis.memtable(sample_arrow)
+            preview_df = preview_from_arrow(
+                sample_arrow, preview_rows, label=label, quiet=quiet
+            )
 
             variables, freq_table = build_variables(
                 sample_table,
@@ -208,8 +251,11 @@ def _build_from_parquet(
                 infer_stats=True,
                 freq_threshold=freq_threshold,
             )
+            preview_df = preview_from_ibis(
+                table, preview_rows, label=label, quiet=quiet
+            )
 
-        return variables, row_count, actual_sample_size, freq_table
+        return variables, row_count, actual_sample_size, freq_table, preview_df
     finally:
         con.disconnect()
 

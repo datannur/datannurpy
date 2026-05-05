@@ -30,6 +30,12 @@ from .utils.params import _UNSET, validate_params
 from .scanner.filesystem import FileSystem
 from .scanner.utils import get_mtime_iso
 from .finalize import remove_dataset_cascade
+from .preview import (
+    PreviewRows,
+    effective_preview_rows,
+    remember_preview,
+    resolve_preview_rows,
+)
 from .schema import Dataset, EntityMetadata, Folder, Variable, folder_from_metadata
 from .scanner.database import (
     batch_table_data_size,
@@ -82,6 +88,7 @@ def add_database(
     include: Sequence[str] | None = None,
     exclude: Sequence[str] | None = None,
     sample_size: int | None = _UNSET,
+    preview_rows: PreviewRows = None,
     group_by_prefix: bool | str = True,
     prefix_min_tables: int = 2,
     time_series: bool = True,
@@ -102,6 +109,10 @@ def add_database(
     resolved_sample_size = (
         sample_size if sample_size is not _UNSET else catalog.sample_size
     )
+    resolved_depth = depth if depth is not None else catalog.depth
+    preview_limit = effective_preview_rows(
+        resolve_preview_rows(preview_rows, catalog.preview_rows), resolved_depth
+    )
 
     # Handle remote SQLite files (sftp://, s3://, etc.)
     if isinstance(connection, str) and is_remote_database_file(connection):
@@ -117,6 +128,7 @@ def add_database(
                 include=include,
                 exclude=exclude,
                 sample_size=resolved_sample_size,
+                preview_rows=preview_limit,
                 group_by_prefix=group_by_prefix,
                 prefix_min_tables=prefix_min_tables,
                 time_series=time_series,
@@ -138,6 +150,7 @@ def add_database(
                 include=include,
                 exclude=exclude,
                 sample_size=resolved_sample_size,
+                preview_rows=preview_limit,
                 group_by_prefix=group_by_prefix,
                 prefix_min_tables=prefix_min_tables,
                 time_series=time_series,
@@ -157,6 +170,7 @@ def add_database(
         include=include,
         exclude=exclude,
         sample_size=resolved_sample_size,
+        preview_rows=preview_limit,
         group_by_prefix=group_by_prefix,
         prefix_min_tables=prefix_min_tables,
         time_series=time_series,
@@ -177,6 +191,7 @@ def _add_database_impl(
     include: Sequence[str] | None,
     exclude: Sequence[str] | None,
     sample_size: int | None,
+    preview_rows: int,
     group_by_prefix: bool | str,
     prefix_min_tables: int,
     time_series: bool,
@@ -423,6 +438,7 @@ def _add_database_impl(
                     data_path=table_data_path,
                     data_size=get_table_data_size(con, table_name, schema_name),
                     last_update_timestamp=catalog._now if is_change else None,
+                    preview_rows=0,
                     _seen=True,
                     _match_path=table_data_path,
                 )
@@ -505,15 +521,20 @@ def _add_database_impl(
 
             # Stat/Value mode: scan table
             try:
-                table_vars, nb_row, actual_sample_size, freq_table = scan_table(
-                    con,
-                    table_name,
-                    schema=schema_name,
-                    dataset_id=dataset_id,
-                    infer_stats=True,
-                    freq_threshold=freq_threshold,
-                    sample_size=sample_size if resolved_depth == "value" else None,
-                    row_count=current_nb_row,
+                table_vars, nb_row, actual_sample_size, freq_table, preview = (
+                    scan_table(
+                        con,
+                        table_name,
+                        schema=schema_name,
+                        dataset_id=dataset_id,
+                        infer_stats=True,
+                        freq_threshold=freq_threshold,
+                        sample_size=sample_size if resolved_depth == "value" else None,
+                        preview_rows=preview_rows,
+                        return_preview=True,
+                        quiet=q,
+                        row_count=current_nb_row,
+                    )
                 )
             except Exception as exc:
                 log_error(table_name, exc, q)
@@ -534,6 +555,7 @@ def _add_database_impl(
                 data_size=size_cache.get(table_name)
                 or get_table_data_size(con, table_name, schema_name),
                 sample_size=actual_sample_size,
+                preview_rows=preview_rows,
                 schema_signature=current_signature,
                 last_update_timestamp=effective_timestamp,
                 _seen=True,
@@ -544,6 +566,7 @@ def _add_database_impl(
             table_to_dataset_id[(schema_name, table_name)] = dataset_id
             collect_fk_refs(meta.fks, dataset_id, raw_fk_refs)
             catalog.dataset.add(dataset)
+            remember_preview(catalog, dataset.id, preview, label=table_name)
 
             var_id_mapping = build_variable_ids(table_vars, dataset.id)
             if freq_table is not None:
@@ -555,7 +578,7 @@ def _add_database_impl(
             log_done(f"{table_name} ({nb_row:,} rows, {len(table_vars)} vars)", q, t0)
 
         if seen_ids:
-            catalog.dataset.update_many(seen_ids, _seen=True)
+            catalog.dataset.update_many(seen_ids, _seen=True, preview_rows=preview_rows)
             catalog.enumeration_manager.mark_datasets_seen(seen_ids)
 
         # Process time series groups
@@ -578,6 +601,7 @@ def _add_database_impl(
                 depth=resolved_depth,
                 freq_threshold=freq_threshold,
                 sample_size=sample_size if resolved_depth == "value" else None,
+                preview_rows=preview_rows,
                 quiet=q,
             )
 
@@ -619,6 +643,7 @@ def _scan_table_series(
     depth: Depth,
     freq_threshold: int | None,
     sample_size: int | None,
+    preview_rows: int,
     quiet: bool,
 ) -> int:
     """Scan a time series of database tables. Returns 1 on error, 0 on success."""
@@ -647,6 +672,7 @@ def _scan_table_series(
     nb_row: int | None = None
     actual_sample_size: int | None = None
     freq_table = None
+    preview = None
 
     if depth == "dataset":
         pass  # No scanning needed
@@ -675,15 +701,20 @@ def _scan_table_series(
             # Stat/Value: scan latest table for stats
             try:
                 row_count = get_table_row_count(con, last_table, schema_name)
-                table_vars, nb_row, actual_sample_size, freq_table = scan_table(
-                    con,
-                    last_table,
-                    schema=schema_name,
-                    dataset_id=dataset_id,
-                    infer_stats=True,
-                    freq_threshold=freq_threshold,
-                    sample_size=sample_size,
-                    row_count=row_count,
+                table_vars, nb_row, actual_sample_size, freq_table, preview = (
+                    scan_table(
+                        con,
+                        last_table,
+                        schema=schema_name,
+                        dataset_id=dataset_id,
+                        infer_stats=True,
+                        freq_threshold=freq_threshold,
+                        sample_size=sample_size,
+                        preview_rows=preview_rows,
+                        return_preview=True,
+                        quiet=quiet,
+                        row_count=row_count,
+                    )
                 )
             except Exception as exc:
                 log_error(dataset_name, exc, quiet)
@@ -736,10 +767,17 @@ def _scan_table_series(
         start_date=first_period,
         end_date=last_period,
         sample_size=actual_sample_size,
+        preview_rows=preview_rows,
         _seen=True,
         _match_path=data_path,
     )
     catalog.dataset.add(dataset)
+    remember_preview(
+        catalog,
+        dataset.id,
+        preview if depth != "variable" else None,
+        label=dataset_name,
+    )
 
     if table_vars:
         var_id_mapping = build_variable_ids(table_vars, dataset.id)

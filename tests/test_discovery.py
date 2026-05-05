@@ -7,6 +7,7 @@ from pathlib import Path
 from datannurpy import Catalog
 from datannurpy.scanner.discovery import (
     DatasetInfo,
+    _match_path_keys,
     compute_scan_plan,
     discover_datasets,
 )
@@ -98,6 +99,25 @@ class TestComputeScanPlan:
 
         assert len(plan.to_scan) == 1
         assert len(plan.to_skip) == 1
+
+    def test_match_path_keys_include_relative_path(self, tmp_path: Path):
+        """Path aliases include runtime absolute and persisted relative keys."""
+        csv_file = tmp_path / "nested" / "data.csv"
+        csv_file.parent.mkdir()
+        csv_file.write_text("a\n1\n")
+
+        assert _match_path_keys(csv_file, tmp_path) == [
+            str(csv_file),
+            "nested/data.csv",
+        ]
+
+    def test_match_path_keys_handle_root_and_outside_paths(self, tmp_path: Path):
+        """Path aliases cover root folders and paths outside the scan root."""
+        outside = tmp_path.parent / "outside.csv"
+
+        assert _match_path_keys(tmp_path, tmp_path) == [str(tmp_path), ""]
+        assert _match_path_keys(outside, tmp_path) == [str(outside)]
+        assert _match_path_keys(Path("data.csv"), Path(".")) == ["data.csv"]
 
 
 class TestDiscoverDatasets:

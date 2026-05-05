@@ -4,8 +4,24 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any, cast
+
+import polars as pl
+import pyarrow as pa
+import pytest
 
 from datannurpy import Catalog, EntityMetadata, Folder
+from datannurpy.errors import ConfigError
+from datannurpy.preview import (
+    _dataset_id_from_preview_file,
+    _json_safe_object,
+    _preview_files_exist,
+    _preview_label,
+    _remove_stale_preview_files,
+    normalize_preview_df,
+    preview_from_ibis,
+    validate_preview_rows,
+)
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 CSV_DIR = DATA_DIR / "csv"
@@ -246,6 +262,217 @@ class TestCatalogWrite:
             data = json.load(f)
         assert len(data) == 1
         assert data[0]["id"] == "org1"
+
+    def test_preview_rows_exports_json_and_jsonjs(self, tmp_path: Path):
+        """preview_rows writes bounded JSON and JSON-JS preview files."""
+        data_path = tmp_path / "sales.csv"
+        data_path.write_text("id,name\n1,Alice\n2,Bob\n3,Charlie\n")
+
+        catalog = Catalog(depth="stat", preview_rows=2)
+        catalog.add_dataset(data_path, metadata=EntityMetadata(id="sales"))
+        catalog.export_db(tmp_path / "out")
+
+        preview_path = tmp_path / "out" / "preview" / "sales.json"
+        preview_js_path = tmp_path / "out" / "preview" / "sales.json.js"
+        assert preview_path.exists()
+        assert preview_js_path.exists()
+
+        rows = json.loads(preview_path.read_text())
+        assert rows == [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}]
+        datasets = json.loads((tmp_path / "out" / "dataset.json").read_text())
+        assert datasets[0]["has_preview"] == 1
+
+        content = preview_js_path.read_text()
+        assert content.startswith("jsonjs.data['sales'] = ")
+        assert json.loads(content.replace("jsonjs.data['sales'] = ", ""))[0] == [
+            "id",
+            "name",
+        ]
+
+    def test_preview_rows_false_disables_export(self, tmp_path: Path):
+        """preview_rows=False disables preview files."""
+        data_path = tmp_path / "sales.csv"
+        data_path.write_text("id,name\n1,Alice\n")
+
+        catalog = Catalog(depth="stat", preview_rows=False)
+        catalog.add_dataset(data_path, metadata=EntityMetadata(id="sales"))
+        catalog.export_db(tmp_path / "out")
+
+        assert not (tmp_path / "out" / "preview").exists()
+        datasets = json.loads((tmp_path / "out" / "dataset.json").read_text())
+        assert "has_preview" not in datasets[0]
+
+    def test_dataset_and_variable_depth_do_not_export_previews(self, tmp_path: Path):
+        """Structure-only depths do not read rows for previews."""
+        for depth in ("dataset", "variable"):
+            data_path = tmp_path / f"{depth}.csv"
+            data_path.write_text("id,name\n1,Alice\n")
+            out_dir = tmp_path / f"out-{depth}"
+
+            catalog = Catalog(depth=depth)
+            catalog.add_dataset(data_path, metadata=EntityMetadata(id=depth))
+            catalog.export_db(out_dir)
+
+            assert not (out_dir / "preview").exists()
+
+    def test_add_dataset_preview_override_disables_one_source(self, tmp_path: Path):
+        """Per-source preview_rows override can disable an individual dataset."""
+        public = tmp_path / "public.csv"
+        private = tmp_path / "private.csv"
+        public.write_text("id\n1\n")
+        private.write_text("id\n2\n")
+
+        catalog = Catalog(depth="stat", preview_rows=1)
+        catalog.add_dataset(public, metadata=EntityMetadata(id="public"))
+        catalog.add_dataset(
+            private, metadata=EntityMetadata(id="private"), preview_rows=False
+        )
+        catalog.export_db(tmp_path / "out")
+
+        assert (tmp_path / "out" / "preview" / "public.json").exists()
+        assert not (tmp_path / "out" / "preview" / "private.json").exists()
+
+    def test_invalid_preview_rows_raise_config_error(self, tmp_path: Path):
+        """Invalid preview_rows values fail fast."""
+        data_path = tmp_path / "sales.csv"
+        data_path.write_text("id\n1\n")
+
+        with pytest.raises(ConfigError, match="preview_rows cannot be None"):
+            validate_preview_rows(None, allow_none=False)
+        with pytest.raises(ConfigError, match="preview_rows must be a non-negative"):
+            validate_preview_rows("bad", allow_none=True)  # type: ignore[arg-type]
+        with pytest.raises(ConfigError, match="preview_rows must be >= 0"):
+            Catalog(preview_rows=-1)
+        with pytest.raises(ConfigError, match="preview_rows=true is ambiguous"):
+            Catalog(preview_rows=True)  # type: ignore[arg-type]
+
+        catalog = Catalog()
+        with pytest.raises(ConfigError, match="preview_rows must be >= 0"):
+            catalog.add_dataset(data_path, preview_rows=-1)
+
+    def test_preview_export_removes_stale_files(self, tmp_path: Path):
+        """Preview synchronization removes files for disabled or removed datasets."""
+        preview_dir = tmp_path / "out" / "preview"
+        preview_dir.mkdir(parents=True)
+        (preview_dir / "stale.json").write_text("[]")
+        (preview_dir / "stale.json.js").write_text("jsonjs.data['stale'] = []")
+
+        catalog = Catalog(depth="stat", preview_rows=False)
+        catalog.export_db(tmp_path / "out")
+
+        assert not preview_dir.exists()
+
+    def test_preview_helpers_cover_fallbacks_and_cleanup(self, tmp_path: Path):
+        """Preview helpers normalize objects and clean non-preview paths."""
+
+        class FakeLimitedTable:
+            def __init__(self, rows: int = 0) -> None:
+                self.rows = rows
+
+            def limit(self, rows: int) -> FakeLimitedTable:
+                return FakeLimitedTable(rows)
+
+            def to_pyarrow(self) -> pa.Table:
+                raise RuntimeError("arrow unavailable")
+
+            def execute(self) -> pa.Table:
+                return pa.table({"id": list(range(self.rows))})
+
+        preview = preview_from_ibis(
+            cast(Any, FakeLimitedTable()),
+            1,
+            label="fake",
+            quiet=True,
+        )
+        assert preview is not None
+        assert preview.to_dicts() == [{"id": 0}]
+
+        normalized = normalize_preview_df(
+            pl.DataFrame(
+                {
+                    "binary_value": pl.Series([None, b"abc"], dtype=pl.Binary),
+                    "object_value": pl.Series([None, {"a": 1}], dtype=pl.Object),
+                }
+            )
+        )
+        assert normalized.to_dicts() == [
+            {"binary_value": None, "object_value": None},
+            {"binary_value": "b'abc'", "object_value": "{'a': 1}"},
+        ]
+        assert _json_safe_object(None) is None
+        assert _json_safe_object({"b": 2}) == "{'b': 2}"
+
+        from datannurpy.schema import Dataset
+
+        label_catalog = Catalog()
+        dataset = Dataset(id="fallback", name="Fallback")
+        assert _preview_label(label_catalog, dataset) == "Fallback"
+        label_catalog._dataset_preview_labels[dataset.id] = "Stored label"
+        assert _preview_label(label_catalog, dataset) == "Stored label"
+
+        preview_dir = tmp_path / "preview"
+        nested = preview_dir / "nested"
+        nested.mkdir(parents=True)
+        (nested / "file.txt").write_text("remove me")
+        (preview_dir / "keep.json").write_text("[]")
+        (preview_dir / "stale.txt").write_text("remove me")
+
+        _remove_stale_preview_files(preview_dir, {"keep"})
+
+        assert (preview_dir / "keep.json").exists()
+        assert not _preview_files_exist(preview_dir, "keep")
+        (preview_dir / "keep.json.js").write_text("jsonjs.data['keep'] = []")
+        assert _preview_files_exist(preview_dir, "keep")
+        assert not nested.exists()
+        assert not (preview_dir / "stale.txt").exists()
+        assert _dataset_id_from_preview_file(Path("stale.txt")) is None
+
+    def test_incremental_export_preserves_existing_preview(self, tmp_path: Path):
+        """Skipped unchanged datasets keep existing preview files."""
+        data_path = tmp_path / "sales.csv"
+        data_path.write_text("id\n1\n2\n")
+        app_path = tmp_path / "app"
+
+        catalog = Catalog(app_path=app_path, depth="stat", preview_rows=1)
+        catalog.add_dataset(data_path, metadata=EntityMetadata(id="sales"))
+        catalog.export_db(catalog.db_path)
+
+        preview_path = app_path / "data" / "db" / "preview" / "sales.json"
+        preview_js_path = app_path / "data" / "db" / "preview" / "sales.json.js"
+        preview_path.write_text('[{"id": 99}]')
+        preview_js_path.write_text("jsonjs.data['sales'] = [[\"id\"], [99]]")
+
+        incremental = Catalog(app_path=app_path, depth="stat", preview_rows=1)
+        incremental.add_dataset(data_path, metadata=EntityMetadata(id="sales"))
+        incremental.export_db(incremental.db_path)
+
+        assert json.loads(preview_path.read_text()) == [{"id": 99}]
+        assert preview_js_path.read_text() == "jsonjs.data['sales'] = [[\"id\"], [99]]"
+        datasets = json.loads((app_path / "data" / "db" / "dataset.json").read_text())
+        assert datasets[0]["has_preview"] == 1
+
+    def test_database_preview_uses_row_limit(self, tmp_path: Path):
+        """Database previews honor the configured row limit."""
+        import sqlite3
+
+        db_path = tmp_path / "test.db"
+        conn = sqlite3.connect(db_path)
+        conn.execute("CREATE TABLE users (id INTEGER, name TEXT)")
+        conn.executemany(
+            "INSERT INTO users VALUES (?, ?)",
+            [(1, "Alice"), (2, "Bob"), (3, "Charlie")],
+        )
+        conn.commit()
+        conn.close()
+
+        catalog = Catalog(depth="stat", preview_rows=2)
+        catalog.add_database(f"sqlite:///{db_path}", metadata=EntityMetadata(id="db"))
+        catalog.export_db(tmp_path / "out")
+
+        rows = json.loads(
+            (tmp_path / "out" / "preview" / "db---users.json").read_text()
+        )
+        assert len(rows) == 2
 
     def test_write_tags(self, tmp_path: Path):
         """export_db should write tag.json when tags exist."""

@@ -28,9 +28,20 @@ class TestIncrementalScanFiles:
 
         assert len(catalog1.dataset.all()) == 1
         assert len(catalog1.variable.all()) == 2
+        ds_first = catalog1.dataset.all()[0]
+        assert ds_first.data_path == "test.csv"
+        assert ds_first._match_path == str(csv_file)
+
+        exported_dataset = json.loads(
+            (app_dir / "data" / "db" / "dataset.json").read_text()
+        )
+        assert exported_dataset[0]["data_path"] == "test.csv"
+        assert str(tmp_path) not in exported_dataset[0]["data_path"]
 
         # Second scan (same file, same mtime)
         catalog2 = Catalog(app_path=app_dir, quiet=True)
+        reloaded = catalog2.dataset.all()[0]
+        assert reloaded._match_path == "test.csv"
         initial_datasets = len(catalog2.dataset.all())
         catalog2.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
 
@@ -39,6 +50,7 @@ class TestIncrementalScanFiles:
         # Dataset should be marked as seen
         ds = catalog2.dataset.all()[0]
         assert getattr(ds, "_seen", False) is True
+        assert ds._match_path == str(csv_file)
 
     def test_unchanged_file_with_dataset_metadata_is_skipped(self, tmp_path: Path):
         """dataset.csv metadata should not break incremental matching on reload."""
@@ -177,6 +189,21 @@ class TestIncrementalScanFiles:
 class TestIncrementalScanAddDataset:
     """Test incremental scan for add_dataset."""
 
+    def test_add_dataset_same_session_unchanged_skipped(self, tmp_path: Path):
+        """add_dataset should match the runtime absolute _match_path in-session."""
+        csv_file = tmp_path / "test.csv"
+        csv_file.write_text("a,b\n1,2\n")
+
+        catalog = Catalog(quiet=True)
+        catalog.add_dataset(csv_file)
+        catalog.add_dataset(csv_file)
+
+        assert len(catalog.dataset.all()) == 1
+        ds = catalog.dataset.all()[0]
+        assert ds.data_path == "test.csv"
+        assert ds._match_path == str(csv_file)
+        assert getattr(ds, "_seen", False) is True
+
     def test_add_dataset_unchanged_skipped(self, tmp_path: Path):
         """add_dataset should skip unchanged file."""
         app_dir = tmp_path
@@ -224,6 +251,28 @@ class TestIncrementalScanAddDataset:
         assert len(catalog2.dataset.all()) == 1
         assert catalog2.dataset.all()[0].nb_row == 2
         assert len(catalog2.variable.all()) == 3
+
+    def test_add_partitioned_dataset_same_session_unchanged_skipped(
+        self, tmp_path: Path
+    ):
+        """Partitioned add_dataset should match runtime _match_path in-session."""
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
+        dataset_dir = tmp_path / "partitioned"
+        part_dir = dataset_dir / "year=2024"
+        part_dir.mkdir(parents=True)
+        pq.write_table(pa.table({"a": [1, 2]}), part_dir / "data.parquet")
+
+        catalog = Catalog(quiet=True)
+        catalog.add_dataset(dataset_dir)
+        catalog.add_dataset(dataset_dir)
+
+        assert len(catalog.dataset.all()) == 1
+        ds = catalog.dataset.all()[0]
+        assert ds.data_path == "partitioned"
+        assert ds._match_path == str(dataset_dir)
+        assert getattr(ds, "_seen", False) is True
 
 
 class TestRemoveDatasetCascade:

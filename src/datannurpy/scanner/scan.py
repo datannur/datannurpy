@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 import pyarrow as pa
 import pyarrow.fs
 import pyarrow.parquet as pq
+import polars as pl
 
 from ..schema import Variable
 from .csv import scan_csv
@@ -43,6 +44,7 @@ class ScanResult:
     description: str | None = None
     name: str | None = None  # Dataset name from metadata (Delta, Iceberg)
     data_size: int | None = None
+    preview: pl.DataFrame | None = None
 
 
 def scan_file(
@@ -54,6 +56,7 @@ def scan_file(
     freq_threshold: int | None = None,
     csv_encoding: str | None = None,
     sample_size: int | None = None,
+    preview_rows: int = 0,
     csv_skip_copy: bool = False,
     fs: FileSystem | None = None,
     quiet: bool = False,
@@ -87,6 +90,7 @@ def scan_file(
             freq_threshold=freq_threshold,
             csv_encoding=csv_encoding,
             sample_size=sample_size,
+            preview_rows=preview_rows,
             csv_skip_copy=csv_skip_copy,
             fs=fs,
             quiet=quiet,
@@ -102,6 +106,7 @@ def scan_file(
         freq_threshold=freq_threshold,
         csv_encoding=csv_encoding,
         sample_size=sample_size,
+        preview_rows=preview_rows,
         csv_skip_copy=csv_skip_copy,
         quiet=quiet,
         path_label=path_label,
@@ -116,6 +121,7 @@ def _scan_local(
     freq_threshold: int | None,
     csv_encoding: str | None,
     sample_size: int | None,
+    preview_rows: int,
     csv_skip_copy: bool,
     quiet: bool = False,
     path_label: str | None = None,
@@ -129,11 +135,15 @@ def _scan_local(
         "iceberg": scan_iceberg,
     }
     if delivery_format in parquet_scanners:
-        variables, nb_row, freq_table, metadata = parquet_scanners[delivery_format](
+        variables, nb_row, freq_table, metadata, preview = parquet_scanners[
+            delivery_format
+        ](
             path,
             dataset_id=dataset_id,
             freq_threshold=freq_threshold,
             sample_size=sample_size,
+            preview_rows=preview_rows,
+            return_preview=True,
             quiet=quiet,
         )
         return ScanResult(
@@ -144,16 +154,21 @@ def _scan_local(
             description=metadata.description if metadata else None,
             name=metadata.name if metadata else None,
             data_size=metadata.data_size if metadata else None,
+            preview=preview,
         )
 
     if delivery_format in ("sas", "spss", "stata"):
-        variables, nb_row, actual_sample_size, freq_table, metadata = scan_statistical(
-            path,
-            dataset_id=dataset_id,
-            freq_threshold=freq_threshold,
-            sample_size=sample_size,
-            quiet=quiet,
-            path_label=path_label,
+        variables, nb_row, actual_sample_size, freq_table, metadata, preview = (
+            scan_statistical(
+                path,
+                dataset_id=dataset_id,
+                freq_threshold=freq_threshold,
+                sample_size=sample_size,
+                preview_rows=preview_rows,
+                return_preview=True,
+                quiet=quiet,
+                path_label=path_label,
+            )
         )
         return ScanResult(
             variables=variables,
@@ -161,15 +176,18 @@ def _scan_local(
             sample_size=actual_sample_size,
             freq_table=freq_table,
             description=metadata.description if metadata else None,
+            preview=preview,
         )
 
     if delivery_format == "csv":
-        variables, nb_row, actual_sample_size, freq_table = scan_csv(
+        variables, nb_row, actual_sample_size, freq_table, preview = scan_csv(
             path,
             dataset_id=dataset_id,
             freq_threshold=freq_threshold,
             csv_encoding=csv_encoding,
             sample_size=sample_size,
+            preview_rows=preview_rows,
+            return_preview=True,
             csv_skip_copy=csv_skip_copy,
             quiet=quiet,
             path_label=path_label,
@@ -179,17 +197,25 @@ def _scan_local(
             nb_row=nb_row,
             sample_size=actual_sample_size,
             freq_table=freq_table,
+            preview=preview,
         )
 
     # Excel (xls, xlsx)
-    variables, nb_row, freq_table = scan_excel(
+    variables, nb_row, freq_table, preview = scan_excel(
         path,
         dataset_id=dataset_id,
         freq_threshold=freq_threshold,
+        preview_rows=preview_rows,
+        return_preview=True,
         quiet=quiet,
         path_label=path_label,
     )
-    return ScanResult(variables=variables, nb_row=nb_row, freq_table=freq_table)
+    return ScanResult(
+        variables=variables,
+        nb_row=nb_row,
+        freq_table=freq_table,
+        preview=preview,
+    )
 
 
 def _scan_with_ensure_local(
@@ -200,6 +226,7 @@ def _scan_with_ensure_local(
     freq_threshold: int | None,
     csv_encoding: str | None,
     sample_size: int | None,
+    preview_rows: int,
     csv_skip_copy: bool,
     fs: FileSystem,
     quiet: bool = False,
@@ -221,6 +248,7 @@ def _scan_with_ensure_local(
             freq_threshold=freq_threshold,
             csv_encoding=csv_encoding,
             sample_size=sample_size,
+            preview_rows=preview_rows,
             csv_skip_copy=csv_skip_copy,
             quiet=quiet,
             path_label=path_label,

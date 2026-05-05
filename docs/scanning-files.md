@@ -195,3 +195,22 @@ sample_size: null
 When a dataset has more rows than `sample_size`, a uniform random sample is used for frequency counts and enumeration detection. All other statistics (`nb_row`, `nb_missing`, `nb_distinct`, `min`, `max`, `mean`, `std`) are computed on the full dataset.
 
 The actual number of sampled rows is recorded in `Dataset.sample_size` (`null` when no sampling was applied).
+
+## Dataset previews
+
+By default, `preview_rows` is `100`. At `stat` and `value` depth, each scanned dataset exports up to that many rows in `preview/<dataset_id>.json` and `preview/<dataset_id>.json.js`. These rows come from data already read during scanning when possible, including reservoir samples used for frequency detection.
+
+Override the limit per file source, or set `false` to disable previews for one source while keeping the global default:
+
+```yaml
+preview_rows: 100
+
+add:
+  - folder: ./data/public
+    preview_rows: 50
+
+  - dataset: ./data/private.csv
+    preview_rows: false
+```
+
+Previews are scan-time data. They are not generated at `dataset` or `variable` depth, and export commands do not have a separate `preview_rows` override.

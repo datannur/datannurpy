@@ -177,6 +177,7 @@ def compute_scan_plan(
     datasets: list[DatasetInfo],
     catalog: Catalog,
     refresh: bool,
+    root: PurePath | None = None,
 ) -> ScanPlan:
     """Compute which datasets need scanning based on mtime."""
     to_scan: list[DatasetInfo] = []
@@ -187,10 +188,32 @@ def compute_scan_plan(
     }
 
     for info in datasets:
-        existing = existing_by_path.get(str(info.path))
+        match_path = str(info.path)
+        existing = None
+        for key in _match_path_keys(info.path, root):
+            existing = existing_by_path.get(key)
+            if existing is not None:
+                existing_by_path[match_path] = existing
+                break
         if existing is None or refresh or existing.last_update_timestamp != info.mtime:
             to_scan.append(info)
         else:
             to_skip.append(info)
 
     return ScanPlan(to_scan=to_scan, to_skip=to_skip, existing_by_path=existing_by_path)
+
+
+def _match_path_keys(path: PurePath, root: PurePath | None) -> list[str]:
+    """Return persisted and runtime match keys for a discovered path."""
+    keys = [str(path)]
+    if root is None:
+        return keys
+    try:
+        rel_path = path.relative_to(root).as_posix()
+    except ValueError:
+        return keys
+    if rel_path == ".":
+        rel_path = ""
+    if rel_path not in keys:
+        keys.append(rel_path)
+    return keys

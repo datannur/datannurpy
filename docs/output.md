@@ -22,6 +22,12 @@ If the export is larger than expected, the main levers are scan depth, frequency
 
 `.json.js` reflects local or shared-folder usage (`file://`), `.json` reflects uncompressed HTTP, and `.json.gz` reflects HTTP served with gzip.
 
+### Dataset previews
+
+At `stat` and `value` depth, datannurpy exports small dataset previews by default. Database-only exports write them to `<output_dir>/preview/<dataset_id>.json` and `<output_dir>/preview/<dataset_id>.json.js`; app exports place the same files under `data/db/preview/`. The JSON file is an array of row objects, and the JSON-JS file uses `jsonjs.data['<dataset_id>']`, matching the metadata table convention.
+
+Use `preview_rows` to control the maximum number of rows per dataset. The default is `100`; set `preview_rows: 0` or `preview_rows: false` globally or on an individual `add` entry to disable previews for sensitive sources. Previews are not collected at `dataset` or `variable` depth, because those modes do not read data rows.
+
 ## Incremental scan
 
 

@@ -12,9 +12,11 @@ from typing import TYPE_CHECKING, Any
 
 import duckdb as _duckdb
 import ibis
+import polars as pl
 import pyarrow as pa
 
 from ..utils import log_error, log_warn
+from ..preview import preview_from_arrow, preview_from_ibis
 from .excel import is_valid_tabular_dataset
 from .filesystem import ensure_local_utf8
 from .utils import build_variables
@@ -194,16 +196,29 @@ def scan_csv(
     freq_threshold: int | None = None,
     csv_encoding: str | None = None,
     sample_size: int | None = None,
+    preview_rows: int = 0,
+    return_preview: bool = False,
     csv_skip_copy: bool = False,
     quiet: bool = False,
     path_label: str | None = None,
-) -> tuple[list[Variable], int | None, int | None, pa.Table | None]:
+) -> tuple[Any, ...]:
     """Scan a CSV file and return (variables, row_count, actual_sample_size, freq_table)."""
     file_path = Path(path)
     label = path_label or file_path.name
 
+    def result(
+        variables: list[Variable],
+        nb_row: int | None,
+        actual_sample_size: int | None,
+        freq_table: pa.Table | None,
+        preview_df: pl.DataFrame | None,
+    ) -> tuple[Any, ...]:
+        if return_preview:
+            return variables, nb_row, actual_sample_size, freq_table, preview_df
+        return variables, nb_row, actual_sample_size, freq_table
+
     if file_path.stat().st_size == 0:
-        return [], 0, None, None
+        return result([], 0, None, None, None)
 
     try:
         with _csv_source(file_path, csv_encoding, csv_skip_copy) as csv_path:
@@ -223,7 +238,7 @@ def scan_csv(
                         f"({reason}); skipped as untreatable",
                         quiet,
                     )
-                    return [], None, None, None
+                    return result([], None, None, None, None)
 
             con = ibis.duckdb.connect()
             try:
@@ -249,7 +264,7 @@ def scan_csv(
                             f"({_short_csv_error(exc)}); skipped as untreatable",
                             quiet,
                         )
-                        return [], None, None, None
+                        return result([], None, None, None, None)
 
                 if row_count == 0:
                     variables, freq_table = build_variables(
@@ -258,9 +273,13 @@ def scan_csv(
                         dataset_id=dataset_id,
                         infer_stats=False,
                     )
-                    return variables, 0, None, freq_table
+                    preview_df = preview_from_ibis(
+                        table, preview_rows, label=label, quiet=quiet
+                    )
+                    return result(variables, 0, None, freq_table, preview_df)
 
                 actual_sample_size: int | None = None
+                preview_df = None
                 if sample_size is not None and row_count > sample_size and infer_stats:
                     safe_path = str(csv_path).replace("'", "''")
                     strict_arg = "" if strict_mode else ", strict_mode=false"
@@ -273,6 +292,9 @@ def scan_csv(
                     sample_arrow = cursor.fetch_arrow_table()
                     actual_sample_size = len(sample_arrow)
                     sample_table = ibis.memtable(sample_arrow)
+                    preview_df = preview_from_arrow(
+                        sample_arrow, preview_rows, label=label, quiet=quiet
+                    )
 
                     variables, freq_table = build_variables(
                         sample_table,
@@ -291,10 +313,13 @@ def scan_csv(
                         infer_stats=infer_stats,
                         freq_threshold=freq_threshold,
                     )
+                    preview_df = preview_from_ibis(
+                        table, preview_rows, label=label, quiet=quiet
+                    )
             finally:
                 con.disconnect()
     except Exception as e:
         log_error(label, e, quiet)
-        return [], 0, None, None
+        return result([], 0, None, None, None)
 
-    return variables, row_count, actual_sample_size, freq_table
+    return result(variables, row_count, actual_sample_size, freq_table, preview_df)

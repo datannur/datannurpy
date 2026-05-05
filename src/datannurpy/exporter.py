@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 
 from .add_metadata import ensure_metadata_applied
 from .errors import ConfigError
+from .preview import apply_preview_flags, sync_preview_exports
 
 _GZIP_CHUNK_SIZE = 1024 * 1024
 
@@ -368,6 +369,8 @@ def export_db(
         "frequency": "variable",
         "value": "enumeration",
     }
+    preview_ids = sync_preview_exports(catalog, path)
+    apply_preview_flags(catalog, preview_ids)
     _drop_empty_columns(catalog)
     catalog.save(
         path,

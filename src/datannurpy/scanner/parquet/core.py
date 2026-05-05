@@ -8,11 +8,13 @@ from typing import Any
 
 import duckdb as _duckdb
 import ibis
+import polars as pl
 import pyarrow as pa
 import pyarrow.parquet as pq
 
 from ...schema import Variable
 from ...utils import log_debug, log_error, log_warn
+from ...preview import preview_from_arrow, preview_from_ibis
 from ..utils import build_variables
 from .discovery import DatasetType, ParquetDatasetInfo
 
@@ -26,6 +28,21 @@ class DatasetMetadata:
     column_descriptions: dict[str, str] | None = None
     data_size: int | None = None
     sample_size: int | None = None
+
+
+def _parquet_result(
+    variables: list[Variable],
+    nb_row: int,
+    freq_table: pa.Table | None,
+    metadata: DatasetMetadata,
+    preview_df: pl.DataFrame | None,
+    *,
+    return_preview: bool,
+) -> tuple[Any, ...]:
+    """Return the legacy scanner tuple unless preview was explicitly requested."""
+    if return_preview:
+        return variables, nb_row, freq_table, metadata, preview_df
+    return variables, nb_row, freq_table, metadata
 
 
 def apply_column_descriptions(
@@ -75,13 +92,21 @@ def _build_with_sampling(
     freq_threshold: int | None,
     sample_size: int | None,
     table_name: str,
-) -> tuple[list[Variable], int | None, pa.Table | None]:
+    preview_rows: int,
+    label: str,
+    quiet: bool,
+) -> tuple[list[Variable], int | None, pa.Table | None, pl.DataFrame | None]:
     """Build variables with optional DuckDB reservoir sampling."""
     if sample_size is not None and row_count > sample_size and infer_stats:
         cursor: Any = con.raw_sql(
             f"SELECT * FROM {table_name} USING SAMPLE reservoir({sample_size} ROWS)"
         )
         sample_arrow = cursor.fetch_arrow_table()
+        preview_df = (
+            preview_from_arrow(sample_arrow, preview_rows, label=label, quiet=quiet)
+            if preview_rows > 0
+            else None
+        )
         sample_table = ibis.memtable(sample_arrow)
         variables, freq_table = build_variables(
             sample_table,
@@ -92,7 +117,7 @@ def _build_with_sampling(
             full_table=table,
             full_nb_rows=row_count,
         )
-        return variables, len(sample_arrow), freq_table
+        return variables, len(sample_arrow), freq_table, preview_df
     variables, freq_table = build_variables(
         table,
         nb_rows=row_count,
@@ -100,7 +125,8 @@ def _build_with_sampling(
         infer_stats=infer_stats,
         freq_threshold=freq_threshold,
     )
-    return variables, None, freq_table
+    preview_df = preview_from_ibis(table, preview_rows, label=label, quiet=quiet)
+    return variables, None, freq_table, preview_df
 
 
 def scan_simple(
@@ -111,7 +137,9 @@ def scan_simple(
     *,
     sample_size: int | None = None,
     quiet: bool = False,
-) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
+    preview_rows: int = 0,
+    return_preview: bool = False,
+) -> tuple[Any, ...]:
     """Scan a simple Parquet file."""
     # Extract metadata
     metadata = extract_parquet_metadata(path)
@@ -124,15 +152,20 @@ def scan_simple(
             row_count = int(table.count().to_pyarrow().as_py())
             table_name = table.get_name()
 
-            variables, actual_sample_size, freq_table = _build_with_sampling(
-                con,
-                table,
-                row_count=row_count,
-                dataset_id=dataset_id,
-                infer_stats=infer_stats,
-                freq_threshold=freq_threshold,
-                sample_size=sample_size,
-                table_name=table_name,
+            variables, actual_sample_size, freq_table, preview_df = (
+                _build_with_sampling(
+                    con,
+                    table,
+                    row_count=row_count,
+                    dataset_id=dataset_id,
+                    infer_stats=infer_stats,
+                    freq_threshold=freq_threshold,
+                    sample_size=sample_size,
+                    table_name=table_name,
+                    preview_rows=preview_rows,
+                    label=str(path),
+                    quiet=quiet,
+                )
             )
         except (KeyError, _duckdb.InvalidInputException) as exc:
             # DuckDB exposes GeoParquet geometry as GEOMETRY('<crs>') where
@@ -163,12 +196,22 @@ def scan_simple(
                 infer_stats=infer_stats,
                 freq_threshold=freq_threshold,
             )
+            preview_df = preview_from_arrow(
+                arrow_table, preview_rows, label=str(path), quiet=quiet
+            )
             actual_sample_size = None
 
         apply_column_descriptions(variables, metadata.column_descriptions)
         metadata.sample_size = actual_sample_size
 
-        return variables, row_count, freq_table, metadata
+        return _parquet_result(
+            variables,
+            row_count,
+            freq_table,
+            metadata,
+            preview_df,
+            return_preview=return_preview,
+        )
     finally:
         con.disconnect()
 
@@ -181,7 +224,9 @@ def scan_delta(
     *,
     sample_size: int | None = None,
     quiet: bool = False,
-) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
+    preview_rows: int = 0,
+    return_preview: bool = False,
+) -> tuple[Any, ...]:
     """Scan a Delta Lake table."""
     # Extract metadata using deltalake if available (optional, for metadata only)
     # DuckDB reads the data via its own delta extension
@@ -214,7 +259,7 @@ def scan_delta(
         row_count = int(table.count().to_pyarrow().as_py())
         table_name = table.get_name()
 
-        variables, actual_sample_size, freq_table = _build_with_sampling(
+        variables, actual_sample_size, freq_table, preview_df = _build_with_sampling(
             con,
             table,
             row_count=row_count,
@@ -223,11 +268,21 @@ def scan_delta(
             freq_threshold=freq_threshold,
             sample_size=sample_size,
             table_name=table_name,
+            preview_rows=preview_rows,
+            label=str(path),
+            quiet=quiet,
         )
 
         metadata.sample_size = actual_sample_size
 
-        return variables, row_count, freq_table, metadata
+        return _parquet_result(
+            variables,
+            row_count,
+            freq_table,
+            metadata,
+            preview_df,
+            return_preview=return_preview,
+        )
     finally:
         con.disconnect()
 
@@ -240,9 +295,10 @@ def scan_hive(
     *,
     sample_size: int | None = None,
     quiet: bool = False,
-) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
+    preview_rows: int = 0,
+    return_preview: bool = False,
+) -> tuple[Any, ...]:
     """Scan a Hive-partitioned Parquet dataset."""
-    _ = quiet  # unused but kept for API consistency
     # Hive partitioned datasets don't have table-level metadata
     # Compute data_size by summing parquet file sizes
     pq_files = list(path.rglob("*.parquet")) + list(path.rglob("*.pq"))
@@ -257,7 +313,7 @@ def scan_hive(
         row_count = int(table.count().to_pyarrow().as_py())
         table_name = table.get_name()
 
-        variables, actual_sample_size, freq_table = _build_with_sampling(
+        variables, actual_sample_size, freq_table, preview_df = _build_with_sampling(
             con,
             table,
             row_count=row_count,
@@ -266,11 +322,21 @@ def scan_hive(
             freq_threshold=freq_threshold,
             sample_size=sample_size,
             table_name=table_name,
+            preview_rows=preview_rows,
+            label=str(path),
+            quiet=quiet,
         )
 
         metadata.sample_size = actual_sample_size
 
-        return variables, row_count, freq_table, metadata
+        return _parquet_result(
+            variables,
+            row_count,
+            freq_table,
+            metadata,
+            preview_df,
+            return_preview=return_preview,
+        )
     finally:
         con.disconnect()
 
@@ -283,9 +349,10 @@ def scan_iceberg(
     *,
     sample_size: int | None = None,
     quiet: bool = False,
-) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
+    preview_rows: int = 0,
+    return_preview: bool = False,
+) -> tuple[Any, ...]:
     """Scan an Apache Iceberg table using PyIceberg."""
-    _ = quiet  # unused but kept for API consistency
     try:
         from pyiceberg.table import StaticTable
     except ImportError as e:
@@ -359,7 +426,7 @@ def scan_iceberg(
         table = con.create_table("_iceberg", arrow_table, temp=True)
         table_name = table.get_name()
 
-        variables, actual_sample_size, freq_table = _build_with_sampling(
+        variables, actual_sample_size, freq_table, preview_df = _build_with_sampling(
             con,
             table,
             row_count=row_count,
@@ -368,6 +435,9 @@ def scan_iceberg(
             freq_threshold=freq_threshold,
             sample_size=sample_size,
             table_name=table_name,
+            preview_rows=preview_rows,
+            label=str(path),
+            quiet=quiet,
         )
     finally:
         con.disconnect()
@@ -375,7 +445,19 @@ def scan_iceberg(
     apply_column_descriptions(variables, metadata.column_descriptions)
     metadata.sample_size = actual_sample_size
 
-    return variables, row_count, freq_table, metadata
+    if preview_df is None:
+        preview_df = preview_from_arrow(
+            arrow_table, preview_rows, label=str(path), quiet=quiet
+        )
+
+    return _parquet_result(
+        variables,
+        row_count,
+        freq_table,
+        metadata,
+        preview_df,
+        return_preview=return_preview,
+    )
 
 
 SCANNERS = {
@@ -393,12 +475,22 @@ def scan_parquet_dataset(
     infer_stats: bool = True,
     freq_threshold: int | None = None,
     sample_size: int | None = None,
-) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
+    preview_rows: int = 0,
+    return_preview: bool = False,
+    quiet: bool = False,
+) -> tuple[Any, ...]:
     """Scan a Parquet dataset based on its type."""
     scanner = SCANNERS[info.type]
     assert isinstance(info.path, Path)
     return scanner(
-        info.path, dataset_id, infer_stats, freq_threshold, sample_size=sample_size
+        info.path,
+        dataset_id,
+        infer_stats,
+        freq_threshold,
+        sample_size=sample_size,
+        preview_rows=preview_rows,
+        return_preview=return_preview,
+        quiet=quiet,
     )
 
 
@@ -410,7 +502,9 @@ def scan_parquet(
     freq_threshold: int | None = None,
     sample_size: int | None = None,
     quiet: bool = False,
-) -> tuple[list[Variable], int, pa.Table | None, DatasetMetadata]:
+    preview_rows: int = 0,
+    return_preview: bool = False,
+) -> tuple[Any, ...]:
     """Scan a simple Parquet file and return (variables, row_count, freq_table, metadata)."""
     return scan_simple(
         Path(path),
@@ -419,4 +513,6 @@ def scan_parquet(
         freq_threshold,
         sample_size=sample_size,
         quiet=quiet,
+        preview_rows=preview_rows,
+        return_preview=return_preview,
     )

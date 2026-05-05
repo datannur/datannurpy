@@ -13,6 +13,7 @@ from .add_dataset import add_dataset
 from .add_folder import add_folder
 from .exporter import export_app, export_db
 from .finalize import finalize
+from .preview import PreviewRows, validate_preview_rows
 from .schema import Config, DatannurDB
 from .utils import EnumerationManager, configure_logging
 from .utils.ids import compute_runtime_ids
@@ -46,6 +47,7 @@ class Catalog(DatannurDB):
         freq_threshold: int = 100,
         csv_encoding: str | None = None,
         sample_size: int | None = 100_000,
+        preview_rows: PreviewRows = 100,
         csv_skip_copy: bool = False,
         app_config: dict[str, str] | None = None,
         quiet: bool = False,
@@ -93,6 +95,7 @@ class Catalog(DatannurDB):
         self.freq_threshold = freq_threshold
         self.csv_encoding = csv_encoding
         self.sample_size = sample_size
+        self.preview_rows = validate_preview_rows(preview_rows, allow_none=False) or 0
         self.csv_skip_copy = csv_skip_copy
         self.quiet = quiet
         self.verbose = verbose
@@ -112,6 +115,8 @@ class Catalog(DatannurDB):
         self._loaded_metadata: list[dict[str, Any]] | None = None
         self._dataset_match_index: dict[str, LoadedDatasetRef] | None = None
         self._freq_hidden_ids: set[str] = set()
+        self._dataset_previews: dict[str, pl.DataFrame] = {}
+        self._dataset_preview_labels: dict[str, str] = {}
         if metadata_path is not None:
             from .add_metadata import load_metadata
 
