@@ -239,19 +239,20 @@ def _add_database_impl(
         )
         root_folder_id = folder.id
 
-    # Set data_path: use remote_path if remote, otherwise local path
+    # Set public data_path while keeping local file paths internal-only.
     if remote_path:
         folder.data_path = sanitize_connection_url(remote_path)
         folder.last_update_date = None  # Can't get mtime from remote
     else:
-        folder.data_path = (
+        local_database_path = (
             get_database_path(connection, backend_name)
             if isinstance(connection, str)
             else None
         )
+        folder.data_path = f"{backend_name}://{db_name}"
         # Use mtime of database file for last_update_date (null for non-file connections)
-        if folder.data_path:
-            folder.last_update_date = get_mtime_iso(Path(folder.data_path))
+        if local_database_path:
+            folder.last_update_date = get_mtime_iso(Path(local_database_path))
         else:
             folder.last_update_date = None
     folder.type = folder.type or backend_name
