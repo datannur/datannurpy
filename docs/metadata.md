@@ -44,6 +44,23 @@ source---employees_csv---salary,"Monthly gross salary in euros","finance,hr"
 source---employees_csv---department,"Department code","hr"
 ```
 
+The most common metadata columns are the same whether the source is CSV, Excel, JSON, SAS, or a database table:
+
+| Entity/table | Useful columns |
+| ------------ | -------------- |
+| `folder` | `id`, `parent_id`, `name`, `description`, `manager_id`, `owner_id`, `tag_ids`, `doc_ids`, `license`, `link`, `localisation` |
+| `dataset` | `id`, `folder_id`, `name`, `description`, `manager_id`, `owner_id`, `tag_ids`, `doc_ids`, `license`, `data_path`, `link`, `localisation`, `start_date`, `end_date`, `updating_each` |
+| `variable` | `id`, `name`, `dataset_id`, `description`, `tag_ids`, `enumeration_ids`, `concept_id`, `type`, `start_date`, `end_date` |
+| `organization` | `id`, `parent_id`, `name`, `description`, `email`, `phone`, `tag_ids`, `doc_ids` |
+| `tag` | `id`, `parent_id`, `name`, `description`, `doc_ids` |
+| `doc` | `id`, `name`, `description`, `path`, `type`, `last_update` |
+| `concept` | `id`, `parent_id`, `name`, `description`, `tag_ids`, `doc_ids` |
+| `enumeration` | `id`, `folder_id`, `name`, `description`, `type` |
+| `value` | `enumeration_id`, `value`, `description` |
+| `config` | `id`, `value` |
+
+For folder-based metadata sources, name each file after the entity (`folder.csv`, `folder.xlsx`, `folder.json`, etc.). List fields such as `tag_ids`, `doc_ids`, and `enumeration_ids` can be written as comma-separated values in tabular files, or as arrays in JSON. For full schema details, use the linked datannur schemas as the reference.
+
 **Merge behavior:**
 
 - Existing entities are updated (manual values override auto-scanned values)

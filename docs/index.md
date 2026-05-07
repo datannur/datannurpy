@@ -7,14 +7,15 @@ Python library for [datannur](https://github.com/datannur/datannur) catalog meta
 
 A lightweight catalog compatible with most data sources:
 
-| Category          | Formats                                               |
-| ----------------- | ----------------------------------------------------- |
-| **Spreadsheets**  | CSV, Excel (.xlsx, .xls)                              |
-| **Columnar**      | Parquet, Delta Lake, Apache Iceberg, Hive partitioned |
-| **Statistical**   | SAS (.sas7bdat), SPSS (.sav), Stata (.dta)            |
-| **Databases**     | PostgreSQL, MySQL, Oracle, SQL Server, SQLite, DuckDB |
+| Category           | Formats                                               |
+| ------------------ | ----------------------------------------------------- |
+| **Spreadsheets**   | CSV, Excel (.xlsx, .xls)                              |
+| **Columnar**       | Parquet, Delta Lake, Apache Iceberg, Hive partitioned |
+| **Statistical**    | SAS (.sas7bdat), SPSS (.sav), Stata (.dta)            |
+| **Databases**      | PostgreSQL, MySQL, Oracle, SQL Server, SQLite, DuckDB |
+| **Remote storage** | SFTP, Amazon S3, Azure Blob Storage, Google Cloud Storage |
 
-All formats support automatic schema inference and statistics computation.
+All scanned data formats support automatic schema inference and statistics computation.
 
 ## Installation
 
@@ -31,7 +32,7 @@ pip install datannurpy[postgres]  # PostgreSQL
 pip install datannurpy[mysql]     # MySQL
 pip install datannurpy[oracle]    # Oracle
 pip install datannurpy[mssql]     # SQL Server
-pip install datannurpy[ssh]       # SSH tunneling to remote databases
+pip install datannurpy[ssh]       # SFTP and SSH tunneling to remote databases
 
 # File formats
 pip install datannurpy[stat]      # SAS, SPSS, Stata
@@ -79,6 +80,7 @@ with tools like Dependency-Track or Grype.
 
 ## Quick start
 
+Create a `catalog.yml` file that tells datannurpy where to scan data and where to export the catalog:
 
 ```yaml
 # catalog.yml
@@ -95,6 +97,19 @@ add:
 ```bash
 python -m datannurpy catalog.yml
 ```
+
+This scans the configured files and database, writes a standalone datannur app to `./my-catalog`, and opens it in your browser. Re-running the same config updates the existing catalog incrementally, so unchanged files and tables are reused when possible.
+
+Use `output_dir` instead of `app_path` when you only want JSON metadata for an existing datannur app:
+
+```yaml
+output_dir: ./metadata-export
+
+add:
+  - folder: ./data
+```
+
+Most projects start with this flow: choose the sources in `add`, choose a [scan depth](/scan-depth), optionally enrich the catalog with [manual metadata](/metadata), then export either a complete app or JSON metadata.
 
 Or use the Python API:
 

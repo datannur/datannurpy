@@ -300,6 +300,24 @@ EntityMetadata(
 | updating_each  | str \| None       | Update frequency. |
 | no_more_update | str \| None       | Marker that no further updates are expected. |
 
+In YAML configs, the same metadata is usually written as top-level keys on an `add` entry:
+
+```yaml
+add:
+  - folder: ./data
+    id: source
+    name: Source data
+    description: Curated files used by the analytics team.
+
+  - dataset: ./data/sales.csv
+    id: source---sales
+    folder_id: source
+    name: Sales
+    description: Monthly sales by product and region.
+```
+
+`EntityMetadata` is the Python API equivalent of those YAML metadata keys.
+
 ## ID helpers
 
 ```python

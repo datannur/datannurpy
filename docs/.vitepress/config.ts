@@ -39,9 +39,9 @@ export default defineConfig({
       { text: "Scan depth", link: "/scan-depth" },
       { text: "Scanning files", link: "/scanning-files" },
       { text: "Scanning databases", link: "/scanning-databases" },
-      { text: "Time series grouping", link: "/time-series" },
       { text: "Metadata & configuration", link: "/metadata" },
       { text: "Output & exports", link: "/output" },
+      { text: "Time series grouping", link: "/time-series" },
       { text: "Python API", link: "/python-api" },
     ],
 
