@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.23.1 (2026-05-07)
+
+- doc: clarify builder docs for scan depth, metadata sources, remote storage extras, and database introspection support
+- fix: ui app preview and about page screenshot
+
 ## 0.23.0 (2026-05-05)
 
 - add: export dataset previews as JSON and JSON-JS files, controlled by global and per-source `preview_rows`

@@ -114,7 +114,7 @@ env_file: .env               # SFTP_PASSWORD, AWS_KEY, AWS_SECRET, etc.
 
 ### SFTP
 
-Paramiko is included by default.
+Requires `pip install datannurpy[ssh]`.
 
 ```yaml
 add:
