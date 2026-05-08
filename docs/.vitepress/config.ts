@@ -16,15 +16,14 @@ export default defineConfig({
       "link",
       {
         rel: "icon",
-        type: "image/png",
-        sizes: "32x32",
-        href: "/builder/favicon-32.png",
+        type: "image/x-icon",
+        href: "/builder/icon.ico",
       },
     ],
   ],
 
   themeConfig: {
-    logo: "/logo.png",
+    logo: "/icon.svg",
 
     outline: "deep",
 
