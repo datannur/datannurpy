@@ -6,9 +6,8 @@ import re
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-import ibis
-
 if TYPE_CHECKING:
+    import ibis
     from ..catalog import Catalog
 
 from ..schema import Tag

@@ -32,11 +32,31 @@ def test_main_help(flag: str, capsys) -> None:
 @pytest.mark.parametrize("flag", ["-V", "--version"])
 def test_main_version(flag: str, capsys) -> None:
     """main() with --version shows version and exits 0."""
-    with patch.object(sys, "argv", ["datannurpy", flag]):
-        with pytest.raises(SystemExit) as exc_info:
-            main()
-        assert exc_info.value.code == 0
-    assert "datannurpy" in capsys.readouterr().out
+    with patch("datannurpy.__main__.version", return_value="1.2.3"):
+        with patch.object(sys, "argv", ["datannurpy", flag]):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 0
+    assert capsys.readouterr().out == "datannurpy 1.2.3\n"
+
+
+def test_public_imports() -> None:
+    """Package root exposes the documented public API."""
+    from datannurpy import Catalog, ConfigError, Folder, __version__, run_config
+
+    assert Catalog.__name__ == "Catalog"
+    assert ConfigError.__name__ == "ConfigError"
+    assert Folder.__name__ == "Folder"
+    assert callable(run_config)
+    assert __version__
+
+
+def test_public_import_unknown_attribute() -> None:
+    """Package root reports unknown lazy attributes normally."""
+    import datannurpy
+
+    with pytest.raises(AttributeError):
+        datannurpy.__getattr__("missing")
 
 
 def test_main_run_config(tmp_path: Path) -> None:

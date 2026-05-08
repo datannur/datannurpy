@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.23.2 (2026-05-08)
+
+- perf: keep `datannurpy` imports lightweight and avoid runtime imports for CLI `--help` / `--version`
+
 ## 0.23.1 (2026-05-07)
 
 - doc: clarify builder docs for scan depth, metadata sources, remote storage extras, and database introspection support

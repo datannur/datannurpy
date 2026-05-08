@@ -5,12 +5,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..scanner.autotag import SCAN_TAG_ID, SCAN_TAG_DESCRIPTION
-from ..scanner.db_introspect import ForeignKey, TableMetadata
 from ..schema import Dataset, Tag, Variable
 from .ids import make_id, sanitize_id
 
 if TYPE_CHECKING:
     from ..catalog import Catalog
+    from ..scanner.db_introspect import ForeignKey, TableMetadata
 
 _DB_TAG_PARENT_ID = "db"
 _DB_CONSTRAINT_TAGS: dict[str, str] = {

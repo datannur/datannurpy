@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from importlib.metadata import version
 
 
 USAGE = "Usage: python -m datannurpy <config.yml>"
@@ -15,9 +16,7 @@ def main() -> None:
         sys.exit(0)
 
     if len(sys.argv) >= 2 and sys.argv[1] in ("-V", "--version"):
-        from . import __version__
-
-        print(f"datannurpy {__version__}")
+        print(f"datannurpy {version('datannurpy')}")
         sys.exit(0)
 
     if len(sys.argv) < 2:

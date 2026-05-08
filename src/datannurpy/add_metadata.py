@@ -28,7 +28,9 @@ from .schema import (
     Value,
     Variable,
 )
-from .scanner import read_csv, read_excel, read_statistical
+from .scanner.csv import read_csv
+from .scanner.excel import read_excel
+from .scanner.statistical import read_statistical
 from .utils import log_done, log_error, log_section, log_warn
 from .utils.ids import build_frequency_id, build_value_id
 from .utils.params import validate_params
