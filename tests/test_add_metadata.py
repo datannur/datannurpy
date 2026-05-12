@@ -1959,6 +1959,36 @@ class TestMetadataTombstones:
         assert kept_variable.enumeration_ids == []
         assert kept_variable.concept_id is None
 
+    def test_folder_tombstone_removes_descendants_and_contents(self, tmp_path: Path):
+        """Folder tombstones remove descendants and contained entities."""
+        catalog = Catalog(quiet=True)
+        catalog.folder.add(Folder(id="root"))
+        catalog.folder.add(Folder(id="child", parent_id="root"))
+        catalog.folder.add(Folder(id="other"))
+        catalog.dataset.add(Dataset(id="ds1", folder_id="child"))
+        catalog.dataset.add(Dataset(id="ds2", folder_id="other"))
+        catalog.variable.add(Variable(id="ds1---v1", name="v1", dataset_id="ds1"))
+        catalog.variable.add(Variable(id="ds2---v1", name="v1", dataset_id="ds2"))
+        catalog.frequency.add(Frequency(variable_id="ds1---v1", value="a", frequency=1))
+        catalog.enumeration.add(Enumeration(id="e1", folder_id="child"))
+        catalog.value.add(Value(enumeration_id="e1", value="a"))
+        meta = tmp_path / "meta"
+        meta.mkdir()
+        (meta / "folder.csv").write_text("id,_delete\nroot,true\n")
+
+        add_metadata(catalog, meta, quiet=True)
+
+        assert catalog.folder.get("root") is None
+        assert catalog.folder.get("child") is None
+        assert catalog.folder.get("other") is not None
+        assert catalog.dataset.get("ds1") is None
+        assert catalog.dataset.get("ds2") is not None
+        assert catalog.variable.get("ds1---v1") is None
+        assert catalog.variable.get("ds2---v1") is not None
+        assert catalog.frequency.count == 0
+        assert catalog.enumeration.get("e1") is None
+        assert catalog.value.count == 0
+
     def test_tombstones_ignore_value_and_frequency(self, tmp_path: Path):
         """Composite-key tables are out of scope for direct tombstones."""
         meta = tmp_path / "meta"

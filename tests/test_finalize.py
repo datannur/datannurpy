@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from datannurpy import Catalog, EntityMetadata, Folder
+from datannurpy.finalize import remove_folders_cascade
 from datannurpy.schema import Doc, Enumeration, Organization, Tag, Value, Variable
 from datannurpy.utils.ids import build_value_id
 
@@ -48,6 +49,29 @@ class TestFinalizeIdempotent:
 
         # Entity should not be removed (no db_path = no cleanup)
         assert len(catalog.folder.all()) == 1
+
+
+class TestRemoveFoldersCascade:
+    """Tests for folder cascade removal helper."""
+
+    def test_empty_ids_noop(self):
+        """Empty folder ID lists should not change the catalog."""
+        catalog = Catalog(quiet=True)
+        catalog.folder.add(Folder(id="root"))
+
+        remove_folders_cascade(catalog, [])
+
+        assert catalog.folder.get("root") is not None
+
+    def test_cycle_does_not_loop_forever(self):
+        """Already-collected folders are skipped while traversing descendants."""
+        catalog = Catalog(quiet=True)
+        catalog.folder.add(Folder(id="root", parent_id="child"))
+        catalog.folder.add(Folder(id="child", parent_id="root"))
+
+        remove_folders_cascade(catalog, "root")
+
+        assert catalog.folder.count == 0
 
 
 class TestFinalizeUnseenFolders:

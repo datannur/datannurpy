@@ -59,6 +59,7 @@ ENTITY_CLASSES: dict[str, type] = {
 ENTITIES_WITHOUT_ID = {"value", "frequency"}
 
 TOMBSTONE_ENTITIES = {
+    "folder",
     "dataset",
     "variable",
     "enumeration",
@@ -967,6 +968,7 @@ def apply_metadata_tombstones(catalog: Catalog) -> None:
         remove_datasets_cascade,
         remove_docs_cascade,
         remove_enumerations_cascade,
+        remove_folders_cascade,
         remove_organizations_cascade,
         remove_tags_cascade,
         remove_variables_cascade,
@@ -978,6 +980,8 @@ def apply_metadata_tombstones(catalog: Catalog) -> None:
 
     if dataset_ids := tombstones.get("dataset"):
         remove_datasets_cascade(catalog, dataset_ids)
+    if folder_ids := tombstones.get("folder"):
+        remove_folders_cascade(catalog, folder_ids)
     if variable_ids := tombstones.get("variable"):
         remove_variables_cascade(catalog, variable_ids)
     if enumeration_ids := tombstones.get("enumeration"):

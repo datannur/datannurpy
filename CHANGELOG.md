@@ -1,14 +1,12 @@
 # datannurpy
 
-## 0.23.2 (2026-05-08)
+## 0.24.0 (2026-05-12)
 
 - perf: keep `datannurpy` imports lightweight and avoid runtime imports for CLI `--help` / `--version`
 - fix: `export_app()` now preserves local app `data/` state by default and refreshes bundled app files only on first install or with `update_app=True`
 - fix: reuse bulk cascade cleanup when removing variables, enumerations, tags, docs, concepts, and organizations
-- add: automatically load `app_path/data/db-ui` as the last metadata source when it exists
-- add: support `_delete` metadata tombstones for removing entities before export
-- add: support `!` metadata clear instructions for scalar and relation fields
-- add: support `!id` metadata relation removal instructions
+- add: support app metadata overlays via `app_path/data/db-ui`, loaded as the last metadata source when it exists
+- add: support metadata overlay instructions: `!` clears fields, `!id` removes relation IDs, and `_delete` tombstones remove entities before export, including folder cascades
 
 ## 0.23.1 (2026-05-07)
 

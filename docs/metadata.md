@@ -112,7 +112,14 @@ Use `_delete: true` to remove an entity from the final catalog:
 ]
 ```
 
-Deletion is supported for `dataset`, `variable`, `enumeration`, `organization`, `tag`, `doc`, and `concept`. Cascades are applied before export: deleting a dataset removes its variables, frequencies, and previews; deleting a variable removes its frequencies; deleting enumerations, tags, docs, concepts, or organizations also cleans related references where needed. Folder deletion is intentionally not supported yet because descendant cascade rules need a broader design.
+Deletion is supported for all ID-keyed catalog entities. Composite tables (`value` and `frequency`) are not deleted directly; they are removed through cascades from their parent enumeration, variable, dataset, or folder.
+
+Cascades are applied before export:
+
+- deleting a folder removes its descendant folders, contained datasets, dataset variables, frequencies, previews, and contained enumerations;
+- deleting a dataset removes its variables, frequencies, and previews;
+- deleting a variable removes its frequencies;
+- deleting enumerations, tags, docs, concepts, or organizations also cleans related references where needed.
 
 ## Metadata-first pattern
 

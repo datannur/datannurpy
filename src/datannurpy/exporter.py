@@ -147,13 +147,12 @@ def _clean_stale_db_files(catalog: Catalog, path: Path) -> None:
     for file_path in path.iterdir():
         if not file_path.is_file():
             continue
+        name = None
         if file_path.suffix == ".json":
             name = file_path.stem
         elif file_path.name.endswith(".json.js"):
             name = _table_name_from_jsonjs(file_path)
-        else:
-            continue
-        if name not in expected_names:
+        if name is not None and name not in expected_names:
             file_path.unlink()
 
 

@@ -87,6 +87,40 @@ def remove_datasets_cascade(
     catalog.dataset.remove_all(ids)
 
 
+def remove_folders_cascade(
+    catalog: Catalog, folder_ids: str | list[str] | set[str]
+) -> None:
+    """Remove folders, descendant folders, and contained datasets/enumerations."""
+    ids = _as_id_list(folder_ids)
+    if not ids:
+        return
+
+    removed = _collect_descendant_folder_ids(catalog, set(ids))
+    dataset_ids = catalog.dataset.ids_where("folder_id", "in", removed)
+    remove_datasets_cascade(catalog, dataset_ids)
+    enumeration_ids = catalog.enumeration.ids_where("folder_id", "in", removed)
+    remove_enumerations_cascade(catalog, enumeration_ids)
+    catalog.folder.remove_all(list(removed))
+
+
+def _collect_descendant_folder_ids(catalog: Catalog, folder_ids: set[str]) -> set[str]:
+    """Return folder IDs plus all descendants by parent_id."""
+    children: dict[str, list[str]] = {}
+    for folder in catalog.folder.all():
+        if folder.parent_id is not None:
+            children.setdefault(folder.parent_id, []).append(folder.id)
+
+    collected: set[str] = set()
+    stack = list(folder_ids)
+    while stack:
+        folder_id = stack.pop()
+        if folder_id in collected:
+            continue
+        collected.add(folder_id)
+        stack.extend(children.get(folder_id, []))
+    return collected
+
+
 def remove_variables_cascade(
     catalog: Catalog, variable_ids: str | list[str] | set[str]
 ) -> None:

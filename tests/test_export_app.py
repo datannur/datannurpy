@@ -74,6 +74,16 @@ class TestExportApp:
 
         assert note.exists()
 
+    def test_clean_stale_db_files_keeps_directories(self, tmp_path):
+        """Stale DB cleanup should ignore directories."""
+        catalog = Catalog(quiet=True)
+        preview_dir = tmp_path / "preview"
+        preview_dir.mkdir()
+
+        exporter._clean_stale_db_files(catalog, tmp_path)
+
+        assert preview_dir.exists()
+
     def test_export_app_preserves_data_except_db(self, _employees_catalog, tmp_path):
         """Repeated export_app should preserve local data files outside data/db."""
         _employees_catalog.export_app(tmp_path)
