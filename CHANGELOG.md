@@ -5,6 +5,7 @@
 - perf: keep `datannurpy` imports lightweight and avoid runtime imports for CLI `--help` / `--version`
 - fix: `export_app()` now preserves local app `data/` state by default and refreshes bundled app files only on first install or with `update_app=True`
 - fix: reuse bulk cascade cleanup when removing variables, enumerations, tags, docs, concepts, and organizations
+- add: automatically load `app_path/data/db-ui` as the last metadata source when it exists
 
 ## 0.23.1 (2026-05-07)
 

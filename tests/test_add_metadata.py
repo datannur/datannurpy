@@ -1633,3 +1633,66 @@ class TestMetadataPathList:
         )
         catalog = Catalog(metadata_path=[base, overlay], quiet=True)
         assert catalog._freq_hidden_ids == {"ds---a", "ds---b"}
+
+
+class TestAppMetadataOverlayPath:
+    """Test automatic app_path/data/db-ui metadata source discovery."""
+
+    def test_app_db_ui_is_used_without_metadata_path(self, tmp_path: Path):
+        """app_path/data/db-ui is applied even when metadata_path is not configured."""
+        app_path = tmp_path / "app"
+        db_ui = app_path / "data" / "db-ui"
+        db_ui.mkdir(parents=True)
+        (db_ui / "tag.json").write_text('[{"id":"ui","name":"UI"}]')
+
+        catalog = Catalog(app_path=app_path, quiet=True)
+        ensure_metadata_applied(catalog)
+
+        tag = catalog.tag.get("ui")
+        assert tag is not None
+        assert tag.name == "UI"
+
+    def test_app_db_ui_is_applied_after_configured_metadata_path(self, tmp_path: Path):
+        """app_path/data/db-ui overrides configured metadata sources."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "tag.csv").write_text("id,name\nt1,Base\n")
+        app_path = tmp_path / "app"
+        db_ui = app_path / "data" / "db-ui"
+        db_ui.mkdir(parents=True)
+        (db_ui / "tag.json").write_text('[{"id":"t1","name":"UI"}]')
+
+        catalog = Catalog(app_path=app_path, metadata_path=base, quiet=True)
+        ensure_metadata_applied(catalog)
+
+        tag = catalog.tag.get("t1")
+        assert tag is not None
+        assert tag.name == "UI"
+
+    def test_app_db_ui_is_not_duplicated_when_configured(self, tmp_path: Path):
+        """Explicitly configured app_path/data/db-ui is not loaded twice."""
+        app_path = tmp_path / "app"
+        db_ui = app_path / "data" / "db-ui"
+        db_ui.mkdir(parents=True)
+        (db_ui / "tag.json").write_text('[{"id":"ui","name":"UI"}]')
+
+        catalog = Catalog(app_path=app_path, metadata_path=db_ui, quiet=True)
+
+        assert catalog.metadata_path == db_ui
+        assert len(catalog._loaded_metadata or []) == 1
+
+    def test_app_db_ui_does_not_mutate_metadata_path_list(self, tmp_path: Path):
+        """Composing the effective path does not mutate caller-owned lists."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "tag.csv").write_text("id,name\nt1,Base\n")
+        app_path = tmp_path / "app"
+        db_ui = app_path / "data" / "db-ui"
+        db_ui.mkdir(parents=True)
+        (db_ui / "tag.json").write_text('[{"id":"t1","name":"UI"}]')
+        metadata_path: list[str | Path] = [base]
+
+        catalog = Catalog(app_path=app_path, metadata_path=metadata_path, quiet=True)
+
+        assert metadata_path == [base]
+        assert catalog.metadata_path == [base, db_ui]
