@@ -72,6 +72,7 @@ TOMBSTONE_ENTITIES = {
 LIST_FIELDS = {"tag_ids", "doc_ids", "enumeration_ids", "source_var_ids"}
 
 CLEAR_VALUE = "!"
+REMOVE_PREFIX = "!"
 
 
 class _ClearList:
@@ -369,6 +370,31 @@ def _is_clear_value(value: Any) -> bool:
     return isinstance(value, str) and value.strip() == CLEAR_VALUE
 
 
+def _split_relation_instructions(values: list[str]) -> tuple[list[str], set[str]]:
+    """Split relation list entries into additions and removals."""
+    removals = {
+        value.removeprefix(REMOVE_PREFIX)
+        for value in values
+        if value.startswith(REMOVE_PREFIX) and value != REMOVE_PREFIX
+    }
+    additions = [
+        value
+        for value in values
+        if value != REMOVE_PREFIX
+        and not value.startswith(REMOVE_PREFIX)
+        and value not in removals
+    ]
+    return additions, removals
+
+
+def _resolve_relation_list(existing_list: list[str], new_list: list[str]) -> list[str]:
+    """Apply relation additions/removals and return a deduplicated final list."""
+    additions, removals = _split_relation_instructions(new_list)
+    kept_existing = [value for value in existing_list if value not in removals]
+    kept_additions = [value for value in additions if value not in removals]
+    return list(dict.fromkeys(kept_additions + kept_existing))
+
+
 def _is_truthy_delete(value: Any) -> bool:
     """Return whether a metadata _delete value is truthy."""
     if isinstance(value, bool):
@@ -475,10 +501,8 @@ def _merge_entity(
                 continue
             new_list = value if isinstance(value, list) else []
             if new_list:
-                # Merge lists: new values first, then existing (deduplicated)
                 existing_list = getattr(existing, key, []) or []
-                merged = list(dict.fromkeys(new_list + existing_list))
-                setattr(existing, key, merged)
+                setattr(existing, key, _resolve_relation_list(existing_list, new_list))
         else:
             # Override with new value
             setattr(existing, key, value)
@@ -540,7 +564,13 @@ def _process_standard_table(
             _merge_entity(new_by_id[entity_id], row_data)
         else:
             row_data = {
-                key: ([] if value is _CLEAR_LIST else value)
+                key: (
+                    []
+                    if value is _CLEAR_LIST
+                    else _resolve_relation_list([], value)
+                    if key in LIST_FIELDS and isinstance(value, list)
+                    else value
+                )
                 for key, value in row_data.items()
             }
             new_entity = entity_class(**row_data)

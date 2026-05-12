@@ -334,6 +334,18 @@ class TestMergeEntity:
         _merge_entity(entity, {"tag_ids": []})
         assert entity.tag_ids == ["a"]
 
+    def test_remove_relation_id(self):
+        """!id removes a relation from the accumulated list."""
+        entity = Variable(id="test", name="Test", dataset_id="ds", tag_ids=["a", "b"])
+        _merge_entity(entity, {"tag_ids": ["c", "!a"]})
+        assert entity.tag_ids == ["c", "b"]
+
+    def test_relation_removal_wins_over_addition(self):
+        """Removing and adding the same relation in one row removes it."""
+        entity = Variable(id="test", name="Test", dataset_id="ds", tag_ids=["a", "b"])
+        _merge_entity(entity, {"tag_ids": ["a", "!a", "c"]})
+        assert entity.tag_ids == ["c", "b"]
+
 
 class TestGetCatalogTable:
     """Test _get_catalog_table function."""
@@ -1777,6 +1789,55 @@ class TestMetadataClearInstructions:
         dataset = catalog.dataset.get("ds1")
         assert dataset is not None
         assert dataset.tag_ids == ["t1"]
+
+
+class TestMetadataRelationRemovalInstructions:
+    """Test !id metadata relation removal instructions."""
+
+    def test_remove_relation_from_csv(self, tmp_path: Path):
+        """A !id relation entry removes an accumulated relation ID."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "dataset.csv").write_text('id,tag_ids\nds1,"t1,t2"\n')
+        overlay = tmp_path / "overlay"
+        overlay.mkdir()
+        (overlay / "dataset.csv").write_text('id,tag_ids\nds1,"t3,!t1"\n')
+
+        catalog = Catalog(metadata_path=[base, overlay], quiet=True)
+        ensure_metadata_applied(catalog)
+
+        dataset = catalog.dataset.get("ds1")
+        assert dataset is not None
+        assert dataset.tag_ids == ["t3", "t2"]
+
+    def test_remove_relation_from_json(self, tmp_path: Path):
+        """JSON !id relation entries are consumed as instructions."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "dataset.json").write_text('[{"id":"ds1","tag_ids":["t1","t2"]}]')
+        overlay = tmp_path / "overlay"
+        overlay.mkdir()
+        (overlay / "dataset.json").write_text('[{"id":"ds1","tag_ids":["t3","!t1"]}]')
+
+        catalog = Catalog(metadata_path=[base, overlay], quiet=True)
+        ensure_metadata_applied(catalog)
+
+        dataset = catalog.dataset.get("ds1")
+        assert dataset is not None
+        assert dataset.tag_ids == ["t3", "t2"]
+
+    def test_create_new_entity_consumes_relation_removal(self, tmp_path: Path):
+        """New entities never store !id instruction entries."""
+        metadata = tmp_path / "metadata"
+        metadata.mkdir()
+        (metadata / "dataset.csv").write_text('id,tag_ids\nds1,"t1,!t1,t2"\n')
+
+        catalog = Catalog(metadata_path=metadata, quiet=True)
+        ensure_metadata_applied(catalog)
+
+        dataset = catalog.dataset.get("ds1")
+        assert dataset is not None
+        assert dataset.tag_ids == ["t2"]
 
 
 class TestMetadataTombstones:
