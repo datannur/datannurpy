@@ -19,7 +19,7 @@ from .utils.params import validate_params
 if TYPE_CHECKING:
     from .catalog import Catalog
 
-from .add_metadata import ensure_metadata_applied
+from .add_metadata import apply_metadata_tombstones, ensure_metadata_applied
 from .errors import ConfigError
 from .preview import apply_preview_flags, sync_preview_exports
 
@@ -388,6 +388,7 @@ def export_db(
         "frequency": "variable",
         "value": "enumeration",
     }
+    apply_metadata_tombstones(catalog)
     preview_ids = sync_preview_exports(catalog, path)
     apply_preview_flags(catalog, preview_ids)
     _drop_empty_columns(catalog)

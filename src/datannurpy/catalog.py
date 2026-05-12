@@ -148,6 +148,7 @@ class Catalog(DatannurDB):
         self._loaded_metadata: list[dict[str, Any]] | None = None
         self._dataset_match_index: dict[str, LoadedDatasetRef] | None = None
         self._freq_hidden_ids: set[str] = set()
+        self._metadata_tombstones: dict[str, set[str]] = {}
         self._dataset_previews: dict[str, pl.DataFrame] = {}
         self._dataset_preview_labels: dict[str, str] = {}
         if self.metadata_path is not None:

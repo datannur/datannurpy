@@ -58,6 +58,16 @@ ENTITY_CLASSES: dict[str, type] = {
 # Entities without required id (use composite key)
 ENTITIES_WITHOUT_ID = {"value", "frequency"}
 
+TOMBSTONE_ENTITIES = {
+    "dataset",
+    "variable",
+    "enumeration",
+    "organization",
+    "tag",
+    "doc",
+    "concept",
+}
+
 # List fields that should be merged (union)
 LIST_FIELDS = {"tag_ids", "doc_ids", "enumeration_ids", "source_var_ids"}
 
@@ -340,6 +350,49 @@ def _parse_list_field(value: Any) -> list[str]:
             return []
         return [v.strip() for v in value.split(",") if v.strip()]
     return []
+
+
+def _is_truthy_delete(value: Any) -> bool:
+    """Return whether a metadata _delete value is truthy."""
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+
+    import pandas as pd
+
+    if not isinstance(value, (list, dict)) and bool(pd.isna(value)):
+        return False
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return value != 0
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y"}
+    return bool(value)
+
+
+def _extract_tombstone_ids(
+    tables: dict[str, tuple[pd.DataFrame, str]],
+) -> dict[str, set[str]]:
+    """Extract _delete tombstone ids from loaded metadata tables."""
+    tombstones: dict[str, set[str]] = {}
+    for entity_name, (df, _file_name) in tables.items():
+        if entity_name not in TOMBSTONE_ENTITIES:
+            continue
+        if "id" not in df.columns or "_delete" not in df.columns:
+            continue
+        ids = set()
+        for entity_id, delete_value in zip(df["id"].tolist(), df["_delete"].tolist()):
+            if entity_id is not None and _is_truthy_delete(delete_value):
+                ids.add(str(entity_id))
+        if ids:
+            tombstones[entity_name] = ids
+    return tombstones
+
+
+def _merge_tombstones(target: dict[str, set[str]], source: dict[str, set[str]]) -> None:
+    """Merge extracted tombstones into the catalog-level tombstone map."""
+    for entity_name, ids in source.items():
+        target.setdefault(entity_name, set()).update(ids)
 
 
 def _convert_row_to_dict(
@@ -793,6 +846,11 @@ def _apply_tables(
             print(f"    • {err}", file=sys.stderr)
         return
 
+    _merge_tombstones(
+        catalog._metadata_tombstones,
+        _extract_tombstone_ids(tables),
+    )
+
     total_created = 0
     total_updated = 0
 
@@ -825,6 +883,7 @@ def add_metadata(
         start_time = log_section("add_metadata", str(p), quiet)
         tables = _load_tables(p, allowed_entities, quiet=quiet)
         _apply_tables(self, tables, quiet=quiet, start_time=start_time)
+    apply_metadata_tombstones(self)
 
 
 def ensure_metadata_applied(catalog: Catalog) -> None:
@@ -842,6 +901,38 @@ def ensure_metadata_applied(catalog: Catalog) -> None:
             tables = _load_tables(p, allowed_entities, quiet=catalog.quiet)
         _apply_tables(catalog, tables, quiet=catalog.quiet, start_time=start_time)
     catalog._metadata_applied = True
+
+
+def apply_metadata_tombstones(catalog: Catalog) -> None:
+    """Apply _delete metadata tombstones before export."""
+    from .finalize import (
+        remove_concepts_cascade,
+        remove_datasets_cascade,
+        remove_docs_cascade,
+        remove_enumerations_cascade,
+        remove_organizations_cascade,
+        remove_tags_cascade,
+        remove_variables_cascade,
+    )
+
+    tombstones = getattr(catalog, "_metadata_tombstones", None)
+    if not tombstones:
+        return
+
+    if dataset_ids := tombstones.get("dataset"):
+        remove_datasets_cascade(catalog, dataset_ids)
+    if variable_ids := tombstones.get("variable"):
+        remove_variables_cascade(catalog, variable_ids)
+    if enumeration_ids := tombstones.get("enumeration"):
+        remove_enumerations_cascade(catalog, enumeration_ids)
+    if organization_ids := tombstones.get("organization"):
+        remove_organizations_cascade(catalog, organization_ids)
+    if tag_ids := tombstones.get("tag"):
+        remove_tags_cascade(catalog, tag_ids)
+    if doc_ids := tombstones.get("doc"):
+        remove_docs_cascade(catalog, doc_ids)
+    if concept_ids := tombstones.get("concept"):
+        remove_concepts_cascade(catalog, concept_ids)
 
 
 def log_summary_metadata(

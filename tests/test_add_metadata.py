@@ -13,16 +13,28 @@ import pytest
 
 from datannurpy import Catalog, EntityMetadata, Folder
 from datannurpy.errors import ConfigError
-from datannurpy.schema import Enumeration, Frequency, Value, Variable
+from datannurpy.schema import (
+    Concept,
+    Dataset,
+    Doc,
+    Enumeration,
+    Frequency,
+    Organization,
+    Tag,
+    Value,
+    Variable,
+)
 from datannurpy.utils.ids import build_frequency_id, build_value_id
 from datannurpy.add_metadata import (
     DEPTH_ENTITIES,
     FREQ_HIDDEN_TAG,
     _convert_row_to_dict,
     _extract_freq_hidden_ids,
+    _extract_tombstone_ids,
     _get_catalog_table,
     _get_required_fields,
     _is_database_connection,
+    _is_truthy_delete,
     _load_tables_from_database,
     _load_tables_from_folder,
     _metadata_file_label,
@@ -1633,6 +1645,176 @@ class TestMetadataPathList:
         )
         catalog = Catalog(metadata_path=[base, overlay], quiet=True)
         assert catalog._freq_hidden_ids == {"ds---a", "ds---b"}
+
+
+class TestMetadataTombstones:
+    """Test _delete metadata tombstones."""
+
+    def test_tombstone_removes_entity_on_export(self, tmp_path: Path):
+        """A _delete row removes the entity from the final export."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "tag.csv").write_text("id,name\nt1,Base\n")
+        overlay = tmp_path / "overlay"
+        overlay.mkdir()
+        (overlay / "tag.csv").write_text("id,_delete\nt1,true\n")
+        out = tmp_path / "out"
+
+        catalog = Catalog(metadata_path=[base, overlay], quiet=True)
+        catalog.export_db(out)
+
+        assert catalog.tag.get("t1") is None
+        assert not (out / "tag.json").exists()
+
+    def test_tombstone_cascades_tag_references(self, tmp_path: Path):
+        """Tag tombstones remove references from relation fields."""
+        meta = tmp_path / "meta"
+        meta.mkdir()
+        (meta / "tag.csv").write_text("id,name,_delete\nt1,Tag,true\n")
+        (meta / "dataset.csv").write_text("id,tag_ids\nds1,t1\n")
+
+        catalog = Catalog(metadata_path=meta, quiet=True)
+        catalog.export_db(tmp_path / "out")
+
+        dataset = catalog.dataset.get("ds1")
+        assert dataset is not None
+        assert dataset.tag_ids == []
+        assert catalog.tag.get("t1") is None
+
+    def test_tombstone_cascades_dataset_children(self, tmp_path: Path):
+        """Dataset tombstones remove child variables and frequencies."""
+        meta = tmp_path / "meta"
+        meta.mkdir()
+        (meta / "dataset.csv").write_text("id,name,_delete\nds1,Dataset,true\n")
+        (meta / "variable.csv").write_text("id,name,dataset_id\nds1---v1,v1,ds1\n")
+        (meta / "frequency.csv").write_text(
+            "variable_id,value,frequency\nds1---v1,a,1\n"
+        )
+
+        catalog = Catalog(metadata_path=meta, quiet=True)
+        catalog.export_db(tmp_path / "out")
+
+        assert catalog.dataset.get("ds1") is None
+        assert catalog.variable.get("ds1---v1") is None
+        assert catalog.frequency.count == 0
+
+    def test_add_metadata_applies_tombstones_immediately(self, tmp_path: Path):
+        """Direct add_metadata consumes tombstones after applying rows."""
+        catalog = Catalog(quiet=True)
+        catalog.tag.add(Tag(id="t1", name="Tag"))
+        catalog.dataset.add(Dataset(id="ds1", tag_ids=["t1"]))
+        meta = tmp_path / "meta"
+        meta.mkdir()
+        (meta / "tag.csv").write_text("id,_delete\nt1,true\n")
+
+        add_metadata(catalog, meta, quiet=True)
+
+        dataset = catalog.dataset.get("ds1")
+        assert dataset is not None
+        assert dataset.tag_ids == []
+        assert catalog.tag.get("t1") is None
+
+    def test_tombstones_apply_all_supported_entity_cascades(self, tmp_path: Path):
+        """Tombstones reuse cascade cleanup for every supported entity type."""
+        catalog = Catalog(quiet=True)
+        catalog.dataset.add(Dataset(id="ds1"))
+        catalog.variable.add(
+            Variable(
+                id="ds1---v1",
+                name="v1",
+                dataset_id="ds1",
+                enumeration_ids=["e1"],
+                concept_id="c1",
+            )
+        )
+        catalog.enumeration.add(Enumeration(id="e1"))
+        catalog.value.add(Value(enumeration_id="e1", value="a"))
+        catalog.organization.add(Organization(id="org1"))
+        catalog.folder.add(Folder(id="f1", owner_id="org1", manager_id="org1"))
+        catalog.doc.add(Doc(id="doc1"))
+        catalog.tag.add(Tag(id="t1"))
+        catalog.concept.add(Concept(id="c1"))
+        catalog.dataset.add(Dataset(id="ds2", tag_ids=["t1"], doc_ids=["doc1"]))
+        catalog.variable.add(Variable(id="ds2---v1", name="v1", dataset_id="ds2"))
+        meta = tmp_path / "meta"
+        meta.mkdir()
+        (meta / "variable.csv").write_text("id,dataset_id,_delete\nds2---v1,ds2,true\n")
+        (meta / "enumeration.csv").write_text("id,_delete\ne1,true\n")
+        (meta / "organization.csv").write_text("id,_delete\norg1,true\n")
+        (meta / "tag.csv").write_text("id,_delete\nt1,true\n")
+        (meta / "doc.csv").write_text("id,_delete\ndoc1,true\n")
+        (meta / "concept.csv").write_text("id,_delete\nc1,true\n")
+
+        add_metadata(catalog, meta, quiet=True)
+
+        assert catalog.variable.get("ds2---v1") is None
+        assert catalog.enumeration.get("e1") is None
+        assert catalog.value.count == 0
+        assert catalog.organization.get("org1") is None
+        assert catalog.tag.get("t1") is None
+        assert catalog.doc.get("doc1") is None
+        assert catalog.concept.get("c1") is None
+        folder = catalog.folder.get("f1")
+        assert folder is not None
+        assert folder.owner_id is None
+        kept_dataset = catalog.dataset.get("ds2")
+        assert kept_dataset is not None
+        assert kept_dataset.tag_ids == []
+        assert kept_dataset.doc_ids == []
+        kept_variable = catalog.variable.get("ds1---v1")
+        assert kept_variable is not None
+        assert kept_variable.enumeration_ids == []
+        assert kept_variable.concept_id is None
+
+    def test_tombstones_ignore_value_and_frequency(self, tmp_path: Path):
+        """Composite-key tables are out of scope for direct tombstones."""
+        meta = tmp_path / "meta"
+        meta.mkdir()
+        (meta / "value.csv").write_text("enumeration_id,value,_delete\ne1,a,true\n")
+        (meta / "frequency.csv").write_text(
+            "variable_id,value,frequency,_delete\nv1,a,1,true\n"
+        )
+
+        catalog = Catalog(metadata_path=meta, quiet=True)
+
+        assert catalog._metadata_tombstones == {}
+
+    def test_delete_value_parsing(self):
+        """_delete accepts explicit truthy values only."""
+        import math
+
+        assert _is_truthy_delete(True)
+        assert _is_truthy_delete(1)
+        assert _is_truthy_delete("true")
+        assert _is_truthy_delete("YES")
+        assert _is_truthy_delete(["value"])
+        assert not _is_truthy_delete(False)
+        assert not _is_truthy_delete(0)
+        assert not _is_truthy_delete("false")
+        assert not _is_truthy_delete(None)
+        assert not _is_truthy_delete(math.nan)
+
+    def test_tombstone_extraction_edge_cases(self):
+        """Tombstone extraction ignores unsupported and incomplete rows."""
+        import pandas as pd
+
+        tables: dict[str, tuple[pd.DataFrame, str]] = {
+            "value": (
+                pd.DataFrame({"id": ["ignored"], "_delete": [True]}),
+                "value.csv",
+            ),
+            "tag": (
+                pd.DataFrame({"name": ["Missing id"], "_delete": [True]}),
+                "tag.csv",
+            ),
+            "doc": (pd.DataFrame({"id": [None], "_delete": [True]}), "doc.csv"),
+            "concept": (
+                pd.DataFrame({"id": ["c1"], "_delete": [False]}),
+                "concept.csv",
+            ),
+        }
+
+        assert _extract_tombstone_ids(tables) == {}
 
 
 class TestAppMetadataOverlayPath:
