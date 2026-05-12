@@ -28,11 +28,13 @@ from datannurpy.utils.ids import build_frequency_id, build_value_id
 from datannurpy.add_metadata import (
     DEPTH_ENTITIES,
     FREQ_HIDDEN_TAG,
+    _CLEAR_LIST,
     _convert_row_to_dict,
     _extract_freq_hidden_ids,
     _extract_tombstone_ids,
     _get_catalog_table,
     _get_required_fields,
+    _is_clear_value,
     _is_database_connection,
     _is_truthy_delete,
     _load_tables_from_database,
@@ -256,6 +258,40 @@ class TestConvertRowToDict:
         result = _convert_row_to_dict(row, Variable)
         assert "tag_ids" not in result
 
+    def test_clear_scalar_field(self):
+        """Exact ! should clear scalar fields."""
+        row: dict[Hashable, Any] = {
+            "id": "test",
+            "name": "Test",
+            "dataset_id": "ds",
+            "description": "!",
+        }
+
+        result = _convert_row_to_dict(row, Variable)
+
+        assert result["description"] is None
+
+    def test_clear_list_field(self):
+        """Exact ! should clear relation list fields."""
+        row: dict[Hashable, Any] = {
+            "id": "test",
+            "name": "Test",
+            "dataset_id": "ds",
+            "tag_ids": "!",
+        }
+
+        result = _convert_row_to_dict(row, Variable)
+
+        assert result["tag_ids"] is _CLEAR_LIST
+        assert repr(result["tag_ids"]) == "CLEAR_LIST"
+
+    def test_clear_value_detection(self):
+        """Only exact ! strings are clear markers."""
+        assert _is_clear_value("!")
+        assert _is_clear_value(" ! ")
+        assert not _is_clear_value("!tag")
+        assert not _is_clear_value(["!"])
+
 
 class TestMergeEntity:
     """Test _merge_entity function."""
@@ -285,6 +321,18 @@ class TestMergeEntity:
         entity = Variable(id="test", name="Test", dataset_id="ds")
         _merge_entity(entity, {"tag_ids": ["a", "b"]})
         assert entity.tag_ids == ["a", "b"]
+
+    def test_clear_list_field(self):
+        """Merging an empty list clears an existing relation list."""
+        entity = Variable(id="test", name="Test", dataset_id="ds", tag_ids=["a"])
+        _merge_entity(entity, {"tag_ids": _CLEAR_LIST})
+        assert entity.tag_ids == []
+
+    def test_empty_list_field_does_not_clear(self):
+        """Merging a plain empty list keeps an existing relation list."""
+        entity = Variable(id="test", name="Test", dataset_id="ds", tag_ids=["a"])
+        _merge_entity(entity, {"tag_ids": []})
+        assert entity.tag_ids == ["a"]
 
 
 class TestGetCatalogTable:
@@ -653,6 +701,17 @@ class TestProcessEntityTable:
         assert updated == 0
         assert len(catalog.folder.all()) == 1
         assert catalog.folder.all()[0].id == "f1"
+
+    def test_create_new_entity_with_clear_list_field(self):
+        """Clear markers on new entities become empty relation lists."""
+        catalog = Catalog()
+        df = pd.DataFrame({"id": ["f1"], "tag_ids": ["!"]})
+
+        created, updated = _process_entity_table(catalog, "folder", df)
+
+        assert created == 1
+        assert updated == 0
+        assert catalog.folder.all()[0].tag_ids == []
 
     def test_update_existing_entity(self):
         """Should update existing entities."""
@@ -1645,6 +1704,79 @@ class TestMetadataPathList:
         )
         catalog = Catalog(metadata_path=[base, overlay], quiet=True)
         assert catalog._freq_hidden_ids == {"ds---a", "ds---b"}
+
+
+class TestMetadataClearInstructions:
+    """Test exact ! metadata clear instructions."""
+
+    def test_clear_scalar_from_csv(self, tmp_path: Path):
+        """A scalar ! clears the accumulated value."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "dataset.csv").write_text("id,description\nds1,Description\n")
+        overlay = tmp_path / "overlay"
+        overlay.mkdir()
+        (overlay / "dataset.csv").write_text("id,description\nds1,!\n")
+
+        catalog = Catalog(metadata_path=[base, overlay], quiet=True)
+        ensure_metadata_applied(catalog)
+
+        dataset = catalog.dataset.get("ds1")
+        assert dataset is not None
+        assert dataset.description is None
+
+    def test_clear_relation_from_csv(self, tmp_path: Path):
+        """A relation ! clears all accumulated relation IDs."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "dataset.csv").write_text("id,tag_ids\nds1,t1\n")
+        overlay = tmp_path / "overlay"
+        overlay.mkdir()
+        (overlay / "dataset.csv").write_text("id,tag_ids\nds1,!\n")
+
+        catalog = Catalog(metadata_path=[base, overlay], quiet=True)
+        ensure_metadata_applied(catalog)
+
+        dataset = catalog.dataset.get("ds1")
+        assert dataset is not None
+        assert dataset.tag_ids == []
+
+    def test_empty_values_still_leave_existing_values_unchanged(self, tmp_path: Path):
+        """Empty metadata values are not clear instructions."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "dataset.csv").write_text(
+            "id,description,tag_ids\nds1,Description,t1\n"
+        )
+        overlay = tmp_path / "overlay"
+        overlay.mkdir()
+        (overlay / "dataset.csv").write_text("id,description,tag_ids\nds1,,\n")
+
+        catalog = Catalog(metadata_path=[base, overlay], quiet=True)
+        ensure_metadata_applied(catalog)
+
+        dataset = catalog.dataset.get("ds1")
+        assert dataset is not None
+        assert dataset.description == "Description"
+        assert dataset.tag_ids == ["t1"]
+
+    def test_empty_json_array_still_leaves_existing_relation_unchanged(
+        self, tmp_path: Path
+    ):
+        """JSON [] is not a clear instruction."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "dataset.json").write_text('[{"id":"ds1","tag_ids":["t1"]}]')
+        overlay = tmp_path / "overlay"
+        overlay.mkdir()
+        (overlay / "dataset.json").write_text('[{"id":"ds1","tag_ids":[]}]')
+
+        catalog = Catalog(metadata_path=[base, overlay], quiet=True)
+        ensure_metadata_applied(catalog)
+
+        dataset = catalog.dataset.get("ds1")
+        assert dataset is not None
+        assert dataset.tag_ids == ["t1"]
 
 
 class TestMetadataTombstones:

@@ -7,6 +7,7 @@
 - fix: reuse bulk cascade cleanup when removing variables, enumerations, tags, docs, concepts, and organizations
 - add: automatically load `app_path/data/db-ui` as the last metadata source when it exists
 - add: support `_delete` metadata tombstones for removing entities before export
+- add: support `!` metadata clear instructions for scalar and relation fields
 
 ## 0.23.1 (2026-05-07)
 

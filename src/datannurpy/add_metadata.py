@@ -71,6 +71,18 @@ TOMBSTONE_ENTITIES = {
 # List fields that should be merged (union)
 LIST_FIELDS = {"tag_ids", "doc_ids", "enumeration_ids", "source_var_ids"}
 
+CLEAR_VALUE = "!"
+
+
+class _ClearList:
+    """Sentinel for explicit relation clear instructions."""
+
+    def __repr__(self) -> str:
+        return "CLEAR_LIST"
+
+
+_CLEAR_LIST = _ClearList()
+
 # Policy tag IDs
 FREQ_HIDDEN_TAG = "policy---frequency-hidden"
 
@@ -352,6 +364,11 @@ def _parse_list_field(value: Any) -> list[str]:
     return []
 
 
+def _is_clear_value(value: Any) -> bool:
+    """Return whether a metadata value is the explicit clear marker."""
+    return isinstance(value, str) and value.strip() == CLEAR_VALUE
+
+
 def _is_truthy_delete(value: Any) -> bool:
     """Return whether a metadata _delete value is truthy."""
     if isinstance(value, bool):
@@ -415,6 +432,10 @@ def _convert_row_to_dict(
         ):
             continue
 
+        if _is_clear_value(value):
+            result[key_str] = _CLEAR_LIST if key_str in LIST_FIELDS else None
+            continue
+
         # Coerce datetime / date / pd.Timestamp to YYYY/MM/DD —
         # CSV (DuckDB) and Excel parsers infer date columns natively, but the
         # schema declares date fields as `str | None`. Aligning on YYYY/MM/DD
@@ -449,13 +470,15 @@ def _merge_entity(
             continue  # Never override id
 
         if key in LIST_FIELDS:
-            # Merge lists: new values first, then existing (deduplicated)
-            existing_list = getattr(existing, key, []) or []
+            if value is _CLEAR_LIST:
+                setattr(existing, key, [])
+                continue
             new_list = value if isinstance(value, list) else []
-            merged = list(
-                dict.fromkeys(new_list + existing_list)
-            )  # Preserve order, dedupe
-            setattr(existing, key, merged)
+            if new_list:
+                # Merge lists: new values first, then existing (deduplicated)
+                existing_list = getattr(existing, key, []) or []
+                merged = list(dict.fromkeys(new_list + existing_list))
+                setattr(existing, key, merged)
         else:
             # Override with new value
             setattr(existing, key, value)
@@ -516,6 +539,10 @@ def _process_standard_table(
             # Same id appears twice in the CSV for a brand-new entity: merge
             _merge_entity(new_by_id[entity_id], row_data)
         else:
+            row_data = {
+                key: ([] if value is _CLEAR_LIST else value)
+                for key, value in row_data.items()
+            }
             new_entity = entity_class(**row_data)
             if hasattr(new_entity, "_seen"):
                 new_entity._seen = True
