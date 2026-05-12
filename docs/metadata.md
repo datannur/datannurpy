@@ -66,8 +66,53 @@ For folder-based metadata sources, name each file after the entity (`folder.csv`
 - Existing entities are updated (manual values override auto-scanned values)
 - New entities are created
 - List fields (`tag_ids`, `doc_ids`, etc.) are merged
+- Empty cells and JSON empty arrays leave existing values unchanged
 
-**Ordering:** Metadata is automatically applied before export/finalization, after all `add_folder`, `add_dataset`, and `add_database` calls, so manual values take precedence.
+**Ordering:** Metadata is automatically applied before export/finalization, after all `add_folder`, `add_dataset`, and `add_database` calls, so manual values take precedence. If `app_path/data/db-ui` exists, it is loaded automatically as the last metadata source, after configured `metadata_path` sources. This lets local app edits override scanned metadata without adding `data/db-ui` to the configuration. `data/db-ui` uses the same supported metadata formats as any other metadata source; `data/db` remains the generated export.
+
+### Overlay instructions
+
+Metadata sources can include small instructions for clearing fields, removing individual relations, or deleting entities before export. These instructions are consumed by the builder and are not written to `data/db`.
+
+Use `!` as the exact value of a scalar field to clear it:
+
+```csv
+id,description
+source---employees_csv,!
+```
+
+Use `!` as the exact value of a relation field to clear all accumulated relations for that field:
+
+```csv
+id,tag_ids
+source---employees_csv,!
+```
+
+Use `!id` inside a relation list to remove one accumulated relation while keeping or adding others:
+
+```json
+[
+  {
+    "id": "source---employees_csv---salary",
+    "tag_ids": ["finance", "!auto---numeric"]
+  }
+]
+```
+
+Relation removals are applied in metadata source order. If one row contains both `id` and `!id`, removal wins for that relation. Supported relation fields are `tag_ids`, `doc_ids`, `enumeration_ids`, and `source_var_ids`.
+
+Use `_delete: true` to remove an entity from the final catalog:
+
+```json
+[
+  {
+    "id": "source---old_dataset",
+    "_delete": true
+  }
+]
+```
+
+Deletion is supported for `dataset`, `variable`, `enumeration`, `organization`, `tag`, `doc`, and `concept`. Cascades are applied before export: deleting a dataset removes its variables, frequencies, and previews; deleting a variable removes its frequencies; deleting enumerations, tags, docs, concepts, or organizations also cleans related references where needed. Folder deletion is intentionally not supported yet because descendant cascade rules need a broader design.
 
 ## Metadata-first pattern
 
