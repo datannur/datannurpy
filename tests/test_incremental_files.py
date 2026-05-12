@@ -7,7 +7,28 @@ import os
 from pathlib import Path
 
 from datannurpy import Catalog, EntityMetadata
-from datannurpy.finalize import remove_dataset_cascade
+from datannurpy.finalize import (
+    remove_concepts_cascade,
+    remove_dataset_cascade,
+    remove_datasets_cascade,
+    remove_docs_cascade,
+    remove_enumerations_cascade,
+    remove_organizations_cascade,
+    remove_tags_cascade,
+    remove_variables_cascade,
+)
+from datannurpy.schema import (
+    Concept,
+    Dataset,
+    Doc,
+    Enumeration,
+    Folder,
+    Frequency,
+    Organization,
+    Tag,
+    Value,
+    Variable,
+)
 
 
 class TestIncrementalScanFiles:
@@ -478,8 +499,6 @@ class TestRemoveDatasetCascadeWithMultipleDatasets:
 
     def test_removes_dataset_without_frequency_tables(self, tmp_path: Path):
         """remove_dataset_cascade handles dataset without frequencies."""
-        from datannurpy.schema import Dataset
-
         catalog = Catalog(quiet=True)
 
         # Manually add a dataset without scanning (no frequencies)
@@ -497,8 +516,6 @@ class TestRemoveDatasetCascadeWithMultipleDatasets:
 
     def test_removes_dataset_without_data_path(self):
         """remove_dataset_cascade handles dataset without data_path."""
-        from datannurpy.schema import Dataset
-
         catalog = Catalog(quiet=True)
 
         # Manually add a dataset without data_path
@@ -511,6 +528,193 @@ class TestRemoveDatasetCascadeWithMultipleDatasets:
         remove_dataset_cascade(catalog, ds)
 
         assert len(catalog.dataset.all()) == 0
+
+
+class TestRemoveEntityCascades:
+    """Test reusable entity cascade cleanup helpers."""
+
+    def test_cascade_helpers_ignore_empty_inputs(self):
+        """Cascade helpers should be cheap no-ops for empty ID lists."""
+        catalog = Catalog(quiet=True)
+
+        remove_datasets_cascade(catalog, [])
+        remove_variables_cascade(catalog, [])
+        remove_enumerations_cascade(catalog, [])
+        remove_tags_cascade(catalog, [])
+        remove_docs_cascade(catalog, [])
+        remove_concepts_cascade(catalog, [])
+        remove_organizations_cascade(catalog, [])
+
+    def test_remove_tags_cascade_accepts_single_id(self):
+        """Cascade helpers can remove a single ID without wrapping it in a list."""
+        catalog = Catalog(quiet=True)
+        catalog.tag.add(Tag(id="t1"))
+        catalog.dataset.add(Dataset(id="ds1", tag_ids=[]))
+
+        remove_tags_cascade(catalog, "t1")
+
+        assert catalog.tag.get("t1") is None
+        dataset = catalog.dataset.get("ds1")
+        assert dataset is not None
+        assert dataset.tag_ids == []
+
+    def test_remove_variables_cascade_removes_frequencies(self):
+        """Direct variable removal should remove linked frequencies."""
+        catalog = Catalog(quiet=True)
+        catalog.variable.add(Variable(id="v1", name="v1", dataset_id="ds1"))
+        catalog.variable.add(Variable(id="v2", name="v2", dataset_id="ds1"))
+        catalog.frequency.add(
+            Frequency(id="freq1", variable_id="v1", value="a", frequency=1)
+        )
+        catalog.frequency.add(
+            Frequency(id="freq2", variable_id="v2", value="b", frequency=1)
+        )
+
+        remove_variables_cascade(catalog, {"v1"})
+
+        assert catalog.variable.get("v1") is None
+        assert catalog.variable.get("v2") is not None
+        assert [freq.variable_id for freq in catalog.frequency.all()] == ["v2"]
+
+    def test_remove_enumerations_cascade_clears_variable_references(self):
+        """Enumeration removal should clear variable links and values."""
+        catalog = Catalog(quiet=True)
+        catalog.enumeration.add(Enumeration(id="e1"))
+        catalog.enumeration.add(Enumeration(id="e2"))
+        catalog.value.add(Value(id="value1", enumeration_id="e1", value="red"))
+        catalog.value.add(Value(id="value2", enumeration_id="e2", value="blue"))
+        catalog.variable.add(
+            Variable(
+                id="v1",
+                name="v1",
+                dataset_id="ds1",
+                enumeration_ids=["e1", "e2"],
+            )
+        )
+
+        remove_enumerations_cascade(catalog, {"e1"})
+
+        assert catalog.enumeration.get("e1") is None
+        assert catalog.enumeration.get("e2") is not None
+        variable = catalog.variable.get("v1")
+        assert variable is not None
+        assert variable.enumeration_ids == ["e2"]
+        assert [value.enumeration_id for value in catalog.value.all()] == ["e2"]
+
+    def test_remove_tags_cascade_clears_relation_fields(self):
+        """Tag removal should clear tag_ids across referencing entities."""
+        catalog = Catalog(quiet=True)
+        catalog.tag.add(Tag(id="t1"))
+        catalog.tag.add(Tag(id="t2"))
+        catalog.folder.add(Folder(id="f1", tag_ids=["t1", "t2"]))
+        catalog.dataset.add(Dataset(id="ds1", tag_ids=["t1"]))
+        catalog.variable.add(
+            Variable(id="v1", name="v1", dataset_id="ds1", tag_ids=["t1"])
+        )
+        catalog.organization.add(Organization(id="org1", tag_ids=["t1"]))
+        catalog.concept.add(Concept(id="c1", tag_ids=["t1"]))
+
+        remove_tags_cascade(catalog, {"t1"})
+
+        assert catalog.tag.get("t1") is None
+        assert catalog.tag.get("t2") is not None
+        folder = catalog.folder.get("f1")
+        dataset = catalog.dataset.get("ds1")
+        variable = catalog.variable.get("v1")
+        organization = catalog.organization.get("org1")
+        concept = catalog.concept.get("c1")
+        assert folder is not None
+        assert dataset is not None
+        assert variable is not None
+        assert organization is not None
+        assert concept is not None
+        assert folder.tag_ids == ["t2"]
+        assert dataset.tag_ids == []
+        assert variable.tag_ids == []
+        assert organization.tag_ids == []
+        assert concept.tag_ids == []
+
+    def test_remove_docs_cascade_clears_relation_fields(self):
+        """Doc removal should clear doc_ids across referencing entities."""
+        catalog = Catalog(quiet=True)
+        catalog.doc.add(Doc(id="doc1"))
+        catalog.doc.add(Doc(id="doc2"))
+        catalog.folder.add(Folder(id="f1", doc_ids=["doc1", "doc2"]))
+        catalog.dataset.add(Dataset(id="ds1", doc_ids=["doc1"]))
+        catalog.organization.add(Organization(id="org1", doc_ids=["doc1"]))
+        catalog.tag.add(Tag(id="t1", doc_ids=["doc1"]))
+        catalog.concept.add(Concept(id="c1", doc_ids=["doc1"]))
+
+        remove_docs_cascade(catalog, {"doc1"})
+
+        assert catalog.doc.get("doc1") is None
+        assert catalog.doc.get("doc2") is not None
+        folder = catalog.folder.get("f1")
+        dataset = catalog.dataset.get("ds1")
+        organization = catalog.organization.get("org1")
+        tag = catalog.tag.get("t1")
+        concept = catalog.concept.get("c1")
+        assert folder is not None
+        assert dataset is not None
+        assert organization is not None
+        assert tag is not None
+        assert concept is not None
+        assert folder.doc_ids == ["doc2"]
+        assert dataset.doc_ids == []
+        assert organization.doc_ids == []
+        assert tag.doc_ids == []
+        assert concept.doc_ids == []
+
+    def test_remove_concepts_cascade_clears_variable_references(self):
+        """Concept removal should clear variable concept_id links."""
+        catalog = Catalog(quiet=True)
+        catalog.concept.add(Concept(id="c1"))
+        catalog.variable.add(
+            Variable(id="v1", name="v1", dataset_id="ds1", concept_id="c1")
+        )
+
+        remove_concepts_cascade(catalog, {"c1"})
+
+        assert catalog.concept.get("c1") is None
+        variable = catalog.variable.get("v1")
+        assert variable is not None
+        assert variable.concept_id is None
+
+    def test_remove_organizations_cascade_clears_owner_manager_references(self):
+        """Organization removal should clear owner and manager links."""
+        catalog = Catalog(quiet=True)
+        catalog.organization.add(Organization(id="org1"))
+        catalog.organization.add(Organization(id="org2"))
+        catalog.folder.add(Folder(id="f1", owner_id="org1", manager_id="org2"))
+        catalog.dataset.add(Dataset(id="ds1", owner_id="org2", manager_id="org1"))
+
+        remove_organizations_cascade(catalog, {"org1"})
+
+        assert catalog.organization.get("org1") is None
+        assert catalog.organization.get("org2") is not None
+        folder = catalog.folder.get("f1")
+        dataset = catalog.dataset.get("ds1")
+        assert folder is not None
+        assert dataset is not None
+        assert folder.owner_id is None
+        assert folder.manager_id == "org2"
+        assert dataset.owner_id == "org2"
+        assert dataset.manager_id is None
+
+    def test_finalize_removes_unseen_concepts_with_references(self, tmp_path: Path):
+        """Finalize should reuse concept cascade cleanup for unseen concepts."""
+        catalog = Catalog(app_path=tmp_path, quiet=True)
+        catalog.concept.add(Concept(id="c1", _seen=False))
+        catalog.variable.add(
+            Variable(id="v1", name="v1", dataset_id="ds1", concept_id="c1")
+        )
+
+        catalog.finalize()
+
+        assert catalog.concept.get("c1") is None
+        variable = catalog.variable.get("v1")
+        assert variable is not None
+        assert variable.concept_id is None
 
 
 class TestIncrementalFolderWithParquet:
