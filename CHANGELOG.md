@@ -3,6 +3,7 @@
 ## 0.23.2 (2026-05-08)
 
 - perf: keep `datannurpy` imports lightweight and avoid runtime imports for CLI `--help` / `--version`
+- fix: `export_app()` now preserves local app `data/` state by default and refreshes bundled app files only on first install or with `update_app=True`
 
 ## 0.23.1 (2026-05-07)
 

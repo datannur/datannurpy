@@ -42,6 +42,8 @@ add:
 
 Use `refresh: true` to force a full rescan.
 
+Existing app exports update `data/db` by default and preserve local app state under `data/`. To refresh the bundled front-end app files after upgrading datannurpy, set `update_app: true` or call `catalog.export_app(update_app=True)`.
+
 ## Evolution tracking
 
 
