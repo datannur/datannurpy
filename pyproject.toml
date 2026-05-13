@@ -103,6 +103,7 @@ include = ["src/datannurpy"]
 ignore-vcs = true
 
 [tool.uv]
+exclude-newer = "3 days"
 constraint-dependencies = [
   "cffi>=1.17.0",
   "duckdb>=1.0",
