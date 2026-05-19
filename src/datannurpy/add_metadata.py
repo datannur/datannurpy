@@ -70,7 +70,15 @@ TOMBSTONE_ENTITIES = {
 }
 
 # List fields that should be merged (union)
-LIST_FIELDS = {"tag_ids", "doc_ids", "enumeration_ids", "source_var_ids"}
+LIST_FIELDS = {
+    "tag_ids",
+    "doc_ids",
+    "enumeration_ids",
+    "source_var_ids",
+    "implied_tag_ids",
+}
+
+BOOL_FIELDS = {"propagate_to_parents"}
 
 CLEAR_VALUE = "!"
 REMOVE_PREFIX = "!"
@@ -414,6 +422,17 @@ def _is_truthy_delete(value: Any) -> bool:
     return bool(value)
 
 
+def _parse_bool_field(value: Any) -> bool:
+    """Parse a boolean metadata value."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return value != 0
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y"}
+    return bool(value)
+
+
 def _extract_tombstone_ids(
     tables: dict[str, tuple[pd.DataFrame, str]],
 ) -> dict[str, set[str]]:
@@ -477,6 +496,8 @@ def _convert_row_to_dict(
             parsed = _parse_list_field(value)
             if parsed:
                 result[key_str] = parsed
+        elif key_str in BOOL_FIELDS:
+            result[key_str] = _parse_bool_field(value)
         else:
             result[key_str] = value
 

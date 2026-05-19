@@ -1,5 +1,9 @@
 # datannurpy
 
+## Unreleased
+
+- add: support variable `business_key` and tag `implied_tag_ids` / `propagate_to_parents` metadata fields
+
 ## 0.24.0 (2026-05-12)
 
 - build: constrain `uv` dependency resolution to packages published at least 3 days ago

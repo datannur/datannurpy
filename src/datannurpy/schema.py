@@ -135,6 +135,7 @@ class Variable:
     description: str | None = None
     type: str | None = None
     key: int | None = None
+    business_key: int | None = None
     nb_distinct: int | None = None
     nb_duplicate: int | None = None
     nb_missing: int | None = None
@@ -205,6 +206,8 @@ class Tag:
     id: str
     parent_id: str | None = None
     doc_ids: list[str] = field(default_factory=list)
+    implied_tag_ids: list[str] = field(default_factory=list)
+    propagate_to_parents: bool | None = None
     name: str | None = None
     description: str | None = None
     _seen: bool = False  # Runtime field for incremental scan

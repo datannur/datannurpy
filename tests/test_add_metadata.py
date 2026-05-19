@@ -1563,6 +1563,72 @@ class TestFrequencyHiddenPolicy:
 class TestConceptEntity:
     """Test concept entity loading."""
 
+    def test_tag_extended_fields_load_from_csv(self, tmp_path: Path):
+        """Tag relation and propagation fields should be loaded."""
+        (tmp_path / "tag.csv").write_text(
+            'id,implied_tag_ids,propagate_to_parents\nbase,"t1, t2",true\n'
+        )
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        ensure_metadata_applied(catalog)
+
+        tag = catalog.tag.get("base")
+        assert tag is not None
+        assert tag.implied_tag_ids == ["t1", "t2"]
+        assert tag.propagate_to_parents is True
+
+    def test_tag_propagate_to_parents_bool_values(self, tmp_path: Path):
+        """propagate_to_parents should parse common metadata bool values."""
+        (tmp_path / "tag.csv").write_text(
+            "id,propagate_to_parents\n"
+            "true_text,true\n"
+            "false_text,false\n"
+            "one_number,1\n"
+            "zero_number,0\n"
+        )
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        ensure_metadata_applied(catalog)
+
+        true_text = catalog.tag.get("true_text")
+        false_text = catalog.tag.get("false_text")
+        one_number = catalog.tag.get("one_number")
+        zero_number = catalog.tag.get("zero_number")
+        assert true_text is not None
+        assert false_text is not None
+        assert one_number is not None
+        assert zero_number is not None
+        assert true_text.propagate_to_parents is True
+        assert false_text.propagate_to_parents is False
+        assert one_number.propagate_to_parents is True
+        assert zero_number.propagate_to_parents is False
+
+    def test_tag_propagate_to_parents_json_bool_values(self, tmp_path: Path):
+        """propagate_to_parents should parse JSON bool values."""
+        (tmp_path / "tag.json").write_text(
+            '[{"id":"true_bool","propagate_to_parents":true},'
+            '{"id":"false_bool","propagate_to_parents":false},'
+            '{"id":"one_number","propagate_to_parents":1},'
+            '{"id":"zero_number","propagate_to_parents":0},'
+            '{"id":"empty_list","propagate_to_parents":[]}]'
+        )
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        ensure_metadata_applied(catalog)
+
+        true_bool = catalog.tag.get("true_bool")
+        false_bool = catalog.tag.get("false_bool")
+        one_number = catalog.tag.get("one_number")
+        zero_number = catalog.tag.get("zero_number")
+        empty_list = catalog.tag.get("empty_list")
+        assert true_bool is not None
+        assert false_bool is not None
+        assert one_number is not None
+        assert zero_number is not None
+        assert empty_list is not None
+        assert true_bool.propagate_to_parents is True
+        assert false_bool.propagate_to_parents is False
+        assert one_number.propagate_to_parents is True
+        assert zero_number.propagate_to_parents is False
+        assert empty_list.propagate_to_parents is False
+
     def test_concept_loads_from_csv(self, tmp_path: Path):
         """Concept rows from concept.csv should be loaded into catalog.concept."""
         (tmp_path / "concept.csv").write_text(
@@ -1599,6 +1665,18 @@ class TestConceptEntity:
         var = catalog.variable.get("ds---v1")
         assert var is not None
         assert var.concept_id == "c1"
+
+    def test_variable_business_key_loaded(self, tmp_path: Path):
+        """business_key column on variable should be loaded."""
+        (tmp_path / "variable.csv").write_text(
+            "id,name,dataset_id,business_key\nds---v1,v1,ds,1\n"
+        )
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        ensure_metadata_applied(catalog)
+
+        var = catalog.variable.get("ds---v1")
+        assert var is not None
+        assert var.business_key == 1
 
     def test_unseen_concept_removed_on_finalize(self, tmp_path: Path):
         """Concepts with _seen=False should be removed on finalize."""
