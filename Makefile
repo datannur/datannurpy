@@ -76,7 +76,7 @@ test-db-all: test-db test-db-oracle18
 # Demo publication (manual, 2-step)
 #
 #   1. make demo              → scan + export to $(DEMO_OUT), opens in browser
-#   2. make demo-setup        → one-shot: npm install + playwright chromium
+#   2. make demo-setup        → one-shot: install Playwright chromium for Python
 #   3. make demo-publish      → inject configs + prerender + deploy via SSH
 #
 # Configs (deploy, static-make, llm-web) live in $(DEMO_CONFIGS) (gitignored).
@@ -86,8 +86,8 @@ demo:
 	uv run python -m datannurpy $(DEMO_CONFIG)
 
 demo-setup:
-	@test -f $(DEMO_OUT)/package.json || { echo "Run 'make demo' first"; exit 1; }
-	cd $(DEMO_OUT) && npm install && npx playwright install chromium
+	@test -f $(DEMO_OUT)/datannur.py || { echo "Run 'make demo' first"; exit 1; }
+	uv run --with playwright python -m playwright install chromium
 
 demo-configs-init:
 	@test -d $(DEMO_OUT)/data-template || { echo "Run 'make demo' first to get the templates"; exit 1; }
@@ -103,7 +103,6 @@ demo-configs-init:
 
 demo-publish:
 	@test -d $(DEMO_OUT) || { echo "Run 'make demo' first"; exit 1; }
-	@test -d $(DEMO_OUT)/node_modules || { echo "Run 'make demo-setup' first"; exit 1; }
 	@test -f $(DEMO_CONFIGS)/deploy.config.json || { echo "Missing configs — run 'make demo-configs-init' and fill in $(DEMO_CONFIGS)/"; exit 1; }
 	@for f in $(DEMO_CFG_FILES); do \
 		if [ -f $(DEMO_CONFIGS)/$$f ]; then \
@@ -111,4 +110,5 @@ demo-publish:
 			echo "Injected $$f"; \
 		fi; \
 	done
-	cd $(DEMO_OUT) && npm run static-deploy
+	uv run --with playwright python -m playwright install chromium
+	cd $(DEMO_OUT) && uv run --with playwright python datannur.py static-deploy

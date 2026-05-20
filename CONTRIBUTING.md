@@ -55,7 +55,7 @@ Manual, 2-step workflow for publishing the hybrid demo (local `data/` scan + edi
 ```bash
 make download-app         # fetches the front repo (also preserves db-source/)
 make demo                 # scan + export to examples/output_editorial/
-make demo-setup           # npm install + playwright chromium (~90 MB)
+make demo-setup           # install Python Playwright chromium (~90 MB)
 make demo-configs-init    # creates templates in examples/datannur_app/configs/
 # then edit examples/datannur_app/configs/{deploy,static-make,llm-web}.config.json
 ```
