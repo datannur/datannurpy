@@ -1,12 +1,9 @@
 # datannurpy
 
-## 0.25.0 (2026-05-20)
+## 0.24.0 (2026-05-21)
 
 - add: support variable `business_key` and tag `implied_tag_ids` / `propagate_to_parents` metadata fields
 - change: app tooling now uses Python scripts instead of Node.js for static export/deploy, OpenAPI generation, and REST API launch helpers
-
-## 0.24.0 (2026-05-12)
-
 - build: constrain `uv` dependency resolution to packages published at least 3 days ago
 - perf: keep `datannurpy` imports lightweight and avoid runtime imports for CLI `--help` / `--version`
 - fix: `export_app()` now preserves local app `data/` state by default and refreshes bundled app files only on first install or with `update_app=True`
