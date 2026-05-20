@@ -1,8 +1,9 @@
 # datannurpy
 
-## Unreleased
+## 0.25.0 (2026-05-20)
 
 - add: support variable `business_key` and tag `implied_tag_ids` / `propagate_to_parents` metadata fields
+- change: app tooling now uses Python scripts instead of Node.js for static export/deploy, OpenAPI generation, and REST API launch helpers
 
 ## 0.24.0 (2026-05-12)
 
