@@ -1,5 +1,16 @@
 # datannurpy
 
+## 0.24.0 (2026-05-21)
+
+- add: support variable `business_key` and tag `implied_tag_ids` / `propagate_to_parents` metadata fields
+- change: app tooling now uses Python scripts instead of Node.js for static export/deploy, OpenAPI generation, and REST API launch helpers
+- build: constrain `uv` dependency resolution to packages published at least 3 days ago
+- perf: keep `datannurpy` imports lightweight and avoid runtime imports for CLI `--help` / `--version`
+- fix: `export_app()` now preserves local app `data/` state by default and refreshes bundled app files only on first install or with `update_app=True`
+- fix: reuse bulk cascade cleanup when removing variables, enumerations, tags, docs, concepts, and organizations
+- add: support app metadata overlays via `app_path/data/db-ui`, loaded as the last metadata source when it exists
+- add: support metadata overlay instructions: `!` clears fields, `!id` removes relation IDs, and `_delete` tombstones remove entities before export, including folder cascades
+
 ## 0.23.1 (2026-05-07)
 
 - doc: clarify builder docs for scan depth, metadata sources, remote storage extras, and database introspection support

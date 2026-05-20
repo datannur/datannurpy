@@ -8,7 +8,7 @@ from pathlib import Path, PurePath
 from typing import TYPE_CHECKING, Any
 
 import pyarrow as pa
-import pyarrow.fs
+import pyarrow.fs as pa_fs_module
 import pyarrow.parquet as pq
 import polars as pl
 
@@ -28,6 +28,9 @@ from .parquet import scan_parquet
 from .parquet.core import scan_delta, scan_hive, scan_iceberg
 from .statistical import scan_statistical
 from .utils import build_variables_from_schema
+
+_PA_PY_FILE_SYSTEM = getattr(pa_fs_module, "PyFileSystem")
+_PA_FSSPEC_HANDLER = getattr(pa_fs_module, "FSSpecHandler")
 
 if TYPE_CHECKING:
     from .filesystem import FileSystem
@@ -362,7 +365,7 @@ def _scan_schema_only_remote(
     """Optimized schema-only scan for remote files."""
     # Parquet: PyArrow reads footer natively via fsspec (no full download)
     if delivery_format == "parquet":
-        pa_fs = pyarrow.fs.PyFileSystem(pyarrow.fs.FSSpecHandler(fs.fs))
+        pa_fs = _PA_PY_FILE_SYSTEM(_PA_FSSPEC_HANDLER(fs.fs))
         full_path = fs._full_path(str(path))
         schema = pq.read_schema(full_path, filesystem=pa_fs)
         variables = build_variables_from_schema(schema, dataset_id)
@@ -405,7 +408,7 @@ def _scan_schema_only_remote(
         # List parquet files remotely
         parquet_files = fs.glob(f"{path}/**/*.parquet")
         if parquet_files:
-            pa_fs = pyarrow.fs.PyFileSystem(pyarrow.fs.FSSpecHandler(fs.fs))
+            pa_fs = _PA_PY_FILE_SYSTEM(_PA_FSSPEC_HANDLER(fs.fs))
             schema = pq.read_schema(parquet_files[0], filesystem=pa_fs)
         else:
             schema = pa.schema([])

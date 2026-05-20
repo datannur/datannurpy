@@ -26,6 +26,39 @@ if TYPE_CHECKING:
 Depth = Literal["dataset", "variable", "stat", "value"]
 
 
+def _normalize_metadata_paths(
+    metadata_path: str | Path | list[str | Path] | None,
+) -> list[str | Path]:
+    """Return configured metadata paths as a list."""
+    if metadata_path is None:
+        return []
+    if isinstance(metadata_path, list):
+        return list(metadata_path)
+    return [metadata_path]
+
+
+def _effective_metadata_path(
+    metadata_path: str | Path | list[str | Path] | None,
+    app_path: Path | None,
+) -> str | Path | list[str | Path] | None:
+    """Append app_path/data/db-ui after configured metadata sources when present."""
+    paths = _normalize_metadata_paths(metadata_path)
+    if app_path is not None:
+        db_ui_path = app_path / "data" / "db-ui"
+        if db_ui_path.is_dir():
+            resolved_db_ui = db_ui_path.resolve()
+            local_paths = [
+                Path(path).resolve() for path in paths if "://" not in str(path)
+            ]
+            if resolved_db_ui not in local_paths:
+                paths.append(db_ui_path)
+    if not paths:
+        return None
+    if len(paths) == 1:
+        return paths[0]
+    return paths
+
+
 class Catalog(DatannurDB):
     """A catalog containing folders, datasets and variables."""
 
@@ -110,17 +143,18 @@ class Catalog(DatannurDB):
                 self.config.add(Config(id=key, value=val))
 
         # Metadata
-        self.metadata_path: str | Path | list[str | Path] | None = metadata_path
+        self.metadata_path = _effective_metadata_path(metadata_path, self.app_path)
         self._metadata_applied = False
         self._loaded_metadata: list[dict[str, Any]] | None = None
         self._dataset_match_index: dict[str, LoadedDatasetRef] | None = None
         self._freq_hidden_ids: set[str] = set()
+        self._metadata_tombstones: dict[str, set[str]] = {}
         self._dataset_previews: dict[str, pl.DataFrame] = {}
         self._dataset_preview_labels: dict[str, str] = {}
-        if metadata_path is not None:
+        if self.metadata_path is not None:
             from .add_metadata import load_metadata
 
-            load_metadata(self, metadata_path)
+            load_metadata(self, self.metadata_path)
 
         # State
         self._loaded_from_db = load_path is not None
@@ -159,7 +193,7 @@ class Catalog(DatannurDB):
                 pl.col("data_path").alias("_match_path")
             )
 
-            if metadata_path is not None and "id" in self.dataset._df.columns:
+            if self.metadata_path is not None and "id" in self.dataset._df.columns:
                 from .add_metadata import _build_dataset_match_paths_by_id
 
                 metadata_match_paths = _build_dataset_match_paths_by_id(

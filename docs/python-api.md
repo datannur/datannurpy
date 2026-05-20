@@ -197,6 +197,7 @@ catalog.export_app(
     *,
     open_browser=False,
     track_evolution=True,
+    update_app=False,
     copy_assets=None,
     base_dir=None,
     quiet=None,
@@ -208,11 +209,12 @@ catalog.export_app(
 | output_dir      | str \| Path \| None | None    | Output directory (uses app_path if None)   |
 | open_browser    | bool                | False   | Open app in browser after export           |
 | track_evolution | bool                | True    | Track changes between exports              |
+| update_app      | bool                | False   | Refresh bundled front-end app files when the app already exists |
 | copy_assets     | dict \| list[dict] \| None | None    | Copy extra local files/directories into the exported app using the same rules as `copy_assets()` |
 | base_dir        | str \| Path \| None | None    | Base directory for relative `copy_assets.from` paths (defaults to current working directory) |
 | quiet           | bool \| None        | None    | Override catalog quiet setting             |
 
-Exports complete standalone datannur app with data. Uses `app_path` by default if set at init.
+Exports complete standalone datannur app with data. Uses `app_path` by default if set at init. Existing apps update `data/db` by default; pass `update_app=True` to refresh bundled front-end files.
 
 ## `Catalog.finalize()`
 

@@ -13,16 +13,30 @@ import pytest
 
 from datannurpy import Catalog, EntityMetadata, Folder
 from datannurpy.errors import ConfigError
-from datannurpy.schema import Enumeration, Frequency, Value, Variable
+from datannurpy.schema import (
+    Concept,
+    Dataset,
+    Doc,
+    Enumeration,
+    Frequency,
+    Organization,
+    Tag,
+    Value,
+    Variable,
+)
 from datannurpy.utils.ids import build_frequency_id, build_value_id
 from datannurpy.add_metadata import (
     DEPTH_ENTITIES,
     FREQ_HIDDEN_TAG,
+    _CLEAR_LIST,
     _convert_row_to_dict,
     _extract_freq_hidden_ids,
+    _extract_tombstone_ids,
     _get_catalog_table,
     _get_required_fields,
+    _is_clear_value,
     _is_database_connection,
+    _is_truthy_delete,
     _load_tables_from_database,
     _load_tables_from_folder,
     _metadata_file_label,
@@ -244,6 +258,40 @@ class TestConvertRowToDict:
         result = _convert_row_to_dict(row, Variable)
         assert "tag_ids" not in result
 
+    def test_clear_scalar_field(self):
+        """Exact ! should clear scalar fields."""
+        row: dict[Hashable, Any] = {
+            "id": "test",
+            "name": "Test",
+            "dataset_id": "ds",
+            "description": "!",
+        }
+
+        result = _convert_row_to_dict(row, Variable)
+
+        assert result["description"] is None
+
+    def test_clear_list_field(self):
+        """Exact ! should clear relation list fields."""
+        row: dict[Hashable, Any] = {
+            "id": "test",
+            "name": "Test",
+            "dataset_id": "ds",
+            "tag_ids": "!",
+        }
+
+        result = _convert_row_to_dict(row, Variable)
+
+        assert result["tag_ids"] is _CLEAR_LIST
+        assert repr(result["tag_ids"]) == "CLEAR_LIST"
+
+    def test_clear_value_detection(self):
+        """Only exact ! strings are clear markers."""
+        assert _is_clear_value("!")
+        assert _is_clear_value(" ! ")
+        assert not _is_clear_value("!tag")
+        assert not _is_clear_value(["!"])
+
 
 class TestMergeEntity:
     """Test _merge_entity function."""
@@ -273,6 +321,30 @@ class TestMergeEntity:
         entity = Variable(id="test", name="Test", dataset_id="ds")
         _merge_entity(entity, {"tag_ids": ["a", "b"]})
         assert entity.tag_ids == ["a", "b"]
+
+    def test_clear_list_field(self):
+        """Merging an empty list clears an existing relation list."""
+        entity = Variable(id="test", name="Test", dataset_id="ds", tag_ids=["a"])
+        _merge_entity(entity, {"tag_ids": _CLEAR_LIST})
+        assert entity.tag_ids == []
+
+    def test_empty_list_field_does_not_clear(self):
+        """Merging a plain empty list keeps an existing relation list."""
+        entity = Variable(id="test", name="Test", dataset_id="ds", tag_ids=["a"])
+        _merge_entity(entity, {"tag_ids": []})
+        assert entity.tag_ids == ["a"]
+
+    def test_remove_relation_id(self):
+        """!id removes a relation from the accumulated list."""
+        entity = Variable(id="test", name="Test", dataset_id="ds", tag_ids=["a", "b"])
+        _merge_entity(entity, {"tag_ids": ["c", "!a"]})
+        assert entity.tag_ids == ["c", "b"]
+
+    def test_relation_removal_wins_over_addition(self):
+        """Removing and adding the same relation in one row removes it."""
+        entity = Variable(id="test", name="Test", dataset_id="ds", tag_ids=["a", "b"])
+        _merge_entity(entity, {"tag_ids": ["a", "!a", "c"]})
+        assert entity.tag_ids == ["c", "b"]
 
 
 class TestGetCatalogTable:
@@ -641,6 +713,17 @@ class TestProcessEntityTable:
         assert updated == 0
         assert len(catalog.folder.all()) == 1
         assert catalog.folder.all()[0].id == "f1"
+
+    def test_create_new_entity_with_clear_list_field(self):
+        """Clear markers on new entities become empty relation lists."""
+        catalog = Catalog()
+        df = pd.DataFrame({"id": ["f1"], "tag_ids": ["!"]})
+
+        created, updated = _process_entity_table(catalog, "folder", df)
+
+        assert created == 1
+        assert updated == 0
+        assert catalog.folder.all()[0].tag_ids == []
 
     def test_update_existing_entity(self):
         """Should update existing entities."""
@@ -1480,6 +1563,72 @@ class TestFrequencyHiddenPolicy:
 class TestConceptEntity:
     """Test concept entity loading."""
 
+    def test_tag_extended_fields_load_from_csv(self, tmp_path: Path):
+        """Tag relation and propagation fields should be loaded."""
+        (tmp_path / "tag.csv").write_text(
+            'id,implied_tag_ids,propagate_to_parents\nbase,"t1, t2",true\n'
+        )
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        ensure_metadata_applied(catalog)
+
+        tag = catalog.tag.get("base")
+        assert tag is not None
+        assert tag.implied_tag_ids == ["t1", "t2"]
+        assert tag.propagate_to_parents is True
+
+    def test_tag_propagate_to_parents_bool_values(self, tmp_path: Path):
+        """propagate_to_parents should parse common metadata bool values."""
+        (tmp_path / "tag.csv").write_text(
+            "id,propagate_to_parents\n"
+            "true_text,true\n"
+            "false_text,false\n"
+            "one_number,1\n"
+            "zero_number,0\n"
+        )
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        ensure_metadata_applied(catalog)
+
+        true_text = catalog.tag.get("true_text")
+        false_text = catalog.tag.get("false_text")
+        one_number = catalog.tag.get("one_number")
+        zero_number = catalog.tag.get("zero_number")
+        assert true_text is not None
+        assert false_text is not None
+        assert one_number is not None
+        assert zero_number is not None
+        assert true_text.propagate_to_parents is True
+        assert false_text.propagate_to_parents is False
+        assert one_number.propagate_to_parents is True
+        assert zero_number.propagate_to_parents is False
+
+    def test_tag_propagate_to_parents_json_bool_values(self, tmp_path: Path):
+        """propagate_to_parents should parse JSON bool values."""
+        (tmp_path / "tag.json").write_text(
+            '[{"id":"true_bool","propagate_to_parents":true},'
+            '{"id":"false_bool","propagate_to_parents":false},'
+            '{"id":"one_number","propagate_to_parents":1},'
+            '{"id":"zero_number","propagate_to_parents":0},'
+            '{"id":"empty_list","propagate_to_parents":[]}]'
+        )
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        ensure_metadata_applied(catalog)
+
+        true_bool = catalog.tag.get("true_bool")
+        false_bool = catalog.tag.get("false_bool")
+        one_number = catalog.tag.get("one_number")
+        zero_number = catalog.tag.get("zero_number")
+        empty_list = catalog.tag.get("empty_list")
+        assert true_bool is not None
+        assert false_bool is not None
+        assert one_number is not None
+        assert zero_number is not None
+        assert empty_list is not None
+        assert true_bool.propagate_to_parents is True
+        assert false_bool.propagate_to_parents is False
+        assert one_number.propagate_to_parents is True
+        assert zero_number.propagate_to_parents is False
+        assert empty_list.propagate_to_parents is False
+
     def test_concept_loads_from_csv(self, tmp_path: Path):
         """Concept rows from concept.csv should be loaded into catalog.concept."""
         (tmp_path / "concept.csv").write_text(
@@ -1516,6 +1665,18 @@ class TestConceptEntity:
         var = catalog.variable.get("ds---v1")
         assert var is not None
         assert var.concept_id == "c1"
+
+    def test_variable_business_key_loaded(self, tmp_path: Path):
+        """business_key column on variable should be loaded."""
+        (tmp_path / "variable.csv").write_text(
+            "id,name,dataset_id,business_key\nds---v1,v1,ds,1\n"
+        )
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        ensure_metadata_applied(catalog)
+
+        var = catalog.variable.get("ds---v1")
+        assert var is not None
+        assert var.business_key == 1
 
     def test_unseen_concept_removed_on_finalize(self, tmp_path: Path):
         """Concepts with _seen=False should be removed on finalize."""
@@ -1633,3 +1794,388 @@ class TestMetadataPathList:
         )
         catalog = Catalog(metadata_path=[base, overlay], quiet=True)
         assert catalog._freq_hidden_ids == {"ds---a", "ds---b"}
+
+
+class TestMetadataClearInstructions:
+    """Test exact ! metadata clear instructions."""
+
+    def test_clear_scalar_from_csv(self, tmp_path: Path):
+        """A scalar ! clears the accumulated value."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "dataset.csv").write_text("id,description\nds1,Description\n")
+        overlay = tmp_path / "overlay"
+        overlay.mkdir()
+        (overlay / "dataset.csv").write_text("id,description\nds1,!\n")
+
+        catalog = Catalog(metadata_path=[base, overlay], quiet=True)
+        ensure_metadata_applied(catalog)
+
+        dataset = catalog.dataset.get("ds1")
+        assert dataset is not None
+        assert dataset.description is None
+
+    def test_clear_relation_from_csv(self, tmp_path: Path):
+        """A relation ! clears all accumulated relation IDs."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "dataset.csv").write_text("id,tag_ids\nds1,t1\n")
+        overlay = tmp_path / "overlay"
+        overlay.mkdir()
+        (overlay / "dataset.csv").write_text("id,tag_ids\nds1,!\n")
+
+        catalog = Catalog(metadata_path=[base, overlay], quiet=True)
+        ensure_metadata_applied(catalog)
+
+        dataset = catalog.dataset.get("ds1")
+        assert dataset is not None
+        assert dataset.tag_ids == []
+
+    def test_empty_values_still_leave_existing_values_unchanged(self, tmp_path: Path):
+        """Empty metadata values are not clear instructions."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "dataset.csv").write_text(
+            "id,description,tag_ids\nds1,Description,t1\n"
+        )
+        overlay = tmp_path / "overlay"
+        overlay.mkdir()
+        (overlay / "dataset.csv").write_text("id,description,tag_ids\nds1,,\n")
+
+        catalog = Catalog(metadata_path=[base, overlay], quiet=True)
+        ensure_metadata_applied(catalog)
+
+        dataset = catalog.dataset.get("ds1")
+        assert dataset is not None
+        assert dataset.description == "Description"
+        assert dataset.tag_ids == ["t1"]
+
+    def test_empty_json_array_still_leaves_existing_relation_unchanged(
+        self, tmp_path: Path
+    ):
+        """JSON [] is not a clear instruction."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "dataset.json").write_text('[{"id":"ds1","tag_ids":["t1"]}]')
+        overlay = tmp_path / "overlay"
+        overlay.mkdir()
+        (overlay / "dataset.json").write_text('[{"id":"ds1","tag_ids":[]}]')
+
+        catalog = Catalog(metadata_path=[base, overlay], quiet=True)
+        ensure_metadata_applied(catalog)
+
+        dataset = catalog.dataset.get("ds1")
+        assert dataset is not None
+        assert dataset.tag_ids == ["t1"]
+
+
+class TestMetadataRelationRemovalInstructions:
+    """Test !id metadata relation removal instructions."""
+
+    def test_remove_relation_from_csv(self, tmp_path: Path):
+        """A !id relation entry removes an accumulated relation ID."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "dataset.csv").write_text('id,tag_ids\nds1,"t1,t2"\n')
+        overlay = tmp_path / "overlay"
+        overlay.mkdir()
+        (overlay / "dataset.csv").write_text('id,tag_ids\nds1,"t3,!t1"\n')
+
+        catalog = Catalog(metadata_path=[base, overlay], quiet=True)
+        ensure_metadata_applied(catalog)
+
+        dataset = catalog.dataset.get("ds1")
+        assert dataset is not None
+        assert dataset.tag_ids == ["t3", "t2"]
+
+    def test_remove_relation_from_json(self, tmp_path: Path):
+        """JSON !id relation entries are consumed as instructions."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "dataset.json").write_text('[{"id":"ds1","tag_ids":["t1","t2"]}]')
+        overlay = tmp_path / "overlay"
+        overlay.mkdir()
+        (overlay / "dataset.json").write_text('[{"id":"ds1","tag_ids":["t3","!t1"]}]')
+
+        catalog = Catalog(metadata_path=[base, overlay], quiet=True)
+        ensure_metadata_applied(catalog)
+
+        dataset = catalog.dataset.get("ds1")
+        assert dataset is not None
+        assert dataset.tag_ids == ["t3", "t2"]
+
+    def test_create_new_entity_consumes_relation_removal(self, tmp_path: Path):
+        """New entities never store !id instruction entries."""
+        metadata = tmp_path / "metadata"
+        metadata.mkdir()
+        (metadata / "dataset.csv").write_text('id,tag_ids\nds1,"t1,!t1,t2"\n')
+
+        catalog = Catalog(metadata_path=metadata, quiet=True)
+        ensure_metadata_applied(catalog)
+
+        dataset = catalog.dataset.get("ds1")
+        assert dataset is not None
+        assert dataset.tag_ids == ["t2"]
+
+
+class TestMetadataTombstones:
+    """Test _delete metadata tombstones."""
+
+    def test_tombstone_removes_entity_on_export(self, tmp_path: Path):
+        """A _delete row removes the entity from the final export."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "tag.csv").write_text("id,name\nt1,Base\n")
+        overlay = tmp_path / "overlay"
+        overlay.mkdir()
+        (overlay / "tag.csv").write_text("id,_delete\nt1,true\n")
+        out = tmp_path / "out"
+
+        catalog = Catalog(metadata_path=[base, overlay], quiet=True)
+        catalog.export_db(out)
+
+        assert catalog.tag.get("t1") is None
+        assert not (out / "tag.json").exists()
+
+    def test_tombstone_cascades_tag_references(self, tmp_path: Path):
+        """Tag tombstones remove references from relation fields."""
+        meta = tmp_path / "meta"
+        meta.mkdir()
+        (meta / "tag.csv").write_text("id,name,_delete\nt1,Tag,true\n")
+        (meta / "dataset.csv").write_text("id,tag_ids\nds1,t1\n")
+
+        catalog = Catalog(metadata_path=meta, quiet=True)
+        catalog.export_db(tmp_path / "out")
+
+        dataset = catalog.dataset.get("ds1")
+        assert dataset is not None
+        assert dataset.tag_ids == []
+        assert catalog.tag.get("t1") is None
+
+    def test_tombstone_cascades_dataset_children(self, tmp_path: Path):
+        """Dataset tombstones remove child variables and frequencies."""
+        meta = tmp_path / "meta"
+        meta.mkdir()
+        (meta / "dataset.csv").write_text("id,name,_delete\nds1,Dataset,true\n")
+        (meta / "variable.csv").write_text("id,name,dataset_id\nds1---v1,v1,ds1\n")
+        (meta / "frequency.csv").write_text(
+            "variable_id,value,frequency\nds1---v1,a,1\n"
+        )
+
+        catalog = Catalog(metadata_path=meta, quiet=True)
+        catalog.export_db(tmp_path / "out")
+
+        assert catalog.dataset.get("ds1") is None
+        assert catalog.variable.get("ds1---v1") is None
+        assert catalog.frequency.count == 0
+
+    def test_add_metadata_applies_tombstones_immediately(self, tmp_path: Path):
+        """Direct add_metadata consumes tombstones after applying rows."""
+        catalog = Catalog(quiet=True)
+        catalog.tag.add(Tag(id="t1", name="Tag"))
+        catalog.dataset.add(Dataset(id="ds1", tag_ids=["t1"]))
+        meta = tmp_path / "meta"
+        meta.mkdir()
+        (meta / "tag.csv").write_text("id,_delete\nt1,true\n")
+
+        add_metadata(catalog, meta, quiet=True)
+
+        dataset = catalog.dataset.get("ds1")
+        assert dataset is not None
+        assert dataset.tag_ids == []
+        assert catalog.tag.get("t1") is None
+
+    def test_tombstones_apply_all_supported_entity_cascades(self, tmp_path: Path):
+        """Tombstones reuse cascade cleanup for every supported entity type."""
+        catalog = Catalog(quiet=True)
+        catalog.dataset.add(Dataset(id="ds1"))
+        catalog.variable.add(
+            Variable(
+                id="ds1---v1",
+                name="v1",
+                dataset_id="ds1",
+                enumeration_ids=["e1"],
+                concept_id="c1",
+            )
+        )
+        catalog.enumeration.add(Enumeration(id="e1"))
+        catalog.value.add(Value(enumeration_id="e1", value="a"))
+        catalog.organization.add(Organization(id="org1"))
+        catalog.folder.add(Folder(id="f1", owner_id="org1", manager_id="org1"))
+        catalog.doc.add(Doc(id="doc1"))
+        catalog.tag.add(Tag(id="t1"))
+        catalog.concept.add(Concept(id="c1"))
+        catalog.dataset.add(Dataset(id="ds2", tag_ids=["t1"], doc_ids=["doc1"]))
+        catalog.variable.add(Variable(id="ds2---v1", name="v1", dataset_id="ds2"))
+        meta = tmp_path / "meta"
+        meta.mkdir()
+        (meta / "variable.csv").write_text("id,dataset_id,_delete\nds2---v1,ds2,true\n")
+        (meta / "enumeration.csv").write_text("id,_delete\ne1,true\n")
+        (meta / "organization.csv").write_text("id,_delete\norg1,true\n")
+        (meta / "tag.csv").write_text("id,_delete\nt1,true\n")
+        (meta / "doc.csv").write_text("id,_delete\ndoc1,true\n")
+        (meta / "concept.csv").write_text("id,_delete\nc1,true\n")
+
+        add_metadata(catalog, meta, quiet=True)
+
+        assert catalog.variable.get("ds2---v1") is None
+        assert catalog.enumeration.get("e1") is None
+        assert catalog.value.count == 0
+        assert catalog.organization.get("org1") is None
+        assert catalog.tag.get("t1") is None
+        assert catalog.doc.get("doc1") is None
+        assert catalog.concept.get("c1") is None
+        folder = catalog.folder.get("f1")
+        assert folder is not None
+        assert folder.owner_id is None
+        kept_dataset = catalog.dataset.get("ds2")
+        assert kept_dataset is not None
+        assert kept_dataset.tag_ids == []
+        assert kept_dataset.doc_ids == []
+        kept_variable = catalog.variable.get("ds1---v1")
+        assert kept_variable is not None
+        assert kept_variable.enumeration_ids == []
+        assert kept_variable.concept_id is None
+
+    def test_folder_tombstone_removes_descendants_and_contents(self, tmp_path: Path):
+        """Folder tombstones remove descendants and contained entities."""
+        catalog = Catalog(quiet=True)
+        catalog.folder.add(Folder(id="root"))
+        catalog.folder.add(Folder(id="child", parent_id="root"))
+        catalog.folder.add(Folder(id="other"))
+        catalog.dataset.add(Dataset(id="ds1", folder_id="child"))
+        catalog.dataset.add(Dataset(id="ds2", folder_id="other"))
+        catalog.variable.add(Variable(id="ds1---v1", name="v1", dataset_id="ds1"))
+        catalog.variable.add(Variable(id="ds2---v1", name="v1", dataset_id="ds2"))
+        catalog.frequency.add(Frequency(variable_id="ds1---v1", value="a", frequency=1))
+        catalog.enumeration.add(Enumeration(id="e1", folder_id="child"))
+        catalog.value.add(Value(enumeration_id="e1", value="a"))
+        meta = tmp_path / "meta"
+        meta.mkdir()
+        (meta / "folder.csv").write_text("id,_delete\nroot,true\n")
+
+        add_metadata(catalog, meta, quiet=True)
+
+        assert catalog.folder.get("root") is None
+        assert catalog.folder.get("child") is None
+        assert catalog.folder.get("other") is not None
+        assert catalog.dataset.get("ds1") is None
+        assert catalog.dataset.get("ds2") is not None
+        assert catalog.variable.get("ds1---v1") is None
+        assert catalog.variable.get("ds2---v1") is not None
+        assert catalog.frequency.count == 0
+        assert catalog.enumeration.get("e1") is None
+        assert catalog.value.count == 0
+
+    def test_tombstones_ignore_value_and_frequency(self, tmp_path: Path):
+        """Composite-key tables are out of scope for direct tombstones."""
+        meta = tmp_path / "meta"
+        meta.mkdir()
+        (meta / "value.csv").write_text("enumeration_id,value,_delete\ne1,a,true\n")
+        (meta / "frequency.csv").write_text(
+            "variable_id,value,frequency,_delete\nv1,a,1,true\n"
+        )
+
+        catalog = Catalog(metadata_path=meta, quiet=True)
+
+        assert catalog._metadata_tombstones == {}
+
+    def test_delete_value_parsing(self):
+        """_delete accepts explicit truthy values only."""
+        import math
+
+        assert _is_truthy_delete(True)
+        assert _is_truthy_delete(1)
+        assert _is_truthy_delete("true")
+        assert _is_truthy_delete("YES")
+        assert _is_truthy_delete(["value"])
+        assert not _is_truthy_delete(False)
+        assert not _is_truthy_delete(0)
+        assert not _is_truthy_delete("false")
+        assert not _is_truthy_delete(None)
+        assert not _is_truthy_delete(math.nan)
+
+    def test_tombstone_extraction_edge_cases(self):
+        """Tombstone extraction ignores unsupported and incomplete rows."""
+        import pandas as pd
+
+        tables: dict[str, tuple[pd.DataFrame, str]] = {
+            "value": (
+                pd.DataFrame({"id": ["ignored"], "_delete": [True]}),
+                "value.csv",
+            ),
+            "tag": (
+                pd.DataFrame({"name": ["Missing id"], "_delete": [True]}),
+                "tag.csv",
+            ),
+            "doc": (pd.DataFrame({"id": [None], "_delete": [True]}), "doc.csv"),
+            "concept": (
+                pd.DataFrame({"id": ["c1"], "_delete": [False]}),
+                "concept.csv",
+            ),
+        }
+
+        assert _extract_tombstone_ids(tables) == {}
+
+
+class TestAppMetadataOverlayPath:
+    """Test automatic app_path/data/db-ui metadata source discovery."""
+
+    def test_app_db_ui_is_used_without_metadata_path(self, tmp_path: Path):
+        """app_path/data/db-ui is applied even when metadata_path is not configured."""
+        app_path = tmp_path / "app"
+        db_ui = app_path / "data" / "db-ui"
+        db_ui.mkdir(parents=True)
+        (db_ui / "tag.json").write_text('[{"id":"ui","name":"UI"}]')
+
+        catalog = Catalog(app_path=app_path, quiet=True)
+        ensure_metadata_applied(catalog)
+
+        tag = catalog.tag.get("ui")
+        assert tag is not None
+        assert tag.name == "UI"
+
+    def test_app_db_ui_is_applied_after_configured_metadata_path(self, tmp_path: Path):
+        """app_path/data/db-ui overrides configured metadata sources."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "tag.csv").write_text("id,name\nt1,Base\n")
+        app_path = tmp_path / "app"
+        db_ui = app_path / "data" / "db-ui"
+        db_ui.mkdir(parents=True)
+        (db_ui / "tag.json").write_text('[{"id":"t1","name":"UI"}]')
+
+        catalog = Catalog(app_path=app_path, metadata_path=base, quiet=True)
+        ensure_metadata_applied(catalog)
+
+        tag = catalog.tag.get("t1")
+        assert tag is not None
+        assert tag.name == "UI"
+
+    def test_app_db_ui_is_not_duplicated_when_configured(self, tmp_path: Path):
+        """Explicitly configured app_path/data/db-ui is not loaded twice."""
+        app_path = tmp_path / "app"
+        db_ui = app_path / "data" / "db-ui"
+        db_ui.mkdir(parents=True)
+        (db_ui / "tag.json").write_text('[{"id":"ui","name":"UI"}]')
+
+        catalog = Catalog(app_path=app_path, metadata_path=db_ui, quiet=True)
+
+        assert catalog.metadata_path == db_ui
+        assert len(catalog._loaded_metadata or []) == 1
+
+    def test_app_db_ui_does_not_mutate_metadata_path_list(self, tmp_path: Path):
+        """Composing the effective path does not mutate caller-owned lists."""
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "tag.csv").write_text("id,name\nt1,Base\n")
+        app_path = tmp_path / "app"
+        db_ui = app_path / "data" / "db-ui"
+        db_ui.mkdir(parents=True)
+        (db_ui / "tag.json").write_text('[{"id":"t1","name":"UI"}]')
+        metadata_path: list[str | Path] = [base]
+
+        catalog = Catalog(app_path=app_path, metadata_path=metadata_path, quiet=True)
+
+        assert metadata_path == [base]
+        assert catalog.metadata_path == [base, db_ui]

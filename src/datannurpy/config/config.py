@@ -43,6 +43,7 @@ RESERVED_KEYS = {
     "output_dir",
     "post_export",
     "track_evolution",
+    "update_app",
 }
 
 
@@ -241,6 +242,7 @@ def run_config(path: str | Path) -> Catalog:
     open_browser = config.pop("open_browser", False)
     copy_assets = config.pop("copy_assets", None)
     track_evolution = config.pop("track_evolution", True)
+    update_app = config.pop("update_app", False)
     post_export = config.pop("post_export", None)
     output_dir = config.pop("output_dir", None)
     if output_dir:
@@ -306,6 +308,7 @@ def run_config(path: str | Path) -> Catalog:
         catalog.export_app(
             open_browser=open_browser,
             track_evolution=track_evolution,
+            update_app=update_app,
             copy_assets=copy_assets,
             base_dir=base_dir,
         )

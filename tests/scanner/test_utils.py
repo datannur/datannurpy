@@ -406,7 +406,8 @@ class TestBuildVariables:
         from ibis.expr.operations import InMemoryTable, PhysicalTable
 
         csv_path = tmp_path / "small.csv"
-        pa_csv.write_csv(
+        write_csv = getattr(pa_csv, "write_csv")
+        write_csv(
             pa.table({"a": ["x", "y", "x"], "b": ["p", "p", "q"]}),
             csv_path,
         )
@@ -524,7 +525,8 @@ class TestBuildVariables:
 
         monkeypatch.setattr(scanner_utils, "_MATERIALIZE_MAX_ROWS", 1)
         csv_path = tmp_path / "small.csv"
-        pa_csv.write_csv(pa.table({"a": ["x", "y", "x"]}), csv_path)
+        write_csv = getattr(pa_csv, "write_csv")
+        write_csv(pa.table({"a": ["x", "y", "x"]}), csv_path)
         con = ibis.duckdb.connect()
         table = con.read_csv(str(csv_path))
         variables, freq = build_variables(

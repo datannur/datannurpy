@@ -19,7 +19,7 @@ from .utils.params import validate_params
 if TYPE_CHECKING:
     from .catalog import Catalog
 
-from .add_metadata import ensure_metadata_applied
+from .add_metadata import apply_metadata_tombstones, ensure_metadata_applied
 from .errors import ConfigError
 from .preview import apply_preview_flags, sync_preview_exports
 
@@ -136,6 +136,24 @@ def _print_export_size_report(path: Path, *, quiet: bool) -> None:
         return
     print(report, file=sys.stderr)
     _write_log(report)
+
+
+def _clean_stale_db_files(catalog: Catalog, path: Path) -> None:
+    """Remove generated JSON database files that are no longer part of the export."""
+    if not path.exists():
+        return
+    table_names = set(catalog._tables)
+    expected_names = table_names | {"__table__", "config", "evolution"}
+    for file_path in path.iterdir():
+        if not file_path.is_file():
+            continue
+        name = None
+        if file_path.suffix == ".json":
+            name = file_path.stem
+        elif file_path.name.endswith(".json.js"):
+            name = _table_name_from_jsonjs(file_path)
+        if name is not None and name not in expected_names:
+            file_path.unlink()
 
 
 def _normalize_copy_assets(copy_assets: Any) -> list[dict[str, Any]]:
@@ -369,6 +387,7 @@ def export_db(
         "frequency": "variable",
         "value": "enumeration",
     }
+    apply_metadata_tombstones(catalog)
     preview_ids = sync_preview_exports(catalog, path)
     apply_preview_flags(catalog, preview_ids)
     _drop_empty_columns(catalog)
@@ -378,6 +397,7 @@ def export_db(
         timestamp=catalog._now,
         parent_relations=parent_relations,
     )
+    _clean_stale_db_files(catalog, Path(path))
     _print_export_size_report(Path(path), quiet=q)
 
     if copy_assets is not None:
@@ -396,6 +416,11 @@ def _get_app_path() -> Path:
     return Path(__file__).parent / "app"
 
 
+def _is_app_initialized(output_dir: Path) -> bool:
+    """Return whether an exported app already exists."""
+    return (output_dir / "index.html").is_file()
+
+
 def _copy_app(output_dir: Path) -> None:
     """Copy datannur app to output directory."""
     app_src = _get_app_path()
@@ -407,10 +432,14 @@ def _copy_app(output_dir: Path) -> None:
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Copy app files to output_dir (merge with existing files)
+    # Copy app files to output_dir. The data directory is local app state; it is
+    # created if needed but never removed or overwritten by app asset refreshes.
     for item in app_src.iterdir():
         dest = output_dir / item.name
         if item.is_dir():
+            if item.name == "data":
+                dest.mkdir(parents=True, exist_ok=True)
+                continue
             if dest.exists():
                 shutil.rmtree(dest)
             shutil.copytree(item, dest)
@@ -425,6 +454,7 @@ def export_app(
     *,
     open_browser: bool = False,
     track_evolution: bool = True,
+    update_app: bool = False,
     copy_assets: Any = None,
     base_dir: str | Path | None = None,
     quiet: bool | None = None,
@@ -450,8 +480,10 @@ def export_app(
         print(header, file=sys.stderr)
     _write_log(header)
 
-    # Copy app files
-    _copy_app(output_dir)
+    # Install app files on first export. Later exports update data/db only unless
+    # the caller explicitly requests a front-end bundle refresh.
+    if update_app or not _is_app_initialized(output_dir):
+        _copy_app(output_dir)
 
     # Write to data/db/
     db_dir = output_dir / "data" / "db"

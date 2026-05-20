@@ -42,6 +42,10 @@ add:
 
 Use `refresh: true` to force a full rescan.
 
+Existing app exports update `data/db` by default and preserve local app state under `data/`. To refresh the bundled front-end app files after upgrading datannurpy, set `update_app: true` or call `catalog.export_app(update_app=True)`.
+
+When `app_path/data/db-ui` exists, it is loaded automatically as the last metadata source before export. See [Manual metadata](/metadata) for merge ordering and overlay instructions.
+
 ## Evolution tracking
 
 

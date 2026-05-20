@@ -20,8 +20,10 @@ from datannurpy.preview import (
     _remove_stale_preview_files,
     normalize_preview_df,
     preview_from_ibis,
+    sync_preview_exports,
     validate_preview_rows,
 )
+from datannurpy.schema import Dataset
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 CSV_DIR = DATA_DIR / "csv"
@@ -426,6 +428,16 @@ class TestCatalogWrite:
         assert not nested.exists()
         assert not (preview_dir / "stale.txt").exists()
         assert _dataset_id_from_preview_file(Path("stale.txt")) is None
+
+    def test_sync_preview_exports_skips_missing_preview_files(self, tmp_path: Path):
+        """Preview sync skips eligible datasets when no preview data or files exist."""
+        catalog = Catalog()
+        catalog.dataset.add(Dataset(id="missing", preview_rows=1))
+
+        preview_ids = sync_preview_exports(catalog, tmp_path)
+
+        assert preview_ids == set()
+        assert not (tmp_path / "preview").exists()
 
     def test_incremental_export_preserves_existing_preview(self, tmp_path: Path):
         """Skipped unchanged datasets keep existing preview files."""

@@ -58,6 +58,114 @@ class TestExportApp:
 
         assert not extra_file.exists()
 
+    def test_clean_stale_db_files_handles_missing_path(self):
+        """Stale DB cleanup should ignore missing directories."""
+        catalog = Catalog(quiet=True)
+
+        exporter._clean_stale_db_files(catalog, Path("/nonexistent/datannur/db"))
+
+    def test_clean_stale_db_files_keeps_unrelated_non_json_files(self, tmp_path):
+        """Stale DB cleanup should only remove generated JSON database files."""
+        catalog = Catalog(quiet=True)
+        note = tmp_path / "note.txt"
+        note.write_text("local")
+
+        exporter._clean_stale_db_files(catalog, tmp_path)
+
+        assert note.exists()
+
+    def test_clean_stale_db_files_keeps_directories(self, tmp_path):
+        """Stale DB cleanup should ignore directories."""
+        catalog = Catalog(quiet=True)
+        preview_dir = tmp_path / "preview"
+        preview_dir.mkdir()
+
+        exporter._clean_stale_db_files(catalog, tmp_path)
+
+        assert preview_dir.exists()
+
+    def test_export_app_preserves_data_except_db(self, _employees_catalog, tmp_path):
+        """Repeated export_app should preserve local data files outside data/db."""
+        _employees_catalog.export_app(tmp_path)
+
+        ui_dir = tmp_path / "data" / "db-ui"
+        ui_dir.mkdir()
+        ui_file = ui_dir / "dataset.json"
+        ui_file.write_text('[{"id":"manual","description":"Manual"}]')
+        config_file = tmp_path / "data" / "localhost-ports.config.json"
+        config_file.write_text('{"editServerPort": 8765}')
+        old_db_file = tmp_path / "data" / "db" / "old_data.json"
+        old_db_file.write_text("[]")
+
+        _employees_catalog.export_app(tmp_path)
+
+        assert ui_file.exists()
+        assert config_file.exists()
+        assert not old_db_file.exists()
+
+    def test_export_app_does_not_refresh_existing_app_by_default(
+        self, _employees_catalog, tmp_path
+    ):
+        """Existing app assets are not refreshed unless update_app is true."""
+        _employees_catalog.export_app(tmp_path)
+
+        marker = tmp_path / "assets" / "local-only.txt"
+        marker.write_text("local")
+
+        _employees_catalog.export_app(tmp_path)
+
+        assert marker.exists()
+
+    def test_export_app_update_app_refreshes_existing_app(
+        self, _employees_catalog, tmp_path
+    ):
+        """update_app=True refreshes bundled app assets while preserving data."""
+        _employees_catalog.export_app(tmp_path)
+
+        marker = tmp_path / "assets" / "local-only.txt"
+        marker.write_text("local")
+        data_file = tmp_path / "data" / "db-ui" / "dataset.json"
+        data_file.parent.mkdir(parents=True)
+        data_file.write_text("[]")
+
+        _employees_catalog.export_app(tmp_path, update_app=True)
+
+        assert not marker.exists()
+        assert data_file.exists()
+
+    def test_export_app_preserves_evolution_tracking(self, tmp_path):
+        """export_app should track evolution while regenerating data/db."""
+        app_dir = tmp_path / "app"
+
+        catalog1 = Catalog(app_path=app_dir, quiet=True)
+        catalog1.add_folder(
+            DATA_DIR,
+            metadata=EntityMetadata(id="test", name="Original"),
+            include=["**/employees.csv"],
+        )
+        catalog1.export_app()
+
+        catalog2 = Catalog(app_path=app_dir, quiet=True)
+        catalog2.add_folder(
+            DATA_DIR,
+            metadata=EntityMetadata(id="test", name="Modified"),
+            include=["**/employees.csv"],
+        )
+        catalog2.export_app()
+
+        evolution_path = app_dir / "data" / "db" / "evolution.json"
+        assert evolution_path.exists()
+        evolution = json.loads(evolution_path.read_text())
+        assert any(
+            item["type"] == "update"
+            and item["entity"] == "folder"
+            and item["entity_id"] == "test"
+            and item["variable"] == "name"
+            and item["old_value"] == "Original"
+            and item["new_value"] == "Modified"
+            for item in evolution
+        )
+
     def test_export_app_quiet(self, _employees_catalog, tmp_path):
         """export_app with quiet=True should not print."""
         _employees_catalog.export_app(tmp_path, quiet=True)

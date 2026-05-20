@@ -28,7 +28,9 @@ from .schema import (
     Value,
     Variable,
 )
-from .scanner import read_csv, read_excel, read_statistical
+from .scanner.csv import read_csv
+from .scanner.excel import read_excel
+from .scanner.statistical import read_statistical
 from .utils import log_done, log_error, log_section, log_warn
 from .utils.ids import build_frequency_id, build_value_id
 from .utils.params import validate_params
@@ -56,8 +58,40 @@ ENTITY_CLASSES: dict[str, type] = {
 # Entities without required id (use composite key)
 ENTITIES_WITHOUT_ID = {"value", "frequency"}
 
+TOMBSTONE_ENTITIES = {
+    "folder",
+    "dataset",
+    "variable",
+    "enumeration",
+    "organization",
+    "tag",
+    "doc",
+    "concept",
+}
+
 # List fields that should be merged (union)
-LIST_FIELDS = {"tag_ids", "doc_ids", "enumeration_ids", "source_var_ids"}
+LIST_FIELDS = {
+    "tag_ids",
+    "doc_ids",
+    "enumeration_ids",
+    "source_var_ids",
+    "implied_tag_ids",
+}
+
+BOOL_FIELDS = {"propagate_to_parents"}
+
+CLEAR_VALUE = "!"
+REMOVE_PREFIX = "!"
+
+
+class _ClearList:
+    """Sentinel for explicit relation clear instructions."""
+
+    def __repr__(self) -> str:
+        return "CLEAR_LIST"
+
+
+_CLEAR_LIST = _ClearList()
 
 # Policy tag IDs
 FREQ_HIDDEN_TAG = "policy---frequency-hidden"
@@ -340,6 +374,90 @@ def _parse_list_field(value: Any) -> list[str]:
     return []
 
 
+def _is_clear_value(value: Any) -> bool:
+    """Return whether a metadata value is the explicit clear marker."""
+    return isinstance(value, str) and value.strip() == CLEAR_VALUE
+
+
+def _split_relation_instructions(values: list[str]) -> tuple[list[str], set[str]]:
+    """Split relation list entries into additions and removals."""
+    removals = {
+        value.removeprefix(REMOVE_PREFIX)
+        for value in values
+        if value.startswith(REMOVE_PREFIX) and value != REMOVE_PREFIX
+    }
+    additions = [
+        value
+        for value in values
+        if value != REMOVE_PREFIX
+        and not value.startswith(REMOVE_PREFIX)
+        and value not in removals
+    ]
+    return additions, removals
+
+
+def _resolve_relation_list(existing_list: list[str], new_list: list[str]) -> list[str]:
+    """Apply relation additions/removals and return a deduplicated final list."""
+    additions, removals = _split_relation_instructions(new_list)
+    kept_existing = [value for value in existing_list if value not in removals]
+    kept_additions = [value for value in additions if value not in removals]
+    return list(dict.fromkeys(kept_additions + kept_existing))
+
+
+def _is_truthy_delete(value: Any) -> bool:
+    """Return whether a metadata _delete value is truthy."""
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+
+    import pandas as pd
+
+    if not isinstance(value, (list, dict)) and bool(pd.isna(value)):
+        return False
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return value != 0
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y"}
+    return bool(value)
+
+
+def _parse_bool_field(value: Any) -> bool:
+    """Parse a boolean metadata value."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return value != 0
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y"}
+    return bool(value)
+
+
+def _extract_tombstone_ids(
+    tables: dict[str, tuple[pd.DataFrame, str]],
+) -> dict[str, set[str]]:
+    """Extract _delete tombstone ids from loaded metadata tables."""
+    tombstones: dict[str, set[str]] = {}
+    for entity_name, (df, _file_name) in tables.items():
+        if entity_name not in TOMBSTONE_ENTITIES:
+            continue
+        if "id" not in df.columns or "_delete" not in df.columns:
+            continue
+        ids = set()
+        for entity_id, delete_value in zip(df["id"].tolist(), df["_delete"].tolist()):
+            if entity_id is not None and _is_truthy_delete(delete_value):
+                ids.add(str(entity_id))
+        if ids:
+            tombstones[entity_name] = ids
+    return tombstones
+
+
+def _merge_tombstones(target: dict[str, set[str]], source: dict[str, set[str]]) -> None:
+    """Merge extracted tombstones into the catalog-level tombstone map."""
+    for entity_name, ids in source.items():
+        target.setdefault(entity_name, set()).update(ids)
+
+
 def _convert_row_to_dict(
     row: dict[Hashable, Any], entity_class: type
 ) -> dict[str, Any]:
@@ -360,6 +478,10 @@ def _convert_row_to_dict(
         ):
             continue
 
+        if _is_clear_value(value):
+            result[key_str] = _CLEAR_LIST if key_str in LIST_FIELDS else None
+            continue
+
         # Coerce datetime / date / pd.Timestamp to YYYY/MM/DD —
         # CSV (DuckDB) and Excel parsers infer date columns natively, but the
         # schema declares date fields as `str | None`. Aligning on YYYY/MM/DD
@@ -374,6 +496,8 @@ def _convert_row_to_dict(
             parsed = _parse_list_field(value)
             if parsed:
                 result[key_str] = parsed
+        elif key_str in BOOL_FIELDS:
+            result[key_str] = _parse_bool_field(value)
         else:
             result[key_str] = value
 
@@ -394,13 +518,13 @@ def _merge_entity(
             continue  # Never override id
 
         if key in LIST_FIELDS:
-            # Merge lists: new values first, then existing (deduplicated)
-            existing_list = getattr(existing, key, []) or []
+            if value is _CLEAR_LIST:
+                setattr(existing, key, [])
+                continue
             new_list = value if isinstance(value, list) else []
-            merged = list(
-                dict.fromkeys(new_list + existing_list)
-            )  # Preserve order, dedupe
-            setattr(existing, key, merged)
+            if new_list:
+                existing_list = getattr(existing, key, []) or []
+                setattr(existing, key, _resolve_relation_list(existing_list, new_list))
         else:
             # Override with new value
             setattr(existing, key, value)
@@ -461,6 +585,16 @@ def _process_standard_table(
             # Same id appears twice in the CSV for a brand-new entity: merge
             _merge_entity(new_by_id[entity_id], row_data)
         else:
+            row_data = {
+                key: (
+                    []
+                    if value is _CLEAR_LIST
+                    else _resolve_relation_list([], value)
+                    if key in LIST_FIELDS and isinstance(value, list)
+                    else value
+                )
+                for key, value in row_data.items()
+            }
             new_entity = entity_class(**row_data)
             if hasattr(new_entity, "_seen"):
                 new_entity._seen = True
@@ -791,6 +925,11 @@ def _apply_tables(
             print(f"    • {err}", file=sys.stderr)
         return
 
+    _merge_tombstones(
+        catalog._metadata_tombstones,
+        _extract_tombstone_ids(tables),
+    )
+
     total_created = 0
     total_updated = 0
 
@@ -823,6 +962,7 @@ def add_metadata(
         start_time = log_section("add_metadata", str(p), quiet)
         tables = _load_tables(p, allowed_entities, quiet=quiet)
         _apply_tables(self, tables, quiet=quiet, start_time=start_time)
+    apply_metadata_tombstones(self)
 
 
 def ensure_metadata_applied(catalog: Catalog) -> None:
@@ -840,6 +980,41 @@ def ensure_metadata_applied(catalog: Catalog) -> None:
             tables = _load_tables(p, allowed_entities, quiet=catalog.quiet)
         _apply_tables(catalog, tables, quiet=catalog.quiet, start_time=start_time)
     catalog._metadata_applied = True
+
+
+def apply_metadata_tombstones(catalog: Catalog) -> None:
+    """Apply _delete metadata tombstones before export."""
+    from .finalize import (
+        remove_concepts_cascade,
+        remove_datasets_cascade,
+        remove_docs_cascade,
+        remove_enumerations_cascade,
+        remove_folders_cascade,
+        remove_organizations_cascade,
+        remove_tags_cascade,
+        remove_variables_cascade,
+    )
+
+    tombstones = getattr(catalog, "_metadata_tombstones", None)
+    if not tombstones:
+        return
+
+    if dataset_ids := tombstones.get("dataset"):
+        remove_datasets_cascade(catalog, dataset_ids)
+    if folder_ids := tombstones.get("folder"):
+        remove_folders_cascade(catalog, folder_ids)
+    if variable_ids := tombstones.get("variable"):
+        remove_variables_cascade(catalog, variable_ids)
+    if enumeration_ids := tombstones.get("enumeration"):
+        remove_enumerations_cascade(catalog, enumeration_ids)
+    if organization_ids := tombstones.get("organization"):
+        remove_organizations_cascade(catalog, organization_ids)
+    if tag_ids := tombstones.get("tag"):
+        remove_tags_cascade(catalog, tag_ids)
+    if doc_ids := tombstones.get("doc"):
+        remove_docs_cascade(catalog, doc_ids)
+    if concept_ids := tombstones.get("concept"):
+        remove_concepts_cascade(catalog, concept_ids)
 
 
 def log_summary_metadata(
