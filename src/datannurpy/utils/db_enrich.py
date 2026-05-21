@@ -181,6 +181,6 @@ def resolve_foreign_keys(
     # Fetch all impacted variables in one pass, mutate, then batch replace
     vars_to_update = catalog.variable.where("id", "in", list(fk_updates.keys()))
     for var in vars_to_update:
-        var.fk_var_id = fk_updates[var.id]
+        var.fk_variable_id = fk_updates[var.id]
     catalog.variable.remove_all([v.id for v in vars_to_update])
     catalog.variable.add_all(vars_to_update)

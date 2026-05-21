@@ -758,9 +758,9 @@ class TestCatalogDatabaseIntrospection:
         assert oi["item_id"].key == 2
 
     def test_fk_resolved(self, sqlite_catalog: Catalog) -> None:
-        fk_var_id = _emp_vars(sqlite_catalog)["department_id"].fk_var_id
-        assert fk_var_id is not None
-        assert "departments" in fk_var_id and fk_var_id.endswith("---id")
+        fk_variable_id = _emp_vars(sqlite_catalog)["department_id"].fk_variable_id
+        assert fk_variable_id is not None
+        assert "departments" in fk_variable_id and fk_variable_id.endswith("---id")
 
     def test_db_tags_created(self, sqlite_catalog: Catalog) -> None:
         tag_ids = {t.id for t in sqlite_catalog.tag.all()}
@@ -949,5 +949,5 @@ class TestCatalogIncrementalIntrospection:
             include=["child"],
         )
         v = {v.name: v for v in catalog.variable.all()}
-        assert v["parent_id"].fk_var_id is None
+        assert v["parent_id"].fk_variable_id is None
         db_path.unlink(missing_ok=True)

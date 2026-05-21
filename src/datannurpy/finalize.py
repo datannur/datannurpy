@@ -198,8 +198,8 @@ def remove_organizations_cascade(
         return
     removed = set(ids)
     for table in (catalog.folder, catalog.dataset):
-        _clear_scalar_ids(table, "owner_id", removed)
-        _clear_scalar_ids(table, "manager_id", removed)
+        _clear_scalar_ids(table, "owner_organization_id", removed)
+        _clear_scalar_ids(table, "manager_organization_id", removed)
     catalog.organization.remove_all(ids)
 
 

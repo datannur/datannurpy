@@ -13,8 +13,8 @@ class EntityMetadata:
 
     id: str | None = None
     parent_id: str | None = None
-    manager_id: str | None = None
-    owner_id: str | None = None
+    manager_organization_id: str | None = None
+    owner_organization_id: str | None = None
     tag_ids: list[str] | None = None
     doc_ids: list[str] | None = None
     name: str | None = None
@@ -35,8 +35,8 @@ class Folder:
 
     id: str
     parent_id: str | None = None
-    manager_id: str | None = None
-    owner_id: str | None = None
+    manager_organization_id: str | None = None
+    owner_organization_id: str | None = None
     tag_ids: list[str] = field(default_factory=list)
     doc_ids: list[str] = field(default_factory=list)
     name: str | None = None
@@ -65,8 +65,8 @@ def folder_from_metadata(
     return Folder(
         id=metadata.id or default_id or "",
         parent_id=metadata.parent_id,
-        manager_id=metadata.manager_id,
-        owner_id=metadata.owner_id,
+        manager_organization_id=metadata.manager_organization_id,
+        owner_organization_id=metadata.owner_organization_id,
         tag_ids=list(metadata.tag_ids or []),
         doc_ids=list(metadata.doc_ids or []),
         name=metadata.name if metadata.name is not None else default_name,
@@ -88,8 +88,8 @@ class Dataset:
 
     id: str
     folder_id: str | None = None
-    manager_id: str | None = None
-    owner_id: str | None = None
+    manager_organization_id: str | None = None
+    owner_organization_id: str | None = None
     tag_ids: list[str] = field(default_factory=list)
     doc_ids: list[str] = field(default_factory=list)
     name: str | None = None
@@ -129,8 +129,8 @@ class Variable:
     dataset_id: str
     enumeration_ids: list[str] = field(default_factory=list)
     tag_ids: list[str] = field(default_factory=list)
-    source_var_ids: list[str] = field(default_factory=list)
-    fk_var_id: str | None = None
+    source_variable_ids: list[str] = field(default_factory=list)
+    fk_variable_id: str | None = None
     original_name: str | None = None
     description: str | None = None
     type: str | None = None

@@ -74,7 +74,7 @@ LIST_FIELDS = {
     "tag_ids",
     "doc_ids",
     "enumeration_ids",
-    "source_var_ids",
+    "source_variable_ids",
     "implied_tag_ids",
 }
 

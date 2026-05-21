@@ -685,8 +685,16 @@ class TestRemoveEntityCascades:
         catalog = Catalog(quiet=True)
         catalog.organization.add(Organization(id="org1"))
         catalog.organization.add(Organization(id="org2"))
-        catalog.folder.add(Folder(id="f1", owner_id="org1", manager_id="org2"))
-        catalog.dataset.add(Dataset(id="ds1", owner_id="org2", manager_id="org1"))
+        catalog.folder.add(
+            Folder(
+                id="f1", owner_organization_id="org1", manager_organization_id="org2"
+            )
+        )
+        catalog.dataset.add(
+            Dataset(
+                id="ds1", owner_organization_id="org2", manager_organization_id="org1"
+            )
+        )
 
         remove_organizations_cascade(catalog, {"org1"})
 
@@ -696,10 +704,10 @@ class TestRemoveEntityCascades:
         dataset = catalog.dataset.get("ds1")
         assert folder is not None
         assert dataset is not None
-        assert folder.owner_id is None
-        assert folder.manager_id == "org2"
-        assert dataset.owner_id == "org2"
-        assert dataset.manager_id is None
+        assert folder.owner_organization_id is None
+        assert folder.manager_organization_id == "org2"
+        assert dataset.owner_organization_id == "org2"
+        assert dataset.manager_organization_id is None
 
     def test_finalize_removes_unseen_concepts_with_references(self, tmp_path: Path):
         """Finalize should reuse concept cascade cleanup for unseen concepts."""

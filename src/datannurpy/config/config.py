@@ -19,8 +19,8 @@ VALID_TYPES = {"folder", "dataset", "database"}
 METADATA_KEYS = {
     "id",
     "parent_id",
-    "manager_id",
-    "owner_id",
+    "manager_organization_id",
+    "owner_organization_id",
     "tag_ids",
     "doc_ids",
     "name",

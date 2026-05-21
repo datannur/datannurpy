@@ -266,8 +266,8 @@ Each rule accepts `from`, `to`, optional `include`, and optional `clean`.
 EntityMetadata(
     id=None,
     parent_id=None,
-    manager_id=None,
-    owner_id=None,
+    manager_organization_id=None,
+    owner_organization_id=None,
     tag_ids=None,
     doc_ids=None,
     name=None,
@@ -287,8 +287,8 @@ EntityMetadata(
 | -------------- | ----------------- | ----------- |
 | id             | str \| None       | Explicit entity ID. If omitted, scan-derived defaults are used. |
 | parent_id      | str \| None       | Parent folder ID (`Folder.parent_id` for folders, `Dataset.folder_id` for datasets). |
-| manager_id     | str \| None       | Managing organization ID. |
-| owner_id       | str \| None       | Owning organization ID. |
+| manager_organization_id | str \| None       | Managing organization ID. |
+| owner_organization_id   | str \| None       | Owning organization ID. |
 | tag_ids        | list[str] \| None | Related tag IDs. |
 | doc_ids        | list[str] \| None | Related document IDs. |
 | name           | str \| None       | Display name. |
