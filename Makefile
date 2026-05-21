@@ -1,4 +1,4 @@
-.PHONY: test lint typecheck check check-py39 download-app coverage test-cov update-snapshots test-db test-db-all test-db-oracle18 test-db-setup test-db-up test-db-down audit demo demo-setup demo-publish demo-configs-init
+.PHONY: test lint typecheck check check-py39 download-app docs-release coverage test-cov update-snapshots test-db test-db-all test-db-oracle18 test-db-setup test-db-up test-db-down audit demo demo-setup demo-publish demo-configs-init
 
 DEMO_CONFIG   := examples/demo_editorial.yml
 DEMO_OUT      := examples/output_editorial
@@ -35,6 +35,9 @@ check-py39:
 
 download-app:
 	uv run python scripts/download_app.py
+
+docs-release:
+	cd docs && npm run docs:release
 
 audit:
 	uv export --no-dev --no-hashes | uv run --with pip-audit pip-audit -r /dev/stdin

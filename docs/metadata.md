@@ -48,8 +48,8 @@ The most common metadata columns are the same whether the source is CSV, Excel, 
 
 | Entity/table | Useful columns |
 | ------------ | -------------- |
-| `folder` | `id`, `parent_id`, `name`, `description`, `manager_id`, `owner_id`, `tag_ids`, `doc_ids`, `license`, `link`, `localisation` |
-| `dataset` | `id`, `folder_id`, `name`, `description`, `manager_id`, `owner_id`, `tag_ids`, `doc_ids`, `license`, `data_path`, `link`, `localisation`, `start_date`, `end_date`, `updating_each` |
+| `folder` | `id`, `parent_id`, `name`, `description`, `manager_organization_id`, `owner_organization_id`, `tag_ids`, `doc_ids`, `license`, `link`, `localisation` |
+| `dataset` | `id`, `folder_id`, `name`, `description`, `manager_organization_id`, `owner_organization_id`, `tag_ids`, `doc_ids`, `license`, `data_path`, `link`, `localisation`, `start_date`, `end_date`, `updating_each` |
 | `variable` | `id`, `name`, `dataset_id`, `description`, `tag_ids`, `enumeration_ids`, `concept_id`, `type`, `start_date`, `end_date` |
 | `organization` | `id`, `parent_id`, `name`, `description`, `email`, `phone`, `tag_ids`, `doc_ids` |
 | `tag` | `id`, `parent_id`, `name`, `description`, `doc_ids` |
@@ -99,7 +99,7 @@ Use `!id` inside a relation list to remove one accumulated relation while keepin
 ]
 ```
 
-Relation removals are applied in metadata source order. If one row contains both `id` and `!id`, removal wins for that relation. Supported relation fields are `tag_ids`, `doc_ids`, `enumeration_ids`, and `source_var_ids`.
+Relation removals are applied in metadata source order. If one row contains both `id` and `!id`, removal wins for that relation. Supported relation fields are `tag_ids`, `doc_ids`, `enumeration_ids`, and `source_variable_ids`.
 
 Use `_delete: true` to remove an entity from the final catalog:
 

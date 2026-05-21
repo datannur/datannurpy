@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.24.1 (2026-05-21)
+
+- change: rename organization link fields to `manager_organization_id` and `owner_organization_id`
+- change: rename variable relation fields to `source_variable_ids` and `fk_variable_id`
+
 ## 0.24.0 (2026-05-21)
 
 - add: support variable `business_key` and tag `implied_tag_ids` / `propagate_to_parents` metadata fields
@@ -84,7 +89,7 @@
 ## 0.20.0 (2026-04-26)
 
 - add: metadata-first pattern — `add_folder(create_folders=False)` skips folder creation from disk, reuses `id`/`folder_id` from `metadata/dataset.csv` (matched by `data_path`). New `on_unmatched` parameter (`"skip"` / `"warn"` / `"error"`)
-- add: `Folder` exposes `manager_id` and `owner_id` (organization links), with matching kwargs on `add_folder` / `add_database`
+- add: `Folder` exposes `manager_organization_id` and `owner_organization_id` (organization links), with matching kwargs on `add_folder` / `add_database`
 - fix: `add_metadata` formats dates as `YYYY/MM/DD` (was ISO-8601), aligned with `get_mtime_iso`
 - fix: CSV header parsing on `depth: variable` — BOM, `;` separator with commas in headers, multi-line quoted fields
 - fix: CSV header deduplication (DuckDB-style `name_1`, `name_2`) and bare `\r` normalization (Mac Classic / SDMX exports)

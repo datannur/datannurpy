@@ -141,7 +141,7 @@ Requires [`depth: variable` or higher](/scan-depth).
 | Metadata                | Target field          | Backends           |
 | ----------------------- | --------------------- | ------------------ |
 | Primary keys            | `Variable.key`        | PostgreSQL, MySQL, Oracle, SQL Server, SQLite, DuckDB |
-| Foreign keys            | `Variable.fk_var_id`  | PostgreSQL, MySQL, Oracle, SQL Server, SQLite, DuckDB |
+| Foreign keys            | `Variable.fk_variable_id`  | PostgreSQL, MySQL, Oracle, SQL Server, SQLite, DuckDB |
 | Table/column comments   | `description`         | PostgreSQL, MySQL, Oracle, SQL Server, DuckDB |
 | NOT NULL, UNIQUE, INDEX | Auto tags (`db---*`)  | PostgreSQL, MySQL, Oracle, SQL Server, SQLite, DuckDB |
 | Auto-increment          | Auto tag              | PostgreSQL, MySQL, Oracle, SQL Server, SQLite, DuckDB |

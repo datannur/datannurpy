@@ -2001,7 +2001,11 @@ class TestMetadataTombstones:
         catalog.enumeration.add(Enumeration(id="e1"))
         catalog.value.add(Value(enumeration_id="e1", value="a"))
         catalog.organization.add(Organization(id="org1"))
-        catalog.folder.add(Folder(id="f1", owner_id="org1", manager_id="org1"))
+        catalog.folder.add(
+            Folder(
+                id="f1", owner_organization_id="org1", manager_organization_id="org1"
+            )
+        )
         catalog.doc.add(Doc(id="doc1"))
         catalog.tag.add(Tag(id="t1"))
         catalog.concept.add(Concept(id="c1"))
@@ -2027,7 +2031,7 @@ class TestMetadataTombstones:
         assert catalog.concept.get("c1") is None
         folder = catalog.folder.get("f1")
         assert folder is not None
-        assert folder.owner_id is None
+        assert folder.owner_organization_id is None
         kept_dataset = catalog.dataset.get("ds2")
         assert kept_dataset is not None
         assert kept_dataset.tag_ids == []
