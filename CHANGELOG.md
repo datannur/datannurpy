@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.25.1 (2026-05-26)
+
+- fix: update the README banner URL
+
 ## 0.25.0 (2026-05-26)
 
 - breaking: adapt to the new embedded front app layout under `app/`, including scripts, templates, and static deploy paths
