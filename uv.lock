@@ -14,6 +14,9 @@ resolution-markers = [
 exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
 exclude-newer-span = "P3D"
 
+[options.exclude-newer-package]
+jsonjsdb = "2026-05-26T23:59:59Z"
+
 [manifest]
 constraints = [
     { name = "cffi", specifier = ">=1.17.0" },
@@ -1161,7 +1164,7 @@ requires-dist = [
     { name = "ibis-framework", extras = ["oracle"], marker = "extra == 'oracle'", specifier = ">=11.0" },
     { name = "ibis-framework", extras = ["postgres"], marker = "extra == 'postgres'", specifier = ">=11.0" },
     { name = "ibis-framework", extras = ["postgres", "mysql", "oracle", "mssql"], marker = "extra == 'databases'", specifier = ">=11.0" },
-    { name = "jsonjsdb", specifier = ">=0.8.7" },
+    { name = "jsonjsdb", specifier = ">=0.8.8" },
     { name = "openpyxl", specifier = ">=3.0" },
     { name = "paramiko", marker = "extra == 'ssh'", specifier = ">=4.0" },
     { name = "polars", specifier = ">=1.0" },
@@ -1931,16 +1934,16 @@ wheels = [
 
 [[package]]
 name = "jsonjsdb"
-version = "0.8.7"
+version = "0.8.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openpyxl" },
     { name = "polars", version = "1.36.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "polars", version = "1.39.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e5/22/010236c20f005df0260f908d46ec47f187d323805e15a9ae6387bddde432/jsonjsdb-0.8.7.tar.gz", hash = "sha256:dcb0b41aa5d0810b59c51e3304e29a395eab1801187ef9879b444c7fc7c1a1b0", size = 15913, upload-time = "2026-05-05T20:13:44.102Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/54/34/e99075bf2e72e28399cf44bc38a78135727fe8214f7c9a372329c43945c8/jsonjsdb-0.8.8.tar.gz", hash = "sha256:0607a9df56fb9ba591195cc3dbad0e3dcf54952c4b08b9a7f7128f3b5c99bda8", size = 16017, upload-time = "2026-05-26T14:03:41.327Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ad/09/d49629d098f42dee66c898c8cd779f872550d54b4700a1755cabb0693c2c/jsonjsdb-0.8.7-py3-none-any.whl", hash = "sha256:5fd720a5ba73c50f970cf07ceef98a6d1c7ade9a6b996f3040b20ccae9e028c6", size = 18784, upload-time = "2026-05-05T20:13:42.853Z" },
+    { url = "https://files.pythonhosted.org/packages/26/2a/ba1302074d34529e019f4dba28be4f24532977fb1d2f1f7579bea52d3ba6/jsonjsdb-0.8.8-py3-none-any.whl", hash = "sha256:1ecb1bbae14ce8fcb9a7699e3388d1a5d70179e6d430fe9e0479e5bee6a523d0", size = 18936, upload-time = "2026-05-26T14:03:39.886Z" },
 ]
 
 [[package]]

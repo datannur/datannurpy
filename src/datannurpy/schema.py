@@ -247,6 +247,18 @@ class Config:
     value: str = ""
 
 
+@dataclass
+class ConfigFilter:
+    """A global database filter rule exposed in the web app."""
+
+    id: str
+    name: str
+    entity: str
+    field: str
+    value: str | int | float | bool | None
+    is_active_default: bool | None = None
+
+
 class DatannurDB(Jsonjsdb):
     """Typed datannur database with all tables."""
 
@@ -261,6 +273,7 @@ class DatannurDB(Jsonjsdb):
     doc: Table[Doc]
     concept: Table[Concept]
     config: Table[Config]
+    configFilter: Table[ConfigFilter]
 
     def __init__(self, path: str | None = None) -> None:
         super().__init__(path)
@@ -276,6 +289,7 @@ class DatannurDB(Jsonjsdb):
         self.doc._entity_type = Doc
         self.concept._entity_type = Concept
         self.config._entity_type = Config
+        self.configFilter._entity_type = ConfigFilter
         # Set runtime fields (not persisted)
         self.folder.runtime_fields = {"_seen"}
         self.dataset.runtime_fields = {"_seen", "_match_path", "preview_rows"}

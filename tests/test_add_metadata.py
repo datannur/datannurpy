@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
+import json
 from collections.abc import Hashable
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,7 @@ import pytest
 from datannurpy import Catalog, EntityMetadata, Folder
 from datannurpy.errors import ConfigError
 from datannurpy.schema import (
+    ConfigFilter,
     Concept,
     Dataset,
     Doc,
@@ -1741,6 +1743,39 @@ class TestConfigAutoLoad:
         k3 = catalog.config.get("k3")
         assert k3 is not None
         assert k3.value == ""
+
+    def test_config_filter_csv_loaded_and_exported(self, tmp_path: Path):
+        """configFilter.csv should populate configFilter.json outputs."""
+        (tmp_path / "configFilter.csv").write_text(
+            "id,name,entity,field,value,is_active_default\n"
+            "public,Public datasets,dataset,tag_ids,public,true\n"
+        )
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        ensure_metadata_applied(catalog)
+
+        entry = catalog.configFilter.get("public")
+        assert entry == ConfigFilter(
+            id="public",
+            name="Public datasets",
+            entity="dataset",
+            field="tag_ids",
+            value="public",
+            is_active_default=True,
+        )
+
+        catalog.export_db(tmp_path / "out")
+        data = json.loads((tmp_path / "out" / "configFilter.json").read_text())
+        assert data == [
+            {
+                "id": "public",
+                "name": "Public datasets",
+                "entity": "dataset",
+                "field": "tag_ids",
+                "value": "public",
+                "is_active_default": True,
+            }
+        ]
+        assert (tmp_path / "out" / "configFilter.json.js").exists()
 
 
 class TestMetadataPathList:

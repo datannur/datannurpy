@@ -17,6 +17,7 @@ import ibis
 
 from .schema import (
     Config,
+    ConfigFilter,
     Concept,
     Dataset,
     Doc,
@@ -53,6 +54,7 @@ ENTITY_CLASSES: dict[str, type] = {
     "tag": Tag,
     "doc": Doc,
     "concept": Concept,
+    "configFilter": ConfigFilter,
 }
 
 # Entities without required id (use composite key)
@@ -78,7 +80,7 @@ LIST_FIELDS = {
     "implied_tag_ids",
 }
 
-BOOL_FIELDS = {"propagate_to_parents"}
+BOOL_FIELDS = {"propagate_to_parents", "is_active_default"}
 
 CLEAR_VALUE = "!"
 REMOVE_PREFIX = "!"
@@ -108,6 +110,7 @@ _DATASET_ENTITIES = {
     "doc",
     "concept",
     "config",
+    "configFilter",
 }
 _VARIABLE_ENTITIES = _DATASET_ENTITIES | {"variable"}
 _VALUE_ENTITIES = _VARIABLE_ENTITIES | {"enumeration", "value", "frequency"}
@@ -736,6 +739,7 @@ def _get_catalog_table(catalog: Catalog, entity_name: str) -> Any | None:
         "tag": catalog.tag,
         "doc": catalog.doc,
         "concept": catalog.concept,
+        "configFilter": catalog.configFilter,
     }
     return mapping.get(entity_name)
 
