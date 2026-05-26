@@ -278,7 +278,7 @@ class DatannurDB(Jsonjsdb):
         self.config._entity_type = Config
         # Set runtime fields (not persisted)
         self.folder.runtime_fields = {"_seen"}
-        self.dataset.runtime_fields = {"_seen", "_match_path"}
+        self.dataset.runtime_fields = {"_seen", "_match_path", "preview_rows"}
         self.enumeration.runtime_fields = {"_seen"}
         self.organization.runtime_fields = {"_seen"}
         self.tag.runtime_fields = {"_seen"}

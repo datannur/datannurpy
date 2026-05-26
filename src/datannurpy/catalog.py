@@ -13,7 +13,7 @@ from .add_dataset import add_dataset
 from .add_folder import add_folder
 from .exporter import export_app, export_db
 from .finalize import finalize
-from .preview import PreviewRows, validate_preview_rows
+from .preview import PreviewRows, effective_preview_rows, validate_preview_rows
 from .schema import Config, DatannurDB
 from .utils import EnumerationManager, configure_logging
 from .utils.ids import compute_runtime_ids
@@ -191,6 +191,11 @@ class Catalog(DatannurDB):
         if not self.dataset.is_empty:
             self.dataset._df = self.dataset._df.with_columns(
                 pl.col("data_path").alias("_match_path")
+            )
+            self.dataset._df = self.dataset._df.with_columns(
+                pl.lit(effective_preview_rows(self.preview_rows, self.depth)).alias(
+                    "preview_rows"
+                )
             )
 
             if self.metadata_path is not None and "id" in self.dataset._df.columns:
