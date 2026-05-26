@@ -1,5 +1,14 @@
 # datannurpy
 
+## 0.25.0 (2026-05-26)
+
+- breaking: adapt to the new embedded front app layout under `app/`, including scripts, templates, and static deploy paths
+- fix: adapt demo and app export helpers to the embedded front app layout under `app/`
+- fix: align technical dataset/evolution fields with the front schema contract (`preview_rows`, `last_update_timestamp`, `schema_signature`, `parent_entity`)
+- fix: require `jsonjsdb` 0.8.8 so `parent_entity` remains internal to evolution tracking exports
+- add: support `configFilter` metadata table exports for app-level filters
+- fix: preserve bundled demo `pdf/` and `md-doc/` assets when refreshing the embedded front app
+
 ## 0.24.1 (2026-05-21)
 
 - change: rename organization link fields to `manager_organization_id` and `owner_organization_id`

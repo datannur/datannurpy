@@ -93,11 +93,11 @@ demo-setup:
 	uv run --with playwright python -m playwright install chromium
 
 demo-configs-init:
-	@test -d $(DEMO_OUT)/data-template || { echo "Run 'make demo' first to get the templates"; exit 1; }
+	@test -d $(DEMO_OUT)/app/data-template || { echo "Run 'make demo' first to get the templates"; exit 1; }
 	@mkdir -p $(DEMO_CONFIGS)
 	@for f in $(DEMO_CFG_FILES); do \
 		if [ ! -f $(DEMO_CONFIGS)/$$f ]; then \
-			cp $(DEMO_OUT)/data-template/$$f $(DEMO_CONFIGS)/$$f; \
+			cp $(DEMO_OUT)/app/data-template/$$f $(DEMO_CONFIGS)/$$f; \
 			echo "Created $(DEMO_CONFIGS)/$$f — edit it with your values"; \
 		else \
 			echo "Exists   $(DEMO_CONFIGS)/$$f"; \

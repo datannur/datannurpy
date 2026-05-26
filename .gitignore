@@ -10,6 +10,7 @@ examples/test_*
 .python-version
 *.log
 examples/datannur_app/*
+/todo
 
 # Coverage
 htmlcov/

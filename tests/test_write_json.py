@@ -283,6 +283,7 @@ class TestCatalogWrite:
         assert rows == [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}]
         datasets = json.loads((tmp_path / "out" / "dataset.json").read_text())
         assert datasets[0]["has_preview"] == 1
+        assert "preview_rows" not in datasets[0]
 
         content = preview_js_path.read_text()
         assert content.startswith("jsonjs.data['sales'] = ")

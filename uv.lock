@@ -14,6 +14,9 @@ resolution-markers = [
 exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
 exclude-newer-span = "P3D"
 
+[options.exclude-newer-package]
+jsonjsdb = "2026-05-26T23:59:59Z"
+
 [manifest]
 constraints = [
     { name = "cffi", specifier = ">=1.17.0" },
@@ -504,7 +507,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jmespath", marker = "python_full_version >= '3.10'" },
     { name = "python-dateutil", marker = "python_full_version >= '3.10'" },
-    { name = "urllib3", marker = "python_full_version >= '3.10'" },
+    { name = "urllib3", version = "2.7.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d1/6a/27836dde004717c496f69f4fe28fa2f3f3762d04859a9292681944a45a36/botocore-1.42.61.tar.gz", hash = "sha256:702d6011ace2b5b652a0dbb45053d4d9f79da2c5b184463042434e1754bdd601", size = 14954743, upload-time = "2026-03-04T20:30:41.956Z" }
 wheels = [
@@ -1064,7 +1067,7 @@ wheels = [
 
 [[package]]
 name = "datannurpy"
-version = "0.24.1"
+version = "0.25.0"
 source = { editable = "." }
 dependencies = [
     { name = "cryptography" },
@@ -1132,6 +1135,7 @@ stat = [
 dev = [
     { name = "deltalake", version = "1.2.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "deltalake", version = "1.3.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "idna" },
     { name = "oracledb" },
     { name = "paramiko" },
     { name = "pyiceberg", version = "0.10.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
@@ -1144,6 +1148,7 @@ dev = [
     { name = "pytest-cov" },
     { name = "pytest-xdist" },
     { name = "ruff" },
+    { name = "urllib3", version = "2.7.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 
 [package.metadata]
@@ -1161,7 +1166,7 @@ requires-dist = [
     { name = "ibis-framework", extras = ["oracle"], marker = "extra == 'oracle'", specifier = ">=11.0" },
     { name = "ibis-framework", extras = ["postgres"], marker = "extra == 'postgres'", specifier = ">=11.0" },
     { name = "ibis-framework", extras = ["postgres", "mysql", "oracle", "mssql"], marker = "extra == 'databases'", specifier = ">=11.0" },
-    { name = "jsonjsdb", specifier = ">=0.8.7" },
+    { name = "jsonjsdb", specifier = ">=0.8.8" },
     { name = "openpyxl", specifier = ">=3.0" },
     { name = "paramiko", marker = "extra == 'ssh'", specifier = ">=4.0" },
     { name = "polars", specifier = ">=1.0" },
@@ -1181,6 +1186,7 @@ provides-extras = ["postgres", "mysql", "oracle", "mssql", "databases", "ssh", "
 [package.metadata.requires-dev]
 dev = [
     { name = "deltalake", specifier = ">=0.18.0" },
+    { name = "idna", specifier = ">=3.15" },
     { name = "oracledb", specifier = ">=2.0.0" },
     { name = "paramiko", specifier = ">=4.0" },
     { name = "pyiceberg", specifier = ">=0.10.0" },
@@ -1191,6 +1197,7 @@ dev = [
     { name = "pytest-cov", specifier = ">=4.0" },
     { name = "pytest-xdist", specifier = ">=3.0" },
     { name = "ruff", specifier = ">=0.4.0" },
+    { name = "urllib3", marker = "python_full_version >= '3.10'", specifier = ">=2.7.0" },
 ]
 
 [[package]]
@@ -1867,11 +1874,11 @@ postgres = [
 
 [[package]]
 name = "idna"
-version = "3.11"
+version = "3.16"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/6f/6d/0703ccc57f3a7233505399edb88de3cbd678da106337b9fcde432b65ed60/idna-3.11.tar.gz", hash = "sha256:795dafcc9c04ed0c1fb032c2aa73654d8e8c5023a7df64a53f39190ada629902", size = 194582, upload-time = "2025-10-12T14:55:20.501Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1a/88/bcf9709822fe69d02c2a6a77956c98ce6ea8ca8767a9aadcedc7eb6a2390/idna-3.16.tar.gz", hash = "sha256:d7a6da03db833450fca25d2358ac9ff06cd624577a4aea3a596d5c0f77b8e03d", size = 203770, upload-time = "2026-05-22T00:16:18.781Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0e/61/66938bbb5fc52dbdf84594873d5b51fb1f7c7794e9c0f5bd885f30bc507b/idna-3.11-py3-none-any.whl", hash = "sha256:771a87f49d9defaf64091e6e6fe9c18d4833f140bd19464795bc32d966ca37ea", size = 71008, upload-time = "2025-10-12T14:55:18.883Z" },
+    { url = "https://files.pythonhosted.org/packages/94/16/70255075a9859a0e3adb789b68ceb0e210dec03934245fd98d248226572f/idna-3.16-py3-none-any.whl", hash = "sha256:cc246e3a3f89580c3a951b5ad298ca4638078b2cdd4f115654332b5c26daded5", size = 74165, upload-time = "2026-05-22T00:16:16.698Z" },
 ]
 
 [[package]]
@@ -1931,16 +1938,16 @@ wheels = [
 
 [[package]]
 name = "jsonjsdb"
-version = "0.8.7"
+version = "0.8.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openpyxl" },
     { name = "polars", version = "1.36.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "polars", version = "1.39.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e5/22/010236c20f005df0260f908d46ec47f187d323805e15a9ae6387bddde432/jsonjsdb-0.8.7.tar.gz", hash = "sha256:dcb0b41aa5d0810b59c51e3304e29a395eab1801187ef9879b444c7fc7c1a1b0", size = 15913, upload-time = "2026-05-05T20:13:44.102Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/54/34/e99075bf2e72e28399cf44bc38a78135727fe8214f7c9a372329c43945c8/jsonjsdb-0.8.8.tar.gz", hash = "sha256:0607a9df56fb9ba591195cc3dbad0e3dcf54952c4b08b9a7f7128f3b5c99bda8", size = 16017, upload-time = "2026-05-26T14:03:41.327Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ad/09/d49629d098f42dee66c898c8cd779f872550d54b4700a1755cabb0693c2c/jsonjsdb-0.8.7-py3-none-any.whl", hash = "sha256:5fd720a5ba73c50f970cf07ceef98a6d1c7ade9a6b996f3040b20ccae9e028c6", size = 18784, upload-time = "2026-05-05T20:13:42.853Z" },
+    { url = "https://files.pythonhosted.org/packages/26/2a/ba1302074d34529e019f4dba28be4f24532977fb1d2f1f7579bea52d3ba6/jsonjsdb-0.8.8-py3-none-any.whl", hash = "sha256:1ecb1bbae14ce8fcb9a7699e3388d1a5d70179e6d430fe9e0479e5bee6a523d0", size = 18936, upload-time = "2026-05-26T14:03:39.886Z" },
 ]
 
 [[package]]
@@ -3925,7 +3932,7 @@ dependencies = [
     { name = "certifi", marker = "python_full_version < '3.10'" },
     { name = "charset-normalizer", marker = "python_full_version < '3.10'" },
     { name = "idna", marker = "python_full_version < '3.10'" },
-    { name = "urllib3", marker = "python_full_version < '3.10'" },
+    { name = "urllib3", version = "2.6.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/c9/74/b3ff8e6c8446842c3f5c837e9c3dfcfe2018ea6ecef224c710c85ef728f4/requests-2.32.5.tar.gz", hash = "sha256:dbba0bac56e100853db0ea71b82b4dfd5fe2bf6d3754a8893c3af500cec7d7cf", size = 134517, upload-time = "2025-08-18T20:46:02.573Z" }
 wheels = [
@@ -3947,7 +3954,7 @@ dependencies = [
     { name = "certifi", marker = "python_full_version >= '3.10'" },
     { name = "charset-normalizer", marker = "python_full_version >= '3.10'" },
     { name = "idna", marker = "python_full_version >= '3.10'" },
-    { name = "urllib3", marker = "python_full_version >= '3.10'" },
+    { name = "urllib3", version = "2.7.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/34/64/8860370b167a9721e8956ae116825caff829224fbca0ca6e7bf8ddef8430/requests-2.33.0.tar.gz", hash = "sha256:c7ebc5e8b0f21837386ad0e1c8fe8b829fa5f544d8df3b2253bff14ef29d7652", size = 134232, upload-time = "2026-03-25T15:10:41.586Z" }
 wheels = [
@@ -4178,9 +4185,28 @@ wheels = [
 name = "urllib3"
 version = "2.6.3"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.10'",
+]
 sdist = { url = "https://files.pythonhosted.org/packages/c7/24/5f1b3bdffd70275f6661c76461e25f024d5a38a46f04aaca912426a2b1d3/urllib3-2.6.3.tar.gz", hash = "sha256:1b62b6884944a57dbe321509ab94fd4d3b307075e0c2eae991ac71ee15ad38ed", size = 435556, upload-time = "2026-01-07T16:24:43.925Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/39/08/aaaad47bc4e9dc8c725e68f9d04865dbcb2052843ff09c97b08904852d84/urllib3-2.6.3-py3-none-any.whl", hash = "sha256:bf272323e553dfb2e87d9bfd225ca7b0f467b919d7bbd355436d3fd37cb0acd4", size = 131584, upload-time = "2026-01-07T16:24:42.685Z" },
+]
+
+[[package]]
+name = "urllib3"
+version = "2.7.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14'",
+    "python_full_version == '3.13.*'",
+    "python_full_version == '3.12.*'",
+    "python_full_version == '3.11.*'",
+    "python_full_version == '3.10.*'",
+]
+sdist = { url = "https://files.pythonhosted.org/packages/53/0c/06f8b233b8fd13b9e5ee11424ef85419ba0d8ba0b3138bf360be2ff56953/urllib3-2.7.0.tar.gz", hash = "sha256:231e0ec3b63ceb14667c67be60f2f2c40a518cb38b03af60abc813da26505f4c", size = 433602, upload-time = "2026-05-07T16:13:18.596Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7f/3e/5db95bcf282c52709639744ca2a8b149baccf648e39c8cc87553df9eae0c/urllib3-2.7.0-py3-none-any.whl", hash = "sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897", size = 131087, upload-time = "2026-05-07T16:13:17.151Z" },
 ]
 
 [[package]]

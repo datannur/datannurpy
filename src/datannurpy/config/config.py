@@ -166,7 +166,8 @@ def _resolve_paths(p: str | list[str], base_dir: Path) -> str | list[str]:
 def _resolve_script(name: str, output_dir: Path, base_dir: Path) -> Path:
     """Resolve a post_export script path.
 
-    Bare names target the generated python-scripts directory.
+    Bare names target the generated app/scripts/python directory when present,
+    falling back to the legacy python-scripts directory.
     Explicit script paths remain relative to the config file directory.
     """
     script_path = Path(name)
@@ -174,7 +175,11 @@ def _resolve_script(name: str, output_dir: Path, base_dir: Path) -> Path:
         return script_path
     if len(script_path.parts) > 1 or script_path.suffix == ".py":
         return (base_dir / script_path).resolve()
-    return output_dir / "python-scripts" / f"{name}.py"
+    script_name = f"{name}.py"
+    script = output_dir / "app" / "scripts" / "python" / script_name
+    if script.exists():
+        return script
+    return output_dir / "python-scripts" / script_name
 
 
 def _run_post_export(

@@ -96,7 +96,8 @@ Works with both `app_path` and `output_dir` exports.
 Run Python scripts automatically after export:
 
 ```yaml
-# Single script (bare name → python-scripts/start_app.py)
+# Single script (bare name → app/scripts/python/start_app.py when bundled,
+# with fallback to python-scripts/start_app.py)
 post_export: start_app
 
 # Multiple scripts
@@ -109,7 +110,7 @@ Script resolution:
 
 | Format | Resolved path |
 |---|---|
-| `start_app` | `{output}/python-scripts/start_app.py` |
+| `start_app` | `{output}/app/scripts/python/start_app.py` if present, otherwise `{output}/python-scripts/start_app.py` |
 | `hook.py` | `{config_dir}/hook.py` |
 | `scripts/hook.py` | `{config_dir}/scripts/hook.py` |
 | `/absolute/path.py` | `/absolute/path.py` |
