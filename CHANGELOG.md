@@ -1,5 +1,11 @@
 # datannurpy
 
+## 0.25.0 (2026-05-26)
+
+- breaking: adapt to the new embedded front app layout under `app/`, including scripts, templates, and static deploy paths
+- fix: adapt demo and app export helpers to the embedded front app layout under `app/`
+- fix: preserve bundled demo `pdf/` and `md-doc/` assets when refreshing the embedded front app
+
 ## 0.24.1 (2026-05-21)
 
 - change: rename organization link fields to `manager_organization_id` and `owner_organization_id`

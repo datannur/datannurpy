@@ -1108,9 +1108,19 @@ class TestPostExport:
     """Test post_export script execution."""
 
     def test_resolve_script_bare_name(self, tmp_path: Path):
-        """Bare name resolves to python-scripts/{name}.py."""
+        """Bare name falls back to python-scripts/{name}.py."""
         result = _resolve_script("start_app", tmp_path, tmp_path / "config")
         assert result == tmp_path / "python-scripts" / "start_app.py"
+
+    def test_resolve_script_bare_name_prefers_app_scripts(self, tmp_path: Path):
+        """Bare name resolves to app/scripts/python/{name}.py when present."""
+        script = tmp_path / "app" / "scripts" / "python" / "start_app.py"
+        script.parent.mkdir(parents=True)
+        script.write_text("")
+
+        result = _resolve_script("start_app", tmp_path, tmp_path / "config")
+
+        assert result == script
 
     def test_resolve_script_with_extension(self, tmp_path: Path):
         """Name with .py resolves relative to config directory."""
@@ -1340,7 +1350,7 @@ add:
     def test_post_export_bare_name_resolves_to_python_scripts(
         self, tmp_path: Path, data_dir: Path
     ):
-        """Bare name resolves to python-scripts/{name}.py in output_dir."""
+        """Bare name falls back to python-scripts/{name}.py in output_dir."""
         output = tmp_path / "output"
         scripts_dir = output / "python-scripts"
         scripts_dir.mkdir(parents=True)

@@ -3,12 +3,17 @@
 # Organizations, concepts, etc.), plus a small local overlay.
 #
 # Prerequisite: run `make download-app` first — it fetches the front repo and
-# preserves its db-source/ into examples/datannur_app/db-source (this folder
-# is gitignored to keep a single source of truth in the front repo).
+# preserves its db-source/, pdf/, and md-doc/ demo assets into examples/datannur_app/
+# (this folder is gitignored to keep a single source of truth in the front repo).
 app_path: ./output_editorial
 metadata_path:
   - ./datannur_app/db-source
   - ./datannur_app_overlay
+copy_assets:
+  - from: ./datannur_app/pdf
+    to: data/pdf
+  - from: ./datannur_app/md-doc
+    to: data/db/md-doc
 refresh: true
 open_browser: true
 post_export: generate_openapi

@@ -32,7 +32,7 @@ class TestExportApp:
         _employees_catalog.export_app(tmp_path)
 
         assert (tmp_path / "index.html").exists()
-        assert (tmp_path / "assets").is_dir()
+        assert (tmp_path / "app" / "assets").is_dir()
 
     def test_export_app_writes_to_data_db(self, _employees_catalog, tmp_path):
         """export_app should write data to data/db/ subdirectory."""
@@ -109,7 +109,7 @@ class TestExportApp:
         """Existing app assets are not refreshed unless update_app is true."""
         _employees_catalog.export_app(tmp_path)
 
-        marker = tmp_path / "assets" / "local-only.txt"
+        marker = tmp_path / "app" / "assets" / "local-only.txt"
         marker.write_text("local")
 
         _employees_catalog.export_app(tmp_path)
@@ -122,7 +122,7 @@ class TestExportApp:
         """update_app=True refreshes bundled app assets while preserving data."""
         _employees_catalog.export_app(tmp_path)
 
-        marker = tmp_path / "assets" / "local-only.txt"
+        marker = tmp_path / "app" / "assets" / "local-only.txt"
         marker.write_text("local")
         data_file = tmp_path / "data" / "db-ui" / "dataset.json"
         data_file.parent.mkdir(parents=True)
