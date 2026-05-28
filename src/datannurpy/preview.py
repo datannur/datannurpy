@@ -159,7 +159,10 @@ def sync_preview_exports(catalog: Catalog, output_dir: str | Path) -> set[str]:
     datasets = list(catalog.dataset.all())
     datasets_by_id = {dataset.id: dataset for dataset in datasets}
     eligible_ids = {
-        dataset.id for dataset in datasets if (dataset.preview_rows or 0) > 0
+        dataset.id
+        for dataset in datasets
+        if (dataset.preview_rows or 0) > 0
+        or _preview_files_exist(preview_dir, dataset.id)
     }
 
     if preview_dir.exists():

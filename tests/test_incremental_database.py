@@ -322,7 +322,6 @@ class TestIncrementalScanDatabase:
         )
 
         for ds in catalog.dataset.all():
-            assert ds.last_update_timestamp is None
             assert ds.last_update_date is None
 
     def test_change_detected_sets_update_date(self, sample_db: Path, tmp_path: Path):
@@ -350,12 +349,11 @@ class TestIncrementalScanDatabase:
 
         users = next(d for d in catalog2.dataset.all() if "users" in (d.name or ""))
         assert users.last_update_date is not None
-        assert users.last_update_timestamp is not None
 
     def test_refresh_preserves_timestamp_when_unchanged(
         self, sample_db: Path, tmp_path: Path
     ):
-        """refresh=True on unchanged data should preserve last_update_timestamp."""
+        """refresh=True on unchanged data should preserve last_update_date."""
         app_dir = tmp_path / "catalog"
         conn_str = f"sqlite:////{sample_db}"
 
@@ -381,10 +379,10 @@ class TestIncrementalScanDatabase:
         catalog2.export_db()
 
         users2 = next(d for d in catalog2.dataset.all() if "users" in (d.name or ""))
-        saved_ts = users2.last_update_timestamp
-        assert saved_ts is not None
+        saved_date = users2.last_update_date
+        assert saved_date is not None
 
-        # Scan 3: refresh=True but no change → preserves timestamp
+        # Scan 3: refresh=True but no change → preserves date
         catalog3 = Catalog(app_path=app_dir, quiet=True)
         catalog3.add_database(
             conn_str,
@@ -393,7 +391,7 @@ class TestIncrementalScanDatabase:
         )
 
         users3 = next(d for d in catalog3.dataset.all() if "users" in (d.name or ""))
-        assert users3.last_update_timestamp == saved_ts
+        assert users3.last_update_date == saved_date
 
 
 class TestCloseConnection:

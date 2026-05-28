@@ -20,9 +20,6 @@ _DEMO_DB_SOURCE_DIR = (
 _DEMO_PDF_DIR = (
     Path(__file__).resolve().parent.parent / "examples" / "datannur_app" / "pdf"
 )
-_DEMO_MD_DOC_DIR = (
-    Path(__file__).resolve().parent.parent / "examples" / "datannur_app" / "md-doc"
-)
 
 
 def _replace_dir(source: Path | None, destination: Path, label: str) -> None:
@@ -63,11 +60,6 @@ def download_app() -> None:
 
     pdf_dir = _APP_DIR / "data" / "pdf"
     _replace_dir(pdf_dir if pdf_dir.exists() else None, _DEMO_PDF_DIR, "pdf")
-
-    md_doc_dir = _APP_DIR / "data" / "db" / "md-doc"
-    _replace_dir(
-        md_doc_dir if md_doc_dir.exists() else None, _DEMO_MD_DOC_DIR, "md-doc"
-    )
 
     # Clear demo data content (keep the data/ folder structure)
     data_dir = _APP_DIR / "data"

@@ -66,7 +66,7 @@ track_evolution: false
 ## copy_assets
 
 
-Copy local files or directories into the exported catalog after export:
+Copy local files or directories into the exported catalog during export:
 
 ```yaml
 copy_assets:
@@ -117,7 +117,9 @@ Script resolution:
 
 Explicit script paths are resolved relative to the YAML config file directory, like the other path-based options.
 
-`copy_assets` runs before `post_export`, so custom scripts can consume copied files.
+For app exports, `copy_assets` runs after the app shell is installed and before `data/db` is written, so copied files can participate in the final database export. It also runs before `post_export`, so custom scripts can consume copied files.
+
+The bundled `export_dcat` script writes semantic export artifacts to `data/db-semantic/`, including DCAT RDF files, `validation.json`, and `dcat-report.html` when supported by the app version.
 
 Works with both `app_path` and `output_dir` exports.
 

@@ -208,13 +208,13 @@ class TestConvertRowToDict:
         assert "nb_distinct" not in result
         assert "description" not in result
 
-    def test_coerces_datetime_to_yyyy_mm_dd(self):
-        """datetime / pd.Timestamp / date are coerced to `YYYY/MM/DD`.
+    def test_coerces_update_fields_to_datetime_when_precision_exists(self):
+        """Update fields preserve time precision when available.
 
         DuckDB-based CSV reader and Excel parser auto-infer ISO-8601 columns
-        as datetime; the schema declares date fields as `str | None`. Aligning
-        on `YYYY/MM/DD` matches `get_mtime_iso` (filesystem scan), so lexical
-        order = chronological order across both code paths.
+        as datetime; the schema declares date fields as `str | None`. Update
+        fields keep seconds when the source has a time component, while true
+        date-only values remain date-only.
         """
         import datetime as _dt
 
@@ -227,8 +227,24 @@ class TestConvertRowToDict:
             "last_update_date": ts,
         }
         result = _convert_row_to_dict(row, Folder)
-        assert result["last_update_date"] == "2026/04/23"
+        assert result["last_update_date"] == "2026/04/23T12:11:38"
         assert isinstance(result["last_update_date"], str)
+
+        row_doc_int: dict[Hashable, Any] = {
+            "id": "doc2",
+            "name": "Doc 2",
+            "last_update": 1706239962,
+        }
+        result_doc_int = _convert_row_to_dict(row_doc_int, Doc)
+        assert result_doc_int["last_update"] == "2024/01/26T03:32:42"
+
+        row_doc_text: dict[Hashable, Any] = {
+            "id": "doc3",
+            "name": "Doc 3",
+            "last_update": "2024/01/26T03:32:42",
+        }
+        result_doc_text = _convert_row_to_dict(row_doc_text, Doc)
+        assert result_doc_text["last_update"] == "2024/01/26T03:32:42"
 
         row2: dict[Hashable, Any] = {
             "id": "f2",
@@ -237,6 +253,14 @@ class TestConvertRowToDict:
         }
         result2 = _convert_row_to_dict(row2, Folder)
         assert result2["last_update_date"] == "2026/04/23"
+
+        row3: dict[Hashable, Any] = {
+            "id": "d1",
+            "name": "D1",
+            "start_date": ts,
+        }
+        result3 = _convert_row_to_dict(row3, Dataset)
+        assert result3["start_date"] == "2026/04/23"
 
     def test_handles_list_fields(self):
         """List fields should be parsed correctly."""

@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 from .parquet import discover_parquet_datasets
 from .timeseries import group_time_series
 from .utils import SUPPORTED_FORMATS, find_files, get_mtime_timestamp
+from ..utils import iso_to_timestamp
 
 if TYPE_CHECKING:
     from ..catalog import Catalog
@@ -195,7 +196,11 @@ def compute_scan_plan(
             if existing is not None:
                 existing_by_path[match_path] = existing
                 break
-        if existing is None or refresh or existing.last_update_timestamp != info.mtime:
+        if (
+            existing is None
+            or refresh
+            or iso_to_timestamp(existing.last_update_date) != info.mtime
+        ):
             to_scan.append(info)
         else:
             to_skip.append(info)

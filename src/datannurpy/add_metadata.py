@@ -32,7 +32,7 @@ from .schema import (
 from .scanner.csv import read_csv
 from .scanner.excel import read_excel
 from .scanner.statistical import read_statistical
-from .utils import log_done, log_error, log_section, log_warn
+from .utils import log_done, log_error, log_section, log_warn, timestamp_to_iso
 from .utils.ids import build_frequency_id, build_value_id
 from .utils.params import validate_params
 from .errors import ConfigError
@@ -485,12 +485,15 @@ def _convert_row_to_dict(
             result[key_str] = _CLEAR_LIST if key_str in LIST_FIELDS else None
             continue
 
+        if key_str in {"last_update", "last_update_date"}:
+            value = _normalize_update_value(value)
+
         # Coerce datetime / date / pd.Timestamp to YYYY/MM/DD —
         # CSV (DuckDB) and Excel parsers infer date columns natively, but the
-        # schema declares date fields as `str | None`. Aligning on YYYY/MM/DD
-        # matches `get_mtime_iso` (filesystem scan) so lexical order = chronological
-        # order across both code paths, and survives jsonjsdb's
-        # `json.dump(allow_nan=False)` serialization.
+        # schema declares date fields as `str | None`. Date-only precision is
+        # appropriate for user-supplied metadata. The format is lexicographically
+        # sortable and `iso_to_timestamp` handles both YYYY/MM/DD and the full
+        # YYYY/MM/DDTHH:MM:SS produced by filesystem scans.
         if isinstance(value, (datetime, date)):
             value = value.strftime("%Y/%m/%d")
 
@@ -505,6 +508,17 @@ def _convert_row_to_dict(
             result[key_str] = value
 
     return result
+
+
+def _normalize_update_value(value: Any) -> Any:
+    """Normalize update timestamps while preserving manual date precision."""
+    if isinstance(value, datetime):
+        return value.strftime("%Y/%m/%dT%H:%M:%S")
+    if isinstance(value, date):
+        return value.strftime("%Y/%m/%d")
+    if isinstance(value, (int, float)):
+        return timestamp_to_iso(value)
+    return value
 
 
 def _merge_entity(

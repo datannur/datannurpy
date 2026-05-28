@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import polars as pl
+from jsonjsdb.writer import write_table_json, write_table_jsonjs
 
 from .utils.log import _write_log
 from .utils.params import validate_params
@@ -154,6 +155,42 @@ def _clean_stale_db_files(catalog: Catalog, path: Path) -> None:
             name = _table_name_from_jsonjs(file_path)
         if name is not None and name not in expected_names:
             file_path.unlink()
+
+
+def _is_local_markdown_doc(doc: Any) -> bool:
+    """Return whether a doc points to a local markdown file."""
+    doc_type = (doc.type or "").lower()
+    doc_path = doc.path or ""
+    if doc_type != "md" or not doc_path:
+        return False
+    if "://" in doc_path or doc_path.startswith("/"):
+        return False
+    return Path(doc_path).suffix.lower() == ".md"
+
+
+def _resolve_doc_source_path(db_dir: Path, doc_path: str) -> Path:
+    """Resolve a doc path from an app export or db-only export."""
+    if db_dir.name == "db" and db_dir.parent.name == "data":
+        return db_dir.parent.parent / doc_path
+    return db_dir / doc_path
+
+
+def _sync_markdown_doc_exports(catalog: Catalog, output_dir: str | Path) -> None:
+    """Write md-doc JSON files for local markdown docs."""
+    db_dir = Path(output_dir)
+    md_doc_dir = db_dir / "md-doc"
+
+    for doc in catalog.doc.all():
+        if not _is_local_markdown_doc(doc):
+            continue
+        source_path = _resolve_doc_source_path(db_dir, str(doc.path))
+        if not source_path.exists():
+            continue
+        content = source_path.read_text(encoding="utf-8")
+        md_doc_dir.mkdir(parents=True, exist_ok=True)
+        rows = pl.DataFrame({"content": [content]})
+        write_table_json(rows, md_doc_dir / f"{doc.id}.json")
+        write_table_jsonjs(rows, doc.id, md_doc_dir / f"{doc.id}.json.js")
 
 
 def _normalize_copy_assets(copy_assets: Any) -> list[dict[str, Any]]:
@@ -388,17 +425,6 @@ def export_db(
         "value": "enumeration",
     }
     apply_metadata_tombstones(catalog)
-    preview_ids = sync_preview_exports(catalog, path)
-    apply_preview_flags(catalog, preview_ids)
-    _drop_empty_columns(catalog)
-    catalog.save(
-        path,
-        track_evolution=track_evolution,
-        timestamp=catalog._now,
-        parent_relations=parent_relations,
-    )
-    _clean_stale_db_files(catalog, Path(path))
-    _print_export_size_report(Path(path), quiet=q)
 
     if copy_assets is not None:
         export_dir = Path(path)
@@ -409,6 +435,19 @@ def export_db(
             base_dir=copy_assets_base_dir,
             quiet=q,
         )
+
+    preview_ids = sync_preview_exports(catalog, path)
+    apply_preview_flags(catalog, preview_ids)
+    _sync_markdown_doc_exports(catalog, path)
+    _drop_empty_columns(catalog)
+    catalog.save(
+        path,
+        track_evolution=track_evolution,
+        timestamp=catalog._now,
+        parent_relations=parent_relations,
+    )
+    _clean_stale_db_files(catalog, Path(path))
+    _print_export_size_report(Path(path), quiet=q)
 
 
 def _get_app_path() -> Path:
@@ -485,11 +524,6 @@ def export_app(
     if update_app or not _is_app_initialized(output_dir):
         _copy_app(output_dir)
 
-    # Write to data/db/
-    db_dir = output_dir / "data" / "db"
-    catalog.export_db(db_dir, quiet=True, track_evolution=track_evolution)
-    _print_export_size_report(db_dir, quiet=q)
-
     if copy_assets is not None:
         copy_assets_base_dir = _resolve_copy_base_dir(base_dir)
         _copy_assets_impl(
@@ -498,6 +532,11 @@ def export_app(
             base_dir=copy_assets_base_dir,
             quiet=q,
         )
+
+    # Write to data/db/
+    db_dir = output_dir / "data" / "db"
+    catalog.export_db(db_dir, quiet=True, track_evolution=track_evolution)
+    _print_export_size_report(db_dir, quiet=q)
 
     elapsed = time.perf_counter() - start_time
     index_uri = (output_dir / "index.html").resolve().as_uri()

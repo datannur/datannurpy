@@ -519,26 +519,77 @@ class TestCatalogWrite:
         assert len(data) == 1
         assert data[0]["id"] == "doc1"
 
+    def test_export_db_builds_markdown_doc_files(self, tmp_path: Path):
+        """Local markdown Doc paths are compiled to md-doc JSON files."""
+        from datannurpy.schema import Doc
+
+        app_dir = tmp_path / "app"
+        source_dir = app_dir / "data" / "db-source" / "md"
+        source_dir.mkdir(parents=True)
+        (source_dir / "guide.md").write_text("# Guide\n\nHello", encoding="utf-8")
+
+        catalog = Catalog()
+        catalog.doc.add(
+            Doc(
+                id="guide",
+                type="md",
+                path="data/db-source/md/guide.md",
+            )
+        )
+        catalog.export_db(app_dir / "data" / "db")
+
+        md_doc_json = app_dir / "data" / "db" / "md-doc" / "guide.json"
+        assert json.loads(md_doc_json.read_text()) == [{"content": "# Guide\n\nHello"}]
+        assert (app_dir / "data" / "db" / "md-doc" / "guide.json.js").exists()
+
+    def test_export_db_builds_markdown_doc_files_in_db_export(self, tmp_path: Path):
+        """Markdown Doc paths also resolve relative to db-only output dirs."""
+        from datannurpy.schema import Doc
+
+        source_dir = tmp_path / "output" / "docs"
+        source_dir.mkdir(parents=True)
+        (source_dir / "guide.md").write_text("# Guide", encoding="utf-8")
+
+        catalog = Catalog()
+        catalog.doc.add(Doc(id="guide", type="md", path="docs/guide.md"))
+        catalog.export_db(tmp_path / "output")
+
+        md_doc_json = tmp_path / "output" / "md-doc" / "guide.json"
+        assert json.loads(md_doc_json.read_text()) == [{"content": "# Guide"}]
+
+    def test_export_db_skips_non_local_markdown_doc_files(self, tmp_path: Path):
+        """Only existing local markdown Doc paths are compiled."""
+        from datannurpy.schema import Doc
+
+        catalog = Catalog()
+        catalog.doc.add(Doc(id="pdf", type="pdf", path="docs/file.pdf"))
+        catalog.doc.add(Doc(id="missing", type="md", path="docs/missing.md"))
+        catalog.doc.add(Doc(id="remote", type="md", path="https://example.com/doc.md"))
+        catalog.doc.add(Doc(id="empty", type="md"))
+        catalog.export_db(tmp_path)
+
+        assert not (tmp_path / "md-doc").exists()
+
 
 class TestDatasetIncrementalFields:
     """Test Dataset incremental scan fields export."""
 
-    def test_dataset_last_update_timestamp_exported(self, tmp_path: Path):
-        """last_update_timestamp should be exported to JSON when set."""
+    def test_dataset_last_update_date_exported(self, tmp_path: Path):
+        """last_update_date should be exported to JSON when set."""
         from datannurpy.schema import Dataset
 
         catalog = Catalog()
         ds = Dataset(
             id="test",
             name="Test",
-            last_update_timestamp=1706745600,  # 2024-02-01 00:00:00 UTC
+            last_update_date="2024/02/01T00:00:00",
         )
         catalog.dataset.add(ds)
         catalog.export_db(tmp_path)
 
         with open(tmp_path / "dataset.json") as f:
             data = json.load(f)
-        assert data[0]["last_update_timestamp"] == 1706745600
+        assert data[0]["last_update_date"] == "2024/02/01T00:00:00"
 
     def test_dataset_schema_signature_exported(self, tmp_path: Path):
         """schema_signature should be exported to JSON when set."""
@@ -569,7 +620,7 @@ class TestDatasetIncrementalFields:
         with open(tmp_path / "dataset.json") as f:
             data = json.load(f)
         # Empty columns are stripped from the export
-        assert "last_update_timestamp" not in data[0]
+        assert "last_update_date" not in data[0]
         assert "schema_signature" not in data[0]
 
 

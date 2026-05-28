@@ -287,23 +287,18 @@ def _relative_fs_path(fs: FileSystem, path: str) -> str:
 
 
 def get_mtime_iso(path: PurePath, fs: FileSystem | None = None) -> str:
-    """Get file modification time as YYYY/MM/DD."""
+    """Get file modification time as UTC date-time string."""
     if fs is not None:
         info = fs.info(str(path))
         mtime = info.get("mtime") or info.get("modified", 0)
         # SFTP returns datetime, others return float
         if isinstance(mtime, datetime):
-            return mtime.strftime("%Y/%m/%d")
+            return mtime.astimezone(timezone.utc).strftime("%Y/%m/%dT%H:%M:%S")
     else:
         assert isinstance(path, Path)
         mtime = path.stat().st_mtime
     dt_obj = datetime.fromtimestamp(mtime, tz=timezone.utc)
-    return dt_obj.strftime("%Y/%m/%d")
-
-
-def mtime_iso_from_timestamp(ts: int) -> str:
-    """Format a Unix mtime timestamp as YYYY/MM/DD (UTC)."""
-    return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y/%m/%d")
+    return dt_obj.strftime("%Y/%m/%dT%H:%M:%S")
 
 
 def get_mtime_timestamp(path: PurePath, fs: FileSystem | None = None) -> int:
