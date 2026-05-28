@@ -19,6 +19,7 @@ from .utils import (
     log_warn,
     make_id,
     sanitize_id,
+    timestamp_to_iso,
     upsert_folder,
 )
 from .utils.params import _UNSET, validate_params
@@ -44,7 +45,6 @@ from .scanner.timeseries import (
 from .scanner.utils import (
     get_data_size,
     get_dir_data_size,
-    mtime_iso_from_timestamp,
 )
 from .scanner.parquet.discovery import (
     is_delta_table,
@@ -351,8 +351,7 @@ def add_folder(
                 )
                 catalog.dataset.update(
                     existing.id,
-                    last_update_date=mtime_iso_from_timestamp(info.mtime),
-                    last_update_timestamp=info.mtime,
+                    last_update_date=timestamp_to_iso(info.mtime),
                     data_size=data_size,
                     preview_rows=0,
                     _seen=True,
@@ -400,8 +399,7 @@ def add_folder(
                 name=dataset_name,
                 folder_id=folder_id,
                 data_path=_public_data_path(info.path, root, fs),
-                last_update_date=mtime_iso_from_timestamp(info.mtime),
-                last_update_timestamp=info.mtime,
+                last_update_date=timestamp_to_iso(info.mtime),
                 delivery_format=info.format,
                 nb_resources=nb_resources,
                 preview_rows=0,
@@ -540,8 +538,7 @@ def add_folder(
             name=result.name or dataset_name,
             folder_id=folder_id,
             data_path=_public_data_path(info.path, root, fs),
-            last_update_date=mtime_iso_from_timestamp(info.mtime),
-            last_update_timestamp=info.mtime,
+            last_update_date=timestamp_to_iso(info.mtime),
             delivery_format=info.format,
             description=result.description,
             nb_row=result.nb_row,
@@ -706,8 +703,7 @@ def _scan_time_series(
         name=result.name or dataset_name,
         folder_id=folder_id,
         data_path=_public_data_path(last_path, root, fs),
-        last_update_date=mtime_iso_from_timestamp(info.mtime),
-        last_update_timestamp=info.mtime,
+        last_update_date=timestamp_to_iso(info.mtime),
         delivery_format=info.format,
         description=result.description,
         nb_row=result.nb_row,

@@ -12,6 +12,7 @@ from .utils import (
     log_section,
     log_skip,
     make_id,
+    iso_to_timestamp,
     sanitize_id,
 )
 from .utils.params import _UNSET, validate_params
@@ -74,7 +75,6 @@ def _create_dataset(
         license=resolved_metadata.license,
         data_path=data_path,
         last_update_date=get_mtime_iso(dataset_path, fs=fs),
-        last_update_timestamp=current_mtime,
         delivery_format=delivery_format,
         nb_row=nb_row,
         sample_size=sample_size,
@@ -208,7 +208,10 @@ def add_dataset(
     if existing is None:
         existing = catalog.dataset.get_by("_match_path", data_path_str)
     if existing is not None:
-        if not do_refresh and existing.last_update_timestamp == current_mtime:
+        if (
+            not do_refresh
+            and iso_to_timestamp(existing.last_update_date) == current_mtime
+        ):
             # Unchanged - skip and mark as seen
             catalog.dataset.update(
                 existing.id,
@@ -349,7 +352,7 @@ def _add_parquet_directory(
     if existing is None:
         existing = catalog.dataset.get_by("_match_path", data_path_str)
     if existing is not None:
-        if not refresh and existing.last_update_timestamp == current_mtime:
+        if not refresh and iso_to_timestamp(existing.last_update_date) == current_mtime:
             catalog.dataset.update(
                 existing.id,
                 _seen=True,

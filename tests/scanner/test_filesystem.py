@@ -414,9 +414,10 @@ class TestGetMtimeWithFileSystem:
 
         fs = FileSystem(tmp_path)
         result = get_mtime_iso(file_path, fs=fs)
-        # Should be a date string in YYYY/MM/DD format
-        assert len(result) == 10
+        # Should be a full datetime string in YYYY/MM/DDTHH:MM:SS format
+        assert len(result) == 19
         assert result.count("/") == 2
+        assert "T" in result
 
     def test_get_mtime_timestamp_with_fs(self, tmp_path: Path) -> None:
         """get_mtime_timestamp() should work with FileSystem."""
@@ -441,7 +442,7 @@ class TestGetMtimeWithFileSystem:
         fs.info = MagicMock(return_value={"mtime": test_dt})
 
         result = get_mtime_iso(file_path, fs=fs)
-        assert result == "2024/06/15"
+        assert result == "2024/06/15T12:00:00"
 
     def test_get_mtime_timestamp_datetime_from_sftp(self, tmp_path: Path) -> None:
         """get_mtime_timestamp() should handle datetime mtime (SFTP returns datetime)."""

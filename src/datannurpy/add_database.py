@@ -438,7 +438,6 @@ def _add_database_impl(
                     last_update_date=now_iso if is_change else None,
                     data_path=table_data_path,
                     data_size=get_table_data_size(con, table_name, schema_name),
-                    last_update_timestamp=catalog._now if is_change else None,
                     preview_rows=0,
                     _seen=True,
                     _match_path=table_data_path,
@@ -473,7 +472,7 @@ def _add_database_impl(
                 continue
 
             # Preserve timestamp if data unchanged (for stable evolution tracking)
-            preserved_timestamp: int | None = None
+            preserved_date: str | None = None
 
             if existing_dataset is not None:
                 data_unchanged = (
@@ -493,7 +492,7 @@ def _add_database_impl(
                     continue
 
                 if data_unchanged:
-                    preserved_timestamp = existing_dataset.last_update_timestamp
+                    preserved_date = existing_dataset.last_update_date
 
             # Determine folder for this table
             table_prefix: str | None = None
@@ -511,13 +510,10 @@ def _add_database_impl(
 
             # Timestamps
             if existing_dataset is None:
-                effective_timestamp = None
                 effective_date = None
-            elif preserved_timestamp is not None:
-                effective_timestamp = preserved_timestamp
-                effective_date = timestamp_to_iso(preserved_timestamp)
+            elif preserved_date is not None:
+                effective_date = preserved_date
             else:
-                effective_timestamp = catalog._now
                 effective_date = now_iso
 
             # Stat/Value mode: scan table
@@ -558,7 +554,6 @@ def _add_database_impl(
                 sample_size=actual_sample_size,
                 preview_rows=preview_rows,
                 schema_signature=current_signature,
-                last_update_timestamp=effective_timestamp,
                 _seen=True,
                 _match_path=table_data_path,
             )

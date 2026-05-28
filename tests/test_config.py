@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 from unittest.mock import patch
@@ -1165,6 +1166,45 @@ add:
         run_config(config_file)
         assert marker.read_text() == "ok"
 
+    def test_open_browser_runs_after_post_export(
+        self, tmp_path: Path, data_dir: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        """open_browser waits for post_export-generated files."""
+        output = tmp_path / "output"
+        marker = output / "data" / "post_export_marker.txt"
+        events: list[str] = []
+        script = tmp_path / "my_hook.py"
+        script.write_text(
+            f"from pathlib import Path\nPath({str(marker)!r}).write_text('ok')\n"
+        )
+
+        def fake_open(url: str) -> None:
+            events.append(
+                "open_after_marker" if marker.exists() else "open_before_marker"
+            )
+
+        monkeypatch.setattr("datannurpy.config.config.webbrowser.open", fake_open)
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+app_path: {output}
+refresh: true
+quiet: true
+open_browser: true
+post_export: my_hook.py
+
+add:
+  - type: folder
+    path: {data_dir / "csv"}
+    folder:
+      id: test
+""")
+
+        run_config(config_file)
+
+        assert marker.read_text() == "ok"
+        assert events == ["open_after_marker"]
+
     def test_post_export_prints_when_not_quiet(
         self, tmp_path: Path, data_dir: Path, capsys: pytest.CaptureFixture[str]
     ):
@@ -1448,6 +1488,41 @@ add:
         run_config(config_file)
 
         assert marker.read_text() == "copied"
+
+    def test_copy_assets_runs_before_app_db_export(
+        self, tmp_path: Path, data_dir: Path
+    ):
+        """Copied app preview files are visible on the first app export."""
+        assets_dir = tmp_path / "assets" / "preview"
+        assets_dir.mkdir(parents=True)
+        dataset_id = "test---employees_csv"
+        (assets_dir / f"{dataset_id}.json").write_text("[]")
+        (assets_dir / f"{dataset_id}.json.js").write_text("export default []")
+
+        output_dir = tmp_path / "output"
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+app_path: {output_dir}
+refresh: true
+quiet: true
+preview_rows: false
+copy_assets:
+  - from: ./assets/preview
+    to: data/db/preview
+
+add:
+  - type: folder
+    path: {data_dir / "csv"}
+    metadata:
+      id: test
+""")
+
+        run_config(config_file)
+
+        datasets = json.loads((output_dir / "data" / "db" / "dataset.json").read_text())
+        dataset = next(item for item in datasets if item["id"] == dataset_id)
+        assert dataset["has_preview"] == 1
+        assert (output_dir / "data" / "db" / "preview" / f"{dataset_id}.json").exists()
 
     def test_copy_assets_with_output_dir(self, tmp_path: Path, data_dir: Path):
         """copy_assets also works for db-only exports."""

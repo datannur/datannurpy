@@ -46,7 +46,7 @@ class TestEvolutionStability:
     def test_successive_runs_database_no_spurious_evolution(self, tmp_path: Path):
         """Running twice on unchanged database should not create spurious evolution.
 
-        This specifically tests that last_update_timestamp doesn't generate
+        This specifically tests that last_update_date doesn't generate
         spurious evolution entries when the database hasn't actually changed.
         """
         app_dir = tmp_path / "app"
@@ -86,10 +86,10 @@ class TestEvolutionStability:
                 evolution = json.load(f)
             # If evolution exists, check it's not spurious timestamp updates
             timestamp_updates = [
-                e for e in evolution if e.get("variable") == "last_update_timestamp"
+                e for e in evolution if e.get("variable") == "last_update_date"
             ]
             assert len(timestamp_updates) == 0, (
-                f"Spurious timestamp updates: {timestamp_updates}"
+                f"Spurious date updates: {timestamp_updates}"
             )
 
         # Run 3
@@ -103,7 +103,7 @@ class TestEvolutionStability:
             with open(db_dir / "evolution.json") as f:
                 evolution = json.load(f)
             timestamp_updates = [
-                e for e in evolution if e.get("variable") == "last_update_timestamp"
+                e for e in evolution if e.get("variable") == "last_update_date"
             ]
             assert len(timestamp_updates) == 0, (
                 f"Evolution should be stable: {timestamp_updates}"

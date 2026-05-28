@@ -680,8 +680,8 @@ class TestDepthParameter:
         catalog = Catalog()
         catalog.add_folder(tmp_path, depth="dataset")
         ds = catalog.dataset.all()[0]
-        assert ds.last_update_timestamp is not None
-        original_mtime = ds.last_update_timestamp
+        assert ds.last_update_date is not None
+        original_date = ds.last_update_date
 
         # Modify file (will have current mtime)
         csv_file.write_text("a,b\n1,2\n3,4\n")
@@ -691,8 +691,8 @@ class TestDepthParameter:
 
         ds = catalog.dataset.get(ds.id)
         assert ds is not None
-        assert ds.last_update_timestamp is not None
-        assert ds.last_update_timestamp > original_mtime
+        assert ds.last_update_date is not None
+        assert ds.last_update_date > original_date
 
     def test_depth_value_is_default(self, tmp_path: Path):
         """depth='value' should be the default (with variables and stats)."""

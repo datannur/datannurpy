@@ -111,7 +111,6 @@ class Dataset:
     last_update_date: str | None = None
     updating_each: str | None = None
     no_more_update: str | None = None
-    last_update_timestamp: int | None = None
     schema_signature: str | None = None
     # Runtime fields (not persisted)
     _seen: bool = False

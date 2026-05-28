@@ -28,7 +28,7 @@ from .log import (
 )
 from .enumeration import EnumerationManager
 from .prefix import PrefixFolder, get_prefix_folders, get_table_prefix
-from .time import timestamp_to_iso
+from .time import iso_to_timestamp, timestamp_to_iso
 
 __all__ = [
     # ids
@@ -65,4 +65,5 @@ __all__ = [
     "upsert_folder",
     # time
     "timestamp_to_iso",
+    "iso_to_timestamp",
 ]

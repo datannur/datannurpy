@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import webbrowser
 from pathlib import Path
 from typing import Any
 
@@ -311,7 +312,7 @@ def run_config(path: str | Path) -> Catalog:
         )
     elif catalog.app_path is not None:
         catalog.export_app(
-            open_browser=open_browser,
+            open_browser=open_browser and not post_export,
             track_evolution=track_evolution,
             update_app=update_app,
             copy_assets=copy_assets,
@@ -323,5 +324,8 @@ def run_config(path: str | Path) -> Catalog:
     if post_export and export_dir is not None:
         quiet = catalog_params.get("quiet", False)
         _run_post_export(post_export, export_dir, base_dir, bool(quiet))
+
+    if open_browser and post_export and catalog.app_path is not None:
+        webbrowser.open((catalog.app_path / "index.html").resolve().as_uri())
 
     return catalog

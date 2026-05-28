@@ -116,13 +116,13 @@ class TestIncrementalScanFiles:
         catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
-        first_timestamp = catalog1.dataset.all()[0].last_update_timestamp
-        assert first_timestamp is not None
+        first_date = catalog1.dataset.all()[0].last_update_date
+        assert first_date is not None
 
         # Modify file with a future timestamp to ensure mtime changes
         csv_file.write_text("a,b,c\n1,2,3\n4,5,6\n7,8,9\n")
         # Force mtime to be different (add 10 seconds)
-        new_mtime = first_timestamp + 10
+        new_mtime = int(csv_file.stat().st_mtime) + 10
         os.utime(csv_file, (new_mtime, new_mtime))
 
         # Second scan
@@ -132,7 +132,7 @@ class TestIncrementalScanFiles:
         # Should have rescanned with new data
         assert len(catalog2.dataset.all()) == 1
         ds = catalog2.dataset.all()[0]
-        assert ds.last_update_timestamp != first_timestamp
+        assert ds.last_update_date != first_date
         assert ds.nb_row == 3  # new row count
         assert len([v for v in catalog2.variable.all() if v.dataset_id == ds.id]) == 3
 
@@ -256,12 +256,12 @@ class TestIncrementalScanAddDataset:
         catalog1.add_dataset(csv_file)
         catalog1.export_db()
 
-        first_timestamp = catalog1.dataset.all()[0].last_update_timestamp
-        assert first_timestamp is not None
+        first_date = catalog1.dataset.all()[0].last_update_date
+        assert first_date is not None
 
         # Modify file with a future timestamp
         csv_file.write_text("a,b,c\n1,2,3\n4,5,6\n")
-        new_mtime = first_timestamp + 10
+        new_mtime = int(csv_file.stat().st_mtime) + 10
         os.utime(csv_file, (new_mtime, new_mtime))
 
         # Second scan
@@ -331,26 +331,30 @@ class TestRemoveDatasetCascade:
         assert len(catalog.frequency.all()) == 0
 
 
-class TestLastUpdateTimestamp:
-    """Test last_update_timestamp field."""
+class TestLastUpdateDate:
+    """Test last_update_date field with full datetime."""
 
-    def test_timestamp_set_on_scan(self, tmp_path: Path):
-        """last_update_timestamp should be set when scanning."""
+    def test_date_set_on_scan(self, tmp_path: Path):
+        """last_update_date should be set as full datetime when scanning."""
+        from datetime import datetime, timezone
+
         catalog = Catalog(quiet=True)
         csv_file = tmp_path / "test.csv"
         csv_file.write_text("a,b\n1,2\n")
         catalog.add_dataset(csv_file)
 
         ds = catalog.dataset.all()[0]
-        assert ds.last_update_timestamp is not None
-        assert ds.last_update_timestamp > 0
+        assert ds.last_update_date is not None
 
         # Should match file mtime
         expected_mtime = int(csv_file.stat().st_mtime)
-        assert ds.last_update_timestamp == expected_mtime
+        expected_date = datetime.fromtimestamp(
+            expected_mtime, tz=timezone.utc
+        ).strftime("%Y/%m/%dT%H:%M:%S")
+        assert ds.last_update_date == expected_date
 
-    def test_timestamp_exported_to_json(self, tmp_path: Path):
-        """last_update_timestamp should be exported to JSON."""
+    def test_date_exported_to_json(self, tmp_path: Path):
+        """last_update_date should be exported to JSON with full datetime."""
         app_dir = tmp_path
         db_dir = app_dir / "data" / "db"
         csv_file = tmp_path / "test.csv"
@@ -363,8 +367,8 @@ class TestLastUpdateTimestamp:
         with open(db_dir / "dataset.json") as f:
             data = json.load(f)
 
-        assert "last_update_timestamp" in data[0]
-        assert data[0]["last_update_timestamp"] > 0
+        assert "last_update_date" in data[0]
+        assert "T" in data[0]["last_update_date"]  # Full datetime
 
 
 class TestLogSkip:
@@ -432,11 +436,11 @@ class TestIncrementalParquetDirectory:
         catalog1.add_dataset(part_dir)
         catalog1.export_db()
 
-        first_timestamp = catalog1.dataset.all()[0].last_update_timestamp
-        assert first_timestamp is not None
+        first_date = catalog1.dataset.all()[0].last_update_date
+        assert first_date is not None
 
         # Modify directory mtime
-        new_mtime = first_timestamp + 10
+        new_mtime = int(part_dir.stat().st_mtime) + 10
         os.utime(part_dir, (new_mtime, new_mtime))
 
         # Second scan
@@ -445,7 +449,7 @@ class TestIncrementalParquetDirectory:
 
         # Should have rescanned
         assert len(catalog2.dataset.all()) == 1
-        assert catalog2.dataset.all()[0].last_update_timestamp == new_mtime
+        assert catalog2.dataset.all()[0].last_update_date != first_date
 
 
 class TestRemoveDatasetCascadeWithMultipleDatasets:
@@ -778,11 +782,11 @@ class TestIncrementalFolderWithParquet:
         catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
         catalog1.export_db()
 
-        first_timestamp = catalog1.dataset.all()[0].last_update_timestamp
-        assert first_timestamp is not None
+        first_date = catalog1.dataset.all()[0].last_update_date
+        assert first_date is not None
 
         # Modify directory mtime
-        new_mtime = first_timestamp + 10
+        new_mtime = int(part_dir.stat().st_mtime) + 10
         os.utime(part_dir, (new_mtime, new_mtime))
 
         # Second scan
@@ -791,4 +795,4 @@ class TestIncrementalFolderWithParquet:
 
         # Should have rescanned
         assert len(catalog2.dataset.all()) == 1
-        assert catalog2.dataset.all()[0].last_update_timestamp == new_mtime
+        assert catalog2.dataset.all()[0].last_update_date != first_date

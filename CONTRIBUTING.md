@@ -53,7 +53,7 @@ Manual, 2-step workflow for publishing the hybrid demo (local `data/` scan + edi
 **One-time setup:**
 
 ```bash
-make download-app         # fetches the front repo (also preserves db-source/, pdf/, md-doc/)
+make download-app         # fetches the front repo (also preserves db-source/ and pdf/)
 make demo                 # scan + export to examples/output_editorial/
 make demo-setup           # install Python Playwright chromium (~90 MB)
 make demo-configs-init    # creates templates in examples/datannur_app/configs/
