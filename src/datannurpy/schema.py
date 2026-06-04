@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
+from typing import Any
 
 from jsonjsdb import Jsonjsdb, Table
 
@@ -299,3 +300,25 @@ class DatannurDB(Jsonjsdb):
         self.concept.runtime_fields = {"_seen"}
         self.value.runtime_fields = {"id"}
         self.frequency.runtime_fields = {"id"}
+        for table in self._tables.values():
+            _allow_extra_columns(table)
+
+
+def _allow_extra_columns(table: Table[Any]) -> None:
+    """Ignore non-dataclass columns when materializing typed rows."""
+    original_row_to_entity = table._row_to_entity
+
+    def row_to_entity(row: dict[str, Any]) -> Any:
+        try:
+            return original_row_to_entity(row)
+        except TypeError as error:
+            entity_type = table._entity_type
+            if entity_type is None:  # pragma: no cover - defensive jsonjsdb fallback
+                raise
+            valid_fields = {f.name for f in fields(entity_type)}
+            filtered = {key: value for key, value in row.items() if key in valid_fields}
+            if len(filtered) == len(row):  # pragma: no cover - original error preserved
+                raise error
+            return original_row_to_entity(filtered)
+
+    table._row_to_entity = row_to_entity

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import polars as pl
 import pytest
 
 from datannurpy import Catalog, EntityMetadata, Folder
@@ -27,6 +28,20 @@ class TestCatalogRepr:
         assert "organizations=0" in result
         assert "tags=0" in result
         assert "docs=0" in result
+
+
+class TestCatalogExtraColumns:
+    """Test materializing typed rows when exported tables have extra columns."""
+
+    def test_all_ignores_localized_extra_columns(self):
+        """Extra localized columns should not break typed entity materialization."""
+        catalog = Catalog()
+        catalog.folder.add(Folder(id="f1", name="Folder"))
+        catalog.folder._df = catalog.folder._df.with_columns(
+            pl.lit("Dossier").alias("name:fr")
+        )
+
+        assert catalog.folder.all()[0].name == "Folder"
 
 
 class TestCatalogSampleSize:

@@ -10,6 +10,7 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
+import polars as pl
 import pytest
 
 from datannurpy import Catalog, EntityMetadata, Folder
@@ -32,10 +33,14 @@ from datannurpy.add_metadata import (
     FREQ_HIDDEN_TAG,
     _CLEAR_LIST,
     _convert_row_to_dict,
+    _existing_localized_rows,
     _extract_freq_hidden_ids,
     _extract_tombstone_ids,
     _get_catalog_table,
     _get_required_fields,
+    _is_missing_metadata_value,
+    _localized_field_columns,
+    _merge_localized_fields,
     _is_clear_value,
     _is_database_connection,
     _is_truthy_delete,
@@ -771,6 +776,54 @@ class TestProcessEntityTable:
         assert catalog.folder.all()[0].name == "New"
         assert catalog.folder.all()[0].description == "Updated"
 
+    def test_preserves_localized_columns_for_standard_entities(self):
+        """Localized metadata fields should be kept in the table DataFrame."""
+        catalog = Catalog()
+        df = pd.DataFrame(
+            {
+                "id": ["f1"],
+                "name": ["Folder"],
+                "name:fr": ["Dossier"],
+                "description:fr": ["Description française"],
+                "unknown:fr": ["ignored"],
+            }
+        )
+
+        created, updated = _process_entity_table(catalog, "folder", df)
+
+        assert created == 1
+        assert updated == 0
+        row = catalog.folder.df.to_dicts()[0]
+        assert row["name"] == "Folder"
+        assert row["name:fr"] == "Dossier"
+        assert row["description:fr"] == "Description française"
+        assert "unknown:fr" not in row
+
+    def test_updates_localized_columns_without_overwriting_blank_cells(self):
+        """Blank localized cells should leave existing localized values unchanged."""
+        catalog = Catalog()
+        catalog.folder.add(Folder(id="f1", name="Folder"))
+        catalog.folder._df = catalog.folder._df.with_columns(
+            pl.lit("Ancien").alias("name:fr")
+        )
+        df = pd.DataFrame(
+            {
+                "id": ["f1"],
+                "name": ["Folder updated"],
+                "name:fr": [None],
+                "description:fr": ["Nouvelle description"],
+            }
+        )
+
+        created, updated = _process_entity_table(catalog, "folder", df)
+
+        assert created == 0
+        assert updated == 1
+        row = catalog.folder.df.to_dicts()[0]
+        assert row["name"] == "Folder updated"
+        assert row["name:fr"] == "Ancien"
+        assert row["description:fr"] == "Nouvelle description"
+
     def test_create_value_entity(self):
         """Should create Value entities with composite key."""
         catalog = Catalog()
@@ -809,6 +862,112 @@ class TestProcessEntityTable:
         assert created == 0
         assert updated == 1
         assert catalog.value.all()[0].description == "Updated"
+
+    def test_preserves_localized_columns_for_value_entities(self):
+        """Localized value descriptions should merge by enumeration_id and value."""
+        catalog = Catalog()
+        df = pd.DataFrame(
+            {
+                "enumeration_id": ["m1"],
+                "value": ["a"],
+                "description": ["Value A"],
+                "description:fr": ["Valeur A"],
+            }
+        )
+
+        created, updated = _process_entity_table(catalog, "value", df)
+
+        assert created == 1
+        assert updated == 0
+        row = catalog.value.df.to_dicts()[0]
+        assert row["description"] == "Value A"
+        assert row["description:fr"] == "Valeur A"
+
+    def test_value_localized_clear_and_blank_merge(self):
+        """Value localized fields should support clear and blank preserve semantics."""
+        catalog = Catalog()
+        catalog.value.add(Value(enumeration_id="m1", value="a", description="A"))
+        catalog.value._df = catalog.value._df.with_columns(
+            pl.lit("Ancienne valeur").alias("description:fr")
+        )
+
+        _process_entity_table(
+            catalog,
+            "value",
+            pd.DataFrame(
+                {
+                    "enumeration_id": ["m1", "m1"],
+                    "value": ["a", "a"],
+                    "description:fr": [None, "!"],
+                }
+            ),
+        )
+
+        assert catalog.value.df.to_dicts()[0]["description:fr"] is None
+
+    def test_frequency_localized_columns_merge_by_composite_key(self):
+        """Frequency localized fields should merge by variable_id and value."""
+        catalog = Catalog()
+        df = pd.DataFrame(
+            {
+                "variable_id": ["v1"],
+                "value": ["a"],
+                "frequency": [3],
+                "value:fr": ["a-fr"],
+            }
+        )
+
+        created, updated = _process_entity_table(catalog, "frequency", df)
+
+        assert created == 1
+        assert updated == 0
+        assert catalog.frequency.df.to_dicts()[0]["value:fr"] == "a-fr"
+
+    def test_localized_helpers_cover_empty_and_missing_paths(self):
+        """Localized helper functions should handle empty inputs and missing keys."""
+        catalog = Catalog()
+
+        assert _localized_field_columns(["id", "unknown:fr", "name:fr"], Folder) == [
+            "name:fr"
+        ]
+        assert not _is_missing_metadata_value(["tag"])
+        assert not _is_missing_metadata_value({"label": "Tag"})
+        assert _existing_localized_rows(catalog.folder, Folder, ["id"], {"f1"}) == []
+
+        _merge_localized_fields(catalog.folder, Folder, [{"id": "f1"}], ["id"])
+
+        catalog.folder.add(Folder(id="f1", name="Folder"))
+        _merge_localized_fields(
+            catalog.folder,
+            Folder,
+            [
+                {"id": None, "name:fr": "Sans id"},
+                {"id": "f1", "name:fr": None},
+                {"id": "f1", "name:fr": "Dossier", "description:fr": "Desc"},
+            ],
+            ["id"],
+        )
+        row = catalog.folder.df.to_dicts()[0]
+        assert row["name:fr"] == "Dossier"
+        assert row["description:fr"] == "Desc"
+        assert (
+            _existing_localized_rows(catalog.folder, Folder, ["id"], {"missing"}) == []
+        )
+        assert _existing_localized_rows(catalog.folder, Folder, ["id"], {"f1"}) == [
+            {"id": "f1", "name:fr": "Dossier", "description:fr": "Desc"}
+        ]
+        catalog.folder.add(Folder(id="f2", name="Folder 2"))
+        catalog.folder._df = catalog.folder._df.with_columns(
+            pl.when(pl.col("id") == "f2")
+            .then(pl.lit(None, dtype=pl.Utf8))
+            .otherwise(pl.col("name:fr"))
+            .alias("name:fr"),
+            pl.when(pl.col("id") == "f2")
+            .then(pl.lit(None, dtype=pl.Utf8))
+            .otherwise(pl.col("description:fr"))
+            .alias("description:fr"),
+        )
+        assert _existing_localized_rows(catalog.folder, Folder, ["id"], {"f2"}) == []
 
     def test_skip_value_without_required_fields(self):
         """Should skip Value without enumeration_id or value."""
@@ -2189,7 +2348,9 @@ class TestAppMetadataOverlayPath:
         app_path = tmp_path / "app"
         db_ui = app_path / "data" / "db-ui"
         db_ui.mkdir(parents=True)
-        (db_ui / "tag.json").write_text('[{"id":"ui","name":"UI"}]')
+        (db_ui / "tag.json").write_text(
+            '[{"id":"ui","name":"UI","name:fr":"Interface"}]'
+        )
 
         catalog = Catalog(app_path=app_path, quiet=True)
         ensure_metadata_applied(catalog)
@@ -2197,6 +2358,29 @@ class TestAppMetadataOverlayPath:
         tag = catalog.tag.get("ui")
         assert tag is not None
         assert tag.name == "UI"
+        row = catalog.tag.df.to_dicts()[0]
+        assert row["name:fr"] == "Interface"
+
+    def test_app_db_ui_localized_fields_are_exported(self, tmp_path: Path):
+        """Localized fields from app_path/data/db-ui should survive export."""
+        app_path = tmp_path / "app"
+        db_ui = app_path / "data" / "db-ui"
+        db_ui.mkdir(parents=True)
+        (db_ui / "dataset.json").write_text(
+            '[{"id":"ds","name":"Dataset","name:fr":"Jeu de données"}]'
+        )
+
+        catalog = Catalog(app_path=app_path, quiet=True)
+        catalog.export_db()
+
+        rows = json.loads((app_path / "data" / "db" / "dataset.json").read_text())
+        assert rows == [
+            {
+                "id": "ds",
+                "name": "Dataset",
+                "name:fr": "Jeu de données",
+            }
+        ]
 
     def test_app_db_ui_is_applied_after_configured_metadata_path(self, tmp_path: Path):
         """app_path/data/db-ui overrides configured metadata sources."""

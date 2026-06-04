@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 import time
 from collections.abc import Hashable
@@ -14,6 +15,7 @@ from typing import TYPE_CHECKING, Any, NamedTuple
 from urllib.parse import urlparse
 
 import ibis
+import polars as pl
 
 from .schema import (
     Config,
@@ -82,6 +84,10 @@ LIST_FIELDS = {
 
 BOOL_FIELDS = {"propagate_to_parents", "is_active_default"}
 
+LOCALIZED_FIELD_RE = re.compile(
+    r"^(?P<field>[A-Za-z_][A-Za-z0-9_]*):(?P<lang>[A-Za-z]{2,3}(?:-[A-Za-z0-9]+)*)$"
+)
+
 CLEAR_VALUE = "!"
 REMOVE_PREFIX = "!"
 
@@ -97,6 +103,7 @@ _CLEAR_LIST = _ClearList()
 
 # Policy tag IDs
 FREQ_HIDDEN_TAG = "policy---frequency-hidden"
+LOCALIZED_CLEAR_SENTINEL = "__DATANNURPY_LOCALIZED_CLEAR__"
 
 # Supported file extensions for metadata
 SUPPORTED_EXTENSIONS = {".csv", ".xlsx", ".xls", ".json", ".sas7bdat"}
@@ -510,6 +517,130 @@ def _convert_row_to_dict(
     return result
 
 
+def _is_missing_metadata_value(value: Any) -> bool:
+    """Return whether a metadata cell should leave existing values unchanged."""
+    import pandas as pd
+
+    return value is None or (
+        not isinstance(value, (list, dict)) and bool(pd.isna(value))
+    )
+
+
+def _localized_field_columns(columns: list[Hashable], entity_class: type) -> list[str]:
+    """Return localized metadata columns such as name:fr or description:fr."""
+    valid_fields = _get_field_names(entity_class)
+    localized: list[str] = []
+    for column in columns:
+        column_name = str(column)
+        match = LOCALIZED_FIELD_RE.match(column_name)
+        if (
+            match
+            and match.group("field") in valid_fields
+            and column_name not in localized
+        ):
+            localized.append(column_name)
+    return localized
+
+
+def _merge_localized_fields(
+    catalog_table: Any,
+    entity_class: type,
+    rows: list[dict[str, Any]],
+    key_fields: list[str],
+) -> None:
+    """Preserve localized metadata columns that are outside dataclass fields."""
+    localized_columns = _localized_field_columns(
+        [column for row in rows for column in row], entity_class
+    )
+    if not localized_columns or catalog_table.df.is_empty():
+        return
+
+    records_by_key: dict[tuple[str, ...], dict[str, Any]] = {}
+    for row in rows:
+        key_values: list[str] = []
+        for key_field in key_fields:
+            value = row.get(key_field)
+            if _is_missing_metadata_value(value):
+                key_values = []
+                break
+            key_values.append(str(value))
+        if not key_values:
+            continue
+
+        key = tuple(key_values)
+        record = records_by_key.setdefault(key, dict(zip(key_fields, key_values)))
+        for column in localized_columns:
+            value = row.get(column)
+            if _is_missing_metadata_value(value):
+                continue
+            record[column] = (
+                LOCALIZED_CLEAR_SENTINEL if _is_clear_value(value) else value
+            )
+
+    records = [
+        record for record in records_by_key.values() if len(record) > len(key_fields)
+    ]
+    if not records:  # pragma: no cover - no-op guard for malformed metadata rows
+        return
+
+    localized_df = pl.DataFrame(records)
+    if localized_df.is_empty():  # pragma: no cover - defensive after records guard
+        return
+
+    df = catalog_table._df
+    for column in localized_columns:
+        if column not in df.columns:
+            df = df.with_columns(pl.lit(None, dtype=pl.Utf8).alias(column))
+    joined = df.join(
+        localized_df.select(key_fields + localized_columns),
+        on=key_fields,
+        how="left",
+        suffix="__localized",
+    )
+    for column in localized_columns:
+        update_column = f"{column}__localized"
+        joined = joined.with_columns(
+            pl.when(pl.col(update_column) == LOCALIZED_CLEAR_SENTINEL)
+            .then(pl.lit(None, dtype=pl.Utf8))
+            .otherwise(pl.coalesce(pl.col(update_column), pl.col(column)))
+            .alias(column)
+        ).drop(update_column)
+
+    catalog_table._df = joined
+
+
+def _string_keyed_rows(rows: list[dict[Hashable, Any]]) -> list[dict[str, Any]]:
+    """Return row dictionaries with string keys for localized field handling."""
+    return [{str(key): value for key, value in row.items()} for row in rows]
+
+
+def _existing_localized_rows(
+    catalog_table: Any,
+    entity_class: type,
+    key_fields: list[str],
+    ids: set[str],
+) -> list[dict[str, Any]]:
+    """Return localized values already present on rows about to be replaced."""
+    df = catalog_table._df
+    localized_columns = _localized_field_columns(df.columns, entity_class)
+    if not localized_columns or df.is_empty():
+        return []
+
+    records: list[dict[str, Any]] = []
+    for row in df.select(key_fields + localized_columns).to_dicts():
+        key = "---".join(str(row.get(field)) for field in key_fields)
+        if key not in ids:
+            continue
+        record = {field: row[field] for field in key_fields}
+        for column in localized_columns:
+            value = row.get(column)
+            if not _is_missing_metadata_value(value):
+                record[column] = value
+        if len(record) > len(key_fields):
+            records.append(record)
+    return records
+
+
 def _normalize_update_value(value: Any) -> Any:
     """Normalize update timestamps while preserving manual date precision."""
     if isinstance(value, datetime):
@@ -619,12 +750,22 @@ def _process_standard_table(
 
     created = len(new_by_id)
     updated = len(updated_by_id)
+    existing_localized_rows = _existing_localized_rows(
+        catalog_table, entity_class, ["id"], set(updated_by_id)
+    )
 
     if updated_by_id:
         catalog_table.remove_all(list(updated_by_id.keys()))
         catalog_table.add_all(list(updated_by_id.values()))
     if new_by_id:
         catalog_table.add_all(list(new_by_id.values()))
+
+    _merge_localized_fields(
+        catalog_table,
+        entity_class,
+        existing_localized_rows + _string_keyed_rows(rows),
+        ["id"],
+    )
 
     return created, updated
 
@@ -680,6 +821,9 @@ def _process_value_table(
 
     created = len(new_by_id)
     updated = len(updated_by_id)
+    existing_localized_rows = _existing_localized_rows(
+        catalog.value, Value, ["enumeration_id", "value"], set(updated_by_id)
+    )
 
     if updated_by_id:
         catalog.value.remove_all(list(updated_by_id.keys()))
@@ -688,6 +832,13 @@ def _process_value_table(
         catalog.value.add_all(list(new_by_id.values()))
     if enumerations_to_mark:
         catalog.enumeration.update_many(list(enumerations_to_mark), _seen=True)
+
+    _merge_localized_fields(
+        catalog.value,
+        Value,
+        existing_localized_rows + _string_keyed_rows(rows),
+        ["enumeration_id", "value"],
+    )
 
     return created, updated
 
@@ -730,12 +881,22 @@ def _process_frequency_table(
 
     created = len(new_by_id)
     updated = len(updated_by_id)
+    existing_localized_rows = _existing_localized_rows(
+        catalog.frequency, Frequency, ["variable_id", "value"], set(updated_by_id)
+    )
 
     if updated_by_id:
         catalog.frequency.remove_all(list(updated_by_id.keys()))
         catalog.frequency.add_all(list(updated_by_id.values()))
     if new_by_id:
         catalog.frequency.add_all(list(new_by_id.values()))
+
+    _merge_localized_fields(
+        catalog.frequency,
+        Frequency,
+        existing_localized_rows + _string_keyed_rows(rows),
+        ["variable_id", "value"],
+    )
 
     return created, updated
 
