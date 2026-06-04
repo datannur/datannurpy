@@ -7,6 +7,7 @@
 # (this folder is gitignored to keep a single source of truth in the front repo).
 app_path: ./output_editorial
 refresh: true
+update_app: true
 open_browser: true
 
 metadata_path:
