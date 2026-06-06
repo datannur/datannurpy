@@ -12,6 +12,19 @@ open_browser: true
 output_dir: ./output
 ```
 
+Top-level export options:
+
+| Key | Type | Default | Applies to | Description |
+|---|---|---|---|---|
+| `app_path` | path | `None` | app export | Output directory for a standalone datannur app |
+| `output_dir` | path | `None` | db export | Output directory for JSON metadata only |
+| `open_browser` | bool | `false` | app export | Open the generated app in the browser after export |
+| `refresh` | bool | `false` | scan | Force a full rescan instead of reusing unchanged files or tables |
+| `track_evolution` | bool | `true` | app + db export | Write `evolution.json` with added, updated, and deleted entities |
+| `update_app` | bool | `false` | app export | Refresh bundled front-end app files when `app_path` already exists |
+| `copy_assets` | rule or list of rules | `None` | app + db export | Copy extra local files or directories into the export |
+| `post_export` | script name, path, or list | `None` | app + db export | Run Python scripts after export finishes |
+
 When exports are not run in quiet mode, datannurpy prints a size report by table after writing the database. The report includes raw `.json`, raw `.json.js`, and estimated gzipped `.json` sizes with percentages, which helps identify the tables that dominate catalog weight.
 
 ### Large exports

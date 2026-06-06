@@ -23,7 +23,7 @@ Catalog(
 
 | Attribute      | Type                              | Description                                        |
 | -------------- | --------------------------------- | -------------------------------------------------- |
-| app_path       | str \| Path \| None               | Load existing catalog for incremental scan         |
+| app_path       | str \| Path \| None               | Path for standalone app export; if it already contains `data/db`, it is reused for incremental scans |
 | metadata_path  | str \| Path \| list[str \| Path] \| None | Metadata source folder, database URI, or list of sources |
 | depth          | "dataset" \| "variable" \| "stat" \| "value" | Default scan depth (default: "value")              |
 | refresh        | bool                              | Force full rescan ignoring cache (default: False)  |
@@ -240,6 +240,29 @@ catalog = run_config(path)
 | path      | str \| Path | required | YAML configuration file to load and execute |
 
 Runs a `catalog.yml` workflow and returns the resulting `Catalog`.
+
+Top-level YAML keys recognized by `run_config()`:
+
+| Key | Type | Description |
+| --- | --- | --- |
+| `add` | list[dict] | Scan steps to execute with shorthand entries such as `folder`, `dataset`, or `database` |
+| `env` | dict[str, str] | Environment variables to inject before expanding YAML values |
+| `env_file` | str \| Path \| list[str \| Path] | One or more dotenv files to load before expansion |
+| `output_dir` | str \| Path \| None | Export JSON metadata only to this directory instead of exporting a full app |
+| `open_browser` | bool | Open the generated app in the browser after app export |
+| `copy_assets` | dict \| list[dict] \| None | Copy extra local files or directories into the export |
+| `track_evolution` | bool | Enable or disable `evolution.json` generation during export |
+| `update_app` | bool | Refresh bundled front-end app files when exporting to an existing `app_path` |
+| `post_export` | str \| list[str] \| None | Run Python scripts after export completes |
+
+All other non-reserved top-level keys are passed through to `Catalog(...)` using the same parameter names, such as `app_path`, `metadata_path`, `depth`, `refresh`, `sample_size`, `preview_rows`, `app_config`, `quiet`, `verbose`, and `log_file`.
+
+To keep this API page concise, detailed YAML behavior is documented in the thematic guides:
+
+- export options such as `output_dir`, `open_browser`, `track_evolution`, `update_app`, `copy_assets`, and `post_export`: see [Output & exports](/output)
+- metadata and config options such as `metadata_path`, `env`, `env_file`, and `app_config`: see [Metadata & configuration](/metadata)
+
+Path-based values are resolved relative to the YAML file directory unless documented otherwise in those guides.
 
 ## `copy_assets()`
 
