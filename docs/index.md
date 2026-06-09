@@ -100,6 +100,8 @@ python -m datannurpy catalog.yml
 
 This scans the configured files and database, writes a standalone datannur app to `./my-catalog`, and opens it in your browser. Re-running the same config updates the existing catalog incrementally, so unchanged files and tables are reused when possible.
 
+For export options such as `update_app`, `copy_assets`, or `post_export`, see [Output & exports](/output). For configuration options such as `metadata_path`, `env`, `env_file`, or `app_config`, see [Metadata & configuration](/metadata).
+
 Use `output_dir` instead of `app_path` when you only want JSON metadata for an existing datannur app:
 
 ```yaml
