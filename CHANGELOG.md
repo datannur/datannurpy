@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.26.1 (2026-06-09)
+
+- update: bundle the latest datannur front app with UI and static export fixes
+
 ## 0.26.0 (2026-06-04)
 
 - add: preserve localized metadata fields using the front app `field:lang` convention (for example `name:fr` and `description:fr`) through metadata loading and JSON app exports
