@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 import sys
 import time
@@ -61,6 +62,11 @@ ENTITY_CLASSES: dict[str, type] = {
 
 # Entities without required id (use composite key)
 ENTITIES_WITHOUT_ID = {"value", "frequency"}
+
+LITERAL_CLEAR_MARKER_FIELDS = {
+    Value: {"value"},
+    Frequency: {"value"},
+}
 
 TOMBSTONE_ENTITIES = {
     "folder",
@@ -473,8 +479,7 @@ def _convert_row_to_dict(
 ) -> dict[str, Any]:
     """Convert a row dict to entity constructor kwargs."""
     valid_fields = _get_field_names(entity_class)
-
-    import pandas as pd
+    literal_clear_marker_fields = LITERAL_CLEAR_MARKER_FIELDS.get(entity_class, set())
 
     result: dict[str, Any] = {}
     for key, value in row.items():
@@ -483,12 +488,10 @@ def _convert_row_to_dict(
             continue
 
         # Skip missing values (None, NaN, pd.NA, pd.NaT, np.datetime64('NaT'))
-        if value is None or (
-            not isinstance(value, (list, dict)) and bool(pd.isna(value))
-        ):
+        if _is_missing_metadata_value(value):
             continue
 
-        if _is_clear_value(value):
+        if key_str not in literal_clear_marker_fields and _is_clear_value(value):
             result[key_str] = _CLEAR_LIST if key_str in LIST_FIELDS else None
             continue
 
@@ -519,11 +522,16 @@ def _convert_row_to_dict(
 
 def _is_missing_metadata_value(value: Any) -> bool:
     """Return whether a metadata cell should leave existing values unchanged."""
+    if value is None:
+        return True
+    if isinstance(value, float):
+        return math.isnan(value)
+    if isinstance(value, (str, bool, int, list, dict)):
+        return False
+
     import pandas as pd
 
-    return value is None or (
-        not isinstance(value, (list, dict)) and bool(pd.isna(value))
-    )
+    return bool(pd.isna(value))
 
 
 def _localized_field_columns(columns: list[Hashable], entity_class: type) -> list[str]:

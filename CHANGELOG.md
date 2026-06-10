@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.26.2 (2026-06-10)
+
+- fix: preserve literal `!` values in value and frequency metadata composite keys
+
 ## 0.26.1 (2026-06-09)
 
 - update: bundle the latest datannur front app with UI and static export fixes

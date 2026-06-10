@@ -302,6 +302,42 @@ class TestConvertRowToDict:
 
         assert result["description"] is None
 
+    def test_clear_marker_still_clears_id_field(self):
+        """Exact ! should not become a literal id value."""
+        result = _convert_row_to_dict({"id": "!", "name": "Bang"}, Folder)
+
+        assert result["id"] is None
+
+    def test_preserves_clear_marker_in_composite_value_fields(self):
+        """Exact ! should remain literal in Value/Frequency value fields."""
+        value_result = _convert_row_to_dict(
+            {"enumeration_id": "enum1", "value": "!", "description": "!"}, Value
+        )
+        assert value_result["enumeration_id"] == "enum1"
+        assert value_result["value"] == "!"
+        assert value_result["description"] is None
+
+        frequency_result = _convert_row_to_dict(
+            {"variable_id": "var1", "value": "!", "frequency": 2}, Frequency
+        )
+        assert frequency_result["variable_id"] == "var1"
+        assert frequency_result["value"] == "!"
+
+    def test_clear_marker_still_clears_composite_reference_fields(self):
+        """Exact ! should not become a literal reference id for composite entities."""
+        assert (
+            _convert_row_to_dict({"enumeration_id": "!", "value": "a"}, Value)[
+                "enumeration_id"
+            ]
+            is None
+        )
+        assert (
+            _convert_row_to_dict(
+                {"variable_id": "!", "value": "a", "frequency": 1}, Frequency
+            )["variable_id"]
+            is None
+        )
+
     def test_clear_list_field(self):
         """Exact ! should clear relation list fields."""
         row: dict[Hashable, Any] = {
@@ -842,6 +878,25 @@ class TestProcessEntityTable:
         assert len(catalog.value.all()) == 1
         assert catalog.value.all()[0].enumeration_id == "m1"
 
+    def test_create_value_entity_with_bang_value(self):
+        """Value.value should allow ! as a literal composite-key value."""
+        catalog = Catalog()
+        df = pd.DataFrame(
+            {
+                "enumeration_id": ["enum1", "enum1"],
+                "value": ["!", "?"],
+                "description": ["No information", "Unknown"],
+            }
+        )
+
+        created, updated = _process_entity_table(catalog, "value", df)
+
+        assert created == 2
+        assert updated == 0
+        by_value = {value.value: value for value in catalog.value.all()}
+        assert by_value["!"].description == "No information"
+        assert by_value["?"].description == "Unknown"
+
     def test_update_value_entity(self):
         """Should update existing Value entities."""
         catalog = Catalog()
@@ -1029,6 +1084,25 @@ class TestProcessEntityTable:
         assert catalog.frequency.all()[0].variable_id == "v1"
         assert catalog.frequency.all()[0].value == "a"
         assert catalog.frequency.all()[0].frequency == 5
+
+    def test_create_frequency_entity_with_bang_value(self):
+        """Frequency.value should allow ! as a literal composite-key value."""
+        catalog = Catalog()
+        df = pd.DataFrame(
+            {
+                "variable_id": ["v1", "v1"],
+                "value": ["!", "?"],
+                "frequency": [1, 2],
+            }
+        )
+
+        created, updated = _process_entity_table(catalog, "frequency", df)
+
+        assert created == 2
+        assert updated == 0
+        by_value = {frequency.value: frequency for frequency in catalog.frequency.all()}
+        assert by_value["!"].frequency == 1
+        assert by_value["?"].frequency == 2
 
     def test_update_frequency_entity(self):
         """Should update existing Frequency entities."""
