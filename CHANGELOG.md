@@ -4,6 +4,7 @@
 
 - fix: preserve literal `!` values in value and frequency metadata composite keys
 - fix: preserve folder metadata fields declared in the app schema during metadata import
+- fix: trim metadata identity and scalar string fields during metadata import
 
 ## 0.26.1 (2026-06-09)
 

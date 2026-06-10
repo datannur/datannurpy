@@ -41,6 +41,7 @@ from datannurpy.add_metadata import (
     _is_missing_metadata_value,
     _localized_field_columns,
     _merge_localized_fields,
+    _normalize_integral_float_value,
     _is_clear_value,
     _is_database_connection,
     _is_truthy_delete,
@@ -302,6 +303,19 @@ class TestConvertRowToDict:
 
         assert result["description"] is None
 
+    def test_strips_scalar_string_fields_and_skips_empty_results(self):
+        """Scalar strings should be stripped and blank results treated as missing."""
+        row: dict[Hashable, Any] = {
+            "id": " test ",
+            "name": " Test ",
+            "dataset_id": " ds ",
+            "description": "   ",
+        }
+
+        result = _convert_row_to_dict(row, Variable)
+
+        assert result == {"id": "test", "name": "Test", "dataset_id": "ds"}
+
     def test_clear_marker_still_clears_id_field(self):
         """Exact ! should not become a literal id value."""
         result = _convert_row_to_dict({"id": "!", "name": "Bang"}, Folder)
@@ -322,6 +336,23 @@ class TestConvertRowToDict:
         )
         assert frequency_result["variable_id"] == "var1"
         assert frequency_result["value"] == "!"
+
+    def test_preserves_empty_composite_value_fields(self):
+        """Blank Value/Frequency values should remain valid category codes."""
+        value_result = _convert_row_to_dict(
+            {"enumeration_id": "enum1", "value": "   ", "description": " blank "},
+            Value,
+        )
+        assert value_result == {
+            "enumeration_id": "enum1",
+            "value": "",
+            "description": "blank",
+        }
+
+        frequency_result = _convert_row_to_dict(
+            {"variable_id": "var1", "value": "   ", "frequency": 2}, Frequency
+        )
+        assert frequency_result["value"] == ""
 
     def test_clear_marker_still_clears_composite_reference_fields(self):
         """Exact ! should not become a literal reference id for composite entities."""
@@ -358,6 +389,12 @@ class TestConvertRowToDict:
         assert _is_clear_value(" ! ")
         assert not _is_clear_value("!tag")
         assert not _is_clear_value(["!"])
+
+    def test_normalizes_integral_float_values(self):
+        """Integral floats from metadata readers should normalize cleanly."""
+        assert _normalize_integral_float_value(1.0) == 1
+        assert _normalize_integral_float_value(1.5) == 1.5
+        assert _normalize_integral_float_value(1.0, as_string=True) == "1"
 
 
 class TestMergeEntity:
@@ -836,6 +873,20 @@ class TestProcessEntityTable:
         assert catalog.folder.all()[0].name == "New"
         assert catalog.folder.all()[0].description == "Updated"
 
+    def test_strips_standard_entity_id_before_matching(self):
+        """Whitespace around metadata ids should not create duplicate entities."""
+        catalog = Catalog()
+        catalog.folder.add(Folder(id="f1", name="Old"))
+        df = pd.DataFrame({"id": [" f1 "], "name": [" New "]})
+
+        created, updated = _process_entity_table(catalog, "folder", df)
+
+        assert created == 0
+        assert updated == 1
+        assert len(catalog.folder.all()) == 1
+        assert catalog.folder.all()[0].id == "f1"
+        assert catalog.folder.all()[0].name == "New"
+
     def test_preserves_localized_columns_for_standard_entities(self):
         """Localized metadata fields should be kept in the table DataFrame."""
         catalog = Catalog()
@@ -941,6 +992,35 @@ class TestProcessEntityTable:
         assert created == 0
         assert updated == 1
         assert catalog.value.all()[0].description == "Updated"
+
+    def test_strips_value_composite_key_before_matching(self):
+        """Whitespace around Value composite keys should not create duplicates."""
+        catalog = Catalog()
+        catalog.value.add(
+            Value(
+                id=build_value_id("enum1", "a"),
+                enumeration_id="enum1",
+                value="a",
+                description="Old",
+            )
+        )
+        df = pd.DataFrame(
+            {
+                "enumeration_id": [" enum1 "],
+                "value": [" a "],
+                "description": [" New "],
+            }
+        )
+
+        created, updated = _process_entity_table(catalog, "value", df)
+
+        assert created == 0
+        assert updated == 1
+        assert len(catalog.value.all()) == 1
+        value = catalog.value.all()[0]
+        assert value.enumeration_id == "enum1"
+        assert value.value == "a"
+        assert value.description == "New"
 
     def test_preserves_localized_columns_for_value_entities(self):
         """Localized value descriptions should merge by enumeration_id and value."""
@@ -1061,6 +1141,16 @@ class TestProcessEntityTable:
         created, updated = _process_entity_table(catalog, "value", df)
         assert created == 0  # Both skipped
 
+    def test_skip_value_with_blank_enumeration_id_after_trim(self):
+        """Should skip Value rows whose enumeration_id trims to blank."""
+        catalog = Catalog()
+        df = pd.DataFrame({"enumeration_id": ["   "], "value": ["a"]})
+
+        created, updated = _process_entity_table(catalog, "value", df)
+
+        assert created == 0
+        assert updated == 0
+
     def test_infer_variable_name_from_id(self):
         """Should infer variable name from id."""
         catalog = Catalog()
@@ -1088,6 +1178,16 @@ class TestProcessEntityTable:
 
         created, _ = _process_entity_table(catalog, "folder", df)
         assert created == 1  # Only f1 created
+
+    def test_skip_entity_with_blank_id_after_trim(self):
+        """Should skip id-keyed entities whose id trims to blank."""
+        catalog = Catalog()
+        df = pd.DataFrame({"id": ["   "], "name": ["Blank"]})
+
+        created, updated = _process_entity_table(catalog, "folder", df)
+
+        assert created == 0
+        assert updated == 0
 
     def test_create_frequency_entity(self):
         """Should create Frequency entities with composite key."""
@@ -1150,6 +1250,31 @@ class TestProcessEntityTable:
         assert updated == 1
         assert catalog.frequency.all()[0].frequency == 10
 
+    def test_strips_frequency_composite_key_before_matching(self):
+        """Whitespace around Frequency composite keys should not create duplicates."""
+        catalog = Catalog()
+        catalog.frequency.add(
+            Frequency(
+                id=build_frequency_id("var1", "a"),
+                variable_id="var1",
+                value="a",
+                frequency=1,
+            )
+        )
+        df = pd.DataFrame(
+            {"variable_id": [" var1 "], "value": [" a "], "frequency": [3]}
+        )
+
+        created, updated = _process_entity_table(catalog, "frequency", df)
+
+        assert created == 0
+        assert updated == 1
+        assert len(catalog.frequency.all()) == 1
+        frequency = catalog.frequency.all()[0]
+        assert frequency.variable_id == "var1"
+        assert frequency.value == "a"
+        assert frequency.frequency == 3
+
     def test_skip_frequency_without_required_fields(self):
         """Should skip Frequency without variable_id or value."""
         catalog = Catalog()
@@ -1163,6 +1288,16 @@ class TestProcessEntityTable:
 
         created, updated = _process_entity_table(catalog, "frequency", df)
         assert created == 0  # Both skipped
+
+    def test_skip_frequency_with_blank_variable_id_after_trim(self):
+        """Should skip Frequency rows whose variable_id trims to blank."""
+        catalog = Catalog()
+        df = pd.DataFrame({"variable_id": ["   "], "value": ["a"], "frequency": [1]})
+
+        created, updated = _process_entity_table(catalog, "frequency", df)
+
+        assert created == 0
+        assert updated == 0
 
     def test_update_value_without_description(self):
         """Updating an existing Value without description in CSV should be a no-op update."""

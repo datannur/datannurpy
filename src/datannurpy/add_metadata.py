@@ -395,6 +395,19 @@ def _is_clear_value(value: Any) -> bool:
     return isinstance(value, str) and value.strip() == CLEAR_VALUE
 
 
+def _normalize_integral_float_value(value: Any, *, as_string: bool = False) -> Any:
+    """Normalize integral floats from tabular metadata readers."""
+    if isinstance(value, float) and value.is_integer():
+        value = int(value)
+    return str(value) if as_string else value
+
+
+def _normalize_key_value(value: Any) -> str:
+    """Normalize metadata identity values before matching or ID creation."""
+    value = _normalize_integral_float_value(value, as_string=True)
+    return value.strip()
+
+
 def _split_relation_instructions(values: list[str]) -> tuple[list[str], set[str]]:
     """Split relation list entries into additions and removals."""
     removals = {
@@ -507,6 +520,11 @@ def _convert_row_to_dict(
         if isinstance(value, (datetime, date)):
             value = value.strftime("%Y/%m/%d")
 
+        if isinstance(value, str):
+            value = value.strip()
+            if value == "" and key_str not in literal_clear_marker_fields:
+                continue
+
         # Handle list fields
         if key_str in LIST_FIELDS:
             parsed = _parse_list_field(value)
@@ -571,7 +589,7 @@ def _merge_localized_fields(
             if _is_missing_metadata_value(value):
                 key_values = []
                 break
-            key_values.append(str(value))
+            key_values.append(_normalize_key_value(value))
         if not key_values:
             continue
 
@@ -725,7 +743,7 @@ def _process_standard_table(
         entity_id = row_data.get("id")
         if entity_id is None:
             continue
-        entity_id = str(entity_id)
+        entity_id = _normalize_key_value(entity_id)
         row_data["id"] = entity_id
 
         # For Variable: infer name from id if not provided
@@ -804,8 +822,8 @@ def _process_value_table(
         if enumeration_id is None or value_str is None:
             continue
 
-        enumeration_id = str(enumeration_id)
-        value_str = str(value_str)
+        enumeration_id = _normalize_key_value(enumeration_id)
+        value_str = _normalize_key_value(value_str)
         value_id = build_value_id(enumeration_id, value_str)
         description = row_data.get("description")
 
@@ -868,8 +886,8 @@ def _process_frequency_table(
         if variable_id is None or value_str is None:
             continue
 
-        variable_id = str(variable_id)
-        value_str = str(value_str)
+        variable_id = _normalize_key_value(variable_id)
+        value_str = _normalize_key_value(value_str)
         freq_id = build_frequency_id(variable_id, value_str)
         freq_count = int(row_data.get("frequency", 0))
 
