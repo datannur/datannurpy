@@ -9,6 +9,8 @@ import ibis
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from ibis.expr.schema import Schema as IbisSchema
+
 
 # Oracle system table prefixes to exclude (these exist in user schemas like SYSTEM)
 ORACLE_SYSTEM_TABLE_PREFIXES: tuple[str, ...] = (
@@ -83,7 +85,7 @@ def _oracle_get_schema(
     con: ibis.BaseBackend,
     table_name: str,
     schema: str | None,
-) -> tuple[ibis.Schema, set[str], set[str]]:
+) -> tuple[IbisSchema, set[str], set[str]]:
     """Get table schema, LOB columns, and date/timestamp columns."""
     raw_sql = getattr(con, "raw_sql")
     uc_table = table_name.upper()
