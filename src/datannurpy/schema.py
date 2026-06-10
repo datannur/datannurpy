@@ -42,7 +42,11 @@ class Folder:
     doc_ids: list[str] = field(default_factory=list)
     name: str | None = None
     description: str | None = None
+    delivery_format: str | None = None
+    git_code: str | None = None
     license: str | None = None
+    metadata_path: str | None = None
+    survey_type: str | None = None
     type: str | None = None  # filesystem, sqlite, postgres, etc.
     link: str | None = None
     localisation: str | None = None
@@ -145,7 +149,7 @@ class Variable:
     std: float | None = None
     start_date: str | None = None
     end_date: str | None = None
-    is_pattern: bool = False
+    is_pattern: bool | None = None
     concept_id: str | None = None
 
 

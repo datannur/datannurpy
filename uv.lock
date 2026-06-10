@@ -15,7 +15,7 @@ exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for 
 exclude-newer-span = "P3D"
 
 [options.exclude-newer-package]
-jsonjsdb = "2026-05-26T23:59:59Z"
+jsonjsdb = "2026-06-10T23:59:59Z"
 
 [manifest]
 constraints = [
@@ -1067,7 +1067,7 @@ wheels = [
 
 [[package]]
 name = "datannurpy"
-version = "0.26.1"
+version = "0.26.2"
 source = { editable = "." }
 dependencies = [
     { name = "cryptography" },
@@ -1168,7 +1168,7 @@ requires-dist = [
     { name = "ibis-framework", extras = ["oracle"], marker = "extra == 'oracle'", specifier = ">=11.0" },
     { name = "ibis-framework", extras = ["postgres"], marker = "extra == 'postgres'", specifier = ">=11.0" },
     { name = "ibis-framework", extras = ["postgres", "mysql", "oracle", "mssql"], marker = "extra == 'databases'", specifier = ">=11.0" },
-    { name = "jsonjsdb", specifier = ">=0.8.8" },
+    { name = "jsonjsdb", specifier = ">=0.8.9" },
     { name = "openpyxl", specifier = ">=3.0" },
     { name = "paramiko", marker = "extra == 'ssh'", specifier = ">=5.0" },
     { name = "polars", specifier = ">=1.0" },
@@ -1982,16 +1982,16 @@ wheels = [
 
 [[package]]
 name = "jsonjsdb"
-version = "0.8.8"
+version = "0.8.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openpyxl" },
     { name = "polars", version = "1.36.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "polars", version = "1.39.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/54/34/e99075bf2e72e28399cf44bc38a78135727fe8214f7c9a372329c43945c8/jsonjsdb-0.8.8.tar.gz", hash = "sha256:0607a9df56fb9ba591195cc3dbad0e3dcf54952c4b08b9a7f7128f3b5c99bda8", size = 16017, upload-time = "2026-05-26T14:03:41.327Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d6/c9/371ac041a63061fe964968a7db5aeebdf0320a1f3d8cb683f0c20e694620/jsonjsdb-0.8.9.tar.gz", hash = "sha256:c991fdd77409d846076cce49ba80f337bb402664d5fe8e63032323713339479f", size = 18245, upload-time = "2026-06-10T21:22:43.93Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/26/2a/ba1302074d34529e019f4dba28be4f24532977fb1d2f1f7579bea52d3ba6/jsonjsdb-0.8.8-py3-none-any.whl", hash = "sha256:1ecb1bbae14ce8fcb9a7699e3388d1a5d70179e6d430fe9e0479e5bee6a523d0", size = 18936, upload-time = "2026-05-26T14:03:39.886Z" },
+    { url = "https://files.pythonhosted.org/packages/c6/3c/284f1970077e45bf462cdda4475ed5fc7746e472e44ccee337c9864e6f21/jsonjsdb-0.8.9-py3-none-any.whl", hash = "sha256:7d579b988758d6ec1c2df373e0794b70fc703802fe47c9da7cd65313178cd71d", size = 21207, upload-time = "2026-06-10T21:22:42.898Z" },
 ]
 
 [[package]]
@@ -3724,15 +3724,15 @@ wheels = [
 
 [[package]]
 name = "pyright"
-version = "1.1.409"
+version = "1.1.410"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "nodeenv" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/51/4e/3aa27f74211522dba7e9cbc3e74de779c6d4b654c54e50a4840623be8014/pyright-1.1.409.tar.gz", hash = "sha256:986ee05beca9e077c165758ad123667c679e050059a2546aa02473930394bc93", size = 4430434, upload-time = "2026-04-23T11:02:03.799Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/10/53/e4d8ea1391bd4355231be6f91bf239479aa0014260ed3fb5526eeb12a1f2/pyright-1.1.410.tar.gz", hash = "sha256:07a073b8ba6749826773c1269773efa11b93440d9a6aa60419d9a3172d6dc488", size = 4062013, upload-time = "2026-06-01T17:35:48.894Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/16/6b/330d8ebae582b30c2959a1ef4c3bc344ebde48c2ff0c3f113c4710735e11/pyright-1.1.409-py3-none-any.whl", hash = "sha256:aa3ea228cab90c845c7a60d28db7a844c04315356392aa09fafcee98c8c22fb3", size = 6438161, upload-time = "2026-04-23T11:02:01.309Z" },
+    { url = "https://files.pythonhosted.org/packages/d7/33/288b5868fa00846dacf249633719d747893e54aebd196b9968ac1878a5d3/pyright-1.1.410-py3-none-any.whl", hash = "sha256:5e961bed37cacf96b3f7cd7b1da39b350a9239aa2e69138d0e88f728cfaf296c", size = 6082448, upload-time = "2026-06-01T17:35:46.387Z" },
 ]
 
 [[package]]

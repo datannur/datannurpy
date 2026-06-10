@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 import sys
 import time
@@ -61,6 +62,11 @@ ENTITY_CLASSES: dict[str, type] = {
 
 # Entities without required id (use composite key)
 ENTITIES_WITHOUT_ID = {"value", "frequency"}
+
+LITERAL_CLEAR_MARKER_FIELDS = {
+    Value: {"value"},
+    Frequency: {"value"},
+}
 
 TOMBSTONE_ENTITIES = {
     "folder",
@@ -389,6 +395,19 @@ def _is_clear_value(value: Any) -> bool:
     return isinstance(value, str) and value.strip() == CLEAR_VALUE
 
 
+def _normalize_integral_float_value(value: Any) -> Any:
+    """Normalize integral floats from tabular metadata readers."""
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    return value
+
+
+def _normalize_key_value(value: Any) -> str:
+    """Normalize metadata identity values before matching or ID creation."""
+    value = _normalize_integral_float_value(value)
+    return str(value).strip()
+
+
 def _split_relation_instructions(values: list[str]) -> tuple[list[str], set[str]]:
     """Split relation list entries into additions and removals."""
     removals = {
@@ -473,8 +492,7 @@ def _convert_row_to_dict(
 ) -> dict[str, Any]:
     """Convert a row dict to entity constructor kwargs."""
     valid_fields = _get_field_names(entity_class)
-
-    import pandas as pd
+    literal_clear_marker_fields = LITERAL_CLEAR_MARKER_FIELDS.get(entity_class, set())
 
     result: dict[str, Any] = {}
     for key, value in row.items():
@@ -483,17 +501,17 @@ def _convert_row_to_dict(
             continue
 
         # Skip missing values (None, NaN, pd.NA, pd.NaT, np.datetime64('NaT'))
-        if value is None or (
-            not isinstance(value, (list, dict)) and bool(pd.isna(value))
-        ):
+        if _is_missing_metadata_value(value):
             continue
 
-        if _is_clear_value(value):
+        if key_str not in literal_clear_marker_fields and _is_clear_value(value):
             result[key_str] = _CLEAR_LIST if key_str in LIST_FIELDS else None
             continue
 
         if key_str in {"last_update", "last_update_date"}:
             value = _normalize_update_value(value)
+        else:
+            value = _normalize_integral_float_value(value)
 
         # Coerce datetime / date / pd.Timestamp to YYYY/MM/DD —
         # CSV (DuckDB) and Excel parsers infer date columns natively, but the
@@ -503,6 +521,11 @@ def _convert_row_to_dict(
         # YYYY/MM/DDTHH:MM:SS produced by filesystem scans.
         if isinstance(value, (datetime, date)):
             value = value.strftime("%Y/%m/%d")
+
+        if isinstance(value, str):
+            value = value.strip()
+            if value == "" and key_str not in literal_clear_marker_fields:
+                continue
 
         # Handle list fields
         if key_str in LIST_FIELDS:
@@ -519,11 +542,16 @@ def _convert_row_to_dict(
 
 def _is_missing_metadata_value(value: Any) -> bool:
     """Return whether a metadata cell should leave existing values unchanged."""
+    if value is None:
+        return True
+    if isinstance(value, float):
+        return math.isnan(value)
+    if isinstance(value, (str, bool, int, list, dict)):
+        return False
+
     import pandas as pd
 
-    return value is None or (
-        not isinstance(value, (list, dict)) and bool(pd.isna(value))
-    )
+    return bool(pd.isna(value))
 
 
 def _localized_field_columns(columns: list[Hashable], entity_class: type) -> list[str]:
@@ -563,7 +591,7 @@ def _merge_localized_fields(
             if _is_missing_metadata_value(value):
                 key_values = []
                 break
-            key_values.append(str(value))
+            key_values.append(_normalize_key_value(value))
         if not key_values:
             continue
 
@@ -717,7 +745,7 @@ def _process_standard_table(
         entity_id = row_data.get("id")
         if entity_id is None:
             continue
-        entity_id = str(entity_id)
+        entity_id = _normalize_key_value(entity_id)
         row_data["id"] = entity_id
 
         # For Variable: infer name from id if not provided
@@ -796,8 +824,8 @@ def _process_value_table(
         if enumeration_id is None or value_str is None:
             continue
 
-        enumeration_id = str(enumeration_id)
-        value_str = str(value_str)
+        enumeration_id = _normalize_key_value(enumeration_id)
+        value_str = _normalize_key_value(value_str)
         value_id = build_value_id(enumeration_id, value_str)
         description = row_data.get("description")
 
@@ -860,8 +888,8 @@ def _process_frequency_table(
         if variable_id is None or value_str is None:
             continue
 
-        variable_id = str(variable_id)
-        value_str = str(value_str)
+        variable_id = _normalize_key_value(variable_id)
+        value_str = _normalize_key_value(value_str)
         freq_id = build_frequency_id(variable_id, value_str)
         freq_count = int(row_data.get("frequency", 0))
 

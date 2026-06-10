@@ -10,7 +10,7 @@ import threading
 import warnings
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, NoReturn
+from typing import TYPE_CHECKING, Any, NoReturn, Optional
 from urllib.parse import parse_qs, quote, unquote, urlparse, urlunparse
 
 import ibis
@@ -29,6 +29,8 @@ from .utils import build_variables
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from ibis.expr.schema import Schema as IbisSchema
 
 
 # Backend name mapping from URI scheme
@@ -823,7 +825,7 @@ def _get_table(
     schema: str | None,
     backend: str,
     *,
-    oracle_schema: ibis.Schema | None = None,
+    oracle_schema: Optional[IbisSchema] = None,
     sample_pct: float | None = None,
 ) -> ibis.expr.types.Table:
     """Get an ibis table reference, with Oracle < 23 compatibility."""
@@ -869,7 +871,7 @@ def compute_schema_signature(
     return _hash_ibis_schema(table.schema())
 
 
-def _hash_ibis_schema(sch: ibis.Schema) -> str:
+def _hash_ibis_schema(sch: IbisSchema) -> str:
     """Compute MD5 hash from an ibis Schema."""
     schema_parts = sorted(
         f"{col}:{_normalize_dtype(dtype)}" for col, dtype in sch.items()
@@ -990,7 +992,7 @@ def scan_table(
 
     # Oracle: get schema + detect LOB columns in a single query
     skip_stats_columns: set[str] = set()
-    oracle_schema: ibis.Schema | None = None
+    oracle_schema: Optional[IbisSchema] = None
     if backend == "oracle":
         try:
             oracle_schema, lob_columns, date_columns = _oracle_get_schema(

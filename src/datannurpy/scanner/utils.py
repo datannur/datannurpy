@@ -845,7 +845,7 @@ def build_variables(
             max=get_extra(col_name, 1),
             mean=get_extra(col_name, 2),
             std=get_extra(col_name, 3),
-            is_pattern=col_name in pattern_info,
+            is_pattern=True if col_name in pattern_info else None,
             tag_ids=[auto_tag_map[col_name]] if col_name in auto_tag_map else [],
         )
         for col_name in columns

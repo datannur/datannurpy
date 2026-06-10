@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import polars as pl
-from jsonjsdb.writer import write_table_json, write_table_jsonjs
+from jsonjsdb.writer import write_table_json_pair
 
 from .utils.log import _write_log
 from .utils.params import validate_params
@@ -189,8 +189,9 @@ def _sync_markdown_doc_exports(catalog: Catalog, output_dir: str | Path) -> None
         content = source_path.read_text(encoding="utf-8")
         md_doc_dir.mkdir(parents=True, exist_ok=True)
         rows = pl.DataFrame({"content": [content]})
-        write_table_json(rows, md_doc_dir / f"{doc.id}.json")
-        write_table_jsonjs(rows, doc.id, md_doc_dir / f"{doc.id}.json.js")
+        write_table_json_pair(
+            rows, doc.id, md_doc_dir, json_path=md_doc_dir / f"{doc.id}.json"
+        )
 
 
 def _normalize_copy_assets(copy_assets: Any) -> list[dict[str, Any]]:

@@ -600,7 +600,7 @@ class TestPatternFrequencyIntegration:
         assert var_by_name["code"].is_pattern is True
         assert "auto---structured" in var_by_name["code"].tag_ids
         # Integer column should not be a pattern
-        assert var_by_name["num"].is_pattern is False
+        assert var_by_name["num"].is_pattern is None
         assert var_by_name["num"].tag_ids == []
         # frequency_table should contain pattern entries
         assert frequency_table is not None
@@ -617,7 +617,7 @@ class TestPatternFrequencyIntegration:
             table, nb_rows=5, dataset_id="test", infer_stats=True, freq_threshold=10
         )
         v = variables[0]
-        assert v.is_pattern is False
+        assert v.is_pattern is None
         assert v.tag_ids == []
         assert freq_table is not None
 
@@ -628,7 +628,7 @@ class TestPatternFrequencyIntegration:
         variables, freq_table = build_variables(
             table, nb_rows=50, dataset_id="test", infer_stats=True
         )
-        assert variables[0].is_pattern is False
+        assert variables[0].is_pattern is None
         assert variables[0].tag_ids == []
 
     def test_mixed_columns_freq_and_pattern(self):
@@ -640,7 +640,7 @@ class TestPatternFrequencyIntegration:
             table, nb_rows=50, dataset_id="test", infer_stats=True, freq_threshold=5
         )
         var_by_name = {v.name: v for v in variables}
-        assert var_by_name["low"].is_pattern is False
+        assert var_by_name["low"].is_pattern is None
         assert var_by_name["high"].is_pattern is True
         # Both should have entries in freq_table
         assert freq_table is not None
