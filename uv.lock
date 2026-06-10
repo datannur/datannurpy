@@ -15,7 +15,7 @@ exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for 
 exclude-newer-span = "P3D"
 
 [options.exclude-newer-package]
-jsonjsdb = "2026-05-26T23:59:59Z"
+jsonjsdb = "2026-06-10T23:59:59Z"
 
 [manifest]
 constraints = [
@@ -1168,7 +1168,7 @@ requires-dist = [
     { name = "ibis-framework", extras = ["oracle"], marker = "extra == 'oracle'", specifier = ">=11.0" },
     { name = "ibis-framework", extras = ["postgres"], marker = "extra == 'postgres'", specifier = ">=11.0" },
     { name = "ibis-framework", extras = ["postgres", "mysql", "oracle", "mssql"], marker = "extra == 'databases'", specifier = ">=11.0" },
-    { name = "jsonjsdb", specifier = ">=0.8.8" },
+    { name = "jsonjsdb", specifier = ">=0.8.9" },
     { name = "openpyxl", specifier = ">=3.0" },
     { name = "paramiko", marker = "extra == 'ssh'", specifier = ">=5.0" },
     { name = "polars", specifier = ">=1.0" },
@@ -1982,16 +1982,16 @@ wheels = [
 
 [[package]]
 name = "jsonjsdb"
-version = "0.8.8"
+version = "0.8.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openpyxl" },
     { name = "polars", version = "1.36.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "polars", version = "1.39.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/54/34/e99075bf2e72e28399cf44bc38a78135727fe8214f7c9a372329c43945c8/jsonjsdb-0.8.8.tar.gz", hash = "sha256:0607a9df56fb9ba591195cc3dbad0e3dcf54952c4b08b9a7f7128f3b5c99bda8", size = 16017, upload-time = "2026-05-26T14:03:41.327Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d6/c9/371ac041a63061fe964968a7db5aeebdf0320a1f3d8cb683f0c20e694620/jsonjsdb-0.8.9.tar.gz", hash = "sha256:c991fdd77409d846076cce49ba80f337bb402664d5fe8e63032323713339479f", size = 18245, upload-time = "2026-06-10T21:22:43.93Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/26/2a/ba1302074d34529e019f4dba28be4f24532977fb1d2f1f7579bea52d3ba6/jsonjsdb-0.8.8-py3-none-any.whl", hash = "sha256:1ecb1bbae14ce8fcb9a7699e3388d1a5d70179e6d430fe9e0479e5bee6a523d0", size = 18936, upload-time = "2026-05-26T14:03:39.886Z" },
+    { url = "https://files.pythonhosted.org/packages/c6/3c/284f1970077e45bf462cdda4475ed5fc7746e472e44ccee337c9864e6f21/jsonjsdb-0.8.9-py3-none-any.whl", hash = "sha256:7d579b988758d6ec1c2df373e0794b70fc703802fe47c9da7cd65313178cd71d", size = 21207, upload-time = "2026-06-10T21:22:42.898Z" },
 ]
 
 [[package]]

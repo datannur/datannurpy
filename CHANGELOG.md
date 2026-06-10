@@ -8,6 +8,7 @@
 - fix: normalize integer-like float values from tabular metadata readers during metadata import
 - fix: keep database scanner type checks compatible with Pyright 1.1.410
 - fix: omit default `is_pattern: false` values from variable metadata exports
+- fix: use jsonjsdb 0.8.9 paired JSON writers for Markdown document exports
 
 ## 0.26.1 (2026-06-09)
 
