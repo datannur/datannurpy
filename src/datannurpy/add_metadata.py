@@ -395,17 +395,17 @@ def _is_clear_value(value: Any) -> bool:
     return isinstance(value, str) and value.strip() == CLEAR_VALUE
 
 
-def _normalize_integral_float_value(value: Any, *, as_string: bool = False) -> Any:
+def _normalize_integral_float_value(value: Any) -> Any:
     """Normalize integral floats from tabular metadata readers."""
     if isinstance(value, float) and value.is_integer():
-        value = int(value)
-    return str(value) if as_string else value
+        return int(value)
+    return value
 
 
 def _normalize_key_value(value: Any) -> str:
     """Normalize metadata identity values before matching or ID creation."""
-    value = _normalize_integral_float_value(value, as_string=True)
-    return value.strip()
+    value = _normalize_integral_float_value(value)
+    return str(value).strip()
 
 
 def _split_relation_instructions(values: list[str]) -> tuple[list[str], set[str]]:
@@ -510,6 +510,8 @@ def _convert_row_to_dict(
 
         if key_str in {"last_update", "last_update_date"}:
             value = _normalize_update_value(value)
+        else:
+            value = _normalize_integral_float_value(value)
 
         # Coerce datetime / date / pd.Timestamp to YYYY/MM/DD —
         # CSV (DuckDB) and Excel parsers infer date columns natively, but the

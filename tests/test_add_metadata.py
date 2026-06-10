@@ -316,6 +316,19 @@ class TestConvertRowToDict:
 
         assert result == {"id": "test", "name": "Test", "dataset_id": "ds"}
 
+    def test_normalizes_integral_float_values(self):
+        """Excel-style integral floats should not keep a trailing .0."""
+        dataset_result = _convert_row_to_dict(
+            {"id": 1.0, "name": 2022.0, "nb_row": 10.0}, Dataset
+        )
+        assert dataset_result == {"id": 1, "name": 2022, "nb_row": 10}
+
+        variable_result = _convert_row_to_dict(
+            {"id": "v1", "name": "Var", "dataset_id": "ds", "min": 1.0},
+            Variable,
+        )
+        assert variable_result["min"] == 1
+
     def test_clear_marker_still_clears_id_field(self):
         """Exact ! should not become a literal id value."""
         result = _convert_row_to_dict({"id": "!", "name": "Bang"}, Folder)
@@ -390,11 +403,11 @@ class TestConvertRowToDict:
         assert not _is_clear_value("!tag")
         assert not _is_clear_value(["!"])
 
-    def test_normalizes_integral_float_values(self):
+    def test_normalizes_integral_float_helper(self):
         """Integral floats from metadata readers should normalize cleanly."""
         assert _normalize_integral_float_value(1.0) == 1
         assert _normalize_integral_float_value(1.5) == 1.5
-        assert _normalize_integral_float_value(1.0, as_string=True) == "1"
+        assert _normalize_integral_float_value("1") == "1"
 
 
 class TestMergeEntity:
