@@ -792,6 +792,30 @@ class TestProcessEntityTable:
         assert updated == 0
         assert catalog.folder.all()[0].tag_ids == []
 
+    def test_create_folder_with_schema_metadata_fields(self):
+        """Folder metadata should preserve fields declared in the app schema."""
+        catalog = Catalog()
+        df = pd.DataFrame(
+            {
+                "id": ["folder1"],
+                "name": ["Folder 1"],
+                "survey_type": ["registry"],
+                "delivery_format": ["csv"],
+                "metadata_path": ["/path/to/metadata"],
+                "git_code": ["https://example.org/repo"],
+            }
+        )
+
+        created, updated = _process_entity_table(catalog, "folder", df)
+
+        assert created == 1
+        assert updated == 0
+        row = catalog.folder.df.to_dicts()[0]
+        assert row["survey_type"] == "registry"
+        assert row["delivery_format"] == "csv"
+        assert row["metadata_path"] == "/path/to/metadata"
+        assert row["git_code"] == "https://example.org/repo"
+
     def test_update_existing_entity(self):
         """Should update existing entities."""
         catalog = Catalog()
