@@ -11,16 +11,16 @@
 
 # datannurpy
 
-datannurpy is the Python builder for [datannur](https://github.com/datannur/datannur) catalogs: it scans files and databases, extracts metadata and statistics, and exports a ready-to-use catalog.
+datannurpy is the Python builder for [datannur](https://github.com/datannur/datannur). It scans files and databases, extracts metadata and statistics, then generates a ready-to-use catalog bundled with the datannur app.
 
 **Key features:**
 
 - **Broad format support** - CSV, Excel, Parquet, Delta Lake, Iceberg, SAS, SPSS, Stata
 - **Database introspection** - PostgreSQL, MySQL, Oracle, SQL Server, SQLite, DuckDB
-- **Remote & cloud storage** - SFTP, S3, Azure Blob, GCS via fsspec
-- **Rich metadata** - schema, statistics, frequencies, enumerations, auto-tagging
-- **Incremental scans** - only rescan what changed between runs
-- **YAML or Python API** - declarative configuration or programmatic control
+- **Remote and cloud storage** - SFTP, S3, Azure Blob, GCS via fsspec
+- **Metadata extraction** - Schemas, statistics, frequencies, enumerations, auto-tagging
+- **Incremental scans** - Only rescan what changed between runs
+- **YAML or Python API** - Declarative configuration or programmatic control
 
 ## Quick start
 
@@ -44,9 +44,13 @@ add:
 python -m datannurpy catalog.yml
 ```
 
+This command scans the configured sources, generates the catalog files, and opens the datannur app.
+
 ## Documentation
 
 📖 **Full documentation:** [docs.datannur.com/builder](https://docs.datannur.com/builder/)
+
+🗂️ **datannur app:** [github.com/datannur/datannur](https://github.com/datannur/datannur)
 
 🌐 **Website:** [datannur.com](https://datannur.com)
 
