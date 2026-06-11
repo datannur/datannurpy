@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "datannurpy"
 version = "0.26.2"
-description = "Python toolkit to scan files and databases into ready-to-use datannur catalogs"
+description = "Scan files and databases into ready-to-use datannur catalogs"
 authors = [{ name = "datannur" }]
 readme = "README.md"
 requires-python = ">=3.9"
