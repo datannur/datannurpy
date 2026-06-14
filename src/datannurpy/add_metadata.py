@@ -245,7 +245,7 @@ def _read_file(
     label = path_label or file_path.name
 
     if suffix == ".csv":
-        return read_csv(file_path)
+        return read_csv(file_path, preserve_empty_strings=True)
     elif suffix in {".xlsx", ".xls"}:
         return read_excel(file_path, quiet=quiet, path_label=label)
     elif suffix == ".json":
@@ -1094,12 +1094,12 @@ def _apply_config_table(
         return
     count = 0
     for row in df.to_dict(orient="records"):
-        rid = row.get("id")
+        rid = _optional_str(row.get("id"))
         val = row.get("value")
-        if rid is not None and not (isinstance(rid, float) and rid != rid):
+        if rid is not None:
             if val is None or (isinstance(val, float) and val != val):
                 val = ""
-            catalog.config.add(Config(id=str(rid), value=str(val)))
+            catalog.config.add(Config(id=rid, value=str(val)))
             count += 1
     log_done(f"config: {count} entries loaded", quiet)
 

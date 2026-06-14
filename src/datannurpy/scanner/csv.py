@@ -46,6 +46,7 @@ _CSV_HEADER_SAMPLE_BYTES = 64 * 1024
 # stray missing value far in the file does not invalidate a numeric column
 # typed from the first 20 000-row sample.
 _CSV_NULL_STRINGS = ["", "NA", "N/A", "n/a", "#N/A", "NULL", "null", "NaN", "nan"]
+_CSV_NULL_STRINGS_KEEP_EMPTY = [s for s in _CSV_NULL_STRINGS if s != ""]
 
 
 def _deduplicate_columns(names: list[str]) -> list[str]:
@@ -160,6 +161,7 @@ def read_csv(
     path: str | Path,
     *,
     csv_encoding: str | None = None,
+    preserve_empty_strings: bool = False,
 ) -> pd.DataFrame | None:
     """Read a CSV file into a pandas DataFrame."""
     file_path = Path(path)
@@ -171,7 +173,12 @@ def read_csv(
         with _csv_source(file_path, csv_encoding, csv_skip_copy=False) as csv_path:
             con = ibis.duckdb.connect()
             try:
-                table = con.read_csv(str(csv_path), nullstr=_CSV_NULL_STRINGS)
+                null_strings = (
+                    _CSV_NULL_STRINGS_KEEP_EMPTY
+                    if preserve_empty_strings
+                    else _CSV_NULL_STRINGS
+                )
+                table = con.read_csv(str(csv_path), nullstr=null_strings)
                 result = table.to_pyarrow()
             finally:
                 con.disconnect()

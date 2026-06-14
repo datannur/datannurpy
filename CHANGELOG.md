@@ -3,6 +3,7 @@
 ## 0.26.3 (2026-06-14)
 
 - fix: use jsonjsdb 0.8.10 to preserve JSON hash manifest entries for subdirectory exports
+- fix: preserve explicit empty `value.value` metadata cells as enumeration values
 
 ## 0.26.2 (2026-06-10)
 
