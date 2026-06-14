@@ -561,6 +561,46 @@ class TestCatalogWrite:
         md_doc_json = tmp_path / "output" / "md-doc" / "guide.json"
         assert json.loads(md_doc_json.read_text()) == [{"content": "# Guide"}]
 
+    def test_export_db_rewrites_relative_markdown_doc_links(self, tmp_path: Path):
+        """Relative Markdown links are rooted at the source document directory."""
+        from datannurpy.schema import Doc
+
+        source_dir = tmp_path / "output" / "docs" / "example"
+        source_dir.mkdir(parents=True)
+        (source_dir / "readme.md").write_text(
+            "![Image](images/schema.png)\n"
+            "[Details](details.md)\n"
+            "[Parent](../shared.md)\n"
+            "[Wrapped](<assets/schema.svg>)\n"
+            "[WrappedExternal](<https://example.org/file>)\n"
+            "[Query](details.md?tab=1#section)\n"
+            "[External](https://example.org)\n"
+            "[Root](/doc/file.pdf)\n"
+            "[Anchor](#section)\n"
+            "[Mail](mailto:test@example.org)",
+            encoding="utf-8",
+        )
+
+        catalog = Catalog()
+        catalog.doc.add(Doc(id="readme", type="md", path="docs/example/readme.md"))
+        catalog.export_db(tmp_path / "output")
+
+        md_doc_json = tmp_path / "output" / "md-doc" / "readme.json"
+        assert json.loads(md_doc_json.read_text()) == [
+            {
+                "content": "![Image](/docs/example/images/schema.png)\n"
+                "[Details](/docs/example/details.md)\n"
+                "[Parent](/docs/shared.md)\n"
+                "[Wrapped](</docs/example/assets/schema.svg>)\n"
+                "[WrappedExternal](<https://example.org/file>)\n"
+                "[Query](/docs/example/details.md?tab=1#section)\n"
+                "[External](https://example.org)\n"
+                "[Root](/doc/file.pdf)\n"
+                "[Anchor](#section)\n"
+                "[Mail](mailto:test@example.org)"
+            }
+        ]
+
     def test_export_db_skips_non_local_markdown_doc_files(self, tmp_path: Path):
         """Only existing local markdown Doc paths are compiled."""
         from datannurpy.schema import Doc

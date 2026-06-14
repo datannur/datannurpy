@@ -4,6 +4,7 @@
 
 - fix: use jsonjsdb 0.8.10 to preserve JSON hash manifest entries for subdirectory exports
 - fix: preserve explicit empty `value.value` metadata cells as enumeration values
+- fix: rewrite relative links in exported Markdown document content
 
 ## 0.26.2 (2026-06-10)
 
