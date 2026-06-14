@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "datannurpy"
-version = "0.26.2"
+version = "0.26.3"
 description = "Scan files and databases into ready-to-use datannur catalogs"
 authors = [{ name = "datannur" }]
 readme = "README.md"
@@ -120,7 +120,7 @@ constraint-dependencies = [
 ]
 
 [tool.uv.exclude-newer-package]
-jsonjsdb = "2026-06-10T23:59:59Z"
+jsonjsdb = "2026-06-14T23:59:59Z"
 
 [tool.pyright]
 pythonVersion = "3.9"

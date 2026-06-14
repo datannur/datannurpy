@@ -190,7 +190,11 @@ def _sync_markdown_doc_exports(catalog: Catalog, output_dir: str | Path) -> None
         md_doc_dir.mkdir(parents=True, exist_ok=True)
         rows = pl.DataFrame({"content": [content]})
         write_table_json_pair(
-            rows, doc.id, md_doc_dir, json_path=md_doc_dir / f"{doc.id}.json"
+            rows,
+            doc.id,
+            md_doc_dir,
+            export_root=db_dir,
+            json_path=md_doc_dir / f"{doc.id}.json",
         )
 
 

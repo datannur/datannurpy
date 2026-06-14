@@ -541,6 +541,10 @@ class TestCatalogWrite:
         md_doc_json = app_dir / "data" / "db" / "md-doc" / "guide.json"
         assert json.loads(md_doc_json.read_text()) == [{"content": "# Guide\n\nHello"}]
         assert (app_dir / "data" / "db" / "md-doc" / "guide.json.js").exists()
+        hashes = json.loads(
+            (app_dir / "data" / "db" / "_meta" / "json-hashes.json").read_text()
+        )
+        assert "md-doc/guide.json" in hashes
 
     def test_export_db_builds_markdown_doc_files_in_db_export(self, tmp_path: Path):
         """Markdown Doc paths also resolve relative to db-only output dirs."""
