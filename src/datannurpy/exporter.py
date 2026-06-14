@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import fnmatch
+import posixpath
+import re
 import shutil
 import sys
 import time
 import webbrowser
 import zlib
 from pathlib import Path
+from pathlib import PurePosixPath
 from typing import TYPE_CHECKING, Any
 
 import polars as pl
@@ -25,6 +28,10 @@ from .errors import ConfigError
 from .preview import apply_preview_flags, sync_preview_exports
 
 _GZIP_CHUNK_SIZE = 1024 * 1024
+_MARKDOWN_LINK_RE = re.compile(
+    r"(?P<prefix>!?\[[^\]]*\]\()(?P<target><[^>\n]*>|[^)\s]+)(?P<suffix>(?:\s+[^)]*)?\))"
+)
+_MARKDOWN_UNCHANGED_LINK_PREFIXES = ("http://", "https://", "/", "#", "mailto:")
 
 
 def _drop_empty_columns(catalog: Catalog) -> None:
@@ -175,6 +182,43 @@ def _resolve_doc_source_path(db_dir: Path, doc_path: str) -> Path:
     return db_dir / doc_path
 
 
+def _split_markdown_link_target(target: str) -> tuple[str, str, str]:
+    """Split a Markdown link target into optional angle wrapper, path and suffix."""
+    wrapper = ""
+    if target.startswith("<") and target.endswith(">"):
+        wrapper = "<>"
+        target = target[1:-1]
+
+    suffix_index = len(target)
+    for marker in ("#", "?"):
+        index = target.find(marker)
+        if index != -1:
+            suffix_index = min(suffix_index, index)
+    return wrapper, target[:suffix_index], target[suffix_index:]
+
+
+def _rewrite_markdown_links(content: str, doc_path: str) -> str:
+    """Rewrite relative Markdown links relative to the source document path."""
+    base_path = PurePosixPath(doc_path).parent
+
+    def replace(match: re.Match[str]) -> str:
+        target = match.group("target")
+        wrapper, target_path, target_suffix = _split_markdown_link_target(target)
+        target_lower = target_path.lower()
+        if target_lower.startswith(_MARKDOWN_UNCHANGED_LINK_PREFIXES):
+            return match.group(0)
+        if not target_path:
+            return match.group(0)
+
+        rewritten_path = posixpath.normpath((base_path / target_path).as_posix())
+        rewritten = f"/{rewritten_path}{target_suffix}"
+        if wrapper:
+            rewritten = f"<{rewritten}>"
+        return f"{match.group('prefix')}{rewritten}{match.group('suffix')}"
+
+    return _MARKDOWN_LINK_RE.sub(replace, content)
+
+
 def _sync_markdown_doc_exports(catalog: Catalog, output_dir: str | Path) -> None:
     """Write md-doc JSON files for local markdown docs."""
     db_dir = Path(output_dir)
@@ -186,11 +230,17 @@ def _sync_markdown_doc_exports(catalog: Catalog, output_dir: str | Path) -> None
         source_path = _resolve_doc_source_path(db_dir, str(doc.path))
         if not source_path.exists():
             continue
-        content = source_path.read_text(encoding="utf-8")
+        content = _rewrite_markdown_links(
+            source_path.read_text(encoding="utf-8"), str(doc.path)
+        )
         md_doc_dir.mkdir(parents=True, exist_ok=True)
         rows = pl.DataFrame({"content": [content]})
         write_table_json_pair(
-            rows, doc.id, md_doc_dir, json_path=md_doc_dir / f"{doc.id}.json"
+            rows,
+            doc.id,
+            md_doc_dir,
+            export_root=db_dir,
+            json_path=md_doc_dir / f"{doc.id}.json",
         )
 
 

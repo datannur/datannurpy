@@ -15,7 +15,7 @@ exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for 
 exclude-newer-span = "P3D"
 
 [options.exclude-newer-package]
-jsonjsdb = "2026-06-10T23:59:59Z"
+jsonjsdb = "2026-06-14T23:59:59Z"
 
 [manifest]
 constraints = [
@@ -1067,7 +1067,7 @@ wheels = [
 
 [[package]]
 name = "datannurpy"
-version = "0.26.2"
+version = "0.26.3"
 source = { editable = "." }
 dependencies = [
     { name = "cryptography" },
@@ -1982,16 +1982,16 @@ wheels = [
 
 [[package]]
 name = "jsonjsdb"
-version = "0.8.9"
+version = "0.8.10"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openpyxl" },
     { name = "polars", version = "1.36.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "polars", version = "1.39.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d6/c9/371ac041a63061fe964968a7db5aeebdf0320a1f3d8cb683f0c20e694620/jsonjsdb-0.8.9.tar.gz", hash = "sha256:c991fdd77409d846076cce49ba80f337bb402664d5fe8e63032323713339479f", size = 18245, upload-time = "2026-06-10T21:22:43.93Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/99/fe/f34da76b30de90d07b3e1d191761530f5e9e269270abd2bdbbcb09640baf/jsonjsdb-0.8.10.tar.gz", hash = "sha256:db436d07f71e4fc01c73a8c9bbf3c771a64895d4ddc6f75830fc53040adfe848", size = 18256, upload-time = "2026-06-14T12:36:14.889Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c6/3c/284f1970077e45bf462cdda4475ed5fc7746e472e44ccee337c9864e6f21/jsonjsdb-0.8.9-py3-none-any.whl", hash = "sha256:7d579b988758d6ec1c2df373e0794b70fc703802fe47c9da7cd65313178cd71d", size = 21207, upload-time = "2026-06-10T21:22:42.898Z" },
+    { url = "https://files.pythonhosted.org/packages/4a/f1/9fc8999a970616be580a075abd8db1168cac7f295128fc4ceed4cce78bba/jsonjsdb-0.8.10-py3-none-any.whl", hash = "sha256:b475f7e33b9a0d8fa75071a049245c33a47eb29bf6681cc21e9c989b4f696e4a", size = 21221, upload-time = "2026-06-14T12:36:13.571Z" },
 ]
 
 [[package]]

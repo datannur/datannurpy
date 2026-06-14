@@ -32,6 +32,7 @@ from datannurpy.add_metadata import (
     DEPTH_ENTITIES,
     FREQ_HIDDEN_TAG,
     _CLEAR_LIST,
+    _apply_config_table,
     _convert_row_to_dict,
     _existing_localized_rows,
     _extract_freq_hidden_ids,
@@ -984,6 +985,24 @@ class TestProcessEntityTable:
         by_value = {value.value: value for value in catalog.value.all()}
         assert by_value["!"].description == "No information"
         assert by_value["?"].description == "Unknown"
+
+    def test_create_value_entity_with_empty_value_from_csv(self, tmp_path: Path):
+        """Value.value should allow an explicit empty CSV cell."""
+        metadata_dir = tmp_path / "metadata"
+        metadata_dir.mkdir()
+        (metadata_dir / "value.csv").write_text(
+            "enumeration_id,value,description\ngeneric---example,,Empty / missing\n",
+            encoding="utf-8",
+        )
+
+        catalog = Catalog(metadata_path=metadata_dir, quiet=True)
+        ensure_metadata_applied(catalog)
+
+        values = catalog.value.all()
+        assert len(values) == 1
+        assert values[0].enumeration_id == "generic---example"
+        assert values[0].value == ""
+        assert values[0].description == "Empty / missing"
 
     def test_update_value_entity(self):
         """Should update existing Value entities."""
@@ -2172,6 +2191,16 @@ class TestConfigAutoLoad:
         k3 = catalog.config.get("k3")
         assert k3 is not None
         assert k3.value == ""
+
+    def test_config_coerces_none_value_to_empty_string(self) -> None:
+        """config metadata keeps None values as empty strings."""
+        catalog = Catalog(quiet=True)
+
+        _apply_config_table(catalog, pd.DataFrame({"id": ["k1"], "value": [None]}))
+
+        config = catalog.config.get("k1")
+        assert config is not None
+        assert config.value == ""
 
     def test_config_filter_csv_loaded_and_exported(self, tmp_path: Path):
         """configFilter.csv should populate configFilter.json outputs."""
