@@ -7,6 +7,7 @@
 - perf: cache repeated metadata match path existence checks during dataset metadata loading
 - perf: batch Markdown document export hash metadata through jsonjsdb
 - change: make the export size report opt-in with `export_size_report`
+- security: constrain cryptography to 48.0.1 or newer in uv dependency resolution
 
 ## 0.26.3 (2026-06-14)
 
