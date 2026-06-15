@@ -451,6 +451,7 @@ def export_db(
     track_evolution: bool = True,
     copy_assets: Any = None,
     base_dir: str | Path | None = None,
+    export_size_report: bool = False,
     quiet: bool | None = None,
 ) -> None:
     """Write all catalog entities to JSON files."""
@@ -495,7 +496,8 @@ def export_db(
         parent_relations=parent_relations,
     )
     _clean_stale_db_files(catalog, Path(path))
-    _print_export_size_report(Path(path), quiet=q)
+    if export_size_report:
+        _print_export_size_report(Path(path), quiet=q)
 
 
 def _get_app_path() -> Path:
@@ -544,6 +546,7 @@ def export_app(
     update_app: bool = False,
     copy_assets: Any = None,
     base_dir: str | Path | None = None,
+    export_size_report: bool = False,
     quiet: bool | None = None,
 ) -> None:
     """Export a standalone datannur visualization app with catalog data."""
@@ -584,7 +587,8 @@ def export_app(
     # Write to data/db/
     db_dir = output_dir / "data" / "db"
     catalog.export_db(db_dir, quiet=True, track_evolution=track_evolution)
-    _print_export_size_report(db_dir, quiet=q)
+    if export_size_report:
+        _print_export_size_report(db_dir, quiet=q)
 
     elapsed = time.perf_counter() - start_time
     index_uri = (output_dir / "index.html").resolve().as_uri()

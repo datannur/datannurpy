@@ -23,13 +23,14 @@ Top-level export options:
 | `track_evolution` | bool | `true` | app + db export | Write `evolution.json` with added, updated, and deleted entities |
 | `update_app` | bool | `false` | app export | Refresh bundled front-end app files when `app_path` already exists |
 | `copy_assets` | rule or list of rules | `None` | app + db export | Copy extra local files or directories into the export |
+| `export_size_report` | bool | `false` | app + db export | Print a per-table size report after writing the database |
 | `post_export` | script name, path, or list | `None` | app + db export | Run Python scripts after export finishes |
 
-When exports are not run in quiet mode, datannurpy prints a size report by table after writing the database. The report includes raw `.json`, raw `.json.js`, and estimated gzipped `.json` sizes with percentages, which helps identify the tables that dominate catalog weight.
+Set `export_size_report: true` to print a size report by table after writing the database. The report includes raw `.json`, raw `.json.js`, and estimated gzipped `.json` sizes with percentages, which helps identify the tables that dominate catalog weight.
 
 ### Large exports
 
-Large catalogs are usually dominated by `frequency` and `value`, because those tables store repeated values for many variables. Use the export size report to check which tables matter before changing scan settings.
+Large catalogs are usually dominated by `frequency` and `value`, because those tables store repeated values for many variables. Enable `export_size_report` to check which tables matter before changing scan settings.
 
 If the export is larger than expected, the main levers are scan depth, frequency generation, and sampling. `depth: stat` keeps variable statistics without writing frequency tables or enumerations; `depth: variable` keeps only schema-level metadata; `freq_threshold` controls when high-cardinality string columns switch from value frequencies to pattern frequencies; `sample_size` limits the rows used for frequency counts and enumeration detection while keeping core statistics on the full dataset.
 

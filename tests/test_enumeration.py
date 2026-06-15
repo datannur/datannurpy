@@ -248,12 +248,12 @@ class TestEnumerationExport:
         assert all(v.get("description") is None for v in data)
 
     def test_export_size_report_printed(self, tmp_path: Path, capsys):
-        """export_db should print a size report when not quiet."""
+        """export_db should print a size report when explicitly enabled."""
         (tmp_path / "data.csv").write_text("color\nred\nblue\n")
 
         catalog = Catalog(quiet=True)
         catalog.add_folder(tmp_path)
-        catalog.export_db(tmp_path / "output", quiet=False)
+        catalog.export_db(tmp_path / "output", export_size_report=True, quiet=False)
 
         captured = capsys.readouterr()
         assert "export size by table" in captured.err
@@ -266,7 +266,7 @@ class TestEnumerationExport:
 
         catalog = Catalog(quiet=True)
         catalog.add_folder(tmp_path)
-        catalog.export_db(tmp_path / "output", quiet=True)
+        catalog.export_db(tmp_path / "output", export_size_report=True, quiet=True)
 
         captured = capsys.readouterr()
         assert "export size by table" not in captured.err

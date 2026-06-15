@@ -248,6 +248,7 @@ def run_config(path: str | Path) -> Catalog:
     open_browser = config.pop("open_browser", False)
     copy_assets = config.pop("copy_assets", None)
     track_evolution = config.pop("track_evolution", True)
+    export_size_report = config.pop("export_size_report", False)
     update_app = config.pop("update_app", False)
     post_export = config.pop("post_export", None)
     output_dir = config.pop("output_dir", None)
@@ -307,6 +308,7 @@ def run_config(path: str | Path) -> Catalog:
         catalog.export_db(
             output_dir,
             track_evolution=track_evolution,
+            export_size_report=export_size_report,
             copy_assets=copy_assets,
             base_dir=base_dir,
         )
@@ -315,6 +317,7 @@ def run_config(path: str | Path) -> Catalog:
             open_browser=open_browser and not post_export,
             track_evolution=track_evolution,
             update_app=update_app,
+            export_size_report=export_size_report,
             copy_assets=copy_assets,
             base_dir=base_dir,
         )

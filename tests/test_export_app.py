@@ -182,6 +182,27 @@ class TestExportApp:
         assert "\n  →  exported in " in err
         assert "index.html" in err
 
+    def test_export_app_size_report_is_opt_in(
+        self, _employees_catalog, tmp_path, monkeypatch: pytest.MonkeyPatch
+    ):
+        """export_app prints the size report only when explicitly requested."""
+        from datannurpy import exporter as exporter_mod
+
+        calls: list[Path] = []
+
+        def record_report(path: Path, *, quiet: bool) -> None:
+            calls.append(path)
+
+        monkeypatch.setattr(exporter_mod, "_print_export_size_report", record_report)
+
+        _employees_catalog.export_app(tmp_path / "default", quiet=False)
+        assert calls == []
+
+        _employees_catalog.export_app(
+            tmp_path / "enabled", export_size_report=True, quiet=False
+        )
+        assert calls == [tmp_path / "enabled" / "data" / "db"]
+
     def test_export_app_open_browser(self, _employees_catalog, tmp_path, monkeypatch):
         """export_app with open_browser=True should open browser."""
         opened_urls = []

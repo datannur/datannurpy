@@ -175,6 +175,7 @@ catalog.export_db(
     track_evolution=True,
     copy_assets=None,
     base_dir=None,
+    export_size_report=False,
     quiet=None,
 )
 ```
@@ -185,6 +186,7 @@ catalog.export_db(
 | track_evolution | bool             | True    | Track changes between exports              |
 | copy_assets     | dict \| list[dict] \| None | None    | Copy extra local files/directories into the export using the same rules as `copy_assets()` |
 | base_dir        | str \| Path \| None | None    | Base directory for relative `copy_assets.from` paths (defaults to current working directory) |
+| export_size_report | bool         | False   | Print a per-table export size report, including estimated gzipped `.json` sizes |
 | quiet           | bool \| None     | None    | Override catalog quiet setting             |
 
 Exports JSON metadata files. Calls `finalize()` automatically when data has been scanned.
@@ -200,6 +202,7 @@ catalog.export_app(
     update_app=False,
     copy_assets=None,
     base_dir=None,
+    export_size_report=False,
     quiet=None,
 )
 ```
@@ -212,6 +215,7 @@ catalog.export_app(
 | update_app      | bool                | False   | Refresh bundled front-end app files when the app already exists |
 | copy_assets     | dict \| list[dict] \| None | None    | Copy extra local files/directories into the exported app using the same rules as `copy_assets()` |
 | base_dir        | str \| Path \| None | None    | Base directory for relative `copy_assets.from` paths (defaults to current working directory) |
+| export_size_report | bool            | False   | Print a per-table export size report for `data/db`, including estimated gzipped `.json` sizes |
 | quiet           | bool \| None        | None    | Override catalog quiet setting             |
 
 Exports complete standalone datannur app with data. Uses `app_path` by default if set at init. Existing apps update `data/db` by default; pass `update_app=True` to refresh bundled front-end files.
@@ -252,6 +256,7 @@ Top-level YAML keys recognized by `run_config()`:
 | `open_browser` | bool | Open the generated app in the browser after app export |
 | `copy_assets` | dict \| list[dict] \| None | Copy extra local files or directories into the export |
 | `track_evolution` | bool | Enable or disable `evolution.json` generation during export |
+| `export_size_report` | bool | Enable the per-table export size report after writing the database |
 | `update_app` | bool | Refresh bundled front-end app files when exporting to an existing `app_path` |
 | `post_export` | str \| list[str] \| None | Run Python scripts after export completes |
 
