@@ -498,6 +498,53 @@ class TestHelperUnits:
 
         assert _resolve_match_path(math.nan, tmp_path) is None
 
+    def test_resolve_match_path_existing_file_without_cache(self, tmp_path: Path):
+        from datannurpy.add_metadata import _resolve_match_path
+
+        path = tmp_path / "data.csv"
+        path.write_text("id\n1\n")
+
+        assert _resolve_match_path(path, tmp_path) == str(path)
+
+    def test_resolve_match_path_uses_exists_cache(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        from datannurpy.add_metadata import _resolve_match_path
+
+        path = tmp_path / "missing.csv"
+        exists_calls = 0
+        original_exists = Path.exists
+
+        def count_exists(candidate: Path) -> bool:
+            nonlocal exists_calls
+            if candidate == path:
+                exists_calls += 1
+            return original_exists(candidate)
+
+        cache: dict[str, bool] = {}
+        monkeypatch.setattr(Path, "exists", count_exists)
+
+        assert _resolve_match_path(path, tmp_path, cache) is None
+        assert _resolve_match_path(path, tmp_path, cache) is None
+        assert exists_calls == 1
+
+    def test_explicit_match_path_does_not_resolve_data_path(self, tmp_path: Path):
+        from datannurpy.add_metadata import _load_tables_from_folder
+
+        meta_dir = tmp_path / "meta"
+        meta_dir.mkdir()
+        match_path = tmp_path / "data.csv"
+        match_path.write_text("id\n1\n")
+        (meta_dir / "dataset.csv").write_text(
+            f"id,data_path,_match_path\nds,missing.csv,{match_path}\n"
+        )
+
+        tables = _load_tables_from_folder(meta_dir, {"dataset"}, quiet=True)
+        df = tables["dataset"][0]
+
+        assert df.loc[0, "data_path"] == "missing.csv"
+        assert df.loc[0, "_match_path"] == str(match_path)
+
     def test_optional_str_none(self):
         from datannurpy.add_metadata import _optional_str
 

@@ -4,6 +4,7 @@
 
 - fix: resolve relative links in exported Markdown document content from the original source document directory
 - perf: avoid per-dataset preview file probes when preview exports are disabled or can be discovered from the preview directory
+- perf: cache repeated metadata match path existence checks during dataset metadata loading
 
 ## 0.26.3 (2026-06-14)
 
