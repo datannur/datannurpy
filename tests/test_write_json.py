@@ -562,7 +562,7 @@ class TestCatalogWrite:
         assert json.loads(md_doc_json.read_text()) == [{"content": "# Guide"}]
 
     def test_export_db_rewrites_relative_markdown_doc_links(self, tmp_path: Path):
-        """Relative Markdown links are rooted at the source document directory."""
+        """Relative Markdown links are resolved from the source document directory."""
         from datannurpy.schema import Doc
 
         source_dir = tmp_path / "output" / "docs" / "example"
@@ -586,14 +586,18 @@ class TestCatalogWrite:
         catalog.export_db(tmp_path / "output")
 
         md_doc_json = tmp_path / "output" / "md-doc" / "readme.json"
+        image_path = (source_dir / "images" / "schema.png").resolve()
+        details_path = (source_dir / "details.md").resolve()
+        parent_path = (source_dir / ".." / "shared.md").resolve()
+        wrapped_path = (source_dir / "assets" / "schema.svg").resolve()
         assert json.loads(md_doc_json.read_text()) == [
             {
-                "content": "![Image](/docs/example/images/schema.png)\n"
-                "[Details](/docs/example/details.md)\n"
-                "[Parent](/docs/shared.md)\n"
-                "[Wrapped](</docs/example/assets/schema.svg>)\n"
+                "content": f"![Image]({image_path})\n"
+                f"[Details]({details_path})\n"
+                f"[Parent]({parent_path})\n"
+                f"[Wrapped](<{wrapped_path}>)\n"
                 "[WrappedExternal](<https://example.org/file>)\n"
-                "[Query](/docs/example/details.md?tab=1#section)\n"
+                f"[Query]({details_path}?tab=1#section)\n"
                 "[External](https://example.org)\n"
                 "[Root](/doc/file.pdf)\n"
                 "[Anchor](#section)\n"

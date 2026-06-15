@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import fnmatch
-import posixpath
 import re
 import shutil
 import sys
@@ -11,7 +10,6 @@ import time
 import webbrowser
 import zlib
 from pathlib import Path
-from pathlib import PurePosixPath
 from typing import TYPE_CHECKING, Any
 
 import polars as pl
@@ -197,9 +195,9 @@ def _split_markdown_link_target(target: str) -> tuple[str, str, str]:
     return wrapper, target[:suffix_index], target[suffix_index:]
 
 
-def _rewrite_markdown_links(content: str, doc_path: str) -> str:
+def _rewrite_markdown_links(content: str, source_path: Path) -> str:
     """Rewrite relative Markdown links relative to the source document path."""
-    base_path = PurePosixPath(doc_path).parent
+    base_dir = source_path.parent
 
     def replace(match: re.Match[str]) -> str:
         target = match.group("target")
@@ -210,8 +208,7 @@ def _rewrite_markdown_links(content: str, doc_path: str) -> str:
         if not target_path:
             return match.group(0)
 
-        rewritten_path = posixpath.normpath((base_path / target_path).as_posix())
-        rewritten = f"/{rewritten_path}{target_suffix}"
+        rewritten = f"{base_dir.joinpath(target_path).resolve()}{target_suffix}"
         if wrapper:
             rewritten = f"<{rewritten}>"
         return f"{match.group('prefix')}{rewritten}{match.group('suffix')}"
@@ -231,7 +228,7 @@ def _sync_markdown_doc_exports(catalog: Catalog, output_dir: str | Path) -> None
         if not source_path.exists():
             continue
         content = _rewrite_markdown_links(
-            source_path.read_text(encoding="utf-8"), str(doc.path)
+            source_path.read_text(encoding="utf-8"), source_path
         )
         md_doc_dir.mkdir(parents=True, exist_ok=True)
         rows = pl.DataFrame({"content": [content]})

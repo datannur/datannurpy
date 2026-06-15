@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.27.0 (2026-06-15)
+
+- fix: resolve relative links in exported Markdown document content from the original source document directory
+
 ## 0.26.3 (2026-06-14)
 
 - fix: use jsonjsdb 0.8.10 to preserve JSON hash manifest entries for subdirectory exports
