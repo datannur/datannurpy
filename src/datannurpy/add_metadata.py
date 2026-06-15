@@ -314,23 +314,26 @@ def _load_tables_from_folder(
     # in the export and is only used as the backward-compatible fallback.
     if "dataset" in tables:
         df, fname = tables["dataset"]
+        exists_cache: dict[str, bool] = {}
         if "_match_path" in df.columns:
             df = df.copy()
             df["_match_path"] = df["_match_path"].map(
-                lambda p: _resolve_match_path(p, folder_path)
+                lambda p: _resolve_match_path(p, folder_path, exists_cache)
             )
             tables["dataset"] = (df, fname)
         elif "data_path" in df.columns:
             df = df.copy()
             df["_match_path"] = df["data_path"].map(
-                lambda p: _resolve_match_path(p, folder_path)
+                lambda p: _resolve_match_path(p, folder_path, exists_cache)
             )
             tables["dataset"] = (df, fname)
 
     return tables
 
 
-def _resolve_match_path(data_path: Any, base_dir: Path) -> str | None:
+def _resolve_match_path(
+    data_path: Any, base_dir: Path, exists_cache: dict[str, bool] | None = None
+) -> str | None:
     """Resolve a CSV data_path to an absolute match path (or None if URL/missing)."""
     import pandas as pd
 
@@ -342,7 +345,14 @@ def _resolve_match_path(data_path: Any, base_dir: Path) -> str | None:
     candidate = Path(s)
     if not candidate.is_absolute():
         candidate = (base_dir / candidate).resolve()
-    return str(candidate) if candidate.exists() else None
+    candidate_str = str(candidate)
+    if exists_cache is None:
+        return candidate_str if candidate.exists() else None
+    exists = exists_cache.get(candidate_str)
+    if exists is None:
+        exists = candidate.exists()
+        exists_cache[candidate_str] = exists
+    return candidate_str if exists else None
 
 
 def _load_tables_from_database(

@@ -1,5 +1,14 @@
 # datannurpy
 
+## 0.26.4 (2026-06-15)
+
+- fix: resolve relative links in exported Markdown document content from the original source document directory
+- perf: avoid per-dataset preview file probes when preview exports are disabled or can be discovered from the preview directory
+- perf: cache repeated metadata match path existence checks during dataset metadata loading
+- perf: batch Markdown document export hash metadata through jsonjsdb
+- change: make the export size report opt-in with `export_size_report`
+- security: constrain cryptography to 48.0.1 or newer in uv dependency resolution
+
 ## 0.26.3 (2026-06-14)
 
 - fix: use jsonjsdb 0.8.10 to preserve JSON hash manifest entries for subdirectory exports

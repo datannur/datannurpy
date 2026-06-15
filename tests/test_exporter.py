@@ -7,7 +7,9 @@ from pathlib import Path
 
 import pytest
 
+from datannurpy import Catalog
 from datannurpy.errors import ConfigError
+from datannurpy import exporter as exporter_mod
 from datannurpy.exporter import (
     _build_export_size_report,
     _clean_copy_target,
@@ -43,6 +45,17 @@ class TestExportSizeReportHelpers:
 
         assert capsys.readouterr().err == ""
 
+    def test_print_export_size_report_outputs_non_empty_report(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        """Non-empty export directories print the size report helper output."""
+        (tmp_path / "dataset.json").write_text("[]")
+        (tmp_path / "dataset.json.js").write_text("jsonjs.data['dataset'] = []")
+
+        _print_export_size_report(tmp_path, quiet=False)
+
+        assert "export size by table" in capsys.readouterr().err
+
     def test_total_percent_is_zero_for_missing_format(self, tmp_path: Path):
         """Missing export formats should not show a misleading total percent."""
         (tmp_path / "dataset.json").write_text("[]")
@@ -51,6 +64,23 @@ class TestExportSizeReportHelpers:
 
         total_line = report.splitlines()[-1]
         assert "  0 B   0.0%" in total_line
+
+    def test_export_db_size_report_is_opt_in(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        """export_db does not build the size report unless explicitly requested."""
+        calls: list[Path] = []
+
+        def record_report(path: Path, *, quiet: bool) -> None:
+            calls.append(path)
+
+        monkeypatch.setattr(exporter_mod, "_print_export_size_report", record_report)
+
+        Catalog().export_db(tmp_path / "default", quiet=False)
+        assert calls == []
+
+        Catalog().export_db(tmp_path / "enabled", export_size_report=True, quiet=False)
+        assert calls == [tmp_path / "enabled"]
 
 
 class TestCopyAssetsHelpers:

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import fnmatch
-import posixpath
 import re
 import shutil
 import sys
@@ -11,11 +10,10 @@ import time
 import webbrowser
 import zlib
 from pathlib import Path
-from pathlib import PurePosixPath
 from typing import TYPE_CHECKING, Any
 
 import polars as pl
-from jsonjsdb.writer import write_table_json_pair
+from jsonjsdb.writer import export_hash_session, write_table_json_pair
 
 from .utils.log import _write_log
 from .utils.params import validate_params
@@ -197,9 +195,9 @@ def _split_markdown_link_target(target: str) -> tuple[str, str, str]:
     return wrapper, target[:suffix_index], target[suffix_index:]
 
 
-def _rewrite_markdown_links(content: str, doc_path: str) -> str:
+def _rewrite_markdown_links(content: str, source_path: Path) -> str:
     """Rewrite relative Markdown links relative to the source document path."""
-    base_path = PurePosixPath(doc_path).parent
+    base_dir = source_path.parent
 
     def replace(match: re.Match[str]) -> str:
         target = match.group("target")
@@ -210,8 +208,7 @@ def _rewrite_markdown_links(content: str, doc_path: str) -> str:
         if not target_path:
             return match.group(0)
 
-        rewritten_path = posixpath.normpath((base_path / target_path).as_posix())
-        rewritten = f"/{rewritten_path}{target_suffix}"
+        rewritten = f"{base_dir.joinpath(target_path).resolve()}{target_suffix}"
         if wrapper:
             rewritten = f"<{rewritten}>"
         return f"{match.group('prefix')}{rewritten}{match.group('suffix')}"
@@ -223,6 +220,7 @@ def _sync_markdown_doc_exports(catalog: Catalog, output_dir: str | Path) -> None
     """Write md-doc JSON files for local markdown docs."""
     db_dir = Path(output_dir)
     md_doc_dir = db_dir / "md-doc"
+    markdown_docs = []
 
     for doc in catalog.doc.all():
         if not _is_local_markdown_doc(doc):
@@ -230,18 +228,26 @@ def _sync_markdown_doc_exports(catalog: Catalog, output_dir: str | Path) -> None
         source_path = _resolve_doc_source_path(db_dir, str(doc.path))
         if not source_path.exists():
             continue
-        content = _rewrite_markdown_links(
-            source_path.read_text(encoding="utf-8"), str(doc.path)
-        )
-        md_doc_dir.mkdir(parents=True, exist_ok=True)
-        rows = pl.DataFrame({"content": [content]})
-        write_table_json_pair(
-            rows,
-            doc.id,
-            md_doc_dir,
-            export_root=db_dir,
-            json_path=md_doc_dir / f"{doc.id}.json",
-        )
+        markdown_docs.append((doc, source_path))
+
+    if not markdown_docs:
+        return
+
+    md_doc_dir.mkdir(parents=True, exist_ok=True)
+    with export_hash_session(db_dir) as hash_session:
+        for doc, source_path in markdown_docs:
+            content = _rewrite_markdown_links(
+                source_path.read_text(encoding="utf-8"), source_path
+            )
+            rows = pl.DataFrame({"content": [content]})
+            write_table_json_pair(
+                rows,
+                doc.id,
+                md_doc_dir,
+                export_root=db_dir,
+                json_path=md_doc_dir / f"{doc.id}.json",
+                hash_session=hash_session,
+            )
 
 
 def _normalize_copy_assets(copy_assets: Any) -> list[dict[str, Any]]:
@@ -454,6 +460,7 @@ def export_db(
     track_evolution: bool = True,
     copy_assets: Any = None,
     base_dir: str | Path | None = None,
+    export_size_report: bool = False,
     quiet: bool | None = None,
 ) -> None:
     """Write all catalog entities to JSON files."""
@@ -498,7 +505,8 @@ def export_db(
         parent_relations=parent_relations,
     )
     _clean_stale_db_files(catalog, Path(path))
-    _print_export_size_report(Path(path), quiet=q)
+    if export_size_report:
+        _print_export_size_report(Path(path), quiet=q)
 
 
 def _get_app_path() -> Path:
@@ -547,6 +555,7 @@ def export_app(
     update_app: bool = False,
     copy_assets: Any = None,
     base_dir: str | Path | None = None,
+    export_size_report: bool = False,
     quiet: bool | None = None,
 ) -> None:
     """Export a standalone datannur visualization app with catalog data."""
@@ -587,7 +596,8 @@ def export_app(
     # Write to data/db/
     db_dir = output_dir / "data" / "db"
     catalog.export_db(db_dir, quiet=True, track_evolution=track_evolution)
-    _print_export_size_report(db_dir, quiet=q)
+    if export_size_report:
+        _print_export_size_report(db_dir, quiet=q)
 
     elapsed = time.perf_counter() - start_time
     index_uri = (output_dir / "index.html").resolve().as_uri()
