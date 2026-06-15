@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import polars as pl
-from jsonjsdb.writer import write_table_json_pair
+from jsonjsdb.writer import export_hash_session, write_table_json_pair
 
 from .utils.log import _write_log
 from .utils.params import validate_params
@@ -220,6 +220,7 @@ def _sync_markdown_doc_exports(catalog: Catalog, output_dir: str | Path) -> None
     """Write md-doc JSON files for local markdown docs."""
     db_dir = Path(output_dir)
     md_doc_dir = db_dir / "md-doc"
+    markdown_docs = []
 
     for doc in catalog.doc.all():
         if not _is_local_markdown_doc(doc):
@@ -227,18 +228,26 @@ def _sync_markdown_doc_exports(catalog: Catalog, output_dir: str | Path) -> None
         source_path = _resolve_doc_source_path(db_dir, str(doc.path))
         if not source_path.exists():
             continue
-        content = _rewrite_markdown_links(
-            source_path.read_text(encoding="utf-8"), source_path
-        )
-        md_doc_dir.mkdir(parents=True, exist_ok=True)
-        rows = pl.DataFrame({"content": [content]})
-        write_table_json_pair(
-            rows,
-            doc.id,
-            md_doc_dir,
-            export_root=db_dir,
-            json_path=md_doc_dir / f"{doc.id}.json",
-        )
+        markdown_docs.append((doc, source_path))
+
+    if not markdown_docs:
+        return
+
+    md_doc_dir.mkdir(parents=True, exist_ok=True)
+    with export_hash_session(db_dir) as hash_session:
+        for doc, source_path in markdown_docs:
+            content = _rewrite_markdown_links(
+                source_path.read_text(encoding="utf-8"), source_path
+            )
+            rows = pl.DataFrame({"content": [content]})
+            write_table_json_pair(
+                rows,
+                doc.id,
+                md_doc_dir,
+                export_root=db_dir,
+                json_path=md_doc_dir / f"{doc.id}.json",
+                hash_session=hash_session,
+            )
 
 
 def _normalize_copy_assets(copy_assets: Any) -> list[dict[str, Any]]:
