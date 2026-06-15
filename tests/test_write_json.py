@@ -11,9 +11,11 @@ import pyarrow as pa
 import pytest
 
 from datannurpy import Catalog, EntityMetadata, Folder
+from datannurpy import preview as preview_mod
 from datannurpy.errors import ConfigError
 from datannurpy.preview import (
     _dataset_id_from_preview_file,
+    _existing_preview_ids,
     _json_safe_object,
     _preview_files_exist,
     _preview_label,
@@ -426,14 +428,77 @@ class TestCatalogWrite:
         assert not _preview_files_exist(preview_dir, "keep")
         (preview_dir / "keep.json.js").write_text("jsonjs.data['keep'] = []")
         assert _preview_files_exist(preview_dir, "keep")
+        (preview_dir / "ignored").mkdir()
+        (preview_dir / "ignored.txt").write_text("ignore me")
+        (preview_dir / "partial.json").write_text("[]")
+        assert _existing_preview_ids(preview_dir) == {"keep"}
         assert not nested.exists()
         assert not (preview_dir / "stale.txt").exists()
         assert _dataset_id_from_preview_file(Path("stale.txt")) is None
+
+    def test_sync_preview_exports_scans_existing_preview_dir_once(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        """Preview sync does not probe preview files for each dataset."""
+
+        def fail_preview_probe(preview_dir: Path, dataset_id: str) -> bool:
+            raise AssertionError("preview files should not be probed")
+
+        preview_dir = tmp_path / "preview"
+        preview_dir.mkdir()
+        (preview_dir / "kept.json").write_text("[]")
+        (preview_dir / "kept.json.js").write_text("jsonjs.data['kept'] = []")
+
+        catalog = Catalog()
+        catalog.dataset.add(Dataset(id="kept", preview_rows=0))
+        catalog.dataset.add(Dataset(id="disabled", preview_rows=0))
+        catalog.dataset.add(Dataset(id="eligible", preview_rows=1))
+        monkeypatch.setattr(preview_mod, "_preview_files_exist", fail_preview_probe)
+
+        preview_ids = sync_preview_exports(catalog, tmp_path)
+
+        assert preview_ids == {"kept"}
+        assert (preview_dir / "kept.json").exists()
+        assert (preview_dir / "kept.json.js").exists()
 
     def test_sync_preview_exports_skips_missing_preview_files(self, tmp_path: Path):
         """Preview sync skips eligible datasets when no preview data or files exist."""
         catalog = Catalog()
         catalog.dataset.add(Dataset(id="missing", preview_rows=1))
+
+        preview_ids = sync_preview_exports(catalog, tmp_path)
+
+        assert preview_ids == set()
+        assert not (tmp_path / "preview").exists()
+
+    def test_sync_preview_exports_avoids_file_probes_without_preview_dir(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        """Preview sync avoids file probes when the preview directory is absent."""
+
+        def fail_preview_probe(preview_dir: Path, dataset_id: str) -> bool:
+            raise AssertionError("preview files should not be probed")
+
+        catalog = Catalog()
+        catalog.dataset.add(Dataset(id="eligible", preview_rows=1))
+        monkeypatch.setattr(preview_mod, "_preview_files_exist", fail_preview_probe)
+
+        preview_ids = sync_preview_exports(catalog, tmp_path)
+
+        assert preview_ids == set()
+        assert not (tmp_path / "preview").exists()
+
+    def test_sync_preview_exports_short_circuits_when_disabled(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        """Preview sync avoids per-dataset probes when previews are disabled."""
+
+        def fail_preview_probe(preview_dir: Path, dataset_id: str) -> bool:
+            raise AssertionError("preview files should not be probed")
+
+        catalog = Catalog()
+        catalog.dataset.add(Dataset(id="disabled", preview_rows=0))
+        monkeypatch.setattr(preview_mod, "_preview_files_exist", fail_preview_probe)
 
         preview_ids = sync_preview_exports(catalog, tmp_path)
 

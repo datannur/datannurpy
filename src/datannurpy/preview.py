@@ -157,22 +157,32 @@ def sync_preview_exports(catalog: Catalog, output_dir: str | Path) -> set[str]:
     output_path = Path(output_dir)
     preview_dir = output_path / "preview"
     datasets = list(catalog.dataset.all())
+    preview_dir_exists = preview_dir.exists()
+    if not preview_dir_exists and not any(
+        (dataset.preview_rows or 0) > 0 for dataset in datasets
+    ):
+        return set()
+
+    existing_preview_ids = (
+        _existing_preview_ids(preview_dir) if preview_dir_exists else set()
+    )
     datasets_by_id = {dataset.id: dataset for dataset in datasets}
     eligible_ids = {
         dataset.id
         for dataset in datasets
-        if (dataset.preview_rows or 0) > 0
-        or _preview_files_exist(preview_dir, dataset.id)
+        if (dataset.preview_rows or 0) > 0 or dataset.id in existing_preview_ids
     }
 
-    if preview_dir.exists():
+    if preview_dir_exists:
         _remove_stale_preview_files(preview_dir, eligible_ids)
 
     preview_ids: set[str] = set()
     for dataset_id in sorted(eligible_ids):
         preview = catalog._dataset_previews.get(dataset_id)
         if preview is not None:
-            preview_dir.mkdir(parents=True, exist_ok=True)
+            if not preview_dir_exists:
+                preview_dir.mkdir(parents=True, exist_ok=True)
+                preview_dir_exists = True
             dataset = datasets_by_id[dataset_id]
             try:
                 write_table_json(preview, preview_dir / f"{dataset_id}.json")
@@ -185,10 +195,10 @@ def sync_preview_exports(catalog: Catalog, output_dir: str | Path) -> set[str]:
                 log_warn(f"{label}: preview export skipped ({exc})", catalog.quiet)
                 (preview_dir / f"{dataset_id}.json").unlink(missing_ok=True)
                 (preview_dir / f"{dataset_id}.json.js").unlink(missing_ok=True)
-        elif _preview_files_exist(preview_dir, dataset_id):
+        elif dataset_id in existing_preview_ids:
             preview_ids.add(dataset_id)
 
-    if preview_dir.exists() and not any(preview_dir.iterdir()):
+    if preview_dir_exists and not any(preview_dir.iterdir()):
         preview_dir.rmdir()
     return preview_ids
 
@@ -207,6 +217,21 @@ def _preview_files_exist(preview_dir: Path, dataset_id: str) -> bool:
     json_exists = (preview_dir / f"{dataset_id}.json").exists()
     jsonjs_exists = (preview_dir / f"{dataset_id}.json.js").exists()
     return json_exists and jsonjs_exists
+
+
+def _existing_preview_ids(preview_dir: Path) -> set[str]:
+    """Return dataset ids that have both preview export formats."""
+    json_ids: set[str] = set()
+    jsonjs_ids: set[str] = set()
+    for path in preview_dir.iterdir():
+        if path.is_dir():
+            continue
+        name = path.name
+        if name.endswith(".json.js"):
+            jsonjs_ids.add(name[: -len(".json.js")])
+        elif name.endswith(".json"):
+            json_ids.add(name[: -len(".json")])
+    return json_ids & jsonjs_ids
 
 
 def _preview_label(catalog: Catalog, dataset: Dataset) -> str:
