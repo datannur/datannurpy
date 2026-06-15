@@ -1,6 +1,6 @@
 # datannurpy
 
-## 0.27.0 (2026-06-15)
+## 0.26.4 (2026-06-15)
 
 - fix: resolve relative links in exported Markdown document content from the original source document directory
 - perf: avoid per-dataset preview file probes when preview exports are disabled or can be discovered from the preview directory
