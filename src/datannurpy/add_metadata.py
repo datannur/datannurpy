@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import math
 import re
+import stat
 import sys
 import time
 from collections.abc import Hashable
@@ -112,7 +113,7 @@ FREQ_HIDDEN_TAG = "policy---frequency-hidden"
 LOCALIZED_CLEAR_SENTINEL = "__DATANNURPY_LOCALIZED_CLEAR__"
 
 # Supported file extensions for metadata
-SUPPORTED_EXTENSIONS = {".csv", ".xlsx", ".xls", ".json", ".sas7bdat"}
+SUPPORTED_EXTENSIONS = (".csv", ".xlsx", ".xls", ".json", ".sas7bdat")
 
 # Entities allowed per depth level
 _DATASET_ENTITIES = {
@@ -298,16 +299,21 @@ def _load_tables_from_folder(
 ) -> dict[str, tuple[pd.DataFrame, str]]:
     """Load entity files from a folder. Returns dict of (DataFrame, filename)."""
     tables: dict[str, tuple[pd.DataFrame, str]] = {}
+    files_by_name = {
+        path.name: path for path in folder_path.iterdir() if path.is_file()
+    }
 
     for entity_name in allowed_entities:
         for ext in SUPPORTED_EXTENSIONS:
-            file_path = folder_path / f"{entity_name}{ext}"
-            if file_path.exists():
-                file_label = _metadata_file_label(file_path, folder_path)
-                df = _read_file(file_path, quiet=quiet, path_label=file_label)
-                if df is not None and not df.empty:
-                    tables[entity_name] = (df, file_path.name)
-                break
+            file_name = f"{entity_name}{ext}"
+            file_path = files_by_name.get(file_name)
+            if file_path is None:
+                continue
+            file_label = _metadata_file_label(file_path, folder_path)
+            df = _read_file(file_path, quiet=quiet, path_label=file_label)
+            if df is not None and not df.empty:
+                tables[entity_name] = (df, file_name)
+            break
 
     # Resolve the scan↔metadata match key. An explicit dataset._match_path is
     # strict and overrides data_path for the whole table; data_path stays as-is
@@ -968,9 +974,11 @@ def _load_tables(
     if _is_database_connection(path_str):
         return _load_tables_from_database(path_str, allowed_entities, quiet=quiet)
     folder_path = Path(path)
-    if not folder_path.exists():
+    try:
+        folder_stat = folder_path.stat()
+    except FileNotFoundError:
         raise ConfigError(f"Metadata folder not found: {folder_path}")
-    if not folder_path.is_dir():
+    if not stat.S_ISDIR(folder_stat.st_mode):
         raise ConfigError(f"Metadata source is not a directory: {folder_path}")
     return _load_tables_from_folder(folder_path, allowed_entities, quiet=quiet)
 

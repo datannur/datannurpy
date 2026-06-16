@@ -628,6 +628,26 @@ class TestLoadTablesFromFolder:
         tables = _load_tables_from_folder(tmp_path, ALL_ENTITIES)
         assert "other" not in tables
 
+    def test_indexes_metadata_folder_once(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        """Metadata folder loading should avoid per-entity existence probes."""
+        (tmp_path / "dataset.csv").write_text("id,name\nds,Dataset\n")
+        calls = 0
+        original_iterdir = Path.iterdir
+
+        def count_iterdir(path: Path):
+            nonlocal calls
+            calls += 1
+            yield from original_iterdir(path)
+
+        monkeypatch.setattr(Path, "iterdir", count_iterdir)
+
+        tables = _load_tables_from_folder(tmp_path, ALL_ENTITIES)
+
+        assert "dataset" in tables
+        assert calls == 1
+
     def test_loads_first_matching_extension(self, tmp_path: Path):
         """Should load only one file per entity (first extension found)."""
         (tmp_path / "variable.csv").write_text("id,name,dataset_id\ncsv,CSV,ds\n")
@@ -636,10 +656,8 @@ class TestLoadTablesFromFolder:
         )
 
         tables = _load_tables_from_folder(tmp_path, ALL_ENTITIES)
-        # Should only load one file, not both
         assert "variable" in tables
-        # The filename should be one of the two (order depends on set iteration)
-        assert tables["variable"][1] in ("variable.csv", "variable.json")
+        assert tables["variable"][1] == "variable.csv"
 
     def test_empty_folder(self, tmp_path: Path):
         """Should return empty dict for empty folder."""

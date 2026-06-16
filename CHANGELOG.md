@@ -3,7 +3,7 @@
 ## 0.26.5 (2026-06-16)
 
 - fix: resolve relative links in exported Markdown document content from the original source document directory using browser-compatible local paths
-- perf: reduce redundant filesystem metadata calls during exports, preview synchronization, copy assets cleanup, and local path validation
+- perf: reduce redundant filesystem metadata calls during exports, preview synchronization, copy assets cleanup, metadata loading, and local path validation
 
 ## 0.26.4 (2026-06-15)
 
