@@ -94,8 +94,12 @@ class Catalog(DatannurDB):
 
         # Load existing db if present (skip when refresh=True: full rescan)
         load_path: str | None = None
-        if not refresh and self.db_path and self.db_path.exists():
-            if (self.db_path / "__table__.json").exists():
+        if not refresh and self.db_path:
+            try:
+                (self.db_path / "__table__.json").stat()
+            except FileNotFoundError:
+                pass
+            else:
                 load_path = str(self.db_path)
 
         try:

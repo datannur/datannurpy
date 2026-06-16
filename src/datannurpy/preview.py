@@ -157,15 +157,17 @@ def sync_preview_exports(catalog: Catalog, output_dir: str | Path) -> set[str]:
     output_path = Path(output_dir)
     preview_dir = output_path / "preview"
     datasets = list(catalog.dataset.all())
-    preview_dir_exists = preview_dir.exists()
+    try:
+        preview_paths = list(preview_dir.iterdir())
+        preview_dir_exists = True
+    except FileNotFoundError:
+        preview_paths = []
+        preview_dir_exists = False
+    existing_preview_ids = _existing_preview_ids_from_paths(preview_paths)
     if not preview_dir_exists and not any(
         (dataset.preview_rows or 0) > 0 for dataset in datasets
     ):
         return set()
-
-    existing_preview_ids = (
-        _existing_preview_ids(preview_dir) if preview_dir_exists else set()
-    )
     datasets_by_id = {dataset.id: dataset for dataset in datasets}
     eligible_ids = {
         dataset.id
@@ -173,8 +175,11 @@ def sync_preview_exports(catalog: Catalog, output_dir: str | Path) -> set[str]:
         if (dataset.preview_rows or 0) > 0 or dataset.id in existing_preview_ids
     }
 
-    if preview_dir_exists:
-        _remove_stale_preview_files(preview_dir, eligible_ids)
+    remaining_existing_ids = (
+        _remove_stale_preview_files(preview_paths, eligible_ids)
+        if preview_dir_exists
+        else set()
+    )
 
     preview_ids: set[str] = set()
     for dataset_id in sorted(eligible_ids):
@@ -195,10 +200,10 @@ def sync_preview_exports(catalog: Catalog, output_dir: str | Path) -> set[str]:
                 log_warn(f"{label}: preview export skipped ({exc})", catalog.quiet)
                 (preview_dir / f"{dataset_id}.json").unlink(missing_ok=True)
                 (preview_dir / f"{dataset_id}.json.js").unlink(missing_ok=True)
-        elif dataset_id in existing_preview_ids:
+        elif dataset_id in remaining_existing_ids:
             preview_ids.add(dataset_id)
 
-    if preview_dir_exists and not any(preview_dir.iterdir()):
+    if preview_dir_exists and not preview_ids:
         preview_dir.rmdir()
     return preview_ids
 
@@ -214,16 +219,28 @@ def apply_preview_flags(catalog: Catalog, preview_ids: set[str]) -> None:
 
 def _preview_files_exist(preview_dir: Path, dataset_id: str) -> bool:
     """Return True when both preview export formats exist for a dataset."""
-    json_exists = (preview_dir / f"{dataset_id}.json").exists()
-    jsonjs_exists = (preview_dir / f"{dataset_id}.json.js").exists()
-    return json_exists and jsonjs_exists
+    try:
+        (preview_dir / f"{dataset_id}.json").stat()
+        (preview_dir / f"{dataset_id}.json.js").stat()
+    except FileNotFoundError:
+        return False
+    return True
 
 
 def _existing_preview_ids(preview_dir: Path) -> set[str]:
     """Return dataset ids that have both preview export formats."""
+    try:
+        paths = list(preview_dir.iterdir())
+    except FileNotFoundError:
+        return set()
+    return _existing_preview_ids_from_paths(paths)
+
+
+def _existing_preview_ids_from_paths(paths: list[Path]) -> set[str]:
+    """Return dataset ids that have both preview export formats from paths."""
     json_ids: set[str] = set()
     jsonjs_ids: set[str] = set()
-    for path in preview_dir.iterdir():
+    for path in paths:
         if path.is_dir():
             continue
         name = path.name
@@ -244,15 +261,22 @@ def _preview_label(catalog: Catalog, dataset: Dataset) -> str:
     )
 
 
-def _remove_stale_preview_files(preview_dir: Path, eligible_ids: set[str]) -> None:
-    """Remove preview files whose dataset is no longer eligible."""
-    for path in preview_dir.iterdir():
+def _remove_stale_preview_files(paths: list[Path], eligible_ids: set[str]) -> set[str]:
+    """Remove stale preview files and return dataset ids still present."""
+    remaining_json_ids: set[str] = set()
+    remaining_jsonjs_ids: set[str] = set()
+    for path in paths:
         if path.is_dir():
             shutil.rmtree(path)
             continue
         dataset_id = _dataset_id_from_preview_file(path)
         if dataset_id is None or dataset_id not in eligible_ids:
             path.unlink(missing_ok=True)
+        elif path.name.endswith(".json.js"):
+            remaining_jsonjs_ids.add(dataset_id)
+        else:
+            remaining_json_ids.add(dataset_id)
+    return remaining_json_ids & remaining_jsonjs_ids
 
 
 def _dataset_id_from_preview_file(path: Path) -> str | None:

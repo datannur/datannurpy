@@ -87,6 +87,19 @@ DEFAULT_EXCLUDE_DIRS = {
     ".ipynb_checkpoints",
 }
 DEFAULT_EXCLUDE_PREFIXES = ("~$", ".~lock.")  # Office/LibreOffice temp/lock files
+_FS_DIR_TYPES = {"directory", "dir"}
+
+
+def fs_info_is_dir(fs: FileSystem, path: str) -> bool:
+    """Return whether fsspec info identifies a directory."""
+    info = fs.info(path)
+    if isinstance(info, dict):
+        path_type = info.get("type")
+        if path_type is not None:
+            return str(path_type).lower() in _FS_DIR_TYPES
+    if not fs.exists(path):
+        raise FileNotFoundError(path)
+    return fs.isdir(path)
 
 
 # ---------------------------------------------------------------------------

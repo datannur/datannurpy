@@ -422,7 +422,7 @@ class TestCatalogWrite:
         (preview_dir / "keep.json").write_text("[]")
         (preview_dir / "stale.txt").write_text("remove me")
 
-        _remove_stale_preview_files(preview_dir, {"keep"})
+        _remove_stale_preview_files(list(preview_dir.iterdir()), {"keep"})
 
         assert (preview_dir / "keep.json").exists()
         assert not _preview_files_exist(preview_dir, "keep")
@@ -433,6 +433,8 @@ class TestCatalogWrite:
         (preview_dir / "partial.json").write_text("[]")
         assert _existing_preview_ids(preview_dir) == {"keep"}
         assert not nested.exists()
+
+        assert _existing_preview_ids(tmp_path / "missing-preview") == set()
         assert not (preview_dir / "stale.txt").exists()
         assert _dataset_id_from_preview_file(Path("stale.txt")) is None
 
@@ -651,10 +653,10 @@ class TestCatalogWrite:
         catalog.export_db(tmp_path / "output")
 
         md_doc_json = tmp_path / "output" / "md-doc" / "readme.json"
-        image_path = (source_dir / "images" / "schema.png").resolve()
-        details_path = (source_dir / "details.md").resolve()
-        parent_path = (source_dir / ".." / "shared.md").resolve()
-        wrapped_path = (source_dir / "assets" / "schema.svg").resolve()
+        image_path = (source_dir / "images" / "schema.png").absolute().as_posix()
+        details_path = (source_dir / "details.md").absolute().as_posix()
+        parent_path = (source_dir / ".." / "shared.md").absolute().as_posix()
+        wrapped_path = (source_dir / "assets" / "schema.svg").absolute().as_posix()
         assert json.loads(md_doc_json.read_text()) == [
             {
                 "content": f"![Image]({image_path})\n"

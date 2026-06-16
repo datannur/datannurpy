@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 import pytest
 
@@ -15,14 +15,68 @@ from datannurpy.exporter import (
     _clean_copy_target,
     _format_percent,
     _format_size,
+    _iter_copy_files,
     _normalize_copy_assets,
     _print_export_size_report,
+    _rewrite_markdown_links,
     _resolve_copy_base_dir,
     _resolve_copy_source,
     _resolve_copy_target,
     _should_copy_asset,
+    _table_name_from_jsonjs,
+    _walk_copy_files,
     copy_assets,
 )
+
+
+class TestMarkdownLinkHelpers:
+    """Test Markdown link export helpers."""
+
+    def test_rewrite_serializes_windows_drive_paths(self):
+        """Windows drive paths are exported as browser-compatible root paths."""
+        content = (
+            "![Image](images/schema.png)\n"
+            "[Details](details.md)\n"
+            "[Query](details.md?tab=1#section)\n"
+            "[Wrapped](<assets/schema.svg>)\n"
+            "[External](https://example.org)\n"
+            "[Root](/already/rooted.png)\n"
+            "[Anchor](#section)\n"
+            "[Mail](mailto:test@example.org)"
+        )
+
+        rewritten = _rewrite_markdown_links(
+            content, PureWindowsPath("C:/source/docs/example/README.md")
+        )
+
+        assert rewritten == (
+            "![Image](/C:/source/docs/example/images/schema.png)\n"
+            "[Details](/C:/source/docs/example/details.md)\n"
+            "[Query](/C:/source/docs/example/details.md?tab=1#section)\n"
+            "[Wrapped](</C:/source/docs/example/assets/schema.svg>)\n"
+            "[External](https://example.org)\n"
+            "[Root](/already/rooted.png)\n"
+            "[Anchor](#section)\n"
+            "[Mail](mailto:test@example.org)"
+        )
+
+    def test_rewrite_keeps_unc_paths_unc_style(self):
+        """UNC source paths are not converted to drive-rooted paths."""
+        rewritten = _rewrite_markdown_links(
+            "![Image](images/schema.png)",
+            PureWindowsPath("//SERVER/Share/docs/example/README.md"),
+        )
+
+        assert rewritten == "![Image](//SERVER/Share/docs/example/images/schema.png)"
+
+    def test_rewrite_absolutizes_relative_source_paths(self):
+        """Relative source paths are made absolute without resolving symlinks."""
+        rewritten = _rewrite_markdown_links(
+            "![Image](images/schema.png)", Path("docs/example/README.md")
+        )
+
+        expected = (Path("docs/example/images/schema.png").absolute()).as_posix()
+        assert rewritten == f"![Image]({expected})"
 
 
 class TestExportSizeReportHelpers:
@@ -44,6 +98,40 @@ class TestExportSizeReportHelpers:
         _print_export_size_report(tmp_path, quiet=False)
 
         assert capsys.readouterr().err == ""
+
+    def test_missing_export_directory_has_no_report(self, tmp_path: Path):
+        """Missing export directories do not produce a report."""
+        assert _build_export_size_report(tmp_path / "missing") == ""
+
+    def test_export_size_report_ignores_non_json_files(self, tmp_path: Path):
+        """Only JSON and JSON-JS files are included in size reports."""
+        (tmp_path / "notes.txt").write_text("ignore")
+
+        assert _build_export_size_report(tmp_path) == ""
+
+    def test_export_size_report_skips_disappearing_entries(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        """File races during export size reporting are skipped."""
+
+        class DisappearingEntry:
+            name = "dataset.json"
+
+            def is_file(self) -> bool:
+                return True
+
+            def stat(self) -> os.stat_result:
+                raise FileNotFoundError
+
+        monkeypatch.setattr(
+            exporter_mod.os, "scandir", lambda path: [DisappearingEntry()]
+        )
+
+        assert _build_export_size_report(tmp_path) == ""
+
+    def test_table_name_from_jsonjs_strips_full_suffix(self):
+        """JSON-JS table names strip the generated wrapper suffix."""
+        assert _table_name_from_jsonjs(Path("dataset.json.js")) == "dataset"
 
     def test_print_export_size_report_outputs_non_empty_report(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
@@ -159,10 +247,48 @@ class TestCopyAssetsHelpers:
         destination.write_text("same")
         os.utime(destination, (source.stat().st_atime, source.stat().st_mtime + 10))
 
-        assert not _should_copy_asset(source, destination)
+        assert not _should_copy_asset(source.stat(), destination.stat())
 
         source.write_text("newer")
-        assert _should_copy_asset(source, destination)
+        assert _should_copy_asset(source.stat(), destination.stat())
+
+    def test_should_copy_asset_replaces_non_file_destinations(self, tmp_path: Path):
+        """Incremental copy decisions replace destination directories."""
+        source = tmp_path / "source.txt"
+        source.write_text("same")
+        destination = tmp_path / "dest"
+        destination.mkdir()
+
+        assert _should_copy_asset(source.stat(), destination.stat())
+
+    def test_walk_copy_files_skips_disappearing_files(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        """File races during copy source walking are skipped."""
+        monkeypatch.setattr(
+            exporter_mod.os,
+            "walk",
+            lambda source: [(str(source), [], ["missing.txt"])],
+        )
+
+        assert list(_walk_copy_files(tmp_path)) == []
+
+    def test_walk_copy_files_skips_non_regular_entries(self, tmp_path: Path):
+        """Non-regular entries inside copy source directories are skipped."""
+        fifo = tmp_path / "pipe"
+        os.mkfifo(fifo)
+
+        assert list(_walk_copy_files(tmp_path)) == []
+
+    def test_iter_copy_files_ignores_non_regular_sources(self, tmp_path: Path):
+        """Non-regular copy sources produce no copy work."""
+        fifo = tmp_path / "pipe"
+        os.mkfifo(fifo)
+
+        files, source_is_dir = _iter_copy_files(fifo, None)
+
+        assert files == []
+        assert source_is_dir is False
 
     def test_clean_copy_target_removes_stale_files(self, tmp_path: Path):
         """Stale files are removed and empty directories cleaned up."""
