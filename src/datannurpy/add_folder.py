@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import stat
 from collections.abc import Sequence
 from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Any, Literal
@@ -43,6 +44,7 @@ from .scanner.timeseries import (
     period_sort_key,
 )
 from .scanner.utils import (
+    fs_info_is_dir,
     get_data_size,
     get_dir_data_size,
 )
@@ -211,9 +213,11 @@ def add_folder(
 
     if is_remote or storage_options:
         fs = FileSystem(path, storage_options)
-        if not fs.exists(fs.root):
+        try:
+            is_dir = fs_info_is_dir(fs, fs.root)
+        except FileNotFoundError:
             raise ConfigError(f"Folder not found: {path}")
-        if not fs.isdir(fs.root):
+        if not is_dir:
             raise ConfigError(f"Not a directory: {path}")
         # Use PurePosixPath to preserve forward slashes on Windows
         root = PurePosixPath(fs.root)
@@ -221,9 +225,11 @@ def add_folder(
     else:
         root = Path(path).resolve()
         root_name = root.name
-        if not root.exists():
+        try:
+            root_stat = root.stat()
+        except FileNotFoundError:
             raise ConfigError(f"Folder not found: {root}")
-        if not root.is_dir():
+        if not stat.S_ISDIR(root_stat.st_mode):
             raise ConfigError(f"Not a directory: {root}")
 
     # Reject if path is a dataset (Delta/Hive/Iceberg) - use add_dataset instead

@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import fnmatch
+import os
 import re
 import shutil
+import stat
 import sys
 import time
 import webbrowser
 import zlib
+from collections.abc import Iterator
 from pathlib import Path, PurePath, PureWindowsPath
 from typing import TYPE_CHECKING, Any
 
@@ -92,20 +95,43 @@ def _table_name_from_jsonjs(path: Path) -> str:
 
 def _build_export_size_report(path: Path) -> str:
     """Build a size report for exported json/json.js files."""
-    names = {p.stem for p in path.glob("*.json") if p.is_file()}
-    names.update(
-        _table_name_from_jsonjs(p) for p in path.glob("*.json.js") if p.is_file()
-    )
+    names: set[str] = set()
+    file_sizes: dict[str, int] = {}
+    try:
+        entries = list(os.scandir(path))
+    except FileNotFoundError:
+        return ""
+
+    for entry in entries:
+        try:
+            if not entry.is_file():
+                continue
+            file_stat = entry.stat()
+        except FileNotFoundError:
+            continue
+
+        filename = entry.name
+        if filename.endswith(".json.js"):
+            names.add(filename[: -len(".json.js")])
+        elif filename.endswith(".json"):
+            names.add(filename[: -len(".json")])
+        else:
+            continue
+        file_sizes[filename] = file_stat.st_size
+
     if not names:
         return ""
 
     rows: list[tuple[str, int, int, int]] = []
     for name in sorted(names):
         json_path = path / f"{name}.json"
-        jsonjs_path = path / f"{name}.json.js"
-        json_size = json_path.stat().st_size if json_path.exists() else 0
-        jsonjs_size = jsonjs_path.stat().st_size if jsonjs_path.exists() else 0
-        gzip_size = _gzip_estimated_size(json_path) if json_path.exists() else 0
+        json_filename = f"{name}.json"
+        jsonjs_filename = f"{name}.json.js"
+        json_size = file_sizes.get(json_filename, 0)
+        jsonjs_size = file_sizes.get(jsonjs_filename, 0)
+        gzip_size = (
+            _gzip_estimated_size(json_path) if json_filename in file_sizes else 0
+        )
         rows.append((name, json_size, jsonjs_size, gzip_size))
 
     rows.sort(key=lambda row: row[1] + row[2], reverse=True)
@@ -146,20 +172,23 @@ def _print_export_size_report(path: Path, *, quiet: bool) -> None:
 
 def _clean_stale_db_files(catalog: Catalog, path: Path) -> None:
     """Remove generated JSON database files that are no longer part of the export."""
-    if not path.exists():
+    try:
+        entries = list(os.scandir(path))
+    except FileNotFoundError:
         return
     table_names = set(catalog._tables)
     expected_names = table_names | {"__table__", "config", "evolution"}
-    for file_path in path.iterdir():
-        if not file_path.is_file():
+    for entry in entries:
+        if not entry.is_file():
             continue
         name = None
-        if file_path.suffix == ".json":
-            name = file_path.stem
-        elif file_path.name.endswith(".json.js"):
-            name = _table_name_from_jsonjs(file_path)
+        filename = entry.name
+        if filename.endswith(".json.js"):
+            name = filename[: -len(".json.js")]
+        elif filename.endswith(".json"):
+            name = filename[: -len(".json")]
         if name is not None and name not in expected_names:
-            file_path.unlink()
+            Path(entry.path).unlink()
 
 
 def _is_local_markdown_doc(doc: Any) -> bool:
@@ -243,19 +272,19 @@ def _sync_markdown_doc_exports(catalog: Catalog, output_dir: str | Path) -> None
         if not _is_local_markdown_doc(doc):
             continue
         source_path = _resolve_doc_source_path(db_dir, str(doc.path))
-        if not source_path.exists():
+        try:
+            content = source_path.read_text(encoding="utf-8")
+        except FileNotFoundError:
             continue
-        markdown_docs.append((doc, source_path))
+        markdown_docs.append((doc, source_path, content))
 
     if not markdown_docs:
         return
 
     md_doc_dir.mkdir(parents=True, exist_ok=True)
     with export_hash_session(db_dir) as hash_session:
-        for doc, source_path in markdown_docs:
-            content = _rewrite_markdown_links(
-                source_path.read_text(encoding="utf-8"), source_path
-            )
+        for doc, source_path, content in markdown_docs:
+            content = _rewrite_markdown_links(content, source_path)
             rows = pl.DataFrame({"content": [content]})
             write_table_json_pair(
                 rows,
@@ -325,7 +354,9 @@ def _resolve_copy_source(source: str, base_dir: Path) -> Path:
         source_path = (base_dir / source_path).resolve()
     else:
         source_path = source_path.resolve()
-    if not source_path.exists():
+    try:
+        source_path.stat()
+    except FileNotFoundError:
         raise ConfigError(f"copy_assets source not found: {source_path}")
     return source_path
 
@@ -354,28 +385,51 @@ def _matches_copy_include(path: Path, include: list[str] | None) -> bool:
     )
 
 
+def _walk_copy_files(source: Path) -> Iterator[tuple[Path, Path, os.stat_result]]:
+    """Yield source files, destination-relative paths and source stats."""
+    for dirpath, dirnames, filenames in os.walk(source):
+        dirnames.sort()
+        for filename in sorted(filenames):
+            file_path = Path(dirpath) / filename
+            try:
+                file_stat = file_path.stat()
+            except FileNotFoundError:
+                continue
+            if stat.S_ISREG(file_stat.st_mode):
+                yield file_path, file_path.relative_to(source), file_stat
+
+
 def _iter_copy_files(
     source: Path, include: list[str] | None
-) -> list[tuple[Path, Path]]:
+) -> tuple[list[tuple[Path, Path, os.stat_result]], bool]:
     """Return source files and destination-relative paths."""
-    if source.is_file():
+    source_stat = source.stat()
+    if stat.S_ISREG(source_stat.st_mode):
         rel_path = Path(source.name)
-        return [(source, rel_path)] if _matches_copy_include(rel_path, include) else []
+        files = (
+            [(source, rel_path, source_stat)]
+            if _matches_copy_include(rel_path, include)
+            else []
+        )
+        return files, False
+    if not stat.S_ISDIR(source_stat.st_mode):
+        return [], False
 
     return [
-        (file_path, file_path.relative_to(source))
-        for file_path in sorted(source.rglob("*"))
-        if file_path.is_file()
-        and _matches_copy_include(file_path.relative_to(source), include)
-    ]
+        (file_path, rel_path, file_stat)
+        for file_path, rel_path, file_stat in _walk_copy_files(source)
+        if _matches_copy_include(rel_path, include)
+    ], True
 
 
-def _should_copy_asset(source: Path, destination: Path) -> bool:
+def _should_copy_asset(
+    source_stat: os.stat_result, destination_stat: os.stat_result | None
+) -> bool:
     """Return whether a destination file should be replaced."""
-    if not destination.exists() or not destination.is_file():
+    if destination_stat is None:
         return True
-    source_stat = source.stat()
-    destination_stat = destination.stat()
+    if not stat.S_ISREG(destination_stat.st_mode):
+        return True
     return (
         source_stat.st_size != destination_stat.st_size
         or source_stat.st_mtime > destination_stat.st_mtime
@@ -384,18 +438,20 @@ def _should_copy_asset(source: Path, destination: Path) -> bool:
 
 def _clean_copy_target(target_root: Path, expected_files: set[Path]) -> int:
     """Remove stale files from a copy_assets destination."""
-    if not target_root.exists():
-        return 0
-
     removed = 0
-    for path in sorted(
-        target_root.rglob("*"), key=lambda p: len(p.parts), reverse=True
-    ):
-        if path.is_file() and path.resolve() not in expected_files:
-            path.unlink()
-            removed += 1
-        elif path.is_dir() and not any(path.iterdir()):
-            path.rmdir()
+    for dirpath, dirnames, filenames in os.walk(target_root, topdown=False):
+        current_dir = Path(dirpath)
+        for filename in filenames:
+            path = current_dir / filename
+            if path not in expected_files:
+                path.unlink()
+                removed += 1
+        for dirname in dirnames:
+            path = current_dir / dirname
+            try:
+                path.rmdir()
+            except OSError:
+                pass
     return removed
 
 
@@ -407,9 +463,9 @@ def _copy_assets_impl(
     for rule in rules:
         source = _resolve_copy_source(rule["from"], base_dir)
         target_root = _resolve_copy_target(rule["to"], output_dir)
-        files = _iter_copy_files(source, rule["include"])
+        files, source_is_dir = _iter_copy_files(source, rule["include"])
 
-        if source.is_dir():
+        if source_is_dir:
             try:
                 target_root.mkdir(parents=True, exist_ok=True)
             except NotADirectoryError as exc:
@@ -419,18 +475,24 @@ def _copy_assets_impl(
 
         expected_files: set[Path] = set()
         copied = 0
-        for source_file, rel_path in files:
+        for source_file, rel_path, source_stat in files:
             destination = target_root / rel_path
-            expected_files.add(destination.resolve())
-            if destination.exists() and destination.is_dir():
-                shutil.rmtree(destination)
+            expected_files.add(destination)
+            try:
+                destination_stat = destination.stat()
+            except (FileNotFoundError, NotADirectoryError):
+                destination_stat = None
+            else:
+                if stat.S_ISDIR(destination_stat.st_mode):
+                    shutil.rmtree(destination)
+                    destination_stat = None
             try:
                 destination.parent.mkdir(parents=True, exist_ok=True)
             except (FileExistsError, NotADirectoryError) as exc:
                 raise ConfigError(
                     f"copy_assets destination parent is not a directory: {destination.parent}"
                 ) from exc
-            if _should_copy_asset(source_file, destination):
+            if _should_copy_asset(source_stat, destination_stat):
                 shutil.copy2(source_file, destination)
                 copied += 1
 
@@ -539,7 +601,9 @@ def _is_app_initialized(output_dir: Path) -> bool:
 def _copy_app(output_dir: Path) -> None:
     """Copy datannur app to output directory."""
     app_src = _get_app_path()
-    if not app_src.exists():
+    try:
+        app_items = list(os.scandir(app_src))
+    except FileNotFoundError:
         raise ConfigError(
             "datannur app not found. Run `make download-app` to download it, "
             "or install datannurpy with the app bundled."
@@ -549,14 +613,16 @@ def _copy_app(output_dir: Path) -> None:
 
     # Copy app files to output_dir. The data directory is local app state; it is
     # created if needed but never removed or overwritten by app asset refreshes.
-    for item in app_src.iterdir():
+    for item in app_items:
         dest = output_dir / item.name
         if item.is_dir():
             if item.name == "data":
                 dest.mkdir(parents=True, exist_ok=True)
                 continue
-            if dest.exists():
+            try:
                 shutil.rmtree(dest)
+            except FileNotFoundError:
+                pass
             shutil.copytree(item, dest)
         else:
             shutil.copy2(item, dest)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import stat
 from collections.abc import Sequence
 from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Any, cast
@@ -28,6 +29,7 @@ from .schema import Dataset, EntityMetadata
 from .scanner.filesystem import FileSystem, is_remote_url
 from .scanner.utils import (
     SUPPORTED_FORMATS,
+    fs_info_is_dir,
     get_data_size,
     get_dir_data_size,
     get_mtime_iso,
@@ -146,15 +148,20 @@ def add_dataset(
 
     if is_remote or storage_options:
         fs = FileSystem(path, storage_options)
-        if not fs.exists(fs.root):
+        try:
+            is_dir = fs_info_is_dir(fs, fs.root)
+        except FileNotFoundError:
             raise ConfigError(f"Path not found: {path}")
         dataset_path = PurePosixPath(fs.root)
         path_name = fs.root.rstrip("/").rsplit("/", 1)[-1]
     else:
         dataset_path = Path(path).resolve()
         path_name = dataset_path.name
-        if not dataset_path.exists():
+        try:
+            dataset_stat = dataset_path.stat()
+        except FileNotFoundError:
             raise ConfigError(f"Path not found: {dataset_path}")
+        is_dir = stat.S_ISDIR(dataset_stat.st_mode)
 
     start_time = log_section("add_dataset", path_name, q)
 
@@ -167,12 +174,6 @@ def add_dataset(
         resolve_preview_rows(preview_rows, catalog.preview_rows), resolved_depth
     )
 
-    # Check if it's a partitioned Parquet directory
-    if fs:
-        is_dir = fs.isdir(fs.root)
-    else:
-        assert isinstance(dataset_path, Path)
-        is_dir = dataset_path.is_dir()
     if is_dir:
         _add_parquet_directory(
             catalog,
