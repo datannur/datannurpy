@@ -112,12 +112,14 @@ def _build_export_size_report(path: Path) -> str:
 
         filename = entry.name
         if filename.endswith(".json.js"):
-            names.add(filename[: -len(".json.js")])
+            table_name = filename[: -len(".json.js")]
         elif filename.endswith(".json"):
-            names.add(filename[: -len(".json")])
+            table_name = filename[: -len(".json")]
         else:
-            continue
-        file_sizes[filename] = file_stat.st_size
+            table_name = None
+        if table_name is not None:
+            names.add(table_name)
+            file_sizes[filename] = file_stat.st_size
 
     if not names:
         return ""
