@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.26.5 (2026-06-16)
+
+- fix: resolve relative links in exported Markdown document content from the original source document directory using browser-compatible local paths
+
 ## 0.26.4 (2026-06-15)
 
 - fix: resolve relative links in exported Markdown document content from the original source document directory

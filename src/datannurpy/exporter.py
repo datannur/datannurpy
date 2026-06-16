@@ -9,7 +9,7 @@ import sys
 import time
 import webbrowser
 import zlib
-from pathlib import Path
+from pathlib import Path, PurePath, PureWindowsPath
 from typing import TYPE_CHECKING, Any
 
 import polars as pl
@@ -195,7 +195,23 @@ def _split_markdown_link_target(target: str) -> tuple[str, str, str]:
     return wrapper, target[:suffix_index], target[suffix_index:]
 
 
-def _rewrite_markdown_links(content: str, source_path: Path) -> str:
+def _local_markdown_path(path: PurePath) -> str:
+    """Return a browser-compatible local Markdown path."""
+    value = path.as_posix()
+    if isinstance(path, PureWindowsPath) and not value.startswith("//"):
+        return f"/{value}"
+    return value
+
+
+def _local_markdown_target(base_dir: PurePath, target_path: str) -> PurePath:
+    """Build a local Markdown target without canonicalizing mapped drives."""
+    path = base_dir.joinpath(target_path)
+    if path.is_absolute() or not isinstance(path, Path):
+        return path
+    return path.absolute()
+
+
+def _rewrite_markdown_links(content: str, source_path: PurePath) -> str:
     """Rewrite relative Markdown links relative to the source document path."""
     base_dir = source_path.parent
 
@@ -208,7 +224,8 @@ def _rewrite_markdown_links(content: str, source_path: Path) -> str:
         if not target_path:
             return match.group(0)
 
-        rewritten = f"{base_dir.joinpath(target_path).resolve()}{target_suffix}"
+        rewritten_path = _local_markdown_target(base_dir, target_path)
+        rewritten = f"{_local_markdown_path(rewritten_path)}{target_suffix}"
         if wrapper:
             rewritten = f"<{rewritten}>"
         return f"{match.group('prefix')}{rewritten}{match.group('suffix')}"

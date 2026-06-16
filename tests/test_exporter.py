@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 import pytest
 
@@ -17,12 +17,63 @@ from datannurpy.exporter import (
     _format_size,
     _normalize_copy_assets,
     _print_export_size_report,
+    _rewrite_markdown_links,
     _resolve_copy_base_dir,
     _resolve_copy_source,
     _resolve_copy_target,
     _should_copy_asset,
     copy_assets,
 )
+
+
+class TestMarkdownLinkHelpers:
+    """Test Markdown link export helpers."""
+
+    def test_rewrite_serializes_windows_drive_paths(self):
+        """Windows drive paths are exported as browser-compatible root paths."""
+        content = (
+            "![Image](images/schema.png)\n"
+            "[Details](details.md)\n"
+            "[Query](details.md?tab=1#section)\n"
+            "[Wrapped](<assets/schema.svg>)\n"
+            "[External](https://example.org)\n"
+            "[Root](/already/rooted.png)\n"
+            "[Anchor](#section)\n"
+            "[Mail](mailto:test@example.org)"
+        )
+
+        rewritten = _rewrite_markdown_links(
+            content, PureWindowsPath("C:/source/docs/example/README.md")
+        )
+
+        assert rewritten == (
+            "![Image](/C:/source/docs/example/images/schema.png)\n"
+            "[Details](/C:/source/docs/example/details.md)\n"
+            "[Query](/C:/source/docs/example/details.md?tab=1#section)\n"
+            "[Wrapped](</C:/source/docs/example/assets/schema.svg>)\n"
+            "[External](https://example.org)\n"
+            "[Root](/already/rooted.png)\n"
+            "[Anchor](#section)\n"
+            "[Mail](mailto:test@example.org)"
+        )
+
+    def test_rewrite_keeps_unc_paths_unc_style(self):
+        """UNC source paths are not converted to drive-rooted paths."""
+        rewritten = _rewrite_markdown_links(
+            "![Image](images/schema.png)",
+            PureWindowsPath("//SERVER/Share/docs/example/README.md"),
+        )
+
+        assert rewritten == "![Image](//SERVER/Share/docs/example/images/schema.png)"
+
+    def test_rewrite_absolutizes_relative_source_paths(self):
+        """Relative source paths are made absolute without resolving symlinks."""
+        rewritten = _rewrite_markdown_links(
+            "![Image](images/schema.png)", Path("docs/example/README.md")
+        )
+
+        expected = (Path("docs/example/images/schema.png").absolute()).as_posix()
+        assert rewritten == f"![Image]({expected})"
 
 
 class TestExportSizeReportHelpers:

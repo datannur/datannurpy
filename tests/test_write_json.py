@@ -651,10 +651,10 @@ class TestCatalogWrite:
         catalog.export_db(tmp_path / "output")
 
         md_doc_json = tmp_path / "output" / "md-doc" / "readme.json"
-        image_path = (source_dir / "images" / "schema.png").resolve()
-        details_path = (source_dir / "details.md").resolve()
-        parent_path = (source_dir / ".." / "shared.md").resolve()
-        wrapped_path = (source_dir / "assets" / "schema.svg").resolve()
+        image_path = (source_dir / "images" / "schema.png").absolute().as_posix()
+        details_path = (source_dir / "details.md").absolute().as_posix()
+        parent_path = (source_dir / ".." / "shared.md").absolute().as_posix()
+        wrapped_path = (source_dir / "assets" / "schema.svg").absolute().as_posix()
         assert json.loads(md_doc_json.read_text()) == [
             {
                 "content": f"![Image]({image_path})\n"
