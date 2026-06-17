@@ -34,6 +34,8 @@ add:
 - **`stat`** — data profiling without enumeration detection (faster than `value`)
 - **`value`** — full catalog with frequency tables and enumeration assignment (default)
 
+If you need value frequencies but manage enumerations manually through `metadata_path`, use `auto_enumerations: false` with `depth: value`. Frequencies remain available, but automatic enumeration entities and generated variable links are skipped.
+
 ## Auto-tagging
 
 At `depth="value"` (default), string columns are automatically tagged by content type. Tags use a two-level hierarchy under the `auto` parent:

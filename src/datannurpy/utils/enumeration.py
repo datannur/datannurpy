@@ -121,6 +121,8 @@ class EnumerationManager:
         variables: list[Variable],
         freq_table: pa.Table,
         var_id_mapping: dict[str, str],
+        *,
+        auto_enumerations: bool = True,
     ) -> None:
         """Assign enumerations to variables from frequency table and store it."""
         # Determine columns to exclude (policy---frequency-hidden)
@@ -129,68 +131,71 @@ class EnumerationManager:
             col for col, var_id in var_id_mapping.items() if var_id in hidden_ids
         }
 
-        # Parse frequency table to extract values by variable
-        freq_by_var: dict[str, set[str]] = {}
-        for row in freq_table.to_pylist():
-            col_name = row["variable_id"]
-            if col_name in hidden_cols:
-                continue
-            val: str = row["value"]
-            if col_name not in freq_by_var:
-                freq_by_var[col_name] = set()
-            freq_by_var[col_name].add(val)
+        if auto_enumerations:
+            # Parse frequency table to extract values by variable
+            freq_by_var: dict[str, set[str]] = {}
+            for row in freq_table.to_pylist():
+                col_name = row["variable_id"]
+                if col_name in hidden_cols:
+                    continue
+                val: str = row["value"]
+                if col_name not in freq_by_var:
+                    freq_by_var[col_name] = set()
+                freq_by_var[col_name].add(val)
 
-        # Resolve enumerations: batch new ones, collect existing to mark seen
-        new_enumerations: list[Enumeration] = []
-        new_values: list[Value] = []
-        existing_seen_ids: set[str] = set()
+            # Resolve enumerations: batch new ones, collect existing to mark seen
+            new_enumerations: list[Enumeration] = []
+            new_values: list[Value] = []
+            existing_seen_ids: set[str] = set()
 
-        id_to_old_col = {v: k for k, v in var_id_mapping.items()}
-        for var in variables:
-            if var.is_pattern:
-                continue
-            old_col_name = id_to_old_col[var.id]
-            values = freq_by_var.get(old_col_name)
-            if not values:
-                continue
+            id_to_old_col = {v: k for k, v in var_id_mapping.items()}
+            for var in variables:
+                if var.is_pattern:
+                    continue
+                old_col_name = id_to_old_col[var.id]
+                values = freq_by_var.get(old_col_name)
+                if not values:
+                    continue
 
-            signature = frozenset(values)
+                signature = frozenset(values)
 
-            if signature in self._enumeration_index:
-                enumeration_id = self._enumeration_index[signature]
-                existing_seen_ids.add(enumeration_id)
-            else:
-                hash_10 = compute_enumeration_hash(values)
-                enumeration_id = make_id(ENUMERATIONS_FOLDER_ID, f"enum_{hash_10}")
-                new_enumerations.append(
-                    Enumeration(
-                        id=enumeration_id,
-                        folder_id=ENUMERATIONS_FOLDER_ID,
-                        name=build_enumeration_name(values),
-                        _seen=True,
-                    )
-                )
-                for val in sorted(values):
-                    new_values.append(
-                        Value(
-                            id=build_value_id(enumeration_id, val),
-                            enumeration_id=enumeration_id,
-                            value=val,
+                if signature in self._enumeration_index:
+                    enumeration_id = self._enumeration_index[signature]
+                    existing_seen_ids.add(enumeration_id)
+                else:
+                    hash_10 = compute_enumeration_hash(values)
+                    enumeration_id = make_id(ENUMERATIONS_FOLDER_ID, f"enum_{hash_10}")
+                    new_enumerations.append(
+                        Enumeration(
+                            id=enumeration_id,
+                            folder_id=ENUMERATIONS_FOLDER_ID,
+                            name=build_enumeration_name(values),
+                            _seen=True,
                         )
                     )
-                self._enumeration_index[signature] = enumeration_id
+                    for val in sorted(values):
+                        new_values.append(
+                            Value(
+                                id=build_value_id(enumeration_id, val),
+                                enumeration_id=enumeration_id,
+                                value=val,
+                            )
+                        )
+                    self._enumeration_index[signature] = enumeration_id
 
-            var.enumeration_ids = [enumeration_id]
+                var.enumeration_ids = [enumeration_id]
 
-        # Batch apply: one concat each instead of thousands
-        if new_enumerations or existing_seen_ids:
-            self.ensure_enumerations_folder()
-        if existing_seen_ids:
-            self._catalog.enumeration.update_many(list(existing_seen_ids), _seen=True)
-        if new_enumerations:
-            self._catalog.enumeration.add_all(new_enumerations)
-        if new_values:
-            self._catalog.value.add_all(new_values)
+            # Batch apply: one concat each instead of thousands
+            if new_enumerations or existing_seen_ids:
+                self.ensure_enumerations_folder()
+            if existing_seen_ids:
+                self._catalog.enumeration.update_many(
+                    list(existing_seen_ids), _seen=True
+                )
+            if new_enumerations:
+                self._catalog.enumeration.add_all(new_enumerations)
+            if new_values:
+                self._catalog.value.add_all(new_values)
 
         # Store frequency table with updated IDs (excluding hidden vars)
         self.store_freq_table(freq_table, var_id_mapping, hidden_cols)

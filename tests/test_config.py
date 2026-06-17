@@ -145,6 +145,34 @@ add:
         assert (preview_dir / "public---public_csv.json").exists()
         assert not (preview_dir / "private---private_csv.json").exists()
 
+    def test_run_config_auto_enumerations_override(self, tmp_path: Path):
+        """auto_enumerations works globally and per add entry in YAML."""
+        source_a = tmp_path / "source_a"
+        source_b = tmp_path / "source_b"
+        source_a.mkdir()
+        source_b.mkdir()
+        (source_a / "a.csv").write_text("color\nred\nblue\n")
+        (source_b / "b.csv").write_text("status\nopen\nclosed\n")
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+depth: value
+auto_enumerations: false
+quiet: true
+
+add:
+  - folder: {source_a}
+  - folder: {source_b}
+    auto_enumerations: true
+""")
+        catalog = run_config(config_file)
+
+        assert len(catalog.frequency.all()) == 4
+        assert len(catalog.enumeration.all()) == 1
+        variables = {var.name: var for var in catalog.variable.all()}
+        assert variables["color"].enumeration_ids == []
+        assert len(variables["status"].enumeration_ids) == 1
+
     def test_run_config_with_export_app(self, tmp_path: Path):
         """Config with app_path should create app files."""
         data_dir = tmp_path / "data"

@@ -10,6 +10,7 @@ Catalog(
     depth="value",
     refresh=False,
     freq_threshold=100,
+    auto_enumerations=True,
     csv_encoding=None,
     sample_size=100_000,
     preview_rows=100,
@@ -27,9 +28,10 @@ Catalog(
 | metadata_path  | str \| Path \| list[str \| Path] \| None | Metadata source folder, database URI, or list of sources |
 | depth          | "dataset" \| "variable" \| "stat" \| "value" | Default scan depth (default: "value")              |
 | refresh        | bool                              | Force full rescan ignoring cache (default: False)  |
-| freq_threshold | int                               | Max distinct values for frequency/enumeration detection. Strings above this threshold get pattern frequencies instead |
+| freq_threshold | int                               | Max distinct values for frequency and automatic enumeration detection. Strings above this threshold get pattern frequencies instead |
+| auto_enumerations | bool                           | Create automatic enumerations from value frequencies and attach them to variables (default: True) |
 | csv_encoding   | str \| None                       | Default CSV encoding (utf-8, cp1252, etc.)         |
-| sample_size    | int \| None                       | Default sample size for frequency/enumeration detection (default: 100_000) |
+| sample_size    | int \| None                       | Default sample size for frequency and automatic enumeration detection (default: 100_000) |
 | preview_rows   | int \| Literal[False]             | Default max rows exported in dataset previews at `stat`/`value` depth (default: 100; 0 or false disables) |
 | csv_skip_copy      | bool                              | Skip UTF-8 temp copy for local CSV (default: False)|
 | app_config     | dict[str, str] \| None            | Key-value config for the web app                   |
@@ -61,6 +63,7 @@ catalog.add_folder(
     recursive=True,
     csv_encoding=None,
     sample_size=None,
+    auto_enumerations=None,
     preview_rows=None,
     csv_skip_copy=None,
     storage_options=None,
@@ -81,7 +84,8 @@ catalog.add_folder(
 | exclude         | list[str] \| None                         | None     | Glob patterns to exclude                      |
 | recursive       | bool                                      | True     | Scan subdirectories                           |
 | csv_encoding    | str \| None                               | None     | Override CSV encoding                         |
-| sample_size     | int \| None                               | None     | Sample rows for frequency/enumeration detection (overrides catalog) |
+| sample_size     | int \| None                               | None     | Sample rows for frequency and automatic enumeration detection (overrides catalog) |
+| auto_enumerations | bool \| None                            | None     | Create automatic enumerations from value frequencies for this folder (overrides catalog) |
 | preview_rows    | int \| Literal[False] \| None              | None     | Max preview rows for datasets found in this folder (overrides catalog; 0 or false disables) |
 | csv_skip_copy       | bool \| None                              | None     | Skip UTF-8 temp copy (overrides catalog)      |
 | storage_options | dict \| None                              | None     | Options for remote storage (passed to fsspec) |
@@ -101,6 +105,7 @@ catalog.add_dataset(
     depth=None,
     csv_encoding=None,
     sample_size=None,
+    auto_enumerations=None,
     preview_rows=None,
     csv_skip_copy=None,
     storage_options=None,
@@ -115,7 +120,8 @@ catalog.add_dataset(
 | metadata        | EntityMetadata \| None                    | None     | Dataset identity, parent linkage, and metadata |
 | depth           | "dataset" \| "variable" \| "stat" \| "value" \| None | None     | Scan depth (uses catalog.depth if None)       |
 | csv_encoding    | str \| None                               | None     | Override CSV encoding                         |
-| sample_size     | int \| None                               | None     | Sample rows for frequency/enumeration detection (overrides catalog) |
+| sample_size     | int \| None                               | None     | Sample rows for frequency and automatic enumeration detection (overrides catalog) |
+| auto_enumerations | bool \| None                            | None     | Create automatic enumerations from value frequencies for this dataset (overrides catalog) |
 | preview_rows    | int \| Literal[False] \| None              | None     | Max preview rows for this dataset (overrides catalog; 0 or false disables) |
 | csv_skip_copy       | bool \| None                              | None     | Skip UTF-8 temp copy (overrides catalog)      |
 | storage_options | dict \| None                              | None     | Options for remote storage (passed to fsspec) |
@@ -134,6 +140,7 @@ catalog.add_database(
     include=None,
     exclude=None,
     sample_size=None,
+    auto_enumerations=None,
     preview_rows=None,
     group_by_prefix=True,
     prefix_min_tables=2,
@@ -154,7 +161,8 @@ catalog.add_database(
 | schema             | str \| list[str] \| None                         | None     | Schema(s) to scan                          |
 | include            | list[str] \| None                               | None     | Glob patterns matched against table names to include |
 | exclude            | list[str] \| None                               | None     | Glob patterns matched against table names to exclude |
-| sample_size        | int \| None                                     | None     | Sample rows for frequency/enumeration detection (overrides catalog) |
+| sample_size        | int \| None                                     | None     | Sample rows for frequency and automatic enumeration detection (overrides catalog) |
+| auto_enumerations  | bool \| None                                    | None     | Create automatic enumerations from value frequencies for scanned tables (overrides catalog) |
 | preview_rows       | int \| Literal[False] \| None                    | None     | Max preview rows for scanned table datasets (overrides catalog; 0 or false disables) |
 | group_by_prefix    | bool \| str                                     | True     | Group tables by prefix into subfolders     |
 | prefix_min_tables  | int                                             | 2        | Min tables to form a prefix group          |
@@ -260,7 +268,7 @@ Top-level YAML keys recognized by `run_config()`:
 | `update_app` | bool | Refresh bundled front-end app files when exporting to an existing `app_path` |
 | `post_export` | str \| list[str] \| None | Run Python scripts after export completes |
 
-All other non-reserved top-level keys are passed through to `Catalog(...)` using the same parameter names, such as `app_path`, `metadata_path`, `depth`, `refresh`, `sample_size`, `preview_rows`, `app_config`, `quiet`, `verbose`, and `log_file`.
+All other non-reserved top-level keys are passed through to `Catalog(...)` using the same parameter names, such as `app_path`, `metadata_path`, `depth`, `refresh`, `sample_size`, `auto_enumerations`, `preview_rows`, `app_config`, `quiet`, `verbose`, and `log_file`.
 
 To keep this API page concise, detailed YAML behavior is documented in the thematic guides:
 

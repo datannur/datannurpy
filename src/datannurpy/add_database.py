@@ -88,6 +88,7 @@ def add_database(
     include: Sequence[str] | None = None,
     exclude: Sequence[str] | None = None,
     sample_size: int | None = _UNSET,
+    auto_enumerations: bool | None = None,
     preview_rows: PreviewRows = None,
     group_by_prefix: bool | str = True,
     prefix_min_tables: int = 2,
@@ -110,6 +111,11 @@ def add_database(
         sample_size if sample_size is not _UNSET else catalog.sample_size
     )
     resolved_depth = depth if depth is not None else catalog.depth
+    resolved_auto_enumerations = (
+        auto_enumerations
+        if auto_enumerations is not None
+        else catalog.auto_enumerations
+    )
     preview_limit = effective_preview_rows(
         resolve_preview_rows(preview_rows, catalog.preview_rows), resolved_depth
     )
@@ -128,6 +134,7 @@ def add_database(
                 include=include,
                 exclude=exclude,
                 sample_size=resolved_sample_size,
+                auto_enumerations=resolved_auto_enumerations,
                 preview_rows=preview_limit,
                 group_by_prefix=group_by_prefix,
                 prefix_min_tables=prefix_min_tables,
@@ -150,6 +157,7 @@ def add_database(
                 include=include,
                 exclude=exclude,
                 sample_size=resolved_sample_size,
+                auto_enumerations=resolved_auto_enumerations,
                 preview_rows=preview_limit,
                 group_by_prefix=group_by_prefix,
                 prefix_min_tables=prefix_min_tables,
@@ -170,6 +178,7 @@ def add_database(
         include=include,
         exclude=exclude,
         sample_size=resolved_sample_size,
+        auto_enumerations=resolved_auto_enumerations,
         preview_rows=preview_limit,
         group_by_prefix=group_by_prefix,
         prefix_min_tables=prefix_min_tables,
@@ -191,6 +200,7 @@ def _add_database_impl(
     include: Sequence[str] | None,
     exclude: Sequence[str] | None,
     sample_size: int | None,
+    auto_enumerations: bool,
     preview_rows: int,
     group_by_prefix: bool | str,
     prefix_min_tables: int,
@@ -567,7 +577,10 @@ def _add_database_impl(
             var_id_mapping = build_variable_ids(table_vars, dataset.id)
             if freq_table is not None:
                 catalog.enumeration_manager.assign_from_freq(
-                    table_vars, freq_table, var_id_mapping
+                    table_vars,
+                    freq_table,
+                    var_id_mapping,
+                    auto_enumerations=auto_enumerations,
                 )
             catalog.variable.add_all(table_vars)
 
@@ -597,6 +610,7 @@ def _add_database_impl(
                 depth=resolved_depth,
                 freq_threshold=freq_threshold,
                 sample_size=sample_size if resolved_depth == "value" else None,
+                auto_enumerations=auto_enumerations,
                 preview_rows=preview_rows,
                 quiet=q,
             )
@@ -639,6 +653,7 @@ def _scan_table_series(
     depth: Depth,
     freq_threshold: int | None,
     sample_size: int | None,
+    auto_enumerations: bool,
     preview_rows: int,
     quiet: bool,
 ) -> int:
@@ -779,7 +794,10 @@ def _scan_table_series(
         var_id_mapping = build_variable_ids(table_vars, dataset.id)
         if freq_table is not None:
             catalog.enumeration_manager.assign_from_freq(
-                table_vars, freq_table, var_id_mapping
+                table_vars,
+                freq_table,
+                var_id_mapping,
+                auto_enumerations=auto_enumerations,
             )
         catalog.variable.add_all(table_vars)
 

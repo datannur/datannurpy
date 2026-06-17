@@ -199,6 +199,7 @@ def add_folder(
     time_series: bool = True,
     csv_encoding: str | None = None,
     sample_size: int | None = _UNSET,
+    auto_enumerations: bool | None = None,
     preview_rows: PreviewRows = None,
     csv_skip_copy: bool | None = None,
     quiet: bool | None = None,
@@ -227,6 +228,11 @@ def add_folder(
     q = quiet if quiet is not None else catalog.quiet
     do_refresh = refresh if refresh is not None else catalog.refresh
     resolved_depth = depth if depth is not None else catalog.depth
+    resolved_auto_enumerations = (
+        auto_enumerations
+        if auto_enumerations is not None
+        else catalog.auto_enumerations
+    )
     preview_limit = effective_preview_rows(
         resolve_preview_rows(preview_rows, catalog.preview_rows), resolved_depth
     )
@@ -517,6 +523,7 @@ def add_folder(
                     freq_threshold=freq_threshold,
                     csv_encoding=resolved_encoding,
                     sample_size=resolved_sample_size,
+                    auto_enumerations=resolved_auto_enumerations,
                     preview_rows=preview_limit,
                     csv_skip_copy=resolved_csv_skip_copy,
                     quiet=q,
@@ -600,7 +607,10 @@ def add_folder(
         var_id_mapping = build_variable_ids(result.variables, dataset.id)
         if result.freq_table is not None:
             catalog.enumeration_manager.assign_from_freq(
-                result.variables, result.freq_table, var_id_mapping
+                result.variables,
+                result.freq_table,
+                var_id_mapping,
+                auto_enumerations=resolved_auto_enumerations,
             )
         catalog.variable.add_all(result.variables)
 
@@ -642,6 +652,7 @@ def _scan_time_series(
     freq_threshold: int | None,
     csv_encoding: str | None,
     sample_size: int | None,
+    auto_enumerations: bool,
     preview_rows: int,
     csv_skip_copy: bool,
     quiet: bool,
@@ -798,7 +809,10 @@ def _scan_time_series(
     var_id_mapping = build_variable_ids(result.variables, dataset.id)
     if result.freq_table is not None:
         catalog.enumeration_manager.assign_from_freq(
-            result.variables, result.freq_table, var_id_mapping
+            result.variables,
+            result.freq_table,
+            var_id_mapping,
+            auto_enumerations=auto_enumerations,
         )
     catalog.variable.add_all(result.variables)
 
