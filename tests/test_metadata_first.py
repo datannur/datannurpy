@@ -92,6 +92,26 @@ class TestMetadataFirstE2E:
         for v in variables:
             assert v.dataset_id == "custom_ds"
 
+    def test_create_folders_false_matches_relative_explicit_match_path(
+        self, tmp_path: Path
+    ):
+        """Explicit relative _match_path values resolve from the metadata source."""
+        app_dir = tmp_path / "app"
+        data_dir = app_dir / "db-source" / "dataset"
+        data_dir.mkdir(parents=True)
+        _write_csv(data_dir, "sales.csv")
+
+        meta_dir = tmp_path / "overlay"
+        meta_dir.mkdir()
+        (meta_dir / "dataset.json").write_text(
+            '[{"id":"custom_ds","_match_path":"../app/db-source/dataset/sales.csv"}]'
+        )
+
+        catalog = Catalog(metadata_path=meta_dir, quiet=True)
+        catalog.add_folder(data_dir, create_folders=False, on_unmatched="error")
+
+        assert [dataset.id for dataset in catalog.dataset.all()] == ["custom_ds"]
+
     def test_create_folders_false_no_folder_created(self, tmp_path: Path):
         """create_folders=False creates no folder from the scan path itself."""
         data_dir = tmp_path / "data"

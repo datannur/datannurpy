@@ -324,7 +324,9 @@ def _load_tables_from_folder(
         exists_cache: dict[str, bool] = {}
         if "_match_path" in df.columns:
             df = df.copy()
-            df["_match_path"] = df["_match_path"].map(_resolve_explicit_match_path)
+            df["_match_path"] = df["_match_path"].map(
+                lambda p: _resolve_explicit_match_path(p, folder_path)
+            )
             tables["dataset"] = (df, fname)
         elif "data_path" in df.columns:
             df = df.copy()
@@ -362,11 +364,16 @@ def _resolve_match_path(
     return candidate_str if exists else None
 
 
-def _resolve_explicit_match_path(value: Any) -> str | None:
+def _resolve_explicit_match_path(value: Any, base_dir: Path) -> str | None:
     """Normalize an explicit technical match key without local filesystem checks."""
     s = _optional_str(value)
     if s is None:
         return None
+    if "://" not in s and not _has_period_match_pattern(s):
+        candidate = Path(s)
+        if not candidate.is_absolute():
+            candidate = (base_dir / candidate).resolve()
+        s = str(candidate)
     return normalize_match_key(s)
 
 
