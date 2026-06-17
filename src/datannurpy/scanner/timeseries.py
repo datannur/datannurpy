@@ -65,6 +65,10 @@ _PERIOD_NAME_PATTERNS: dict[PeriodFrequency, str] = {
     "yearly": "[YYYY]",
 }
 
+PERIOD_MATCH_PATTERNS = tuple(
+    sorted(set(_PERIOD_NAME_PATTERNS.values()), key=len, reverse=True)
+)
+
 
 @dataclass
 class PeriodInfo:

@@ -66,6 +66,8 @@ For a grouped series, the dataset receives:
 - `end_date`: last detected period
 - `data_path`: the latest file or table, used as the canonical resource
 
+In metadata-first scans (`create_folders=False`), the technical `_match_path` in `metadata/dataset.csv` can use the same normalized series syntax, for example `sales_[YYYY].csv`, `sales_[YYYY/MM].csv`, `sales_[YYYY]Q[N].csv`, or `sales_[YYYY/MM/DD].csv`, to match the logical series instead of a specific latest file.
+
 At `depth="stat"` or `depth="value"`, statistics and frequency tables are computed from the latest period only. Older periods are scanned in schema-only mode so datannurpy can detect variable availability over time.
 
 Variables also receive `start_date` and `end_date` when their presence changes across periods. A variable present in every period has both fields empty. A variable added after the first period gets `start_date`; a variable removed before the last period gets `end_date`.

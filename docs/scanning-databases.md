@@ -58,7 +58,7 @@ add:
 
   `include` and `exclude` are matched against table names after the optional `schema` filter has selected which schema(s) to scan. They use standard glob-style patterns (`*`, `?`, and character classes such as `[abc]`), not filesystem paths. Filtering first keeps tables that match at least one `include` pattern when `include` is set, then removes tables that match any `exclude` pattern.
 
-  `sample_size` controls rows used for frequency and enumeration detection. `preview_rows` controls the maximum rows exported for each table preview at `stat` and `value` depth; the default is `100`, and `0` or `false` disables previews. Table-series datasets preview the latest period table, matching the statistics scan.
+  `sample_size` controls rows used for frequency and automatic enumeration detection. Set `auto_enumerations: false` globally or on a database entry to keep `depth: value` frequencies without creating automatic enumeration entities or generated variable links. `preview_rows` controls the maximum rows exported for each table preview at `stat` and `value` depth; the default is `100`, and `0` or `false` disables previews. Table-series datasets preview the latest period table, matching the statistics scan.
 
   Examples:
 

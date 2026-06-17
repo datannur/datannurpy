@@ -8,13 +8,13 @@ import re
 import stat
 import sys
 import time
-from collections.abc import Hashable
+from collections.abc import Hashable, Iterable
 from dataclasses import MISSING, fields
 from datetime import date, datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NamedTuple
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlsplit, urlunsplit
 
 import ibis
 import polars as pl
@@ -36,6 +36,7 @@ from .schema import (
 from .scanner.csv import read_csv
 from .scanner.excel import read_excel
 from .scanner.statistical import read_statistical
+from .scanner.timeseries import PERIOD_MATCH_PATTERNS, PERIOD_PLACEHOLDER
 from .utils import log_done, log_error, log_section, log_warn, timestamp_to_iso
 from .utils.ids import build_frequency_id, build_value_id
 from .utils.params import validate_params
@@ -324,7 +325,7 @@ def _load_tables_from_folder(
         if "_match_path" in df.columns:
             df = df.copy()
             df["_match_path"] = df["_match_path"].map(
-                lambda p: _resolve_match_path(p, folder_path, exists_cache)
+                lambda p: _resolve_explicit_match_path(p, folder_path)
             )
             tables["dataset"] = (df, fname)
         elif "data_path" in df.columns:
@@ -340,14 +341,16 @@ def _load_tables_from_folder(
 def _resolve_match_path(
     data_path: Any, base_dir: Path, exists_cache: dict[str, bool] | None = None
 ) -> str | None:
-    """Resolve a CSV data_path to an absolute match path (or None if URL/missing)."""
+    """Resolve data_path fallback to a match path when it is safe to do so."""
     import pandas as pd
 
     if data_path is None or (isinstance(data_path, float) and pd.isna(data_path)):
         return None
     s = str(data_path).strip()
-    if not s or "://" in s:
+    if not s:
         return None
+    if "://" in s or _has_period_match_pattern(s):
+        return normalize_match_key(s)
     candidate = Path(s)
     if not candidate.is_absolute():
         candidate = (base_dir / candidate).resolve()
@@ -359,6 +362,46 @@ def _resolve_match_path(
         exists = candidate.exists()
         exists_cache[candidate_str] = exists
     return candidate_str if exists else None
+
+
+def _resolve_explicit_match_path(value: Any, base_dir: Path) -> str | None:
+    """Normalize an explicit technical match key without local filesystem checks."""
+    s = _optional_str(value)
+    if s is None:
+        return None
+    if "://" not in s and not _has_period_match_pattern(s):
+        candidate = Path(s)
+        if not candidate.is_absolute():
+            candidate = (base_dir / candidate).resolve()
+        s = str(candidate)
+    return normalize_match_key(s)
+
+
+def normalize_match_key(value: str) -> str:
+    """Return the canonical representation used by metadata-first matching."""
+    key = _canonicalize_remote_url(value.strip())
+    for pattern in PERIOD_MATCH_PATTERNS:
+        key = key.replace(pattern, PERIOD_PLACEHOLDER)
+    return key
+
+
+def _has_period_match_pattern(value: str) -> bool:
+    """Return True when a metadata path contains a supported period placeholder."""
+    return any(pattern in value for pattern in PERIOD_MATCH_PATTERNS)
+
+
+def _canonicalize_remote_url(value: str) -> str:
+    """Remove credentials/query/fragment from remote URLs while preserving identity."""
+    parts = urlsplit(value)
+    if not parts.scheme or not parts.netloc:
+        return value.replace("\\", "/")
+    hostname = parts.hostname
+    if hostname is None:
+        return value
+    netloc = hostname
+    if parts.port is not None:
+        netloc = f"{netloc}:{parts.port}"
+    return urlunsplit((parts.scheme, netloc, parts.path, "", ""))
 
 
 def _load_tables_from_database(
@@ -1092,7 +1135,22 @@ def find_loaded_dataset_by_match_path(
         catalog._dataset_match_index = _build_dataset_match_index(
             catalog._loaded_metadata
         )
-    return catalog._dataset_match_index.get(abs_match_path)
+    return catalog._dataset_match_index.get(normalize_match_key(abs_match_path))
+
+
+def find_loaded_dataset_by_match_paths(
+    catalog: Catalog, match_paths: Iterable[str]
+) -> LoadedDatasetRef | None:
+    """Return the first pre-loaded dataset matching any candidate path."""
+    if catalog._dataset_match_index is None:
+        catalog._dataset_match_index = _build_dataset_match_index(
+            catalog._loaded_metadata
+        )
+    for match_path in match_paths:
+        ref = catalog._dataset_match_index.get(normalize_match_key(match_path))
+        if ref is not None:
+            return ref
+    return None
 
 
 def _apply_config_table(

@@ -119,6 +119,7 @@ def add_dataset(
     depth: Depth | None = None,
     csv_encoding: str | None = None,
     sample_size: int | None = _UNSET,
+    auto_enumerations: bool | None = None,
     preview_rows: PreviewRows = None,
     csv_skip_copy: bool | None = None,
     quiet: bool | None = None,
@@ -141,6 +142,11 @@ def add_dataset(
     q = quiet if quiet is not None else catalog.quiet
     do_refresh = refresh if refresh is not None else catalog.refresh
     resolved_depth: Depth = depth if depth is not None else cast("Depth", catalog.depth)
+    resolved_auto_enumerations = (
+        auto_enumerations
+        if auto_enumerations is not None
+        else catalog.auto_enumerations
+    )
 
     # Handle remote URLs vs local paths
     is_remote = is_remote_url(path)
@@ -182,6 +188,7 @@ def add_dataset(
             metadata,
             depth=resolved_depth,
             sample_size=resolved_sample_size,
+            auto_enumerations=resolved_auto_enumerations,
             preview_rows=preview_limit,
             quiet=q,
             refresh=do_refresh,
@@ -309,7 +316,10 @@ def add_dataset(
     var_id_mapping = build_variable_ids(result.variables, dataset.id)
     if result.freq_table is not None:
         catalog.enumeration_manager.assign_from_freq(
-            result.variables, result.freq_table, var_id_mapping
+            result.variables,
+            result.freq_table,
+            var_id_mapping,
+            auto_enumerations=resolved_auto_enumerations,
         )
     catalog.variable.add_all(result.variables)
 
@@ -336,6 +346,7 @@ def _add_parquet_directory(
     *,
     depth: Depth,
     sample_size: int | None,
+    auto_enumerations: bool,
     preview_rows: int = 0,
     quiet: bool,
     refresh: bool,
@@ -451,7 +462,10 @@ def _add_parquet_directory(
     var_id_mapping = build_variable_ids(variables, dataset.id)
     if freq_table is not None:
         catalog.enumeration_manager.assign_from_freq(
-            variables, freq_table, var_id_mapping
+            variables,
+            freq_table,
+            var_id_mapping,
+            auto_enumerations=auto_enumerations,
         )
     catalog.variable.add_all(variables)
 

@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from datannurpy import Catalog
+from datannurpy.add_metadata import ensure_metadata_applied
 from datannurpy.utils import build_enumeration_name, compute_enumeration_hash
 from datannurpy.utils.ids import build_value_id
 
@@ -139,6 +140,64 @@ class TestEnumerationGeneration:
         var = catalog.variable.all()[0]
         assert len(var.enumeration_ids) == 1
         assert var.enumeration_ids[0] == catalog.enumeration.all()[0].id
+
+    def test_auto_enumerations_false_keeps_frequency(self, tmp_path: Path):
+        """auto_enumerations=False should keep frequencies without generated enums."""
+        (tmp_path / "data.csv").write_text("color\nred\nblue\nred\n")
+
+        catalog = Catalog(auto_enumerations=False)
+        catalog.add_folder(tmp_path)
+
+        assert len(catalog.frequency.all()) == 2
+        assert catalog.enumeration.is_empty
+        assert catalog.value.is_empty
+        assert catalog.variable.all()[0].enumeration_ids == []
+
+    def test_auto_enumerations_source_override(self, tmp_path: Path):
+        """Per-source auto_enumerations can override the catalog default."""
+        source_a = tmp_path / "source_a"
+        source_b = tmp_path / "source_b"
+        source_a.mkdir()
+        source_b.mkdir()
+        (source_a / "a.csv").write_text("color\nred\nblue\n")
+        (source_b / "b.csv").write_text("status\nopen\nclosed\n")
+
+        catalog = Catalog(auto_enumerations=False)
+        catalog.add_folder(source_a)
+        catalog.add_folder(source_b, auto_enumerations=True)
+
+        assert len(catalog.frequency.all()) == 4
+        assert len(catalog.enumeration.all()) == 1
+        variables = {var.name: var for var in catalog.variable.all()}
+        assert variables["color"].enumeration_ids == []
+        assert len(variables["status"].enumeration_ids) == 1
+
+    def test_auto_enumerations_false_keeps_manual_metadata(self, tmp_path: Path):
+        """Manual enumerations from metadata_path should remain available."""
+        data_dir = tmp_path / "data"
+        metadata_dir = tmp_path / "metadata"
+        data_dir.mkdir()
+        metadata_dir.mkdir()
+        (data_dir / "data.csv").write_text("color\nred\nblue\nred\n")
+        (metadata_dir / "enumeration.csv").write_text(
+            "id,name\nmanual_color,Manual color\n"
+        )
+        (metadata_dir / "value.csv").write_text(
+            "enumeration_id,value\nmanual_color,red\nmanual_color,blue\n"
+        )
+        (metadata_dir / "variable.csv").write_text(
+            "id,name,dataset_id,enumeration_ids\n"
+            "data---data_csv---color,color,data---data_csv,manual_color\n"
+        )
+
+        catalog = Catalog(metadata_path=metadata_dir, auto_enumerations=False)
+        catalog.add_folder(data_dir)
+        ensure_metadata_applied(catalog)
+        catalog.finalize()
+
+        assert [enum.id for enum in catalog.enumeration.all()] == ["manual_color"]
+        assert {value.value for value in catalog.value.all()} == {"red", "blue"}
+        assert catalog.variable.all()[0].enumeration_ids == ["manual_color"]
 
     def test_enumeration_reused_same_values(self, tmp_path: Path):
         """Same values in different files should reuse same enumeration."""

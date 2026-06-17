@@ -78,6 +78,7 @@ class Catalog(DatannurDB):
         depth: Depth = "value",
         refresh: bool = False,
         freq_threshold: int = 100,
+        auto_enumerations: bool = True,
         csv_encoding: str | None = None,
         sample_size: int | None = 100_000,
         preview_rows: PreviewRows = 100,
@@ -130,6 +131,7 @@ class Catalog(DatannurDB):
         self.depth: Depth = depth
         self.refresh = refresh
         self.freq_threshold = freq_threshold
+        self.auto_enumerations = auto_enumerations
         self.csv_encoding = csv_encoding
         self.sample_size = sample_size
         self.preview_rows = validate_preview_rows(preview_rows, allow_none=False) or 0

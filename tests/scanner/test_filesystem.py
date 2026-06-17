@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+from urllib.parse import urlsplit
 
 import pytest
 
@@ -72,11 +73,54 @@ class TestIsRemoteUrl:
 class TestFileSystem:
     """Test FileSystem class for local filesystem operations."""
 
+    @staticmethod
+    def _filesystem_for_canonical_url(
+        url: str, *, protocol: str = "sftp", root: str = "/root"
+    ) -> FileSystem:
+        fs = FileSystem.__new__(FileSystem)
+        fs.fs = type("FakeFS", (), {"protocol": protocol})()
+        fs.root = root
+        fs._url_parts = urlsplit(url)
+        return fs
+
     def test_init_local_path(self, tmp_path: Path) -> None:
         """FileSystem should initialize with a local path."""
         fs = FileSystem(tmp_path)
         assert fs.is_local
         assert fs.root == str(tmp_path)
+
+    def test_canonical_url_for_path_local_returns_none(self, tmp_path: Path) -> None:
+        """Local filesystems do not produce remote canonical URLs."""
+        fs = FileSystem(tmp_path)
+        assert fs.canonical_url_for_path(tmp_path / "data.csv") is None
+
+    def test_canonical_url_for_path_removes_user_and_preserves_port(self) -> None:
+        """Remote canonical URLs keep host/port/path but not credentials."""
+        fs = self._filesystem_for_canonical_url(
+            "sftp://user@example.org:2222/root", root="/root"
+        )
+
+        assert (
+            fs.canonical_url_for_path(PurePosixPath("folder/data.csv"))
+            == "sftp://example.org:2222/root/folder/data.csv"
+        )
+        assert (
+            fs.canonical_url_for_path("/other/data.csv")
+            == "sftp://example.org:2222/other/data.csv"
+        )
+
+    def test_canonical_url_for_path_without_port(self) -> None:
+        """Remote canonical URLs omit the port when none was configured."""
+        fs = self._filesystem_for_canonical_url("sftp://user@example.org/root")
+
+        assert (
+            fs.canonical_url_for_path("data.csv") == "sftp://example.org/root/data.csv"
+        )
+
+    def test_canonical_url_for_path_missing_remote_identity(self) -> None:
+        """Malformed remote roots without host do not produce canonical URLs."""
+        fs = self._filesystem_for_canonical_url("sftp://@/root")
+        assert fs.canonical_url_for_path("data.csv") is None
 
     def test_init_path_object(self, tmp_path: Path) -> None:
         """FileSystem should accept Path objects."""

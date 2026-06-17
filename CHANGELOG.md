@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.26.6 (2026-06-17)
+
+- add: support `auto_enumerations: false` to keep value frequencies while disabling automatic enumeration creation and variable links
+- fix: support metadata-first matching with remote paths and logical time-series `_match_path` keys while keeping `data_path` as the public exported path
+
 ## 0.26.5 (2026-06-16)
 
 - fix: resolve relative links in exported Markdown document content from the original source document directory using browser-compatible local paths

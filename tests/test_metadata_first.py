@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+from urllib.parse import urlsplit
 
 import pandas as pd
 import pytest
@@ -90,6 +91,26 @@ class TestMetadataFirstE2E:
         assert len(variables) == 2
         for v in variables:
             assert v.dataset_id == "custom_ds"
+
+    def test_create_folders_false_matches_relative_explicit_match_path(
+        self, tmp_path: Path
+    ):
+        """Explicit relative _match_path values resolve from the metadata source."""
+        app_dir = tmp_path / "app"
+        data_dir = app_dir / "db-source" / "dataset"
+        data_dir.mkdir(parents=True)
+        _write_csv(data_dir, "sales.csv")
+
+        meta_dir = tmp_path / "overlay"
+        meta_dir.mkdir()
+        (meta_dir / "dataset.json").write_text(
+            '[{"id":"custom_ds","_match_path":"../app/db-source/dataset/sales.csv"}]'
+        )
+
+        catalog = Catalog(metadata_path=meta_dir, quiet=True)
+        catalog.add_folder(data_dir, create_folders=False, on_unmatched="error")
+
+        assert [dataset.id for dataset in catalog.dataset.all()] == ["custom_ds"]
 
     def test_create_folders_false_no_folder_created(self, tmp_path: Path):
         """create_folders=False creates no folder from the scan path itself."""
@@ -206,7 +227,7 @@ class TestMetadataFirstE2E:
         (meta_dir / "folder.csv").write_text("id,name\nf,F\n")
         (meta_dir / "dataset.csv").write_text(
             "id,name,folder_id,data_path,_match_path,link\n"
-            f"dataset-1,Dataset 1,f,{public_url},../data/resource.csv,{link_url}\n"
+            f"dataset-1,Dataset 1,f,{public_url},{csv},{link_url}\n"
         )
 
         catalog = Catalog(metadata_path=meta_dir, quiet=True)
@@ -258,6 +279,66 @@ class TestMetadataFirstE2E:
         # Folder gets created
         assert any(f.id == "src" for f in catalog.folder.all())
         assert len(catalog.dataset.all()) == 1
+
+    def test_explicit_match_path_with_remote_url_is_indexed(self, tmp_path: Path):
+        """Explicit _match_path is a technical key, not a local filesystem path."""
+        meta_dir = tmp_path / "meta"
+        meta_dir.mkdir()
+        (meta_dir / "dataset.csv").write_text(
+            "id,name,_match_path\n"
+            "remote,Remote,sftp://user@example.org/shared/data/file.csv\n"
+        )
+
+        catalog = Catalog(metadata_path=meta_dir, quiet=True)
+        from datannurpy.add_metadata import find_loaded_dataset_by_match_path
+
+        ref = find_loaded_dataset_by_match_path(
+            catalog, "sftp://example.org/shared/data/file.csv"
+        )
+        assert ref is not None
+        assert ref.id == "remote"
+
+    def test_time_series_match_path_matches_logical_series(self, tmp_path: Path):
+        """Metadata-first can match a logical time series instead of latest file."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        _write_csv(data_dir, "series_2023.csv")
+        _write_csv(data_dir, "series_2024.csv")
+
+        meta_dir = tmp_path / "meta"
+        meta_dir.mkdir()
+        (meta_dir / "dataset.csv").write_text(
+            "id,name,folder_id,_match_path\nseries-id,Series,f,series_[YYYY].csv\n"
+        )
+
+        catalog = Catalog(metadata_path=meta_dir, quiet=True)
+        catalog.add_folder(data_dir, create_folders=False)
+
+        datasets = catalog.dataset.all()
+        assert len(datasets) == 1
+        assert datasets[0].id == "series-id"
+        assert datasets[0].nb_resources == 2
+
+    def test_time_series_data_path_can_fallback_to_logical_series(self, tmp_path: Path):
+        """data_path can be the match fallback when _match_path is absent."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        _write_csv(data_dir, "monthly_2024-01.csv")
+        _write_csv(data_dir, "monthly_2024-02.csv")
+
+        meta_dir = tmp_path / "meta"
+        meta_dir.mkdir()
+        (meta_dir / "dataset.csv").write_text(
+            "id,name,folder_id,data_path\nmonthly-id,Monthly,f,monthly_[YYYY/MM].csv\n"
+        )
+
+        catalog = Catalog(metadata_path=meta_dir, quiet=True)
+        catalog.add_folder(data_dir, create_folders=False)
+
+        datasets = catalog.dataset.all()
+        assert len(datasets) == 1
+        assert datasets[0].id == "monthly-id"
+        assert datasets[0].nb_resources == 2
 
 
 class TestMetadataFirstStructureOnly:
@@ -424,8 +505,8 @@ class TestLoadedMetadataIndexEdgeCases:
 class TestResolveMatchPathEdgeCases:
     """Coverage for _resolve_match_path edge cases."""
 
-    def test_url_returns_none(self, tmp_path: Path):
-        """URLs are returned as None (not resolved as files)."""
+    def test_remote_data_path_is_indexed(self, tmp_path: Path):
+        """Remote data_path is a metadata-first fallback match key."""
         meta_dir = tmp_path / "meta"
         meta_dir.mkdir()
         (meta_dir / "dataset.csv").write_text(
@@ -434,10 +515,9 @@ class TestResolveMatchPathEdgeCases:
         catalog = Catalog(metadata_path=meta_dir, quiet=True)
         from datannurpy.add_metadata import find_loaded_dataset_by_match_path
 
-        assert (
-            find_loaded_dataset_by_match_path(catalog, "https://example.com/x.csv")
-            is None
-        )
+        ref = find_loaded_dataset_by_match_path(catalog, "https://example.com/x.csv")
+        assert ref is not None
+        assert ref.id == "web"
 
     def test_missing_file_returns_none(self, tmp_path: Path):
         """A data_path pointing to a non-existing file is not indexed."""
@@ -485,6 +565,76 @@ class TestHelperUnits:
         ]
 
         assert _build_dataset_match_paths_by_id(sources) == {"ok": "/tmp/data.csv"}
+
+    def test_normalize_match_key_canonicalizes_remote_port_and_bad_host(self):
+        from datannurpy.add_metadata import normalize_match_key
+
+        assert (
+            normalize_match_key("sftp://user@example.org:2222/data/file_[YYYY].csv")
+            == "sftp://example.org:2222/data/file_---PERIOD---.csv"
+        )
+        assert normalize_match_key("sftp://@/data/file.csv") == "sftp://@/data/file.csv"
+
+    def test_find_loaded_dataset_by_match_path_reuses_built_index(self, tmp_path: Path):
+        meta_dir = tmp_path / "meta"
+        meta_dir.mkdir()
+        (meta_dir / "dataset.csv").write_text(
+            "id,name,_match_path\nindexed,Indexed,/data/indexed.csv\n"
+        )
+
+        catalog = Catalog(metadata_path=meta_dir, quiet=True)
+        from datannurpy.add_metadata import find_loaded_dataset_by_match_path
+
+        assert (
+            find_loaded_dataset_by_match_path(catalog, "/data/indexed.csv") is not None
+        )
+        assert catalog._dataset_match_index is not None
+        assert find_loaded_dataset_by_match_path(catalog, "/data/missing.csv") is None
+
+    def test_match_path_candidates_include_remote_series_url(self):
+        from datannurpy.add_folder import _match_path_candidates
+        from datannurpy.scanner.filesystem import FileSystem
+
+        fs = FileSystem.__new__(FileSystem)
+        fs.fs = type("FakeFS", (), {"protocol": "sftp"})()
+        fs.root = "/shared/data"
+        fs._url_parts = urlsplit("sftp://user@example.org/shared/data")
+
+        assert _match_path_candidates(
+            PurePosixPath("/shared/data/series_2024.csv"),
+            fs,
+            series_normalized_path="series_[YYYY].csv",
+        ) == [
+            "sftp://example.org/shared/data/series_[YYYY].csv",
+            "series_[YYYY].csv",
+            "/shared/data/series_2024.csv",
+            "sftp://example.org/shared/data/series_2024.csv",
+        ]
+
+    def test_match_path_candidates_skip_missing_remote_series_url(self):
+        from typing import cast
+
+        from datannurpy.add_folder import _match_path_candidates
+        from datannurpy.scanner.filesystem import FileSystem
+
+        class FakeRemoteFS:
+            is_local = False
+
+            def canonical_url_for_path(self, path: object) -> str | None:
+                path_str = str(path)
+                if "---PERIOD---" in path_str:
+                    return None
+                return f"sftp://example.org{path_str}"
+
+        assert _match_path_candidates(
+            PurePosixPath("/shared/data/series_2024.csv"),
+            cast(FileSystem, FakeRemoteFS()),
+            series_normalized_path="series_---PERIOD---.csv",
+        ) == [
+            "series_---PERIOD---.csv",
+            "/shared/data/series_2024.csv",
+            "sftp://example.org/shared/data/series_2024.csv",
+        ]
 
     def test_resolve_match_path_none(self, tmp_path: Path):
         from datannurpy.add_metadata import _resolve_match_path

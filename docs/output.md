@@ -32,7 +32,7 @@ Set `export_size_report: true` to print a size report by table after writing the
 
 Large catalogs are usually dominated by `frequency` and `value`, because those tables store repeated values for many variables. Enable `export_size_report` to check which tables matter before changing scan settings.
 
-If the export is larger than expected, the main levers are scan depth, frequency generation, and sampling. `depth: stat` keeps variable statistics without writing frequency tables or enumerations; `depth: variable` keeps only schema-level metadata; `freq_threshold` controls when high-cardinality string columns switch from value frequencies to pattern frequencies; `sample_size` limits the rows used for frequency counts and enumeration detection while keeping core statistics on the full dataset.
+If the export is larger than expected, the main levers are scan depth, frequency generation, automatic enumeration generation, and sampling. `depth: stat` keeps variable statistics without writing frequency tables or enumerations; `depth: variable` keeps only schema-level metadata; `auto_enumerations: false` keeps `depth: value` frequency tables but skips automatic enumeration entities and generated variable links; `freq_threshold` controls when high-cardinality string columns switch from value frequencies to pattern frequencies; `sample_size` limits the rows used for frequency counts and automatic enumeration detection while keeping core statistics on the full dataset.
 
 `.json.js` reflects local or shared-folder usage (`file://`), `.json` reflects uncompressed HTTP, and `.json.gz` reflects HTTP served with gzip.
 

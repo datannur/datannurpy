@@ -24,7 +24,10 @@ from .utils import (
     upsert_folder,
 )
 from .utils.params import _UNSET, validate_params
-from .add_metadata import LoadedDatasetRef, find_loaded_dataset_by_match_path
+from .add_metadata import (
+    LoadedDatasetRef,
+    find_loaded_dataset_by_match_paths,
+)
 from .errors import ConfigError
 from .finalize import remove_dataset_cascade
 from .preview import (
@@ -85,6 +88,27 @@ def _public_data_path(path: PurePath, root: PurePath, fs: FileSystem | None) -> 
     if fs is not None and not fs.is_local:
         return str(path)
     return _display_path(path, root)
+
+
+def _match_path_candidates(
+    path: PurePath,
+    fs: FileSystem | None,
+    *,
+    series_normalized_path: str | None = None,
+) -> list[str]:
+    """Return scan keys for metadata-first matching without filesystem I/O."""
+    candidates = [str(path)]
+    if series_normalized_path is not None:
+        candidates.insert(0, series_normalized_path)
+    if fs is not None and not fs.is_local:
+        remote_path = fs.canonical_url_for_path(path)
+        if remote_path is not None:
+            candidates.append(remote_path)
+        if series_normalized_path is not None:
+            remote_series = fs.canonical_url_for_path(series_normalized_path)
+            if remote_series is not None:
+                candidates.insert(0, remote_series)
+    return list(dict.fromkeys(candidates))
 
 
 def _display_dataset_path(info: DatasetInfo, root: PurePath) -> str:
@@ -175,6 +199,7 @@ def add_folder(
     time_series: bool = True,
     csv_encoding: str | None = None,
     sample_size: int | None = _UNSET,
+    auto_enumerations: bool | None = None,
     preview_rows: PreviewRows = None,
     csv_skip_copy: bool | None = None,
     quiet: bool | None = None,
@@ -203,6 +228,11 @@ def add_folder(
     q = quiet if quiet is not None else catalog.quiet
     do_refresh = refresh if refresh is not None else catalog.refresh
     resolved_depth = depth if depth is not None else catalog.depth
+    resolved_auto_enumerations = (
+        auto_enumerations
+        if auto_enumerations is not None
+        else catalog.auto_enumerations
+    )
     preview_limit = effective_preview_rows(
         resolve_preview_rows(preview_rows, catalog.preview_rows), resolved_depth
     )
@@ -366,8 +396,18 @@ def add_folder(
                 log_done(display_label, q, t0)
                 continue
 
+            series_normalized_path = (
+                info.series_normalized_path if info.series_files is not None else None
+            )
             # Metadata-first peek: reuse pre-loaded id/folder_id if available.
-            peek = find_loaded_dataset_by_match_path(catalog, data_path_str)
+            peek = find_loaded_dataset_by_match_paths(
+                catalog,
+                _match_path_candidates(
+                    info.path,
+                    fs,
+                    series_normalized_path=series_normalized_path,
+                ),
+            )
             if peek is None and not create_folders:
                 _handle_unmatched(display_label, on_unmatched, q)
                 continue
@@ -483,6 +523,7 @@ def add_folder(
                     freq_threshold=freq_threshold,
                     csv_encoding=resolved_encoding,
                     sample_size=resolved_sample_size,
+                    auto_enumerations=resolved_auto_enumerations,
                     preview_rows=preview_limit,
                     csv_skip_copy=resolved_csv_skip_copy,
                     quiet=q,
@@ -501,7 +542,9 @@ def add_folder(
         t0 = log_start(display_path, q)
 
         # Metadata-first peek: reuse pre-loaded id/folder_id if available.
-        peek = find_loaded_dataset_by_match_path(catalog, data_path_str)
+        peek = find_loaded_dataset_by_match_paths(
+            catalog, _match_path_candidates(info.path, fs)
+        )
         if peek is None and not create_folders:
             _handle_unmatched(display_path, on_unmatched, q)
             continue
@@ -564,7 +607,10 @@ def add_folder(
         var_id_mapping = build_variable_ids(result.variables, dataset.id)
         if result.freq_table is not None:
             catalog.enumeration_manager.assign_from_freq(
-                result.variables, result.freq_table, var_id_mapping
+                result.variables,
+                result.freq_table,
+                var_id_mapping,
+                auto_enumerations=resolved_auto_enumerations,
             )
         catalog.variable.add_all(result.variables)
 
@@ -606,6 +652,7 @@ def _scan_time_series(
     freq_threshold: int | None,
     csv_encoding: str | None,
     sample_size: int | None,
+    auto_enumerations: bool,
     preview_rows: int,
     csv_skip_copy: bool,
     quiet: bool,
@@ -637,7 +684,14 @@ def _scan_time_series(
 
     # Metadata-first peek: reuse pre-loaded id/folder_id if available.
     # Time series match on the latest period (the canonical data_path).
-    peek = find_loaded_dataset_by_match_path(catalog, str(last_path))
+    peek = find_loaded_dataset_by_match_paths(
+        catalog,
+        _match_path_candidates(
+            last_path,
+            fs,
+            series_normalized_path=normalized,
+        ),
+    )
     if peek is None and not create_folders:
         _handle_unmatched(display_path, on_unmatched, quiet)
         return
@@ -755,7 +809,10 @@ def _scan_time_series(
     var_id_mapping = build_variable_ids(result.variables, dataset.id)
     if result.freq_table is not None:
         catalog.enumeration_manager.assign_from_freq(
-            result.variables, result.freq_table, var_id_mapping
+            result.variables,
+            result.freq_table,
+            var_id_mapping,
+            auto_enumerations=auto_enumerations,
         )
     catalog.variable.add_all(result.variables)
 

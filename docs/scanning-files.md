@@ -192,7 +192,9 @@ To disable sampling globally:
 sample_size: null
 ```
 
-When a dataset has more rows than `sample_size`, a uniform random sample is used for frequency counts and enumeration detection. All other statistics (`nb_row`, `nb_missing`, `nb_distinct`, `min`, `max`, `mean`, `std`) are computed on the full dataset.
+When a dataset has more rows than `sample_size`, a uniform random sample is used for frequency counts and automatic enumeration detection. All other statistics (`nb_row`, `nb_missing`, `nb_distinct`, `min`, `max`, `mean`, `std`) are computed on the full dataset.
+
+Set `auto_enumerations: false` to keep `depth: value` frequency tables without creating automatic enumeration entities or generated variable links. This is useful when enumerations are provided manually through `metadata_path`. Like `sample_size`, it can be set globally or per `add` entry.
 
 The actual number of sampled rows is recorded in `Dataset.sample_size` (`null` when no sampling was applied).
 

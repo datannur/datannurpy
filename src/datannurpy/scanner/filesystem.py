@@ -6,8 +6,9 @@ import codecs
 import shutil
 import tempfile
 from contextlib import contextmanager
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import IO, TYPE_CHECKING, Any
+from urllib.parse import urlsplit, urlunsplit
 
 import fsspec
 
@@ -37,6 +38,7 @@ class FileSystem:
     def __init__(self, path: str | Path, storage_options: dict[str, Any] | None = None):
         """Initialize filesystem from a path (local or remote URL)."""
         path_str = str(path)
+        self._url_parts = urlsplit(path_str) if is_remote_url(path_str) else None
         # Expand ~ in path-like options (e.g., key_filename for SFTP)
         opts = _expand_home_in_options(storage_options) if storage_options else {}
         self.fs, self.root = fsspec.core.url_to_fs(path_str, **opts)
@@ -179,6 +181,23 @@ class FileSystem:
             rel = path[len(self.root) :].lstrip("/")
             return rel if rel else "."
         return path
+
+    def canonical_url_for_path(self, path: str | Path | PurePath) -> str | None:
+        """Return a user-free remote URL for a filesystem path without touching I/O."""
+        if self.is_local or self._url_parts is None:
+            return None
+        protocol = self._url_parts.scheme
+        hostname = self._url_parts.hostname
+        if not protocol or hostname is None:
+            return None
+        netloc = hostname
+        if self._url_parts.port is not None:
+            netloc = f"{netloc}:{self._url_parts.port}"
+
+        path_str = str(path).replace("\\", "/")
+        if not path_str.startswith("/"):
+            path_str = self._full_path(path_str)
+        return urlunsplit((protocol, netloc, path_str, "", ""))
 
 
 def get_filesystem(
