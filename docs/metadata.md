@@ -137,10 +137,14 @@ add:
 In this mode:
 
 - No folder is created from the scanned directory; the hierarchy is taken from `metadata/folder.csv`.
-- Each scanned file is matched to its metadata entry via the `data_path` column of `metadata/dataset.csv`. The scan reuses the metadata-defined `id` and `folder_id`.
+- Each scanned file is matched to its metadata entry via `_match_path` when present, or via `data_path` as a fallback. The scan reuses the metadata-defined `id` and `folder_id`.
 - Files with no metadata match are reported according to `on_unmatched`: `"warn"` (default), `"skip"`, or `"error"`.
 
-**Matching:** the scan computes an absolute path for each file and compares it to the resolved `data_path` from `metadata/dataset.csv`. Relative `data_path` values are resolved against the metadata source directory (the folder containing `dataset.csv`). URLs and missing files are not matched.
+**Matching:** `_match_path` is an optional technical key used only to attach scanned files to metadata rows. Use it when the scan key differs from the public `data_path`, for example for remote sources or logical time-series datasets. If `_match_path` is omitted, `data_path` is used as the match key.
+
+For remote paths, credentials are not part of the match identity: `sftp://user@example.org/path/file.csv` and `sftp://example.org/path/file.csv` match the same scan key. The canonical remote identity keeps the protocol, host, optional port, and path.
+
+For time-series datasets, `_match_path` can use the same normalized period syntax produced by datannurpy: `[YYYY]`, `[YYYY/MM]`, `[YYYY]Q[N]`, or `[YYYY/MM/DD]`. This matches the logical series, not only the latest physical file.
 
 **Example** — `./metadata/dataset.csv`:
 
@@ -152,10 +156,20 @@ hr-headcount,HR headcount,hr,../data/parquet/hr-headcount.parquet
 
 Combined with `add_folder('./data/parquet', create_folders=False)`, the scan attaches variables and stats to `sales-2024` and `hr-headcount` (the IDs declared in metadata) without creating any folder from the disk layout.
 
+**Remote and time-series example** — `./metadata/dataset.csv`:
+
+```csv
+id,name,folder_id,data_path,_match_path
+sales,Sales,finance,sftp://example.org/shared/data/sales_2024.csv,sftp://example.org/shared/data/sales_[YYYY].csv
+traffic,Traffic,transport,sftp://example.org/shared/data/traffic_2024-03.csv,sftp://example.org/shared/data/traffic_[YYYY/MM].csv
+```
+
+Here `data_path` remains the public path shown in the catalog, while `_match_path` is only used to attach the scan result to the metadata row. If the SFTP scan is configured as `sftp://user@example.org/shared/data`, the user part is ignored for matching.
+
 **Constraints:**
 
 - `create_folders=False` is incompatible with `metadata=` in `add_folder()` (no folder is created).
-- The `data_path` you write in `metadata/dataset.csv` is also exported as-is in the output (it is the public link to the data, not a private match key). Use a URL or a deployment-relative path if you want it to remain valid in the front-end.
+- The `data_path` you write in `metadata/dataset.csv` is exported as-is in the output. Use `_match_path` when the technical scan key should differ from the public path shown in the front-end.
 
 ## Environment variables
 

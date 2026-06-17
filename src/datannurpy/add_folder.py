@@ -24,7 +24,10 @@ from .utils import (
     upsert_folder,
 )
 from .utils.params import _UNSET, validate_params
-from .add_metadata import LoadedDatasetRef, find_loaded_dataset_by_match_path
+from .add_metadata import (
+    LoadedDatasetRef,
+    find_loaded_dataset_by_match_paths,
+)
 from .errors import ConfigError
 from .finalize import remove_dataset_cascade
 from .preview import (
@@ -85,6 +88,27 @@ def _public_data_path(path: PurePath, root: PurePath, fs: FileSystem | None) -> 
     if fs is not None and not fs.is_local:
         return str(path)
     return _display_path(path, root)
+
+
+def _match_path_candidates(
+    path: PurePath,
+    fs: FileSystem | None,
+    *,
+    series_normalized_path: str | None = None,
+) -> list[str]:
+    """Return scan keys for metadata-first matching without filesystem I/O."""
+    candidates = [str(path)]
+    if series_normalized_path is not None:
+        candidates.insert(0, series_normalized_path)
+    if fs is not None and not fs.is_local:
+        remote_path = fs.canonical_url_for_path(path)
+        if remote_path is not None:
+            candidates.append(remote_path)
+        if series_normalized_path is not None:
+            remote_series = fs.canonical_url_for_path(series_normalized_path)
+            if remote_series is not None:
+                candidates.insert(0, remote_series)
+    return list(dict.fromkeys(candidates))
 
 
 def _display_dataset_path(info: DatasetInfo, root: PurePath) -> str:
@@ -366,8 +390,18 @@ def add_folder(
                 log_done(display_label, q, t0)
                 continue
 
+            series_normalized_path = (
+                info.series_normalized_path if info.series_files is not None else None
+            )
             # Metadata-first peek: reuse pre-loaded id/folder_id if available.
-            peek = find_loaded_dataset_by_match_path(catalog, data_path_str)
+            peek = find_loaded_dataset_by_match_paths(
+                catalog,
+                _match_path_candidates(
+                    info.path,
+                    fs,
+                    series_normalized_path=series_normalized_path,
+                ),
+            )
             if peek is None and not create_folders:
                 _handle_unmatched(display_label, on_unmatched, q)
                 continue
@@ -501,7 +535,9 @@ def add_folder(
         t0 = log_start(display_path, q)
 
         # Metadata-first peek: reuse pre-loaded id/folder_id if available.
-        peek = find_loaded_dataset_by_match_path(catalog, data_path_str)
+        peek = find_loaded_dataset_by_match_paths(
+            catalog, _match_path_candidates(info.path, fs)
+        )
         if peek is None and not create_folders:
             _handle_unmatched(display_path, on_unmatched, q)
             continue
@@ -637,7 +673,14 @@ def _scan_time_series(
 
     # Metadata-first peek: reuse pre-loaded id/folder_id if available.
     # Time series match on the latest period (the canonical data_path).
-    peek = find_loaded_dataset_by_match_path(catalog, str(last_path))
+    peek = find_loaded_dataset_by_match_paths(
+        catalog,
+        _match_path_candidates(
+            last_path,
+            fs,
+            series_normalized_path=normalized,
+        ),
+    )
     if peek is None and not create_folders:
         _handle_unmatched(display_path, on_unmatched, quiet)
         return
