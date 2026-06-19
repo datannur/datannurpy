@@ -636,6 +636,40 @@ class TestHelperUnits:
             "sftp://example.org/shared/data/series_2024.csv",
         ]
 
+    def test_match_path_candidates_include_local_absolute_series(self):
+        from datannurpy.add_folder import _match_path_candidates
+
+        assert _match_path_candidates(
+            PurePosixPath("/shared/data/series_2024.csv"),
+            None,
+            series_normalized_path="series_---PERIOD---.csv",
+            root=PurePosixPath("/shared/data"),
+        ) == [
+            "/shared/data/series_---PERIOD---.csv",
+            "series_---PERIOD---.csv",
+            "/shared/data/series_2024.csv",
+        ]
+
+    def test_match_path_candidates_include_unc_absolute_series(self):
+        from pathlib import PureWindowsPath
+
+        from datannurpy.add_folder import _match_path_candidates
+        from datannurpy.add_metadata import normalize_match_key
+
+        candidates = _match_path_candidates(
+            PureWindowsPath(r"\\SERVER\SHARE\data\my_series_2024.sas7bdat"),
+            None,
+            series_normalized_path="my_series_---PERIOD---.sas7bdat",
+            root=PureWindowsPath(r"\\SERVER\SHARE\data"),
+        )
+        absolute = r"\\SERVER\SHARE\data\my_series_---PERIOD---.sas7bdat"
+        assert absolute in candidates
+        # The absolute UNC candidate normalizes to the same key as a metadata
+        # `_match_path` written as `\\SERVER\SHARE\data\my_series_[YYYY].sas7bdat`.
+        assert normalize_match_key(absolute) == normalize_match_key(
+            r"\\SERVER\SHARE\data\my_series_[YYYY].sas7bdat"
+        )
+
     def test_resolve_match_path_none(self, tmp_path: Path):
         from datannurpy.add_metadata import _resolve_match_path
 

@@ -95,6 +95,7 @@ def _match_path_candidates(
     fs: FileSystem | None,
     *,
     series_normalized_path: str | None = None,
+    root: PurePath | None = None,
 ) -> list[str]:
     """Return scan keys for metadata-first matching without filesystem I/O."""
     candidates = [str(path)]
@@ -108,6 +109,11 @@ def _match_path_candidates(
             remote_series = fs.canonical_url_for_path(series_normalized_path)
             if remote_series is not None:
                 candidates.insert(0, remote_series)
+    elif series_normalized_path is not None and root is not None:
+        # Local/UNC: add the absolute normalized series candidate so metadata
+        # `_match_path` values like `\\SERVER\SHARE\data\series_[YYYY].csv`
+        # match, mirroring the canonical remote URL candidate added above.
+        candidates.insert(0, str(root / series_normalized_path))
     return list(dict.fromkeys(candidates))
 
 
@@ -406,6 +412,7 @@ def add_folder(
                     info.path,
                     fs,
                     series_normalized_path=series_normalized_path,
+                    root=root,
                 ),
             )
             if peek is None and not create_folders:
@@ -690,6 +697,7 @@ def _scan_time_series(
             last_path,
             fs,
             series_normalized_path=normalized,
+            root=root,
         ),
     )
     if peek is None and not create_folders:
