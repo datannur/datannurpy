@@ -2,6 +2,7 @@
 
 ## 0.26.7 (2026-06-19)
 
+- perf: faster metadata loading via jsonjsdb 0.9.0 partial reads and single-rebuild upserts, cheaper localized-column detection, and a single metadata folder scan
 - fix: match local/UNC time-series `_match_path` keys with `[YYYY]` placeholders by adding an absolute normalized series candidate, mirroring the canonical remote URL candidate already used for SFTP
 
 ## 0.26.6 (2026-06-17)
