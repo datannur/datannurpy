@@ -23,15 +23,20 @@ lint:
 typecheck:
 	uv run pyright src/datannurpy tests
 
+# Coverage is enforced on the modern interpreter (where coverage.py is accurate).
+# check-py39 overrides COV_ARGS to empty: 3.9 verifies compatibility (tests pass on
+# 3.9), not coverage — avoids coverage.py's false-misses on Py<=3.9 `continue` bytecode.
+COV_ARGS ?= --cov=src/datannurpy --cov-report=term-missing --cov-report=xml --cov-report=html --cov-fail-under=100
+
 check:
 	@uv run ruff check . && uv run ruff format --check . & LINT_PID=$$!; \
 	uv run pyright src/datannurpy tests & TYPE_PID=$$!; \
 	wait $$LINT_PID || exit 1; \
 	wait $$TYPE_PID || exit 1
-	uv run pytest --cov=src/datannurpy --cov-report=term-missing --cov-report=xml --cov-report=html --cov-fail-under=100
+	uv run pytest $(COV_ARGS)
 
 check-py39:
-	UV_PYTHON=python3.9 $(MAKE) check
+	UV_PYTHON=python3.9 $(MAKE) check COV_ARGS=
 
 download-app:
 	uv run python scripts/download_app.py
