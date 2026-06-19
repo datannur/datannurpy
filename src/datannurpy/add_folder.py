@@ -95,6 +95,7 @@ def _match_path_candidates(
     fs: FileSystem | None,
     *,
     series_normalized_path: str | None = None,
+    root: PurePath | None = None,
 ) -> list[str]:
     """Return scan keys for metadata-first matching without filesystem I/O."""
     candidates = [str(path)]
@@ -108,6 +109,11 @@ def _match_path_candidates(
             remote_series = fs.canonical_url_for_path(series_normalized_path)
             if remote_series is not None:
                 candidates.insert(0, remote_series)
+    elif series_normalized_path is not None and root is not None:
+        # Local/UNC: add the absolute normalized series candidate so metadata
+        # `_match_path` values like `\\SERVER\SHARE\data\series_[YYYY].csv`
+        # match, mirroring the canonical remote URL candidate added above.
+        candidates.insert(0, str(root / series_normalized_path))
     return list(dict.fromkeys(candidates))
 
 
@@ -358,19 +364,18 @@ def add_folder(
 
     # Structure-only mode: create/update datasets without scanning
     if resolved_depth == "dataset":
-        # Skip unchanged datasets
-        skip_seen_ids: list[str] = []
+        # Skip unchanged datasets (single batch upsert instead of per-dataset update)
+        skipped: list[Dataset] = []
         for info in plan.to_skip:
             existing = plan.existing_by_path.get(str(info.path))
             assert existing is not None
-            skip_seen_ids.append(existing.id)
+            existing._seen = True
+            existing.preview_rows = 0
+            existing._match_path = str(info.path)
+            skipped.append(existing)
             log_skip(_display_dataset_label(info, root), q)
-        if skip_seen_ids:
-            catalog.dataset.update_many(skip_seen_ids, _seen=True, preview_rows=0)
-            for info in plan.to_skip:
-                existing = plan.existing_by_path.get(str(info.path))
-                assert existing is not None
-                catalog.dataset.update(existing.id, _match_path=str(info.path))
+        if skipped:
+            catalog.dataset.upsert_all(skipped)
 
         # Create or update modified datasets
         for info in plan.to_scan:
@@ -406,6 +411,7 @@ def add_folder(
                     info.path,
                     fs,
                     series_normalized_path=series_normalized_path,
+                    root=root,
                 ),
             )
             if peek is None and not create_folders:
@@ -473,21 +479,20 @@ def add_folder(
         )
         return
 
-    # Handle skipped datasets (mark as seen)
+    # Handle skipped datasets (single batch upsert instead of per-dataset update)
     skip_seen_ids: list[str] = []
+    skipped: list[Dataset] = []
     for info in plan.to_skip:
         existing = plan.existing_by_path.get(str(info.path))
         assert existing is not None  # compute_scan_plan guarantees this
+        existing._seen = True
+        existing.preview_rows = preview_limit
+        existing._match_path = str(info.path)
         skip_seen_ids.append(existing.id)
+        skipped.append(existing)
         log_skip(_display_dataset_label(info, root), q)
-    if skip_seen_ids:
-        catalog.dataset.update_many(
-            skip_seen_ids, _seen=True, preview_rows=preview_limit
-        )
-        for info in plan.to_skip:
-            existing = plan.existing_by_path.get(str(info.path))
-            assert existing is not None
-            catalog.dataset.update(existing.id, _match_path=str(info.path))
+    if skipped:
+        catalog.dataset.upsert_all(skipped)
         catalog.enumeration_manager.mark_datasets_seen(skip_seen_ids)
 
     # Process datasets to scan
@@ -690,6 +695,7 @@ def _scan_time_series(
             last_path,
             fs,
             series_normalized_path=normalized,
+            root=root,
         ),
     )
     if peek is None and not create_folders:

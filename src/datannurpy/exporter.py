@@ -88,11 +88,6 @@ def _gzip_estimated_size(path: Path) -> int:
     return total
 
 
-def _table_name_from_jsonjs(path: Path) -> str:
-    """Return table name from a .json.js filename."""
-    return path.name[: -len(".json.js")]
-
-
 def _build_export_size_report(path: Path) -> str:
     """Build a size report for exported json/json.js files."""
     names: set[str] = set()

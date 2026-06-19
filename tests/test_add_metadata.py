@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 import json
+import os
 from collections.abc import Hashable
 from pathlib import Path
 from typing import Any
@@ -633,15 +634,16 @@ class TestLoadTablesFromFolder:
     ):
         """Metadata folder loading should avoid per-entity existence probes."""
         (tmp_path / "dataset.csv").write_text("id,name\nds,Dataset\n")
+        (tmp_path / "subdir").mkdir()  # non-file entry must be skipped, not probed
         calls = 0
-        original_iterdir = Path.iterdir
+        original_scandir = os.scandir
 
-        def count_iterdir(path: Path):
+        def count_scandir(path):
             nonlocal calls
             calls += 1
-            yield from original_iterdir(path)
+            return original_scandir(path)
 
-        monkeypatch.setattr(Path, "iterdir", count_iterdir)
+        monkeypatch.setattr(os, "scandir", count_scandir)
 
         tables = _load_tables_from_folder(tmp_path, ALL_ENTITIES)
 
@@ -1143,7 +1145,7 @@ class TestProcessEntityTable:
         assert not _is_missing_metadata_value({"label": "Tag"})
         assert _existing_localized_rows(catalog.folder, Folder, ["id"], {"f1"}) == []
 
-        _merge_localized_fields(catalog.folder, Folder, [{"id": "f1"}], ["id"])
+        _merge_localized_fields(catalog.folder, Folder, [{"id": "f1"}], ["id"], [])
 
         catalog.folder.add(Folder(id="f1", name="Folder"))
         _merge_localized_fields(
@@ -1155,6 +1157,7 @@ class TestProcessEntityTable:
                 {"id": "f1", "name:fr": "Dossier", "description:fr": "Desc"},
             ],
             ["id"],
+            [],
         )
         row = catalog.folder.df.to_dicts()[0]
         assert row["name:fr"] == "Dossier"

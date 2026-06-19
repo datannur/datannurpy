@@ -102,16 +102,17 @@ class EnumerationManager:
         )
         self._catalog.enumeration.add(enumeration)
 
-        # Create values
-        for val in sorted(values):
-            value_id = build_value_id(enumeration_id, val)
-            self._catalog.value.add(
+        # Create values in a single batch instead of one rebuild per value
+        self._catalog.value.add_all(
+            [
                 Value(
-                    id=value_id,
+                    id=build_value_id(enumeration_id, val),
                     enumeration_id=enumeration_id,
                     value=val,
                 )
-            )
+                for val in sorted(values)
+            ]
+        )
 
         self._enumeration_index[signature] = enumeration_id
         return enumeration_id

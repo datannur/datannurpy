@@ -1,5 +1,11 @@
 # datannurpy
 
+## 0.26.7 (2026-06-19)
+
+- perf: faster metadata loading via jsonjsdb 0.9.0 partial reads and single-rebuild upserts, cheaper localized-column detection, and a single metadata folder scan
+- perf: batch preview flags, skipped-dataset updates, and enumeration value creation to avoid per-row table rebuilds
+- fix: match local/UNC time-series `_match_path` keys with `[YYYY]` placeholders by adding an absolute normalized series candidate, mirroring the canonical remote URL candidate already used for SFTP
+
 ## 0.26.6 (2026-06-17)
 
 - add: support `auto_enumerations: false` to keep value frequencies while disabling automatic enumeration creation and variable links

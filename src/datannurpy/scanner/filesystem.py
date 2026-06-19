@@ -148,26 +148,6 @@ class FileSystem:
             finally:
                 shutil.rmtree(tmp_dir, ignore_errors=True)
 
-    @contextmanager
-    def ensure_local_partial(
-        self, path: str, max_bytes: int
-    ) -> Generator[Path, None, None]:
-        """Download only the first N bytes of a file to a local temp file.
-
-        Useful for reading file headers (SAS/SPSS/Stata) without full download.
-        """
-        full_path = self._full_path(path)
-        suffix = Path(path).suffix
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-            tmp_path = Path(tmp.name)
-        try:
-            with self.fs.open(full_path, "rb") as f:
-                content = f.read(max_bytes)
-            tmp_path.write_bytes(content)
-            yield tmp_path
-        finally:
-            tmp_path.unlink(missing_ok=True)
-
     def to_path(self, path: str) -> Path:
         """Convert filesystem path to Path object (local only)."""
         if not self.is_local:

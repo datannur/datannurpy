@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import re
 import stat
 import sys
@@ -190,7 +191,9 @@ def _validate_entity_table(
     else:
         existing_ids = set()
 
-    # Check for empty required values in each row (for new entities only)
+    # Check for empty required values in each row (for new entities only).
+    # "name" can be inferred from "id" for variables; id is checked separately above.
+    check_fields = check_required - {"id"}
     rows = df.to_dict(orient="records")
     for row_idx, row in enumerate(rows):
         row_data = _convert_row_to_dict(row, entity_class)
@@ -204,8 +207,6 @@ def _validate_entity_table(
             continue
 
         # For new entities, check required fields have values
-        # "name" can be inferred from "id" for variables
-        check_fields = check_required - {"id"}  # id already checked above
         missing_values = [f for f in check_fields if f not in row_data]
         if missing_values:
             missing_str = ", ".join(sorted(missing_values))
@@ -300,9 +301,14 @@ def _load_tables_from_folder(
 ) -> dict[str, tuple[pd.DataFrame, str]]:
     """Load entity files from a folder. Returns dict of (DataFrame, filename)."""
     tables: dict[str, tuple[pd.DataFrame, str]] = {}
-    files_by_name = {
-        path.name: path for path in folder_path.iterdir() if path.is_file()
-    }
+    # os.scandir reuses the directory read's entry type, so is_file() costs no extra
+    # stat round-trip per file (unlike Path.iterdir + Path.is_file) — matters on
+    # shared/network filesystems where each stat is a latency-bound round-trip.
+    files_by_name: dict[str, Path] = {}
+    with os.scandir(folder_path) as entries:
+        for entry in entries:
+            if entry.is_file():
+                files_by_name[entry.name] = folder_path / entry.name
 
     for entity_name in allowed_entities:
         for ext in SUPPORTED_EXTENSIONS:
@@ -494,20 +500,9 @@ def _resolve_relation_list(existing_list: list[str], new_list: list[str]) -> lis
 
 def _is_truthy_delete(value: Any) -> bool:
     """Return whether a metadata _delete value is truthy."""
-    if isinstance(value, bool):
-        return value
-    if value is None:
+    if _is_missing_metadata_value(value):
         return False
-
-    import pandas as pd
-
-    if not isinstance(value, (list, dict)) and bool(pd.isna(value)):
-        return False
-    if isinstance(value, (int, float)) and not isinstance(value, bool):
-        return value != 0
-    if isinstance(value, str):
-        return value.strip().lower() in {"1", "true", "yes", "y"}
-    return bool(value)
+    return _parse_bool_field(value)
 
 
 def _parse_bool_field(value: Any) -> bool:
@@ -613,7 +608,9 @@ def _is_missing_metadata_value(value: Any) -> bool:
     return bool(pd.isna(value))
 
 
-def _localized_field_columns(columns: list[Hashable], entity_class: type) -> list[str]:
+def _localized_field_columns(
+    columns: Iterable[Hashable], entity_class: type
+) -> list[str]:
     """Return localized metadata columns such as name:fr or description:fr."""
     valid_fields = _get_field_names(entity_class)
     localized: list[str] = []
@@ -632,18 +629,28 @@ def _localized_field_columns(columns: list[Hashable], entity_class: type) -> lis
 def _merge_localized_fields(
     catalog_table: Any,
     entity_class: type,
-    rows: list[dict[str, Any]],
+    rows: list[dict[Hashable, Any]],
     key_fields: list[str],
+    existing_rows: list[dict[str, Any]],
 ) -> None:
     """Preserve localized metadata columns that are outside dataclass fields."""
-    localized_columns = _localized_field_columns(
-        [column for row in rows for column in row], entity_class
-    )
+    # Deduplicate column names before matching so the regex runs once per distinct
+    # column instead of once per cell, and skip the string-keying round-trip below
+    # entirely when no localized column is present (the common case).
+    seen: set[str] = set()
+    candidate_columns: list[str] = []
+    for row in (*existing_rows, *rows):
+        for column in row:
+            name = str(column)
+            if name not in seen:
+                seen.add(name)
+                candidate_columns.append(name)
+    localized_columns = _localized_field_columns(candidate_columns, entity_class)
     if not localized_columns or catalog_table.df.is_empty():
         return
 
     records_by_key: dict[tuple[str, ...], dict[str, Any]] = {}
-    for row in rows:
+    for row in existing_rows + _string_keyed_rows(rows):
         key_values: list[str] = []
         for key_field in key_fields:
             value = row.get(key_field)
@@ -788,17 +795,14 @@ def _process_standard_table(
 ) -> tuple[int, int]:
     """Process an id-keyed entity table in batch mode.
 
-    Builds an in-memory lookup of existing entities, merges all rows, then
-    applies a single remove_all + add_all per group (O(N) instead of O(N²)).
+    Reconstructs only the touched rows (get_many), merges all rows, then applies
+    a single upsert_all per group (O(N) instead of O(N²)).
     """
     entity_class = ENTITY_CLASSES[entity_name]
     catalog_table = _get_catalog_table(catalog, entity_name)
     assert catalog_table is not None  # entity_name is always valid
 
-    existing_map: dict[str, Any] = {e.id: e for e in catalog_table.all()}
-    updated_by_id: dict[str, Any] = {}
-    new_by_id: dict[str, Any] = {}
-
+    converted: list[tuple[str, dict[str, Any]]] = []
     for row in rows:
         row_data = _convert_row_to_dict(row, entity_class)
         entity_id = row_data.get("id")
@@ -811,6 +815,16 @@ def _process_standard_table(
         if entity_name == "variable" and "name" not in row_data:
             row_data["name"] = entity_id.split("---")[-1]
 
+        converted.append((entity_id, row_data))
+
+    # Reconstruct only the touched rows (get_many) instead of the whole table (all)
+    existing_map: dict[str, Any] = {
+        e.id: e for e in catalog_table.get_many([eid for eid, _ in converted])
+    }
+    updated_by_id: dict[str, Any] = {}
+    new_by_id: dict[str, Any] = {}
+
+    for entity_id, row_data in converted:
         existing = existing_map.get(entity_id)
         if existing is not None:
             # Mutate in-place (sets _seen, merges list fields, overrides scalars)
@@ -841,17 +855,17 @@ def _process_standard_table(
         catalog_table, entity_class, ["id"], set(updated_by_id)
     )
 
-    if updated_by_id:
-        catalog_table.remove_all(list(updated_by_id.keys()))
-        catalog_table.add_all(list(updated_by_id.values()))
-    if new_by_id:
-        catalog_table.add_all(list(new_by_id.values()))
+    # Single insert-or-replace rebuild instead of remove_all + add_all + add_all
+    upserts = list(updated_by_id.values()) + list(new_by_id.values())
+    if upserts:
+        catalog_table.upsert_all(upserts)
 
     _merge_localized_fields(
         catalog_table,
         entity_class,
-        existing_localized_rows + _string_keyed_rows(rows),
+        rows,
         ["id"],
+        existing_localized_rows,
     )
 
     return created, updated
@@ -862,7 +876,6 @@ def _process_value_table(
     rows: list[dict[Hashable, Any]],
 ) -> tuple[int, int]:
     """Batch-process the value table (composite key: enumeration_id + value)."""
-    existing_map: dict[str, Value] = {v.id: v for v in catalog.value.all()}
     enumeration_ids: set[str] = (
         set(catalog.enumeration.df["id"].to_list())
         if (
@@ -872,22 +885,29 @@ def _process_value_table(
         else set()
     )
 
-    updated_by_id: dict[str, Value] = {}
-    new_by_id: dict[str, Value] = {}
-    enumerations_to_mark: set[str] = set()
-
+    parsed: list[tuple[str, str, str, Any]] = []
     for row in rows:
         row_data = _convert_row_to_dict(row, Value)
         enumeration_id = row_data.get("enumeration_id")
         value_str = row_data.get("value")
         if enumeration_id is None or value_str is None:
             continue
-
         enumeration_id = _normalize_key_value(enumeration_id)
         value_str = _normalize_key_value(value_str)
         value_id = build_value_id(enumeration_id, value_str)
-        description = row_data.get("description")
+        parsed.append(
+            (value_id, enumeration_id, value_str, row_data.get("description"))
+        )
 
+    # Reconstruct only the touched rows (get_many) instead of the whole table (all)
+    existing_map: dict[str, Value] = {
+        v.id: v for v in catalog.value.get_many([p[0] for p in parsed])
+    }
+    updated_by_id: dict[str, Value] = {}
+    new_by_id: dict[str, Value] = {}
+    enumerations_to_mark: set[str] = set()
+
+    for value_id, enumeration_id, value_str, description in parsed:
         if value_id in existing_map:
             target = existing_map[value_id]
             if description is not None:
@@ -912,19 +932,19 @@ def _process_value_table(
         catalog.value, Value, ["enumeration_id", "value"], set(updated_by_id)
     )
 
-    if updated_by_id:
-        catalog.value.remove_all(list(updated_by_id.keys()))
-        catalog.value.add_all(list(updated_by_id.values()))
-    if new_by_id:
-        catalog.value.add_all(list(new_by_id.values()))
+    # Single insert-or-replace rebuild instead of remove_all + add_all + add_all
+    upserts = list(updated_by_id.values()) + list(new_by_id.values())
+    if upserts:
+        catalog.value.upsert_all(upserts)
     if enumerations_to_mark:
         catalog.enumeration.update_many(list(enumerations_to_mark), _seen=True)
 
     _merge_localized_fields(
         catalog.value,
         Value,
-        existing_localized_rows + _string_keyed_rows(rows),
+        rows,
         ["enumeration_id", "value"],
+        existing_localized_rows,
     )
 
     return created, updated
@@ -935,23 +955,28 @@ def _process_frequency_table(
     rows: list[dict[Hashable, Any]],
 ) -> tuple[int, int]:
     """Batch-process the frequency table (composite key: variable_id + value)."""
-    existing_map: dict[str, Frequency] = {f.id: f for f in catalog.frequency.all()}
-
-    updated_by_id: dict[str, Frequency] = {}
-    new_by_id: dict[str, Frequency] = {}
-
+    parsed: list[tuple[str, str, str, int]] = []
     for row in rows:
         row_data = _convert_row_to_dict(row, Frequency)
         variable_id = row_data.get("variable_id")
         value_str = row_data.get("value")
         if variable_id is None or value_str is None:
             continue
-
         variable_id = _normalize_key_value(variable_id)
         value_str = _normalize_key_value(value_str)
         freq_id = build_frequency_id(variable_id, value_str)
-        freq_count = int(row_data.get("frequency", 0))
+        parsed.append(
+            (freq_id, variable_id, value_str, int(row_data.get("frequency", 0)))
+        )
 
+    # Reconstruct only the touched rows (get_many) instead of the whole table (all)
+    existing_map: dict[str, Frequency] = {
+        f.id: f for f in catalog.frequency.get_many([p[0] for p in parsed])
+    }
+    updated_by_id: dict[str, Frequency] = {}
+    new_by_id: dict[str, Frequency] = {}
+
+    for freq_id, variable_id, value_str, freq_count in parsed:
         if freq_id in existing_map:
             target = existing_map[freq_id]
             target.frequency = freq_count
@@ -972,38 +997,27 @@ def _process_frequency_table(
         catalog.frequency, Frequency, ["variable_id", "value"], set(updated_by_id)
     )
 
-    if updated_by_id:
-        catalog.frequency.remove_all(list(updated_by_id.keys()))
-        catalog.frequency.add_all(list(updated_by_id.values()))
-    if new_by_id:
-        catalog.frequency.add_all(list(new_by_id.values()))
+    # Single insert-or-replace rebuild instead of remove_all + add_all + add_all
+    upserts = list(updated_by_id.values()) + list(new_by_id.values())
+    if upserts:
+        catalog.frequency.upsert_all(upserts)
 
     _merge_localized_fields(
         catalog.frequency,
         Frequency,
-        existing_localized_rows + _string_keyed_rows(rows),
+        rows,
         ["variable_id", "value"],
+        existing_localized_rows,
     )
 
     return created, updated
 
 
 def _get_catalog_table(catalog: Catalog, entity_name: str) -> Any | None:
-    """Get the appropriate jsonjsdb table from catalog for an entity type."""
-    mapping = {
-        "folder": catalog.folder,
-        "dataset": catalog.dataset,
-        "variable": catalog.variable,
-        "enumeration": catalog.enumeration,
-        "value": catalog.value,
-        "frequency": catalog.frequency,
-        "organization": catalog.organization,
-        "tag": catalog.tag,
-        "doc": catalog.doc,
-        "concept": catalog.concept,
-        "configFilter": catalog.configFilter,
-    }
-    return mapping.get(entity_name)
+    """Get the jsonjsdb table for an entity type (attribute names match entity names)."""
+    if entity_name not in ENTITY_CLASSES:
+        return None
+    return getattr(catalog, entity_name)
 
 
 def _load_tables(
@@ -1078,43 +1092,41 @@ class LoadedDatasetRef(NamedTuple):
     folder_id: str | None
 
 
+def _iter_dataset_match_records(
+    sources: list[dict[str, tuple[pd.DataFrame, str]]] | None,
+) -> Iterable[tuple[str, str, str | None]]:
+    """Yield (match_path, id, folder_id) for pre-loaded datasets with a match key."""
+    for source in sources or []:
+        entry = source.get("dataset")
+        if entry is None:
+            continue
+        df = entry[0]
+        if "_match_path" not in df.columns or "id" not in df.columns:
+            continue
+        for record in df.to_dict(orient="records"):
+            mp = _optional_str(record.get("_match_path"))
+            row_id = _optional_str(record.get("id"))
+            if mp is not None and row_id is not None:
+                yield mp, row_id, _optional_str(record.get("folder_id"))
+
+
 def _build_dataset_match_index(
     sources: list[dict[str, tuple[pd.DataFrame, str]]] | None,
 ) -> dict[str, LoadedDatasetRef]:
     """Build {abs_match_path: LoadedDatasetRef} from pre-loaded metadata sources."""
-    index: dict[str, LoadedDatasetRef] = {}
-    for source in sources or []:
-        entry = source.get("dataset")
-        if entry is not None:
-            df = entry[0]
-            if "_match_path" in df.columns and "id" in df.columns:
-                for record in df.to_dict(orient="records"):
-                    mp = _optional_str(record.get("_match_path"))
-                    row_id = _optional_str(record.get("id"))
-                    if mp is not None and row_id is not None:
-                        index[mp] = LoadedDatasetRef(
-                            id=row_id,
-                            folder_id=_optional_str(record.get("folder_id")),
-                        )
-    return index
+    return {
+        mp: LoadedDatasetRef(id=row_id, folder_id=folder_id)
+        for mp, row_id, folder_id in _iter_dataset_match_records(sources)
+    }
 
 
 def _build_dataset_match_paths_by_id(
     sources: list[dict[str, tuple[pd.DataFrame, str]]] | None,
 ) -> dict[str, str]:
     """Build {dataset_id: abs_match_path} from pre-loaded metadata sources."""
-    match_paths: dict[str, str] = {}
-    for source in sources or []:
-        entry = source.get("dataset")
-        if entry is not None:
-            df = entry[0]
-            if "_match_path" in df.columns and "id" in df.columns:
-                for record in df.to_dict(orient="records"):
-                    mp = _optional_str(record.get("_match_path"))
-                    row_id = _optional_str(record.get("id"))
-                    if mp is not None and row_id is not None:
-                        match_paths[row_id] = mp
-    return match_paths
+    return {
+        row_id: mp for mp, row_id, _folder_id in _iter_dataset_match_records(sources)
+    }
 
 
 def _optional_str(value: Any) -> str | None:
@@ -1131,11 +1143,7 @@ def find_loaded_dataset_by_match_path(
     catalog: Catalog, abs_match_path: str
 ) -> LoadedDatasetRef | None:
     """Return id/folder_id of pre-loaded dataset matching abs_match_path."""
-    if catalog._dataset_match_index is None:
-        catalog._dataset_match_index = _build_dataset_match_index(
-            catalog._loaded_metadata
-        )
-    return catalog._dataset_match_index.get(normalize_match_key(abs_match_path))
+    return find_loaded_dataset_by_match_paths(catalog, (abs_match_path,))
 
 
 def find_loaded_dataset_by_match_paths(
@@ -1173,7 +1181,7 @@ def _apply_config_table(
         rid = _optional_str(row.get("id"))
         val = row.get("value")
         if rid is not None:
-            if val is None or (isinstance(val, float) and val != val):
+            if _is_missing_metadata_value(val):
                 val = ""
             catalog.config.add(Config(id=rid, value=str(val)))
             count += 1
