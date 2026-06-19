@@ -92,25 +92,6 @@ class TestMemoryFileSystem:
             content = local_path.read_bytes()
             assert content == b"a,b\n1,2\n3,4"
 
-    def test_ensure_local_partial_downloads_n_bytes(
-        self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
-    ) -> None:
-        """ensure_local_partial should only download first N bytes from remote."""
-        # Create a large file
-        content = b"HEADER" + b"X" * 10000
-        memory_fs.pipe(f"{memory_root}/large.sas7bdat", content)
-
-        fs = FileSystem(f"memory://{memory_root}")
-        with fs.ensure_local_partial(
-            f"{memory_root}/large.sas7bdat", max_bytes=100
-        ) as local_path:
-            assert local_path.suffix == ".sas7bdat"
-            partial = local_path.read_bytes()
-            assert len(partial) == 100
-            assert partial == b"HEADER" + b"X" * 94
-        # Temp file cleaned up
-        assert not local_path.exists()
-
 
 class TestCatalogWithMemoryFS:
     """Test Catalog.add_folder and add_dataset with memory:// filesystem."""

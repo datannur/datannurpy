@@ -11,13 +11,11 @@ import pyarrow as pa
 import pytest
 
 from datannurpy import Catalog, EntityMetadata, Folder
-from datannurpy import preview as preview_mod
 from datannurpy.errors import ConfigError
 from datannurpy.preview import (
     _dataset_id_from_preview_file,
-    _existing_preview_ids,
+    _existing_preview_ids_from_paths,
     _json_safe_object,
-    _preview_files_exist,
     _preview_label,
     _remove_stale_preview_files,
     normalize_preview_df,
@@ -425,27 +423,24 @@ class TestCatalogWrite:
         _remove_stale_preview_files(list(preview_dir.iterdir()), {"keep"})
 
         assert (preview_dir / "keep.json").exists()
-        assert not _preview_files_exist(preview_dir, "keep")
+        assert "keep" not in _existing_preview_ids_from_paths(
+            list(preview_dir.iterdir())
+        )
         (preview_dir / "keep.json.js").write_text("jsonjs.data['keep'] = []")
-        assert _preview_files_exist(preview_dir, "keep")
+        assert "keep" in _existing_preview_ids_from_paths(list(preview_dir.iterdir()))
         (preview_dir / "ignored").mkdir()
         (preview_dir / "ignored.txt").write_text("ignore me")
         (preview_dir / "partial.json").write_text("[]")
-        assert _existing_preview_ids(preview_dir) == {"keep"}
+        assert _existing_preview_ids_from_paths(list(preview_dir.iterdir())) == {"keep"}
         assert not nested.exists()
 
-        assert _existing_preview_ids(tmp_path / "missing-preview") == set()
         assert not (preview_dir / "stale.txt").exists()
         assert _dataset_id_from_preview_file(Path("stale.txt")) is None
 
     def test_sync_preview_exports_scans_existing_preview_dir_once(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ):
-        """Preview sync does not probe preview files for each dataset."""
-
-        def fail_preview_probe(preview_dir: Path, dataset_id: str) -> bool:
-            raise AssertionError("preview files should not be probed")
-
+        """Preview sync scans the preview directory once, not once per dataset."""
         preview_dir = tmp_path / "preview"
         preview_dir.mkdir()
         (preview_dir / "kept.json").write_text("[]")
@@ -455,11 +450,21 @@ class TestCatalogWrite:
         catalog.dataset.add(Dataset(id="kept", preview_rows=0))
         catalog.dataset.add(Dataset(id="disabled", preview_rows=0))
         catalog.dataset.add(Dataset(id="eligible", preview_rows=1))
-        monkeypatch.setattr(preview_mod, "_preview_files_exist", fail_preview_probe)
+
+        scans = 0
+        original_iterdir = Path.iterdir
+
+        def counting_iterdir(self: Path):
+            nonlocal scans
+            scans += 1
+            return original_iterdir(self)
+
+        monkeypatch.setattr(Path, "iterdir", counting_iterdir)
 
         preview_ids = sync_preview_exports(catalog, tmp_path)
 
         assert preview_ids == {"kept"}
+        assert scans == 1  # single directory scan, not a probe per dataset
         assert (preview_dir / "kept.json").exists()
         assert (preview_dir / "kept.json.js").exists()
 
@@ -474,33 +479,21 @@ class TestCatalogWrite:
         assert not (tmp_path / "preview").exists()
 
     def test_sync_preview_exports_avoids_file_probes_without_preview_dir(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self, tmp_path: Path
     ):
-        """Preview sync avoids file probes when the preview directory is absent."""
-
-        def fail_preview_probe(preview_dir: Path, dataset_id: str) -> bool:
-            raise AssertionError("preview files should not be probed")
-
+        """Preview sync produces nothing when eligible but no preview dir/data exist."""
         catalog = Catalog()
         catalog.dataset.add(Dataset(id="eligible", preview_rows=1))
-        monkeypatch.setattr(preview_mod, "_preview_files_exist", fail_preview_probe)
 
         preview_ids = sync_preview_exports(catalog, tmp_path)
 
         assert preview_ids == set()
         assert not (tmp_path / "preview").exists()
 
-    def test_sync_preview_exports_short_circuits_when_disabled(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ):
-        """Preview sync avoids per-dataset probes when previews are disabled."""
-
-        def fail_preview_probe(preview_dir: Path, dataset_id: str) -> bool:
-            raise AssertionError("preview files should not be probed")
-
+    def test_sync_preview_exports_short_circuits_when_disabled(self, tmp_path: Path):
+        """Preview sync produces nothing when previews are disabled."""
         catalog = Catalog()
         catalog.dataset.add(Dataset(id="disabled", preview_rows=0))
-        monkeypatch.setattr(preview_mod, "_preview_files_exist", fail_preview_probe)
 
         preview_ids = sync_preview_exports(catalog, tmp_path)
 

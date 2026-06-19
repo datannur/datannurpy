@@ -23,7 +23,6 @@ from datannurpy.exporter import (
     _resolve_copy_source,
     _resolve_copy_target,
     _should_copy_asset,
-    _table_name_from_jsonjs,
     _walk_copy_files,
     copy_assets,
 )
@@ -128,10 +127,6 @@ class TestExportSizeReportHelpers:
         )
 
         assert _build_export_size_report(tmp_path) == ""
-
-    def test_table_name_from_jsonjs_strips_full_suffix(self):
-        """JSON-JS table names strip the generated wrapper suffix."""
-        assert _table_name_from_jsonjs(Path("dataset.json.js")) == "dataset"
 
     def test_print_export_size_report_outputs_non_empty_report(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]

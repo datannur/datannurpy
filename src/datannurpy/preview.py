@@ -210,30 +210,17 @@ def sync_preview_exports(catalog: Catalog, output_dir: str | Path) -> set[str]:
 
 def apply_preview_flags(catalog: Catalog, preview_ids: set[str]) -> None:
     """Mark datasets that have synchronized preview files."""
-    for dataset in catalog.dataset.all():
-        catalog.dataset.update(
-            dataset.id,
-            has_preview=1 if dataset.id in preview_ids else None,
-        )
-
-
-def _preview_files_exist(preview_dir: Path, dataset_id: str) -> bool:
-    """Return True when both preview export formats exist for a dataset."""
-    try:
-        (preview_dir / f"{dataset_id}.json").stat()
-        (preview_dir / f"{dataset_id}.json.js").stat()
-    except FileNotFoundError:
-        return False
-    return True
-
-
-def _existing_preview_ids(preview_dir: Path) -> set[str]:
-    """Return dataset ids that have both preview export formats."""
-    try:
-        paths = list(preview_dir.iterdir())
-    except FileNotFoundError:
-        return set()
-    return _existing_preview_ids_from_paths(paths)
+    df = catalog.dataset.df
+    if df.is_empty() or "id" not in df.columns:
+        return
+    # Batch the two outcomes instead of an O(N) rebuild per dataset.
+    all_ids = df["id"].to_list()
+    with_preview = [i for i in all_ids if i in preview_ids]
+    without_preview = [i for i in all_ids if i not in preview_ids]
+    if with_preview:
+        catalog.dataset.update_many(with_preview, has_preview=1)
+    if without_preview:
+        catalog.dataset.update_many(without_preview, has_preview=None)
 
 
 def _existing_preview_ids_from_paths(paths: list[Path]) -> set[str]:

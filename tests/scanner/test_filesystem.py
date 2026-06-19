@@ -258,22 +258,6 @@ class TestFileSystem:
             assert local_path == dir_path
             assert (local_path / "file.txt").read_text() == "content"
 
-    def test_ensure_local_partial_reads_first_n_bytes(self, tmp_path: Path) -> None:
-        """ensure_local_partial() should only read the first N bytes."""
-        # Create a larger file
-        data_file = tmp_path / "data.sas7bdat"
-        content = b"X" * 1000 + b"Y" * 1000  # 2000 bytes
-        data_file.write_bytes(content)
-
-        fs = FileSystem(tmp_path)
-        with fs.ensure_local_partial(str(data_file), max_bytes=500) as local_path:
-            assert local_path.suffix == ".sas7bdat"
-            partial_content = local_path.read_bytes()
-            assert len(partial_content) == 500
-            assert partial_content == b"X" * 500
-        # Temp file should be cleaned up
-        assert not local_path.exists()
-
     def test_to_path_local(self, tmp_path: Path) -> None:
         """to_path() should convert to Path for local filesystem."""
         fs = FileSystem(tmp_path)

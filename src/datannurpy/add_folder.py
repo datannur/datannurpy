@@ -364,19 +364,18 @@ def add_folder(
 
     # Structure-only mode: create/update datasets without scanning
     if resolved_depth == "dataset":
-        # Skip unchanged datasets
-        skip_seen_ids: list[str] = []
+        # Skip unchanged datasets (single batch upsert instead of per-dataset update)
+        skipped: list[Dataset] = []
         for info in plan.to_skip:
             existing = plan.existing_by_path.get(str(info.path))
             assert existing is not None
-            skip_seen_ids.append(existing.id)
+            existing._seen = True
+            existing.preview_rows = 0
+            existing._match_path = str(info.path)
+            skipped.append(existing)
             log_skip(_display_dataset_label(info, root), q)
-        if skip_seen_ids:
-            catalog.dataset.update_many(skip_seen_ids, _seen=True, preview_rows=0)
-            for info in plan.to_skip:
-                existing = plan.existing_by_path.get(str(info.path))
-                assert existing is not None
-                catalog.dataset.update(existing.id, _match_path=str(info.path))
+        if skipped:
+            catalog.dataset.upsert_all(skipped)
 
         # Create or update modified datasets
         for info in plan.to_scan:
@@ -480,21 +479,20 @@ def add_folder(
         )
         return
 
-    # Handle skipped datasets (mark as seen)
+    # Handle skipped datasets (single batch upsert instead of per-dataset update)
     skip_seen_ids: list[str] = []
+    skipped: list[Dataset] = []
     for info in plan.to_skip:
         existing = plan.existing_by_path.get(str(info.path))
         assert existing is not None  # compute_scan_plan guarantees this
+        existing._seen = True
+        existing.preview_rows = preview_limit
+        existing._match_path = str(info.path)
         skip_seen_ids.append(existing.id)
+        skipped.append(existing)
         log_skip(_display_dataset_label(info, root), q)
-    if skip_seen_ids:
-        catalog.dataset.update_many(
-            skip_seen_ids, _seen=True, preview_rows=preview_limit
-        )
-        for info in plan.to_skip:
-            existing = plan.existing_by_path.get(str(info.path))
-            assert existing is not None
-            catalog.dataset.update(existing.id, _match_path=str(info.path))
+    if skipped:
+        catalog.dataset.upsert_all(skipped)
         catalog.enumeration_manager.mark_datasets_seen(skip_seen_ids)
 
     # Process datasets to scan
