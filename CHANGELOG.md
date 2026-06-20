@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.27.0 (2026-06-20)
+
+- add: extract geo metadata from GeoPackage layers into new dataset fields — `crs` and `geometry_type` (from `gpkg_*` tables, no dependency), plus a WGS84 `bbox` string (reprojected via the optional `geo` extra, pyproj)
+
 ## 0.26.7 (2026-06-19)
 
 - perf: faster metadata loading via jsonjsdb 0.9.0 partial reads and single-rebuild upserts, cheaper localized-column detection, and a single metadata folder scan

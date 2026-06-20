@@ -624,6 +624,13 @@ def _add_database_impl(
         # Resolve FK refs
         resolve_foreign_keys(catalog, raw_fk_refs, table_to_dataset_id)
 
+    # GeoPackage: enrich datasets with CRS / geometry type from gpkg_* tables.
+    # Reads plain SQL on the open SQLite connection; no-op for non-GeoPackage DBs.
+    if backend_name == "sqlite":
+        from .scanner.geopackage import apply_geopackage_geo
+
+        apply_geopackage_geo(catalog, con, backend_name, db_name)
+
     # Close connection if we created it (string connection)
     if isinstance(connection, str):
         close_connection(con)

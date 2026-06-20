@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "datannurpy"
-version = "0.26.7"
+version = "0.27.0"
 description = "Scan files and databases into ready-to-use datannur catalogs"
 authors = [{ name = "datannur" }]
 readme = "README.md"
@@ -51,6 +51,7 @@ stat = [
   "pyreadstat>=1.2.0,<=1.2.8; python_version < '3.10'",
   "pyreadstat>=1.2.0; python_version >= '3.10'",
 ]
+geo = ["pyproj>=3.4"]
 s3 = ["s3fs>=2024.0; python_version >= '3.10'"]
 azure = ["adlfs>=2024.0; python_version >= '3.10'"]
 gcs = ["gcsfs>=2024.0; python_version >= '3.10'"]
@@ -77,6 +78,7 @@ dev = [
   "oracledb>=2.0.0",
   "paramiko>=5.0",
   "pyiceberg>=0.10.0",
+  "pyproj>=3.4",
   "pyreadstat>=1.2.0,<=1.2.8; python_version < '3.10'",
   "pyreadstat>=1.2.0; python_version >= '3.10'",
   "urllib3>=2.7.0; python_version >= '3.10'",
