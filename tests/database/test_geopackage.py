@@ -11,12 +11,8 @@ from typing import TYPE_CHECKING, cast
 import pytest
 
 from datannurpy import Catalog, EntityMetadata
-from datannurpy.scanner import geopackage as geopackage_mod
 from datannurpy.scanner.geopackage import (
     _build_crs,
-    _normalize_geometry_type,
-    _wgs84_bbox,
-    _wgs84_transformer,
     apply_geopackage_geo,
     extract_geopackage_geo,
 )
@@ -231,58 +227,6 @@ class TestUnitHelpers:
         assert _build_crs(None, 2056) is None
         assert _build_crs("EPSG", None) is None
         assert _build_crs("NONE", 0) is None
-
-    def test_normalize_geometry_type(self) -> None:
-        assert _normalize_geometry_type("POLYGON") == "polygon"
-        assert _normalize_geometry_type("MultiPolygon") == "multipolygon"
-        assert _normalize_geometry_type("GEOMETRY") is None
-        assert _normalize_geometry_type("CIRCULARSTRING") is None
-        assert _normalize_geometry_type(None) is None
-
-
-class _RaisingTransformer:
-    def transform_bounds(self, *_args: float) -> tuple[float, ...]:
-        raise RuntimeError("boom")
-
-
-class _NonFiniteTransformer:
-    def transform_bounds(self, *_args: float) -> tuple[float, float, float, float]:
-        return (float("inf"), 0.0, 1.0, 1.0)
-
-
-class TestBboxHelpers:
-    def test_incomplete_bounds_is_none(self) -> None:
-        assert _wgs84_bbox("EPSG:4326", None, 1.0, 2.0, 3.0, cache={}) is None
-
-    def test_non_numeric_bounds_is_none(self) -> None:
-        assert _wgs84_bbox("EPSG:4326", "x", 1.0, 2.0, 3.0, cache={}) is None
-
-    def test_unknown_crs_is_none(self) -> None:
-        assert _wgs84_bbox("EPSG:99999999", *_LV95_BOUNDS, cache={}) is None
-
-    def test_invalid_crs_transformer_is_none(self) -> None:
-        assert _wgs84_transformer("not-a-crs") is None
-
-    def test_transformer_reused_via_cache(self) -> None:
-        cache: dict[str, object] = {}
-        first = _wgs84_bbox("EPSG:2056", *_LV95_BOUNDS, cache=cache)
-        second = _wgs84_bbox("EPSG:2056", *_LV95_BOUNDS, cache=cache)
-        assert first == second
-        assert list(cache) == ["EPSG:2056"]  # transformer built once, then reused
-
-    def test_transform_failure_is_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(
-            geopackage_mod, "_wgs84_transformer", lambda _crs: _RaisingTransformer()
-        )
-        assert _wgs84_bbox("EPSG:2056", *_LV95_BOUNDS, cache={}) is None
-
-    def test_non_finite_reprojection_is_none(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        monkeypatch.setattr(
-            geopackage_mod, "_wgs84_transformer", lambda _crs: _NonFiniteTransformer()
-        )
-        assert _wgs84_bbox("EPSG:2056", *_LV95_BOUNDS, cache={}) is None
 
 
 class _FakeResult:

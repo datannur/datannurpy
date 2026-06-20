@@ -14,6 +14,7 @@ import polars as pl
 
 from ..schema import Variable
 from .csv import scan_csv
+from .geo import extract_geoparquet_geo
 from .excel import (
     _MAX_PREVIEW_ROWS as _EXCEL_PREVIEW_ROWS,
     _XLS_SNIFF_BYTES,
@@ -48,6 +49,10 @@ class ScanResult:
     name: str | None = None  # Dataset name from metadata (Delta, Iceberg)
     data_size: int | None = None
     preview: pl.DataFrame | None = None
+    # Geo metadata (GeoParquet, …); None for non-spatial datasets.
+    crs: str | None = None
+    geometry_type: str | None = None
+    bbox: str | None = None
 
 
 def scan_file(
@@ -149,6 +154,8 @@ def _scan_local(
             return_preview=True,
             quiet=quiet,
         )
+        # GeoParquet keys (crs, geometry_type, bbox) match ScanResult's fields.
+        geo = extract_geoparquet_geo(path) if delivery_format == "parquet" else None
         return ScanResult(
             variables=variables,
             nb_row=nb_row,
@@ -158,6 +165,7 @@ def _scan_local(
             name=metadata.name if metadata else None,
             data_size=metadata.data_size if metadata else None,
             preview=preview,
+            **(geo or {}),
         )
 
     if delivery_format in ("sas", "spss", "stata"):
