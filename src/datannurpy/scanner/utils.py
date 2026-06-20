@@ -69,6 +69,7 @@ SUPPORTED_FORMATS: dict[str, str] = {
     ".sas7bdat": "sas",
     ".sav": "spss",
     ".dta": "stata",
+    ".geojson": "geojson",
 }
 
 # Directories and patterns to always exclude

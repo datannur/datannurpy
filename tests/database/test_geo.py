@@ -88,6 +88,10 @@ class TestWgs84Bbox:
     def test_non_numeric_bounds_is_none(self) -> None:
         assert wgs84_bbox("EPSG:4326", "x", 1.0, 2.0, 3.0, cache={}) is None
 
+    def test_non_finite_bounds_is_none(self) -> None:
+        # Empty layer: an infinite WGS84 extent must not pass through.
+        assert wgs84_bbox("EPSG:4326", float("inf"), 0.0, 1.0, 1.0, cache={}) is None
+
     def test_null_crs_is_none(self) -> None:
         assert wgs84_bbox(None, *_LV95_BOUNDS, cache={}) is None
 

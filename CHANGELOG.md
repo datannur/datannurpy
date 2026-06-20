@@ -3,6 +3,7 @@
 ## 0.27.0 (2026-06-20)
 
 - add: extract geo metadata into new dataset fields `crs`, `geometry_type`, and a WGS84 `bbox` string — from GeoPackage `gpkg_*` tables and GeoParquet `geo` metadata (no dependency); `bbox` reprojection uses the optional `geo` extra (pyproj)
+- add: scan GeoJSON files (`.geojson`) via the optional `geo` extra (pyogrio) — attributes get the usual schema/stats, and the layer's `crs`/`geometry_type`/`bbox` populate the dataset
 
 ## 0.26.7 (2026-06-19)
 

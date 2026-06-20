@@ -64,6 +64,8 @@ def wgs84_bbox(
         bounds = (float(min_x), float(min_y), float(max_x), float(max_y))
     except (TypeError, ValueError):
         return None
+    if any(not math.isfinite(value) for value in bounds):
+        return None  # incomplete or empty layer (inf/NaN extent)
 
     if crs == "EPSG:4326":
         # Native coordinates are already lon/lat in [west, south, east, north].
@@ -90,6 +92,21 @@ def _format_bbox(values: tuple[float, float, float, float]) -> str:
     return ",".join(f"{round(value, 6)}" for value in values)
 
 
+def build_geo_fields(
+    crs: str | None, geometry_type: object, bounds: Any
+) -> dict[str, Any]:
+    """Assemble the ``{crs, geometry_type, bbox}`` dataset contract from raw values.
+
+    ``bounds`` is a native ``(min_x, min_y, max_x, max_y)`` sequence reprojected to a
+    WGS84 ``bbox`` string, or ``None`` when no extent is available.
+    """
+    return {
+        "crs": crs,
+        "geometry_type": normalize_geometry_type(geometry_type),
+        "bbox": wgs84_bbox(crs, *bounds, cache={}) if bounds is not None else None,
+    }
+
+
 def _wgs84_transformer(crs: str) -> Transformer | None:
     """Build a pyproj transformer from ``crs`` to WGS84, or None if unavailable."""
     try:
@@ -114,21 +131,12 @@ def extract_geoparquet_geo(path: str | PathLike[str]) -> dict[str, Any] | None:
     if column is None:
         return None
 
-    crs = _projjson_crs(column.get("crs"))
-    types = column.get("geometry_types")
     # The contract carries a single geometry type; a mixed layer stays null.
-    geometry_type = (
-        normalize_geometry_type(types[0])
-        if isinstance(types, list) and len(types) == 1
-        else None
-    )
+    types = column.get("geometry_types")
+    geometry_type = types[0] if isinstance(types, list) and len(types) == 1 else None
     bbox = column.get("bbox")
-    bbox_str = (
-        wgs84_bbox(crs, *bbox, cache={})
-        if isinstance(bbox, list) and len(bbox) == 4
-        else None
-    )
-    return {"crs": crs, "geometry_type": geometry_type, "bbox": bbox_str}
+    bounds = bbox if isinstance(bbox, list) and len(bbox) == 4 else None
+    return build_geo_fields(_projjson_crs(column.get("crs")), geometry_type, bounds)
 
 
 def _geoparquet_column(path: str | PathLike[str]) -> dict[str, Any] | None:

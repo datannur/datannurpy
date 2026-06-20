@@ -15,6 +15,7 @@ import polars as pl
 from ..schema import Variable
 from .csv import scan_csv
 from .geo import extract_geoparquet_geo
+from .geo_vector import scan_geo_vector
 from .excel import (
     _MAX_PREVIEW_ROWS as _EXCEL_PREVIEW_ROWS,
     _XLS_SNIFF_BYTES,
@@ -32,6 +33,9 @@ from .utils import build_variables_from_schema
 
 _PA_PY_FILE_SYSTEM = getattr(pa_fs_module, "PyFileSystem")
 _PA_FSSPEC_HANDLER = getattr(pa_fs_module, "FSSpecHandler")
+
+# Vector geo formats scanned through pyogrio (optional ``geo`` extra).
+_VECTOR_FORMATS = ("geojson",)
 
 if TYPE_CHECKING:
     from .filesystem import FileSystem
@@ -188,6 +192,24 @@ def _scan_local(
             freq_table=freq_table,
             description=metadata.description if metadata else None,
             preview=preview,
+        )
+
+    if delivery_format in _VECTOR_FORMATS:
+        variables, nb_row, freq_table, geo, preview = scan_geo_vector(
+            path,
+            dataset_id=dataset_id,
+            freq_threshold=freq_threshold,
+            preview_rows=preview_rows,
+            return_preview=True,
+            quiet=quiet,
+            path_label=path_label,
+        )
+        return ScanResult(
+            variables=variables,
+            nb_row=nb_row,
+            freq_table=freq_table,
+            preview=preview,
+            **(geo or {}),
         )
 
     if delivery_format == "csv":
