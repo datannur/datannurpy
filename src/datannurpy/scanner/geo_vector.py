@@ -1,4 +1,4 @@
-"""Vector geo-format reader (GeoJSON, …) via pyogrio.
+"""Vector geo-format reader (GeoJSON, Shapefile, …) via pyogrio.
 
 Reads attribute columns into an Arrow table — reusing the standard
 schema/stats pipeline — and the layer's spatial metadata (CRS, geometry type,

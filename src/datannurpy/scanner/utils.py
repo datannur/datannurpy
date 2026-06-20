@@ -70,6 +70,7 @@ SUPPORTED_FORMATS: dict[str, str] = {
     ".sav": "spss",
     ".dta": "stata",
     ".geojson": "geojson",
+    ".shp": "shapefile",
 }
 
 # Directories and patterns to always exclude
