@@ -8,12 +8,14 @@ layers are read through GDAL/OGR (pyogrio), not a SQL connection.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from contextlib import nullcontext
 from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, cast
 
 from .dataset_scan import finalize_scanned_dataset, skip_unchanged
 from .errors import ConfigError
+from .scanner.database import filter_by_patterns
 from .preview import (
     PreviewRows,
     effective_preview_rows,
@@ -44,6 +46,8 @@ def add_geodatabase(
     metadata: EntityMetadata | None = None,
     *,
     depth: Depth | None = None,
+    include: Sequence[str] | None = None,
+    exclude: Sequence[str] | None = None,
     auto_enumerations: bool | None = None,
     preview_rows: PreviewRows = None,
     quiet: bool | None = None,
@@ -99,7 +103,7 @@ def add_geodatabase(
     with scan_ctx as scan_dir:
         source = str(scan_dir)
         try:
-            layers = list_geo_layers(source)
+            layers = filter_by_patterns(list_geo_layers(source), include, exclude)
         except Exception as e:
             log_error(gdb_name, e, q)
             return

@@ -15,6 +15,8 @@ Use [Scan depth](/scan-depth) to choose how much metadata datannurpy extracts. T
 | Remote SQLite | `sftp://host/path/db.sqlite`                     |
 | DuckDB     | pass an `ibis.duckdb.connect(...)` backend directly |
 
+A GeoPackage is a SQLite file, so it is scanned as a database — each layer becomes a dataset, additionally enriched with `crs`/`geometry_type`/`bbox`. See [Geospatial formats](/scanning-files#geospatial-formats).
+
 ## Basic usage
 
 ```yaml

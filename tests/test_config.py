@@ -94,6 +94,58 @@ add:
         assert any(f.id == "test_db" for f in catalog.folder.all())
         assert any(d.name == "users" for d in catalog.dataset.all())
 
+    def test_run_config_geodatabase(self, tmp_path: Path):
+        """Run a config that scans a File Geodatabase via the `geodatabase` type."""
+        pytest.importorskip("pyogrio", reason="pyogrio (geo extra) not installed")
+        from pyogrio.raw import read_arrow, write_arrow
+
+        src = tmp_path / "src.geojson"
+        src.write_text(
+            json.dumps(
+                {
+                    "type": "FeatureCollection",
+                    "features": [
+                        {
+                            "type": "Feature",
+                            "properties": {"lbl": "a"},
+                            "geometry": {
+                                "type": "Polygon",
+                                "coordinates": [
+                                    [[7.4, 46.0], [7.7, 46.0], [7.7, 46.2], [7.4, 46.0]]
+                                ],
+                            },
+                        }
+                    ],
+                }
+            )
+        )
+        _, table = read_arrow(src)
+        src.unlink()
+        gdb = tmp_path / "store.gdb"
+        for layer in ("roads", "rivers"):
+            write_arrow(
+                table,
+                gdb,
+                driver="OpenFileGDB",
+                layer=layer,
+                geometry_name="wkb_geometry",
+                geometry_type="Polygon",
+                crs="EPSG:2056",
+            )
+
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+output_dir: {tmp_path / "out"}
+quiet: true
+
+add:
+  - geodatabase: {gdb}
+""")
+        catalog = run_config(config_file)
+
+        assert sorted(str(d.name) for d in catalog.dataset.all()) == ["rivers", "roads"]
+        assert any(f.type == "geodatabase" for f in catalog.folder.all())
+
     def test_run_config_with_export_db(self, tmp_path: Path):
         """Config with output_dir should create db files."""
         data_dir = tmp_path / "data"

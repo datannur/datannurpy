@@ -89,6 +89,21 @@ class TestAddGeodatabase:
         catalog.add_geodatabase(str(tmp_path / "store.gdb"), depth="value")
         assert catalog.dataset.get_by("name", "roads") is not None
 
+    def test_include_exclude_filter_layers(self, tmp_path: Path) -> None:
+        _write_gdb(tmp_path / "store.gdb", ("roads", "rivers", "admin_zones"))
+        included = Catalog(app_path=tmp_path / "inc", quiet=True)
+        included.add_geodatabase(str(tmp_path / "store.gdb"), include=["r*"])
+        assert sorted(str(d.name) for d in included.dataset.all()) == [
+            "rivers",
+            "roads",
+        ]
+        excluded = Catalog(app_path=tmp_path / "exc", quiet=True)
+        excluded.add_geodatabase(str(tmp_path / "store.gdb"), exclude=["admin_*"])
+        assert sorted(str(d.name) for d in excluded.dataset.all()) == [
+            "rivers",
+            "roads",
+        ]
+
     def test_incremental_rerun_is_stable(self, tmp_path: Path) -> None:
         _write_gdb(tmp_path / "store.gdb", ("roads",))
         catalog = Catalog(app_path=tmp_path / "app", quiet=True)

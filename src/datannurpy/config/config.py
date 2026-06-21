@@ -16,7 +16,7 @@ from ..catalog import Catalog
 from ..errors import ConfigError
 from ..schema import EntityMetadata
 
-VALID_TYPES = {"folder", "dataset", "database"}
+VALID_TYPES = {"folder", "dataset", "database", "geodatabase"}
 METADATA_KEYS = {
     "id",
     "parent_id",
@@ -79,7 +79,8 @@ def _normalize_entry(
     # Old format: type + path/uri
     if "type" not in item:
         raise ConfigError(
-            "Each 'add' entry must have a type key (folder, dataset, or database)"
+            "Each 'add' entry must have a type key "
+            "(folder, dataset, database, or geodatabase)"
         )
     item_type = item.pop("type")
     if item_type not in VALID_TYPES:
@@ -288,6 +289,9 @@ def run_config(path: str | Path) -> Catalog:
             else:
                 dataset_path = _resolve_paths(item.pop("path"), base_dir)
             catalog.add_dataset(dataset_path, **item)
+        elif item_type == "geodatabase":
+            gdb_path = primary_value if primary_value is not None else item.pop("path")
+            catalog.add_geodatabase(_resolve_path(gdb_path, base_dir), **item)
         else:
             if primary_value is not None:
                 uri = primary_value

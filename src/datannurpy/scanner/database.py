@@ -568,6 +568,21 @@ def match_patterns(items: list[str], patterns: Sequence[str] | str) -> set[str]:
     }
 
 
+def filter_by_patterns(
+    items: list[str],
+    include: Sequence[str] | str | None,
+    exclude: Sequence[str] | str | None,
+) -> list[str]:
+    """Keep names matching any ``include`` pattern, then drop any matching ``exclude``."""
+    if include is not None:
+        included = match_patterns(items, include)
+        items = [item for item in items if item in included]
+    if exclude is not None:
+        excluded = match_patterns(items, exclude)
+        items = [item for item in items if item not in excluded]
+    return items
+
+
 def _quote_ident(name: str, backend: str) -> str:
     """Quote a SQL identifier for the given backend."""
     if backend == "mysql":
@@ -758,15 +773,7 @@ def list_tables(
             con.list_tables(database=db_schema) if db_schema else con.list_tables()
         )
 
-    if include is not None:
-        included = match_patterns(tables, include)
-        tables = [t for t in tables if t in included]
-
-    if exclude is not None:
-        excluded = match_patterns(tables, exclude)
-        tables = [t for t in tables if t not in excluded]
-
-    return sorted(tables)
+    return sorted(filter_by_patterns(tables, include, exclude))
 
 
 def list_schemas(con: ibis.BaseBackend) -> list[str]:

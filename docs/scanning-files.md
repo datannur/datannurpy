@@ -1,6 +1,6 @@
 # Scanning files
 
-Use [Scan depth](/scan-depth) to choose how much metadata datannurpy extracts. The same `depth` setting applies to `add_folder`, `add_dataset`, and `add_database`, either globally or per `add` entry.
+Use [Scan depth](/scan-depth) to choose how much metadata datannurpy extracts. The same `depth` setting applies to `add_folder`, `add_dataset`, `add_database`, and `add_geodatabase`, either globally or per `add` entry.
 
 ## Scanning files
 
@@ -89,6 +89,68 @@ add:
 ```
 
 With extras `[delta]` and `[iceberg]`, metadata (name, description, column docs) is extracted when available.
+
+## Geospatial formats
+
+datannurpy scans vector and raster geospatial files and enriches each dataset with spatial metadata. The `geo` extra provides the vector reader (pyogrio), the raster reader (rasterio), and CRS reprojection (pyproj):
+
+```bash
+pip install datannurpy[geo]
+```
+
+GeoPackage and GeoParquet are read without the extra; their `bbox` is reprojected to WGS84 only when pyproj is available.
+
+```yaml
+add:
+  # Vector and raster files are auto-detected by add_folder, like any other format
+  - folder: ./geodata          # *.geojson, *.shp, *.gml, *.kml, *.tif, *.parquet
+
+  # A single geospatial file
+  - dataset: ./geodata/parcels.shp
+
+  # A GeoPackage is a SQLite container — scanned as a database
+  - database: sqlite:///./geodata/cadastre.gpkg
+
+  # An ESRI File Geodatabase is a multi-layer container — one dataset per layer
+  - geodatabase: ./geodata/cadastre.gdb
+```
+
+| Format | Extension | Added with |
+| ------ | --------- | ---------- |
+| GeoJSON | `.geojson` | `folder` / `dataset` |
+| Shapefile | `.shp` (+ `.shx`/`.dbf`/`.prj`) | `folder` / `dataset` |
+| GML | `.gml` | `folder` / `dataset` |
+| KML | `.kml` | `folder` / `dataset` |
+| GeoTIFF (raster) | `.tif`, `.tiff` | `folder` / `dataset` |
+| GeoParquet | `.parquet` | `folder` / `dataset` |
+| GeoPackage | `.gpkg` | `database: sqlite:///…` |
+| ESRI File Geodatabase | `.gdb` | `geodatabase` |
+
+### Spatial metadata
+
+Each spatial dataset gains these fields (left null for non-spatial data):
+
+| Field | Description |
+| ----- | ----------- |
+| `crs` | Native coordinate reference system, e.g. `EPSG:2056` |
+| `geometry_type` | OGC geometry type (`point`, `polygon`, …); null for rasters and mixed layers |
+| `bbox` | Bounding box `west,south,east,north` in WGS84 (EPSG:4326), lon/lat order |
+| `spatial_resolution` | Raster pixel size in metres (projected CRS only); null for vectors |
+
+For vector layers, attribute columns become variables with the usual schema and statistics; the geometry itself is kept as an un-profiled binary variable. For rasters, each band becomes a variable (`type: band`) carrying its min/max/mean/std.
+
+### Multi-layer containers
+
+GeoPackage and File Geodatabase hold several layers, so each layer becomes its own dataset under a container folder — exactly like database tables. A GeoPackage is a SQLite file, so it is added through `database:` (`sqlite:///…`); a File Geodatabase is a GDAL directory, so it has its own `geodatabase:` entry (or `catalog.add_geodatabase(path)` in Python). Both accept `include`/`exclude` glob patterns to filter layers by name:
+
+```yaml
+add:
+  - geodatabase: ./geodata/cadastre.gdb
+    include: ["parcels_*"]      # only layers starting with parcels_
+    exclude: ["*_tmp"]
+```
+
+Geospatial sources work over [remote storage](#remote-storage) like any other file: remote Shapefiles automatically fetch their `.shx`/`.dbf`/`.prj` companions, and a remote File Geodatabase directory is downloaded before scanning.
 
 ## CSV options
 
