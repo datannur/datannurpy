@@ -68,6 +68,7 @@ def _create_dataset(
     crs: str | None = None,
     geometry_type: str | None = None,
     bbox: str | None = None,
+    spatial_resolution: float | None = None,
     fs: FileSystem | None = None,
     match_path: str | None = None,
 ) -> Dataset:
@@ -94,6 +95,7 @@ def _create_dataset(
         crs=crs,
         geometry_type=geometry_type,
         bbox=bbox,
+        spatial_resolution=spatial_resolution,
         manager_organization_id=resolved_metadata.manager_organization_id,
         owner_organization_id=resolved_metadata.owner_organization_id,
         tag_ids=resolved_metadata.tag_ids or [],
@@ -316,6 +318,7 @@ def add_dataset(
         crs=result.crs,
         geometry_type=result.geometry_type,
         bbox=result.bbox,
+        spatial_resolution=result.spatial_resolution,
         fs=fs,
         match_path=match_path,
     )

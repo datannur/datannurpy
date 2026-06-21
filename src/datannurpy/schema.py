@@ -108,6 +108,7 @@ class Dataset:
     geometry_type: str | None = None  # OGC simple-feature type, e.g. "polygon"
     # Bounding box "west,south,east,north" in WGS84 (EPSG:4326), lon/lat order.
     bbox: str | None = None
+    spatial_resolution: float | None = None  # Raster pixel size, metres (projected CRS)
     delivery_format: str | None = None
     nb_row: int | None = None
     sample_size: int | None = None

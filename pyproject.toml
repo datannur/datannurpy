@@ -51,7 +51,7 @@ stat = [
   "pyreadstat>=1.2.0,<=1.2.8; python_version < '3.10'",
   "pyreadstat>=1.2.0; python_version >= '3.10'",
 ]
-geo = ["pyproj>=3.4", "pyogrio>=0.10"]
+geo = ["pyproj>=3.4", "pyogrio>=0.10", "rasterio>=1.4"]
 s3 = ["s3fs>=2024.0; python_version >= '3.10'"]
 azure = ["adlfs>=2024.0; python_version >= '3.10'"]
 gcs = ["gcsfs>=2024.0; python_version >= '3.10'"]
@@ -80,6 +80,7 @@ dev = [
   "pyiceberg>=0.10.0",
   "pyproj>=3.4",
   "pyogrio>=0.10",
+  "rasterio>=1.4",
   "pyreadstat>=1.2.0,<=1.2.8; python_version < '3.10'",
   "pyreadstat>=1.2.0; python_version >= '3.10'",
   "urllib3>=2.7.0; python_version >= '3.10'",

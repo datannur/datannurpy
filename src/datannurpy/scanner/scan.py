@@ -15,6 +15,7 @@ import polars as pl
 from ..schema import Variable
 from .csv import scan_csv
 from .geo import extract_geoparquet_geo
+from .geo_raster import scan_geo_raster
 from .geo_vector import scan_geo_vector
 from .excel import (
     _MAX_PREVIEW_ROWS as _EXCEL_PREVIEW_ROWS,
@@ -38,6 +39,9 @@ _PA_FSSPEC_HANDLER = getattr(pa_fs_module, "FSSpecHandler")
 # the driver from the extension. Shapefile sidecars (.shx/.dbf/.prj/.cpg) are
 # unmapped, so only the .shp becomes a dataset.
 _VECTOR_FORMATS = ("geojson", "shapefile", "gml", "kml")
+# Geo formats are read by dedicated scanners (not the tabular schema path), so they
+# bypass schema-only mode — their metadata is cheap and wanted at every depth.
+_GEO_FORMATS = (*_VECTOR_FORMATS, "geotiff")
 
 if TYPE_CHECKING:
     from .filesystem import FileSystem
@@ -59,6 +63,7 @@ class ScanResult:
     crs: str | None = None
     geometry_type: str | None = None
     bbox: str | None = None
+    spatial_resolution: float | None = None
 
 
 def scan_file(
@@ -83,8 +88,9 @@ def scan_file(
         fs: Optional FileSystem for remote file access. Non-streamable formats
             (CSV, Excel, SAS/SPSS/Stata) will be downloaded to a temp file.
     """
-    # Schema-only mode: read metadata without scanning data
-    if schema_only:
+    # Schema-only mode: read metadata without scanning data. Geo formats have no
+    # tabular schema path, so they always go through their own scanners.
+    if schema_only and delivery_format not in _GEO_FORMATS:
         return _scan_schema_only(
             path,
             delivery_format,
@@ -211,6 +217,17 @@ def _scan_local(
             nb_row=nb_row,
             freq_table=freq_table,
             preview=preview,
+            **(geo or {}),
+        )
+
+    if delivery_format == "geotiff":
+        variables, nb_row, geo, spatial_resolution = scan_geo_raster(
+            path, dataset_id=dataset_id, quiet=quiet, path_label=path_label
+        )
+        return ScanResult(
+            variables=variables,
+            nb_row=nb_row,
+            spatial_resolution=spatial_resolution,
             **(geo or {}),
         )
 

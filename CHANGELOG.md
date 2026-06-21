@@ -4,6 +4,7 @@
 
 - add: extract geo metadata into new dataset fields `crs`, `geometry_type`, and a WGS84 `bbox` string — from GeoPackage `gpkg_*` tables and GeoParquet `geo` metadata (no dependency); `bbox` reprojection uses the optional `geo` extra (pyproj)
 - add: scan vector geo files — GeoJSON (`.geojson`), Shapefile (`.shp`), GML (`.gml`), KML (`.kml`) — via the optional `geo` extra (pyogrio); attributes get the usual schema/stats and the layer's `crs`/`geometry_type`/`bbox` populate the dataset (Shapefile sidecars fold into the one dataset)
+- add: scan GeoTIFF rasters (`.tif`/`.tiff`) via the optional `geo` extra (rasterio) — one variable per band (`type` `band`) with min/max/mean/std, plus the dataset's `crs`/`bbox` and a new `spatial_resolution` field (pixel size in metres for a projected CRS)
 
 ## 0.26.7 (2026-06-19)
 

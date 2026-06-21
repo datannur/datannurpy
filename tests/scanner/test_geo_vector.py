@@ -77,6 +77,18 @@ class TestScanGeoVectorViaCatalog:
         assert types["name"] == "string"
         assert types["wkb_geometry"] == "binary"
 
+    def test_schema_only_depth_still_extracts_geo(self, tmp_path: Path) -> None:
+        # Geo formats bypass the tabular schema-only path; depth="variable" must not
+        # crash and still yields the geo fields.
+        src = tmp_path / "parcels.geojson"
+        _write_geojson(src, [_polygon("a", _SQUARE)])
+        catalog = Catalog(app_path=tmp_path / "app", quiet=True)
+        catalog.add_dataset(str(src), depth="variable")
+        dataset = catalog.dataset.get_by("name", "parcels")
+        assert dataset is not None
+        assert dataset.crs == "EPSG:4326"
+        assert {v.name for v in catalog.variable.all()} == {"name", "wkb_geometry"}
+
 
 class TestShapefileViaCatalog:
     def test_reprojected_from_native_crs(self, tmp_path: Path) -> None:

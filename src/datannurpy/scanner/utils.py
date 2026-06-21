@@ -73,6 +73,8 @@ SUPPORTED_FORMATS: dict[str, str] = {
     ".shp": "shapefile",
     ".gml": "gml",
     ".kml": "kml",
+    ".tif": "geotiff",
+    ".tiff": "geotiff",
 }
 
 # Directories and patterns to always exclude
