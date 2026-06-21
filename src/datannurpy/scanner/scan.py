@@ -291,7 +291,12 @@ def _scan_with_ensure_local(
             if _looks_like_html_xls_content(f.read(_XLS_SNIFF_BYTES)):
                 _warn_html_xls(path_label or PurePath(path).name, quiet)
                 return ScanResult(variables=[], nb_row=None)
-    ctx = fs.ensure_local_dir if delivery_format in _DIR_FORMATS else fs.ensure_local
+    if delivery_format == "shapefile":
+        ctx = fs.ensure_local_siblings  # .shp needs its .shx/.dbf/.prj companions
+    elif delivery_format in _DIR_FORMATS:
+        ctx = fs.ensure_local_dir
+    else:
+        ctx = fs.ensure_local
     with ctx(str(path)) as local_path:
         return _scan_local(
             local_path,

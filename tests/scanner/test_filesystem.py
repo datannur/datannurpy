@@ -247,6 +247,35 @@ class TestFileSystem:
         # Temp file should be cleaned up
         assert not local_path.exists()
 
+    def test_ensure_local_siblings_local_fs(self, tmp_path: Path) -> None:
+        """ensure_local_siblings() returns the path directly for a local filesystem."""
+        shp = tmp_path / "parcels.shp"
+        shp.write_bytes(b"shp")
+        fs = FileSystem(tmp_path)
+        with fs.ensure_local_siblings(str(shp)) as local_path:
+            assert local_path == shp
+
+    def test_ensure_local_siblings_remote_fs(self) -> None:
+        """ensure_local_siblings() downloads same-stem companions (e.g. shapefile)."""
+        import fsspec
+
+        mem_fs = fsspec.filesystem("memory")
+        mem_fs.mkdir("/siblings")
+        for ext in ("shp", "shx", "dbf", "prj"):
+            mem_fs.pipe(f"/siblings/parcels.{ext}", ext.encode())
+        mem_fs.pipe("/siblings/other.txt", b"x")  # different stem → not fetched
+        fs = FileSystem("memory://siblings")
+        with fs.ensure_local_siblings("/siblings/parcels.shp") as local_path:
+            assert local_path.name == "parcels.shp"
+            downloaded = {p.name for p in local_path.parent.iterdir()}
+            assert downloaded == {
+                "parcels.shp",
+                "parcels.shx",
+                "parcels.dbf",
+                "parcels.prj",
+            }
+        assert not local_path.exists()  # temp cleaned up
+
     def test_ensure_local_dir_local_fs(self, tmp_path: Path) -> None:
         """ensure_local_dir() should return path directly for local filesystem."""
         dir_path = tmp_path / "mydir"

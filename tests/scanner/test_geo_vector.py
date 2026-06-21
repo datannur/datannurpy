@@ -118,6 +118,26 @@ class TestShapefileViaCatalog:
         assert [d.name for d in catalog.dataset.all()] == ["parcels"]
 
 
+class TestRemoteVector:
+    def test_remote_shapefile_fetches_sidecars(self, tmp_path: Path) -> None:
+        import fsspec
+
+        _write_ogr(
+            tmp_path / "parcels.shp", _SQUARE, driver="ESRI Shapefile", crs="EPSG:4326"
+        )
+        mem_fs = fsspec.filesystem("memory")
+        mem_fs.mkdir("/rmt_shp")
+        for f in tmp_path.iterdir():
+            if f.stem == "parcels":
+                mem_fs.upload(str(f), f"/rmt_shp/{f.name}")
+        catalog = Catalog(app_path=tmp_path / "app", quiet=True)
+        catalog.add_dataset("memory:///rmt_shp/parcels.shp")
+        dataset = catalog.dataset.get_by("name", "parcels")
+        assert dataset is not None
+        assert dataset.crs == "EPSG:4326"
+        assert dataset.nb_row == 1  # sidecars present → fully readable
+
+
 class TestGmlKmlViaCatalog:
     def test_gml_is_enriched(self, tmp_path: Path) -> None:
         _write_ogr(tmp_path / "zones.gml", _SQUARE, driver="GML", crs="EPSG:4326")

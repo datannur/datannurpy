@@ -118,6 +118,30 @@ class TestAddGeodatabase:
         assert catalog.dataset.all() == []
 
 
+class TestRemoteGeodatabase:
+    def test_remote_gdb_downloaded_and_scanned(self, tmp_path: Path) -> None:
+        import fsspec
+
+        _write_gdb(tmp_path / "store.gdb", ("roads", "rivers"), crs="EPSG:2056")
+        mem_fs = fsspec.filesystem("memory")
+        mem_fs.mkdir("/rmt_gdb")
+        mem_fs.mkdir("/rmt_gdb/store.gdb")
+        for f in (tmp_path / "store.gdb").iterdir():
+            mem_fs.upload(str(f), f"/rmt_gdb/store.gdb/{f.name}")
+        catalog = Catalog(app_path=tmp_path / "app", quiet=True)
+        catalog.add_geodatabase("memory:///rmt_gdb/store.gdb")
+        assert sorted(str(d.name) for d in catalog.dataset.all()) == ["rivers", "roads"]
+        roads = catalog.dataset.get_by("name", "roads")
+        assert roads is not None
+        assert roads.crs == "EPSG:2056"
+        assert roads.folder_id == "store"
+
+    def test_remote_non_gdb_url_rejected(self, tmp_path: Path) -> None:
+        catalog = Catalog(app_path=tmp_path / "app", quiet=True)
+        with pytest.raises(ConfigError, match="File Geodatabase"):
+            catalog.add_geodatabase("memory:///somewhere/data.parquet")
+
+
 class TestAddDatasetRejectsGeodatabase:
     def test_add_dataset_on_gdb_redirects(self, tmp_path: Path) -> None:
         _write_gdb(tmp_path / "store.gdb", ("roads",))

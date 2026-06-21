@@ -5,15 +5,15 @@ from __future__ import annotations
 import codecs
 import shutil
 import tempfile
-from contextlib import contextmanager
-from pathlib import Path, PurePath
+from contextlib import AbstractContextManager, contextmanager
+from pathlib import Path, PurePath, PurePosixPath
 from typing import IO, TYPE_CHECKING, Any
 from urllib.parse import urlsplit, urlunsplit
 
 import fsspec
 
 if TYPE_CHECKING:
-    from collections.abc import Generator, Iterator
+    from collections.abc import Callable, Generator, Iterator
 
 
 def is_remote_url(path: str | Path) -> bool:
@@ -108,45 +108,52 @@ class FileSystem:
             f.close()
 
     @contextmanager
-    def ensure_local(self, path: str) -> Generator[Path, None, None]:
-        """Ensure file is available locally, downloading if needed.
-
-        For local filesystems, yields the path directly.
-        For remote filesystems, downloads to a temp file and yields that path.
-        The temp file is automatically cleaned up after use.
-        """
+    def _local_copy(
+        self, path: str, download: Callable[[str, Path], None]
+    ) -> Generator[Path, None, None]:
+        """Yield a local copy of ``path``: the path itself when already local, or a
+        temp copy produced by ``download(remote_path, tmp_dir)`` (auto-cleaned)."""
         full_path = self._full_path(path)
         if self.is_local:
             yield Path(full_path)
-        else:
-            tmp_dir = Path(tempfile.mkdtemp())
-            tmp_path = tmp_dir / Path(path).name
-            try:
-                self.fs.download(full_path, str(tmp_path))
-                yield tmp_path
-            finally:
-                tmp_path.unlink(missing_ok=True)
-                tmp_dir.rmdir()
+            return
+        tmp_dir = Path(tempfile.mkdtemp())
+        try:
+            download(full_path, tmp_dir)
+            yield tmp_dir / PurePosixPath(full_path).name
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
 
-    @contextmanager
-    def ensure_local_dir(self, path: str) -> Generator[Path, None, None]:
-        """Ensure directory is available locally, downloading if needed.
+    def ensure_local(self, path: str) -> AbstractContextManager[Path]:
+        """Ensure a single file is available locally (downloads it if remote)."""
+        return self._local_copy(
+            path,
+            lambda src, tmp: self.fs.download(src, str(tmp / PurePosixPath(src).name)),
+        )
 
-        For local filesystems, yields the path directly.
-        For remote filesystems, downloads to a temp directory and yields that path.
-        The temp directory is automatically cleaned up after use.
+    def ensure_local_dir(self, path: str) -> AbstractContextManager[Path]:
+        """Ensure a directory is available locally (downloads it if remote)."""
+        return self._local_copy(
+            path,
+            lambda src, tmp: self.fs.download(
+                src, str(tmp / PurePosixPath(src).name), recursive=True
+            ),
+        )
+
+    def ensure_local_siblings(self, path: str) -> AbstractContextManager[Path]:
+        """Ensure a file and its same-stem siblings are local (e.g. shapefile parts).
+
+        Multi-file formats such as Shapefile (``.shp`` + ``.shx``/``.dbf``/``.prj``)
+        need their companion files alongside the main file to be readable.
         """
-        full_path = self._full_path(path)
-        if self.is_local:
-            yield Path(full_path)
-        else:
-            tmp_dir = tempfile.mkdtemp()
-            local_path = Path(tmp_dir) / Path(path).name
-            try:
-                self.fs.download(full_path, str(local_path), recursive=True)
-                yield local_path
-            finally:
-                shutil.rmtree(tmp_dir, ignore_errors=True)
+        return self._local_copy(path, self._download_siblings)
+
+    def _download_siblings(self, src: str, tmp: Path) -> None:
+        """Download ``src`` and every same-stem file beside it into ``tmp``."""
+        stem = PurePosixPath(src).stem
+        for sibling in self.fs.ls(PurePosixPath(src).parent.as_posix(), detail=False):
+            if PurePosixPath(sibling).stem == stem:
+                self.fs.download(sibling, str(tmp / PurePosixPath(sibling).name))
 
     def to_path(self, path: str) -> Path:
         """Convert filesystem path to Path object (local only)."""
