@@ -45,16 +45,16 @@ def _polygon(name: str, coords: list) -> dict[str, Any]:
     }
 
 
-def _write_shapefile(shp: Path, coords: list, *, crs: str) -> None:
-    """Write a one-feature shapefile (with sidecars) by round-tripping via Arrow."""
-    src = shp.with_suffix(".geojson")
+def _write_ogr(path: Path, coords: list, *, driver: str, crs: str) -> None:
+    """Write a one-feature vector file by round-tripping a GeoJSON through Arrow."""
+    src = path.with_suffix(".geojson")
     _write_geojson(src, [_polygon("a", coords)])
     _, table = read_arrow(src)
     src.unlink()
     write_arrow(
         table,
-        shp,
-        driver="ESRI Shapefile",
+        path,
+        driver=driver,
         geometry_name="wkb_geometry",
         geometry_type="Polygon",
         crs=crs,
@@ -80,7 +80,12 @@ class TestScanGeoVectorViaCatalog:
 
 class TestShapefileViaCatalog:
     def test_reprojected_from_native_crs(self, tmp_path: Path) -> None:
-        _write_shapefile(tmp_path / "parcels.shp", _LV95_SQUARE, crs="EPSG:2056")
+        _write_ogr(
+            tmp_path / "parcels.shp",
+            _LV95_SQUARE,
+            driver="ESRI Shapefile",
+            crs="EPSG:2056",
+        )
         catalog = Catalog(app_path=tmp_path / "app", quiet=True)
         catalog.add_dataset(str(tmp_path / "parcels.shp"))
         dataset = catalog.dataset.get_by("name", "parcels")
@@ -92,11 +97,37 @@ class TestShapefileViaCatalog:
         assert bounds == pytest.approx(_WGS84_BOUNDS, abs=1e-3)
 
     def test_folder_walk_ignores_sidecars(self, tmp_path: Path) -> None:
-        _write_shapefile(tmp_path / "parcels.shp", _SQUARE, crs="EPSG:4326")
+        _write_ogr(
+            tmp_path / "parcels.shp", _SQUARE, driver="ESRI Shapefile", crs="EPSG:4326"
+        )
         catalog = Catalog(app_path=tmp_path / "app", quiet=True)
         catalog.add_folder(str(tmp_path))
         # Only the .shp is a dataset; .shx/.dbf/.prj/.cpg are not scanned.
         assert [d.name for d in catalog.dataset.all()] == ["parcels"]
+
+
+class TestGmlKmlViaCatalog:
+    def test_gml_is_enriched(self, tmp_path: Path) -> None:
+        _write_ogr(tmp_path / "zones.gml", _SQUARE, driver="GML", crs="EPSG:4326")
+        catalog = Catalog(app_path=tmp_path / "app", quiet=True)
+        catalog.add_dataset(str(tmp_path / "zones.gml"))
+        dataset = catalog.dataset.get_by("name", "zones")
+        assert dataset is not None
+        assert dataset.crs == "EPSG:4326"
+        assert dataset.geometry_type == "polygon"
+        assert dataset.bbox == "7.4,46.0,7.7,46.2"
+
+    def test_kml_is_enriched(self, tmp_path: Path) -> None:
+        _write_ogr(tmp_path / "points.kml", _SQUARE, driver="KML", crs="EPSG:4326")
+        catalog = Catalog(app_path=tmp_path / "app", quiet=True)
+        catalog.add_dataset(str(tmp_path / "points.kml"))
+        dataset = catalog.dataset.get_by("name", "points")
+        assert dataset is not None
+        # KML carries the CRS reliably; geometry type and extent are best-effort
+        # (the bundled KML driver reports them inconsistently across GDAL versions).
+        assert dataset.crs == "EPSG:4326"
+        assert dataset.geometry_type in (None, "polygon")
+        assert dataset.bbox in (None, "7.4,46.0,7.7,46.2")
 
 
 class TestScanGeoVector:

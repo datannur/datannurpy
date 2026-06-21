@@ -71,6 +71,8 @@ SUPPORTED_FORMATS: dict[str, str] = {
     ".dta": "stata",
     ".geojson": "geojson",
     ".shp": "shapefile",
+    ".gml": "gml",
+    ".kml": "kml",
 }
 
 # Directories and patterns to always exclude

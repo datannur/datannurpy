@@ -34,9 +34,10 @@ from .utils import build_variables_from_schema
 _PA_PY_FILE_SYSTEM = getattr(pa_fs_module, "PyFileSystem")
 _PA_FSSPEC_HANDLER = getattr(pa_fs_module, "FSSpecHandler")
 
-# Vector geo formats scanned through pyogrio (optional ``geo`` extra). Shapefile
-# sidecars (.shx/.dbf/.prj/.cpg) are unmapped, so only the .shp becomes a dataset.
-_VECTOR_FORMATS = ("geojson", "shapefile")
+# Vector geo formats scanned through pyogrio (optional ``geo`` extra). pyogrio picks
+# the driver from the extension. Shapefile sidecars (.shx/.dbf/.prj/.cpg) are
+# unmapped, so only the .shp becomes a dataset.
+_VECTOR_FORMATS = ("geojson", "shapefile", "gml", "kml")
 
 if TYPE_CHECKING:
     from .filesystem import FileSystem
