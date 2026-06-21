@@ -92,7 +92,7 @@ With extras `[delta]` and `[iceberg]`, metadata (name, description, column docs)
 
 ## Geospatial formats
 
-datannurpy scans vector and raster geospatial files and enriches each dataset with spatial metadata. The `geo` extra provides the vector reader (pyogrio), the raster reader (rasterio), and CRS reprojection (pyproj):
+datannurpy scans vector and raster geospatial files and enriches each dataset with spatial metadata. The `geo` extra provides the vector reader (pyogrio), the raster reader (rasterio), CRS reprojection (pyproj), and the libraries for the ISO 19139 / STAC exports (pygeometa, pystac):
 
 ```bash
 pip install datannurpy[geo]

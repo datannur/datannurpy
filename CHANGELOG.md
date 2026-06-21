@@ -6,6 +6,7 @@
 - add: scan vector geo files — GeoJSON (`.geojson`), Shapefile (`.shp`), GML (`.gml`), KML (`.kml`) — via the optional `geo` extra (pyogrio); attributes get the usual schema/stats and the layer's `crs`/`geometry_type`/`bbox` populate the dataset (Shapefile sidecars fold into the one dataset)
 - add: scan GeoTIFF rasters (`.tif`/`.tiff`) via the optional `geo` extra (rasterio) — one variable per band (`type` `band`) with min/max/mean/std, plus the dataset's `crs`/`bbox` and a new `spatial_resolution` field (pixel size in metres for a projected CRS)
 - add: `catalog.add_geodatabase(path)` scans an ESRI File Geodatabase (`.gdb`) via the optional `geo` extra (pyogrio) — each layer becomes a dataset (with schema/stats and `crs`/`geometry_type`/`bbox`) nested under a container folder, mirroring `add_database`; works on local paths and remote URLs (SFTP/S3/…), and remote Shapefiles now download their `.shx`/`.dbf`/`.prj` companions
+- add: the `geo` extra also installs `pygeometa` and `pystac`, so the app's ISO 19139 and STAC exports work out of the box (DCAT already works via the core `rdflib`/`pyshacl`)
 
 ## 0.26.7 (2026-06-19)
 

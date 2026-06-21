@@ -39,7 +39,7 @@ pip install datannurpy[ssh]       # SFTP and SSH tunneling to remote databases
 pip install datannurpy[stat]      # SAS, SPSS, Stata
 pip install datannurpy[delta]     # Delta Lake metadata extraction
 pip install datannurpy[iceberg]   # Apache Iceberg metadata extraction
-pip install datannurpy[geo]       # GeoJSON, Shapefile, GeoTIFF, GML, KML, File Geodatabase
+pip install datannurpy[geo]       # geospatial formats + ISO 19139 / STAC exports
 
 # Cloud storage
 pip install datannurpy[s3]        # Amazon S3
