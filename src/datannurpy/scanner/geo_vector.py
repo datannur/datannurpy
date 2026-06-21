@@ -30,18 +30,29 @@ _INSTALL_HINT = (
 )
 
 
+def list_geo_layers(path: str | Path) -> list[str]:
+    """Return the layer names of a vector container (e.g. a File Geodatabase)."""
+    try:
+        from pyogrio import list_layers
+    except ImportError as e:
+        raise ImportError(_INSTALL_HINT) from e
+    return [str(name) for name in list_layers(Path(path))[:, 0]]
+
+
 def scan_geo_vector(
     path: str | Path,
     *,
     dataset_id: str,
+    layer: str | None = None,
     freq_threshold: int | None = None,
     preview_rows: int = 0,
     return_preview: bool = False,
     quiet: bool = False,
     path_label: str | None = None,
 ) -> tuple[list[Variable], int, Any, dict[str, Any] | None, pl.DataFrame | None]:
-    """Scan a vector file into (variables, nb_row, freq_table, geo, preview).
+    """Scan a vector file/layer into (variables, nb_row, freq_table, geo, preview).
 
+    ``layer`` selects a layer inside a multi-layer container (default: the first);
     ``geo`` is ``{crs, geometry_type, bbox}`` (or ``None`` on read failure); the
     geometry column itself is kept as a binary variable and skipped from stats.
     """
@@ -54,8 +65,8 @@ def scan_geo_vector(
     file_path = Path(path)
     label = path_label or file_path.name
     try:
-        info = read_info(file_path)
-        _, arrow = read_arrow(file_path)
+        info = read_info(file_path, layer=layer)
+        _, arrow = read_arrow(file_path, layer=layer)
     except Exception as e:
         log_error(label, e, quiet)
         return [], 0, None, None, None

@@ -203,7 +203,11 @@ class TestScanGeoVector:
         monkeypatch.setattr(
             pyogrio,
             "read_info",
-            lambda p: {**real_info(p), "crs": None, "total_bounds": (0, 0, 0, 0)},
+            lambda p, **kw: {
+                **real_info(p, **kw),
+                "crs": None,
+                "total_bounds": (0, 0, 0, 0),
+            },
         )
         _vars, _nb, _freq, geo, _preview = scan_geo_vector(src, dataset_id="ds")
         assert geo is not None
