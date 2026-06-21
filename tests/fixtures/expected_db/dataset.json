@@ -619,7 +619,12 @@
     "data_path": "sqlite://photovoltaik/Project",
     "crs": "EPSG:2056",
     "geometry_type": "point",
-    "bbox": "6.986863,45.93634,10.299173,47.162528",
+    "bbox": [
+      6.986863,
+      45.93634,
+      10.299173,
+      47.162528
+    ],
     "delivery_format": "sqlite",
     "nb_row": 29,
     "has_preview": 1,

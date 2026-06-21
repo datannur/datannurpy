@@ -25,9 +25,9 @@ _WGS84_BOUNDS = (7.43864, 46.05124, 7.69789, 46.23144)
 _EPSG_2056 = {"id": {"authority": "EPSG", "code": 2056}}
 
 
-def _parse_bbox(bbox: str | None) -> list[float]:
+def _parse_bbox(bbox: list[float] | None) -> list[float]:
     assert bbox is not None
-    return [float(part) for part in bbox.split(",")]
+    return bbox
 
 
 def _write_geoparquet(
@@ -72,10 +72,12 @@ class _NonFiniteTransformer:
 
 class TestWgs84Bbox:
     def test_wgs84_passes_through(self) -> None:
-        assert (
-            wgs84_bbox("EPSG:4326", 6.0, 46.0, 7.0, 47.0, cache={})
-            == "6.0,46.0,7.0,47.0"
-        )
+        assert wgs84_bbox("EPSG:4326", 6.0, 46.0, 7.0, 47.0, cache={}) == [
+            6.0,
+            46.0,
+            7.0,
+            47.0,
+        ]
 
     def test_reprojects_from_native_crs(self) -> None:
         assert _parse_bbox(
@@ -154,7 +156,7 @@ class TestExtractGeoparquetGeo:
         assert extract_geoparquet_geo(path) == {
             "crs": "EPSG:4326",
             "geometry_type": "point",
-            "bbox": "7.4,46.0,7.7,46.2",
+            "bbox": [7.4, 46.0, 7.7, 46.2],
         }
 
     def test_mixed_geometry_types_is_null(self, tmp_path: Path) -> None:

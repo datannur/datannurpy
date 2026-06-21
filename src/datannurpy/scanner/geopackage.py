@@ -44,7 +44,7 @@ def _geo_query(has_srs: bool) -> str:
 def extract_geopackage_geo(con: ibis.BaseBackend) -> dict[str, dict[str, Any]]:
     """Map each GeoPackage feature layer to its ``{crs, geometry_type, bbox}``.
 
-    ``bbox`` is the WGS84 ``"west,south,east,north"`` envelope (reprojected from the
+    ``bbox`` is the WGS84 ``[west, south, east, north]`` envelope (reprojected from the
     layer's native CRS via pyproj; ``None`` if pyproj is unavailable and the CRS is
     not already WGS84). Returns an empty dict when the connection is not a GeoPackage
     (or has no usable spatial metadata). Never raises.

@@ -62,7 +62,7 @@ class ScanResult:
     # Geo metadata (GeoParquet, …); None for non-spatial datasets.
     crs: str | None = None
     geometry_type: str | None = None
-    bbox: str | None = None
+    bbox: list[float] | None = None
     spatial_resolution: float | None = None
 
 

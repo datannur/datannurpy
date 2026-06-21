@@ -75,7 +75,7 @@ class TestScanGeoRaster:
         _vars, _nb, geo, spatial_resolution = scan_geo_raster(path, dataset_id="ds")
         assert geo is not None
         assert geo["crs"] == "EPSG:4326"
-        assert geo["bbox"] == "7.4,46.0,7.6,46.2"  # WGS84 passthrough
+        assert geo["bbox"] == [7.4, 46.0, 7.6, 46.2]  # WGS84 passthrough
         assert spatial_resolution is None  # not a projected CRS → no metre resolution
 
     def test_no_crs_yields_null_geo(self, tmp_path: Path) -> None:

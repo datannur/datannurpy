@@ -68,7 +68,7 @@ def _create_dataset(
     scanned_description: str | None = None,
     crs: str | None = None,
     geometry_type: str | None = None,
-    bbox: str | None = None,
+    bbox: list[float] | None = None,
     spatial_resolution: float | None = None,
     fs: FileSystem | None = None,
     match_path: str | None = None,

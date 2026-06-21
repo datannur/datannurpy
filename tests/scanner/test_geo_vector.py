@@ -71,7 +71,7 @@ class TestScanGeoVectorViaCatalog:
         assert dataset is not None
         assert dataset.crs == "EPSG:4326"
         assert dataset.geometry_type == "polygon"
-        assert dataset.bbox == "7.4,46.0,7.7,46.2"  # WGS84 passthrough
+        assert dataset.bbox == [7.4, 46.0, 7.7, 46.2]  # WGS84 passthrough
         # Attribute column plus the geometry, kept as an un-profiled binary variable.
         types = {v.name: v.type for v in catalog.variable.all()}
         assert types["name"] == "string"
@@ -105,8 +105,7 @@ class TestShapefileViaCatalog:
         assert dataset.crs == "EPSG:2056"
         assert dataset.geometry_type == "polygon"
         assert dataset.bbox is not None
-        bounds = [float(p) for p in dataset.bbox.split(",")]
-        assert bounds == pytest.approx(_WGS84_BOUNDS, abs=1e-3)
+        assert dataset.bbox == pytest.approx(_WGS84_BOUNDS, abs=1e-3)
 
     def test_folder_walk_ignores_sidecars(self, tmp_path: Path) -> None:
         _write_ogr(
@@ -147,7 +146,7 @@ class TestGmlKmlViaCatalog:
         assert dataset is not None
         assert dataset.crs == "EPSG:4326"
         assert dataset.geometry_type == "polygon"
-        assert dataset.bbox == "7.4,46.0,7.7,46.2"
+        assert dataset.bbox == [7.4, 46.0, 7.7, 46.2]
 
     def test_kml_is_enriched(self, tmp_path: Path) -> None:
         _write_ogr(tmp_path / "points.kml", _SQUARE, driver="KML", crs="EPSG:4326")
@@ -159,7 +158,7 @@ class TestGmlKmlViaCatalog:
         # (the bundled KML driver reports them inconsistently across GDAL versions).
         assert dataset.crs == "EPSG:4326"
         assert dataset.geometry_type in (None, "polygon")
-        assert dataset.bbox in (None, "7.4,46.0,7.7,46.2")
+        assert dataset.bbox in (None, [7.4, 46.0, 7.7, 46.2])
 
 
 class TestScanGeoVector:
@@ -172,7 +171,7 @@ class TestScanGeoVector:
         assert geo == {
             "crs": "EPSG:4326",
             "geometry_type": "polygon",
-            "bbox": "7.4,46.0,7.7,46.2",
+            "bbox": [7.4, 46.0, 7.7, 46.2],
         }
         assert preview is None  # return_preview defaults to False
 

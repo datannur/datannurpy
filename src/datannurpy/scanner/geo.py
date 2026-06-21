@@ -3,7 +3,7 @@
 Format-agnostic helpers (geometry-type normalization, WGS84 bounding-box
 reprojection) live here so every geo reader — GeoPackage, GeoParquet, … — shares
 one contract: a native ``crs`` (e.g. ``"EPSG:2056"``), an OGC ``geometry_type``,
-and a WGS84 ``"west,south,east,north"`` ``bbox`` string.
+and a WGS84 ``[west, south, east, north]`` ``bbox`` list.
 
 CRS and geometry type need no extra dependency; reprojecting a non-WGS84 bounding
 box to WGS84 uses pyproj (optional ``geo`` extra) and degrades to ``None`` without it.
@@ -52,8 +52,8 @@ def wgs84_bbox(
     max_y: Any,
     *,
     cache: dict[str, Any],
-) -> str | None:
-    """Reproject a native bounding box to WGS84 ``"west,south,east,north"``.
+) -> list[float] | None:
+    """Reproject a native bounding box to a WGS84 ``[west, south, east, north]`` list.
 
     A WGS84 (EPSG:4326) box passes through unchanged (no pyproj needed); any other
     CRS is reprojected via a pyproj transformer memoized in ``cache`` (one per CRS).
@@ -87,9 +87,9 @@ def wgs84_bbox(
     return _format_bbox(projected)
 
 
-def _format_bbox(values: tuple[float, float, float, float]) -> str:
-    """Format a (west, south, east, north) tuple as a comma-separated string."""
-    return ",".join(f"{round(value, 6)}" for value in values)
+def _format_bbox(values: tuple[float, float, float, float]) -> list[float]:
+    """Round a (west, south, east, north) tuple into a [west, south, east, north] list."""
+    return [round(value, 6) for value in values]
 
 
 def build_geo_fields(
@@ -98,7 +98,7 @@ def build_geo_fields(
     """Assemble the ``{crs, geometry_type, bbox}`` dataset contract from raw values.
 
     ``bounds`` is a native ``(min_x, min_y, max_x, max_y)`` sequence reprojected to a
-    WGS84 ``bbox`` string, or ``None`` when no extent is available.
+    WGS84 ``bbox`` list, or ``None`` when no extent is available.
     """
     return {
         "crs": crs,

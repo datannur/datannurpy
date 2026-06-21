@@ -26,9 +26,9 @@ _LV95_BOUNDS = (2600000.0, 1100000.0, 2620000.0, 1120000.0)
 _WGS84_BOUNDS = (7.43864, 46.05124, 7.69789, 46.23144)
 
 
-def _parse_bbox(bbox: str | None) -> list[float]:
+def _parse_bbox(bbox: list[float] | None) -> list[float]:
     assert bbox is not None
-    return [float(part) for part in bbox.split(",")]
+    return bbox
 
 
 def _make_geopackage(
@@ -113,7 +113,7 @@ class TestExtractGeopackageGeo:
         finally:
             con.disconnect()
         assert geo["parcels"]["crs"] == "EPSG:4326"
-        assert geo["parcels"]["bbox"] == "6.0,46.0,7.0,47.0"
+        assert geo["parcels"]["bbox"] == [6.0, 46.0, 7.0, 47.0]
 
     def test_bbox_null_when_pyproj_unavailable(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -184,7 +184,7 @@ class TestApplyGeopackageGeoViaCatalog:
         assert parcels.geometry_type == "multipolygon"
         assert _parse_bbox(parcels.bbox) == pytest.approx(_WGS84_BOUNDS, abs=1e-4)
 
-    def test_bbox_exports_as_comma_string(self, tmp_path: Path) -> None:
+    def test_bbox_exports_as_json_array(self, tmp_path: Path) -> None:
         gpkg = tmp_path / "data.gpkg"
         _make_geopackage(gpkg)
         app_dir = tmp_path / "app"
@@ -198,8 +198,8 @@ class TestApplyGeopackageGeoViaCatalog:
             (app_dir / "data" / "db" / "dataset.json").read_text(encoding="utf-8")
         )
         parcels = next(d for d in datasets if d["name"] == "parcels")
-        assert isinstance(parcels["bbox"], str)
-        assert _parse_bbox(parcels["bbox"]) == pytest.approx(_WGS84_BOUNDS, abs=1e-4)
+        assert isinstance(parcels["bbox"], list)
+        assert parcels["bbox"] == pytest.approx(_WGS84_BOUNDS, abs=1e-4)
 
     def test_plain_sqlite_leaves_geo_fields_null(self, tmp_path: Path) -> None:
         db = tmp_path / "plain.db"
