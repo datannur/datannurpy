@@ -12,6 +12,7 @@ A lightweight catalog compatible with most data sources:
 | **Spreadsheets**   | CSV, Excel (.xlsx, .xls)                              |
 | **Columnar**       | Parquet, Delta Lake, Apache Iceberg, Hive partitioned |
 | **Statistical**    | SAS (.sas7bdat), SPSS (.sav), Stata (.dta)            |
+| **Geospatial**     | GeoJSON, Shapefile, GeoPackage, GeoParquet, GeoTIFF, GML, KML, ESRI File Geodatabase |
 | **Databases**      | PostgreSQL, MySQL, Oracle, SQL Server, SQLite, DuckDB |
 | **Remote storage** | SFTP, Amazon S3, Azure Blob Storage, Google Cloud Storage |
 
@@ -38,6 +39,7 @@ pip install datannurpy[ssh]       # SFTP and SSH tunneling to remote databases
 pip install datannurpy[stat]      # SAS, SPSS, Stata
 pip install datannurpy[delta]     # Delta Lake metadata extraction
 pip install datannurpy[iceberg]   # Apache Iceberg metadata extraction
+pip install datannurpy[geo]       # geospatial formats + ISO 19139 / STAC exports
 
 # Cloud storage
 pip install datannurpy[s3]        # Amazon S3

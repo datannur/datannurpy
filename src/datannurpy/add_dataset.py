@@ -17,6 +17,7 @@ from .utils import (
     sanitize_id,
 )
 from .utils.params import _UNSET, validate_params
+from .dataset_scan import finalize_scanned_dataset, skip_unchanged
 from .errors import ConfigError
 from .finalize import remove_dataset_cascade
 from .preview import (
@@ -65,6 +66,10 @@ def _create_dataset(
     preview_rows: int | None = None,
     data_size: int | None = None,
     scanned_description: str | None = None,
+    crs: str | None = None,
+    geometry_type: str | None = None,
+    bbox: list[float] | None = None,
+    spatial_resolution: float | None = None,
     fs: FileSystem | None = None,
     match_path: str | None = None,
 ) -> Dataset:
@@ -88,6 +93,10 @@ def _create_dataset(
         type=resolved_metadata.type,
         link=resolved_metadata.link,
         localisation=resolved_metadata.localisation,
+        crs=crs,
+        geometry_type=geometry_type,
+        bbox=bbox,
+        spatial_resolution=spatial_resolution,
         manager_organization_id=resolved_metadata.manager_organization_id,
         owner_organization_id=resolved_metadata.owner_organization_id,
         tag_ids=resolved_metadata.tag_ids or [],
@@ -181,6 +190,11 @@ def add_dataset(
     )
 
     if is_dir:
+        if isinstance(dataset_path, Path) and dataset_path.suffix.lower() == ".gdb":
+            raise ConfigError(
+                f"File Geodatabase is a multi-layer container, not a single dataset: "
+                f"{path}. Use add_geodatabase() instead."
+            )
         _add_parquet_directory(
             catalog,
             dataset_path,
@@ -212,27 +226,17 @@ def add_dataset(
     data_path_str = _public_data_path(dataset_path, path_name, fs)
 
     # Check for existing dataset (incremental scan)
-    existing = catalog.dataset.get_by("_match_path", match_path)
-    if existing is None:
-        existing = catalog.dataset.get_by("_match_path", data_path_str)
-    if existing is not None:
-        if (
-            not do_refresh
-            and iso_to_timestamp(existing.last_update_date) == current_mtime
-        ):
-            # Unchanged - skip and mark as seen
-            catalog.dataset.update(
-                existing.id,
-                _seen=True,
-                _match_path=match_path,
-                preview_rows=preview_limit,
-            )
-            catalog.enumeration_manager.mark_dataset_seen(existing.id)
-            log_skip(path_name, q)
-            return
-        else:
-            # Modified or refresh forced - remove old dataset cascade before rescan
-            remove_dataset_cascade(catalog, existing)
+    if skip_unchanged(
+        catalog,
+        match_path,
+        data_path_str,
+        current_mtime,
+        refresh=do_refresh,
+        preview_rows=preview_limit,
+        quiet=q,
+        label=path_name,
+    ):
+        return
 
     # Build dataset ID
     path_stem = Path(path_name).stem
@@ -307,21 +311,22 @@ def add_dataset(
         preview_rows=preview_limit,
         data_size=get_data_size(dataset_path, fs=fs),
         scanned_description=result.description,
+        crs=result.crs,
+        geometry_type=result.geometry_type,
+        bbox=result.bbox,
+        spatial_resolution=result.spatial_resolution,
         fs=fs,
         match_path=match_path,
     )
-    catalog.dataset.add(dataset)
-    remember_preview(catalog, dataset.id, result.preview, label=path_name)
-
-    var_id_mapping = build_variable_ids(result.variables, dataset.id)
-    if result.freq_table is not None:
-        catalog.enumeration_manager.assign_from_freq(
-            result.variables,
-            result.freq_table,
-            var_id_mapping,
-            auto_enumerations=resolved_auto_enumerations,
-        )
-    catalog.variable.add_all(result.variables)
+    finalize_scanned_dataset(
+        catalog,
+        dataset,
+        variables=result.variables,
+        freq_table=result.freq_table,
+        preview=result.preview,
+        label=path_name,
+        auto_enumerations=resolved_auto_enumerations,
+    )
 
     # Log result
     var_count = len(result.variables)

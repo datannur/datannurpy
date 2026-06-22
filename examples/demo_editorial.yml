@@ -25,6 +25,8 @@ copy_assets:
 post_export:
   - generate_openapi
   - export_dcat
+  - export_iso
+  - export_stac
 
 add:
   - folder: ./datannur_app/db-source/dataset

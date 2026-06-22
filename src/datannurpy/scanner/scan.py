@@ -14,6 +14,9 @@ import polars as pl
 
 from ..schema import Variable
 from .csv import scan_csv
+from .geo import extract_geoparquet_geo
+from .geo_raster import scan_geo_raster
+from .geo_vector import scan_geo_vector
 from .excel import (
     _MAX_PREVIEW_ROWS as _EXCEL_PREVIEW_ROWS,
     _XLS_SNIFF_BYTES,
@@ -32,6 +35,14 @@ from .utils import build_variables_from_schema
 _PA_PY_FILE_SYSTEM = getattr(pa_fs_module, "PyFileSystem")
 _PA_FSSPEC_HANDLER = getattr(pa_fs_module, "FSSpecHandler")
 
+# Vector geo formats scanned through pyogrio (optional ``geo`` extra). pyogrio picks
+# the driver from the extension. Shapefile sidecars (.shx/.dbf/.prj/.cpg) are
+# unmapped, so only the .shp becomes a dataset.
+_VECTOR_FORMATS = ("geojson", "shapefile", "gml", "kml")
+# Geo formats are read by dedicated scanners (not the tabular schema path), so they
+# bypass schema-only mode — their metadata is cheap and wanted at every depth.
+_GEO_FORMATS = (*_VECTOR_FORMATS, "geotiff")
+
 if TYPE_CHECKING:
     from .filesystem import FileSystem
 
@@ -48,6 +59,11 @@ class ScanResult:
     name: str | None = None  # Dataset name from metadata (Delta, Iceberg)
     data_size: int | None = None
     preview: pl.DataFrame | None = None
+    # Geo metadata (GeoParquet, …); None for non-spatial datasets.
+    crs: str | None = None
+    geometry_type: str | None = None
+    bbox: list[float] | None = None
+    spatial_resolution: float | None = None
 
 
 def scan_file(
@@ -72,8 +88,9 @@ def scan_file(
         fs: Optional FileSystem for remote file access. Non-streamable formats
             (CSV, Excel, SAS/SPSS/Stata) will be downloaded to a temp file.
     """
-    # Schema-only mode: read metadata without scanning data
-    if schema_only:
+    # Schema-only mode: read metadata without scanning data. Geo formats have no
+    # tabular schema path, so they always go through their own scanners.
+    if schema_only and delivery_format not in _GEO_FORMATS:
         return _scan_schema_only(
             path,
             delivery_format,
@@ -149,6 +166,8 @@ def _scan_local(
             return_preview=True,
             quiet=quiet,
         )
+        # GeoParquet keys (crs, geometry_type, bbox) match ScanResult's fields.
+        geo = extract_geoparquet_geo(path) if delivery_format == "parquet" else None
         return ScanResult(
             variables=variables,
             nb_row=nb_row,
@@ -158,6 +177,7 @@ def _scan_local(
             name=metadata.name if metadata else None,
             data_size=metadata.data_size if metadata else None,
             preview=preview,
+            **(geo or {}),
         )
 
     if delivery_format in ("sas", "spss", "stata"):
@@ -180,6 +200,35 @@ def _scan_local(
             freq_table=freq_table,
             description=metadata.description if metadata else None,
             preview=preview,
+        )
+
+    if delivery_format in _VECTOR_FORMATS:
+        variables, nb_row, freq_table, geo, preview = scan_geo_vector(
+            path,
+            dataset_id=dataset_id,
+            freq_threshold=freq_threshold,
+            preview_rows=preview_rows,
+            return_preview=True,
+            quiet=quiet,
+            path_label=path_label,
+        )
+        return ScanResult(
+            variables=variables,
+            nb_row=nb_row,
+            freq_table=freq_table,
+            preview=preview,
+            **(geo or {}),
+        )
+
+    if delivery_format == "geotiff":
+        variables, nb_row, geo, spatial_resolution = scan_geo_raster(
+            path, dataset_id=dataset_id, quiet=quiet, path_label=path_label
+        )
+        return ScanResult(
+            variables=variables,
+            nb_row=nb_row,
+            spatial_resolution=spatial_resolution,
+            **(geo or {}),
         )
 
     if delivery_format == "csv":
@@ -242,7 +291,12 @@ def _scan_with_ensure_local(
             if _looks_like_html_xls_content(f.read(_XLS_SNIFF_BYTES)):
                 _warn_html_xls(path_label or PurePath(path).name, quiet)
                 return ScanResult(variables=[], nb_row=None)
-    ctx = fs.ensure_local_dir if delivery_format in _DIR_FORMATS else fs.ensure_local
+    if delivery_format == "shapefile":
+        ctx = fs.ensure_local_siblings  # .shp needs its .shx/.dbf/.prj companions
+    elif delivery_format in _DIR_FORMATS:
+        ctx = fs.ensure_local_dir
+    else:
+        ctx = fs.ensure_local
     with ctx(str(path)) as local_path:
         return _scan_local(
             local_path,

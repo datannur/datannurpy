@@ -11,6 +11,7 @@ import polars as pl
 from .add_database import add_database
 from .add_dataset import add_dataset
 from .add_folder import add_folder
+from .add_geodatabase import add_geodatabase
 from .exporter import export_app, export_db
 from .finalize import finalize
 from .preview import PreviewRows, effective_preview_rows, validate_preview_rows
@@ -65,6 +66,7 @@ class Catalog(DatannurDB):
     add_folder = add_folder
     add_dataset = add_dataset
     add_database = add_database
+    add_geodatabase = add_geodatabase
     export_app = export_app
     export_db = export_db
     finalize = finalize

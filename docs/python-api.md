@@ -174,6 +174,37 @@ catalog.add_database(
 | ssh_tunnel         | dict \| None                                    | None     | SSH tunnel config (host, user, port, etc.) |
 
 
+## `Catalog.add_geodatabase()`
+
+```python
+catalog.add_geodatabase(
+    path,
+    metadata=None,
+    *,
+    depth=None,
+    include=None,
+    exclude=None,
+    auto_enumerations=None,
+    preview_rows=None,
+    quiet=None,
+    refresh=None,
+    storage_options=None,
+)
+```
+
+| Parameter         | Type                                            | Default  | Description                                |
+| ----------------- | ----------------------------------------------- | -------- | ------------------------------------------ |
+| path              | str \| Path                                      | required | Path or remote URL of the `.gdb` directory |
+| metadata          | EntityMetadata \| None                          | None     | Identity, parent linkage, and metadata for the container folder |
+| depth             | "dataset" \| "variable" \| "stat" \| "value" \| None | None     | Scan depth (uses catalog.depth if None)    |
+| include           | list[str] \| None                               | None     | Glob patterns matched against layer names to include |
+| exclude           | list[str] \| None                               | None     | Glob patterns matched against layer names to exclude |
+| auto_enumerations | bool \| None                                    | None     | Create automatic enumerations from value frequencies for scanned layers (overrides catalog) |
+| preview_rows      | int \| Literal[False] \| None                    | None     | Max preview rows for scanned layer datasets (overrides catalog; 0 or false disables) |
+| quiet             | bool \| None                                    | None     | Override catalog quiet setting             |
+| refresh           | bool \| None                                    | None     | Force rescan (overrides catalog setting)   |
+| storage_options   | dict \| None                                    | None     | Options for remote storage (passed to fsspec) |
+
 ## `Catalog.export_db()`
 
 ```python

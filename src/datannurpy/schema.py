@@ -104,6 +104,11 @@ class Dataset:
     data_path: str | None = None
     link: str | None = None
     localisation: str | None = None
+    crs: str | None = None  # Native coordinate reference system, e.g. "EPSG:2056"
+    geometry_type: str | None = None  # OGC simple-feature type, e.g. "polygon"
+    # Bounding box [west, south, east, north] in WGS84 (EPSG:4326), lon/lat order.
+    bbox: list[float] | None = None
+    spatial_resolution: float | None = None  # Raster pixel size, metres (projected CRS)
     delivery_format: str | None = None
     nb_row: int | None = None
     sample_size: int | None = None
