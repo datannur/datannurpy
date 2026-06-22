@@ -76,6 +76,7 @@ class Catalog(DatannurDB):
         self,
         *,
         app_path: str | Path | None = None,
+        output_dir: str | Path | None = None,
         metadata_path: str | Path | list[str | Path] | None = None,
         depth: Depth = "value",
         refresh: bool = False,
@@ -91,9 +92,16 @@ class Catalog(DatannurDB):
         log_file: str | Path | None = None,
         _now: int | None = None,
     ) -> None:
-        # Paths
+        # Paths. The persistent db lives under app_path/data/db for app exports,
+        # or directly at output_dir for db-only exports — either way db_path is
+        # both the previous-state source (incremental scans) and export target.
         self.app_path = Path(app_path) if app_path is not None else None
-        self.db_path = self.app_path / "data" / "db" if self.app_path else None
+        if self.app_path is not None:
+            self.db_path: Path | None = self.app_path / "data" / "db"
+        elif output_dir is not None:
+            self.db_path = Path(output_dir)
+        else:
+            self.db_path = None
 
         # Load existing db if present (skip when refresh=True: full rescan)
         load_path: str | None = None

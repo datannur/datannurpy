@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.27.1 (2026-06-22)
+
+- fix: in metadata-first mode, a `[YYYY/MM]` `_match_path` no longer collapses onto a yearly `[YYYY]` series sharing the same filename skeleton — period match keys now carry the series frequency, so each granularity matches only its own group
+- fix: db-only configs (`output_dir` without `app_path`) now load the previous database from `output_dir` for incremental scans, so unchanged datasets are skipped instead of rescanned every run (unless `refresh: true`)
+
 ## 0.27.0 (2026-06-20)
 
 - add: extract geo metadata into new dataset fields `crs`, `geometry_type`, and a WGS84 `bbox` array `[west, south, east, north]` — from GeoPackage `gpkg_*` tables and GeoParquet `geo` metadata (no dependency); `bbox` reprojection uses the optional `geo` extra (pyproj). Requires jsonjsdb >= 0.9.1 (serializes numeric list columns as JSON arrays)

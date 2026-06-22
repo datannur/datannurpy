@@ -37,7 +37,7 @@ from .schema import (
 from .scanner.csv import read_csv
 from .scanner.excel import read_excel
 from .scanner.statistical import read_statistical
-from .scanner.timeseries import PERIOD_MATCH_PATTERNS, PERIOD_PLACEHOLDER
+from .scanner.timeseries import PERIOD_MATCH_PATTERNS, period_match_placeholder
 from .utils import log_done, log_error, log_section, log_warn, timestamp_to_iso
 from .utils.ids import build_frequency_id, build_value_id
 from .utils.params import validate_params
@@ -386,8 +386,10 @@ def _resolve_explicit_match_path(value: Any, base_dir: Path) -> str | None:
 def normalize_match_key(value: str) -> str:
     """Return the canonical representation used by metadata-first matching."""
     key = _canonicalize_remote_url(value.strip())
-    for pattern in PERIOD_MATCH_PATTERNS:
-        key = key.replace(pattern, PERIOD_PLACEHOLDER)
+    placeholder = period_match_placeholder(key)
+    if placeholder is not None:
+        for pattern in PERIOD_MATCH_PATTERNS:
+            key = key.replace(pattern, placeholder)
     return key
 
 

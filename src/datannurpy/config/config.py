@@ -258,6 +258,10 @@ def run_config(path: str | Path) -> Catalog:
 
     # Extract catalog init params and resolve paths
     catalog_params = {k: v for k, v in config.items() if k not in RESERVED_KEYS}
+    # output_dir is both the db-only export target and, when refresh is false,
+    # the previous-db source for incremental scans (mirrors app_path).
+    if output_dir:
+        catalog_params["output_dir"] = output_dir
     if "app_path" in catalog_params:
         catalog_params["app_path"] = _resolve_path(catalog_params["app_path"], base_dir)
     if "log_file" in catalog_params:
