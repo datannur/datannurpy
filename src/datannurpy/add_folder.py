@@ -45,6 +45,7 @@ from .scanner.timeseries import (
     compute_variable_periods,
     get_series_folder_parts,
     period_sort_key,
+    series_match_normalized_path,
 )
 from .scanner.utils import (
     fs_info_is_dir,
@@ -401,9 +402,13 @@ def add_folder(
                 log_done(display_label, q, t0)
                 continue
 
-            series_normalized_path = (
-                info.series_normalized_path if info.series_files is not None else None
-            )
+            series_normalized_path: str | None = None
+            if info.series_files is not None:
+                assert info.series_normalized_path is not None
+                series_normalized_path = series_match_normalized_path(
+                    info.series_normalized_path,
+                    [period for period, _ in info.series_files],
+                )
             # Metadata-first peek: reuse pre-loaded id/folder_id if available.
             peek = find_loaded_dataset_by_match_paths(
                 catalog,
@@ -694,7 +699,7 @@ def _scan_time_series(
         _match_path_candidates(
             last_path,
             fs,
-            series_normalized_path=normalized,
+            series_normalized_path=series_match_normalized_path(normalized, periods),
             root=root,
         ),
     )

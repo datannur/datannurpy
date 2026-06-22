@@ -168,6 +168,34 @@ add:
         assert output_dir.exists()
         assert (output_dir / "__table__.json").exists()
 
+    def test_run_config_output_dir_incremental_skip(self, tmp_path: Path, capsys):
+        """output_dir is reused as the previous db source for incremental scans."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "test.csv").write_text("a,b\n1,2\n")
+
+        output_dir = tmp_path / "out"
+        config_file = tmp_path / "catalog.yml"
+        config_file.write_text(f"""
+output_dir: {output_dir}
+
+add:
+  - type: folder
+    path: {data_dir}
+""")
+        # First run: scan + export the db (refresh defaults to false).
+        run_config(config_file)
+        assert (output_dir / "__table__.json").exists()
+        capsys.readouterr()  # discard first-run logs
+
+        # Second run: the prior db at output_dir is loaded, so the unchanged
+        # file is skipped instead of rescanned.
+        catalog = run_config(config_file)
+        captured = capsys.readouterr()
+        assert catalog._loaded_from_db is True
+        assert "unchanged" in captured.err
+        assert len(catalog.dataset.all()) == 1
+
     def test_run_config_preview_rows_global_and_override(self, tmp_path: Path):
         """preview_rows works globally and per add entry in YAML."""
         public_dir = tmp_path / "public"

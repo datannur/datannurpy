@@ -69,6 +69,24 @@ PERIOD_MATCH_PATTERNS = tuple(
     sorted(set(_PERIOD_NAME_PATTERNS.values()), key=len, reverse=True)
 )
 
+# Frequency-specific placeholders used to build metadata-first match keys.
+# A yearly and a monthly series can share the same filename skeleton
+# (e.g. ``base_---PERIOD---.csv``); tagging the placeholder with the frequency
+# keeps their match identities distinct so a ``[YYYY/MM]`` `_match_path` cannot
+# collapse onto a ``[YYYY]`` group. See `normalize_match_key` in add_metadata.
+_PERIOD_MATCH_PLACEHOLDERS: dict[PeriodFrequency, str] = {
+    "daily": "---PERIOD-D---",
+    "quarterly": "---PERIOD-Q---",
+    "monthly": "---PERIOD-M---",
+    "yearly": "---PERIOD-Y---",
+}
+
+# Reverse lookup keyed by display pattern, for `period_match_placeholder`.
+_PERIOD_MATCH_PLACEHOLDER_BY_PATTERN = {
+    _PERIOD_NAME_PATTERNS[freq]: placeholder
+    for freq, placeholder in _PERIOD_MATCH_PLACEHOLDERS.items()
+}
+
 
 @dataclass
 class PeriodInfo:
@@ -331,6 +349,31 @@ def _period_frequency(period: str) -> PeriodFrequency:
     if _SORT_MONTH_RE.match(period):
         return "monthly"
     return "yearly"
+
+
+def series_match_normalized_path(normalized_path: str, periods: Sequence[str]) -> str:
+    """Tag the generic period placeholder with the series frequency.
+
+    The scan-side normalized path uses a single ``PERIOD_PLACEHOLDER`` for any
+    granularity, so yearly and monthly series sharing a skeleton would produce
+    identical metadata match keys. Embedding the frequency keeps them distinct;
+    mirrors the metadata-side normalisation in `normalize_match_key`.
+    """
+    placeholder = _PERIOD_MATCH_PLACEHOLDERS[_period_frequency(periods[0])]
+    return normalized_path.replace(PERIOD_PLACEHOLDER, placeholder)
+
+
+def period_match_placeholder(value: str) -> str | None:
+    """Return the frequency-specific match placeholder for period patterns in *value*.
+
+    Tests patterns longest-first (PERIOD_MATCH_PATTERNS order), so the finest /
+    overlapping pattern wins — e.g. ``[YYYY]Q[N]`` before its ``[YYYY]`` substring.
+    Returns None when *value* carries no period placeholder.
+    """
+    for pattern in PERIOD_MATCH_PATTERNS:
+        if pattern in value:
+            return _PERIOD_MATCH_PLACEHOLDER_BY_PATTERN[pattern]
+    return None
 
 
 def _sorted_valid_refined_files(

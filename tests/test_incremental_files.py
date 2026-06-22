@@ -206,6 +206,40 @@ class TestIncrementalScanFiles:
         # Should have rescanned
         assert len(catalog2.dataset.all()) == 1
 
+    def test_output_dir_db_is_loaded_for_incremental(self, tmp_path: Path):
+        """output_dir (db-only export) is also the previous db source."""
+        db_dir = tmp_path / "db"
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        csv_file = data_dir / "test.csv"
+        csv_file.write_text("a,b\n1,2\n3,4\n")
+
+        # First run: scan and export the db straight into output_dir.
+        catalog1 = Catalog(output_dir=db_dir, quiet=True)
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
+        catalog1.export_db()
+        assert (db_dir / "__table__.json").exists()
+
+        # Second run: a fresh catalog pointed at the same output_dir loads it.
+        catalog2 = Catalog(output_dir=db_dir, quiet=True)
+        assert catalog2._loaded_from_db is True
+        assert len(catalog2.dataset.all()) == 1
+
+    def test_output_dir_refresh_true_skips_load(self, tmp_path: Path):
+        """refresh=True ignores the existing output_dir db (full rescan)."""
+        db_dir = tmp_path / "db"
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "test.csv").write_text("a,b\n1,2\n3,4\n")
+
+        catalog1 = Catalog(output_dir=db_dir, quiet=True)
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
+        catalog1.export_db()
+
+        catalog2 = Catalog(output_dir=db_dir, refresh=True, quiet=True)
+        assert catalog2._loaded_from_db is False
+        assert len(catalog2.dataset.all()) == 0
+
 
 class TestIncrementalScanAddDataset:
     """Test incremental scan for add_dataset."""

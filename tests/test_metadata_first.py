@@ -438,6 +438,43 @@ class TestMetadataFirstTimeSeries:
         catalog.add_folder(data_dir, create_folders=False, on_unmatched="skip")
         assert len(catalog.dataset.all()) == 0
 
+    def test_yearly_match_path_does_not_match_monthly_group(self, tmp_path: Path):
+        """A [YYYY/MM] _match_path must not collapse onto a yearly [YYYY] group.
+
+        When a folder holds two series sharing the same filename skeleton — a
+        yearly one and a monthly one — a metadata row keyed on ``[YYYY/MM]``
+        must match only the monthly group. Before the fix both granularities
+        normalised to the same ``---PERIOD---`` match key, so the yearly group
+        stole the id and the monthly group then failed with a duplicate id.
+        """
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        # Yearly group: base_<YYYY>.csv
+        for year in (2007, 2010, 2011, 2013, 2014):
+            (data_dir / f"base_{year}.csv").write_text("a,b\n1,2\n")
+        # Monthly group: base_<YYYYMM>.csv (shares the "base_---PERIOD---.csv" skeleton)
+        for ym in (200606, 201307, 201407, 201903, 202002):
+            (data_dir / f"base_{ym}.csv").write_text("a,b\n1,2\n")
+
+        meta_dir = tmp_path / "meta"
+        meta_dir.mkdir()
+        (meta_dir / "dataset.csv").write_text(
+            "id,name,folder_id,_match_path\nmy_series,My series,f,base_[YYYY/MM].csv\n"
+        )
+
+        catalog = Catalog(metadata_path=meta_dir, quiet=True)
+        catalog.add_folder(data_dir, create_folders=False, on_unmatched="skip")
+
+        datasets = catalog.dataset.all()
+        # Only the monthly group matches; the yearly group is left unmatched.
+        assert len(datasets) == 1
+        matched = datasets[0]
+        assert matched.id == "my_series"
+        # The matched group is the monthly one (latest file base_202002.csv),
+        # not the yearly one (latest file base_2014.csv).
+        assert matched.data_path is not None
+        assert matched.data_path.endswith("base_202002.csv")
+
 
 class TestPeekFolderIdFallback:
     """Peek-hit with empty folder_id falls back to scan-derived folder_id."""
@@ -544,6 +581,17 @@ class TestResolveMatchPathEdgeCases:
 class TestHelperUnits:
     """Direct unit tests for internal helpers covering NaN/None branches."""
 
+    def test_period_match_placeholder_picks_finest_or_none(self):
+        from datannurpy.scanner.timeseries import period_match_placeholder
+
+        assert period_match_placeholder("base_[YYYY].csv") == "---PERIOD-Y---"
+        assert period_match_placeholder("base_[YYYY/MM].csv") == "---PERIOD-M---"
+        # Mixed patterns collapse to the finest granularity present.
+        assert period_match_placeholder("[YYYY]/base_[YYYY/MM].csv") == "---PERIOD-M---"
+        # [YYYY] is a substring of [YYYY]Q[N]: the quarterly pattern must win.
+        assert period_match_placeholder("base_[YYYY]Q[N].csv") == "---PERIOD-Q---"
+        assert period_match_placeholder("plain.csv") is None
+
     def test_build_dataset_match_paths_by_id_filters_invalid_rows(self):
         from datannurpy.add_metadata import _build_dataset_match_paths_by_id
 
@@ -571,7 +619,7 @@ class TestHelperUnits:
 
         assert (
             normalize_match_key("sftp://user@example.org:2222/data/file_[YYYY].csv")
-            == "sftp://example.org:2222/data/file_---PERIOD---.csv"
+            == "sftp://example.org:2222/data/file_---PERIOD-Y---.csv"
         )
         assert normalize_match_key("sftp://@/data/file.csv") == "sftp://@/data/file.csv"
 
@@ -655,14 +703,20 @@ class TestHelperUnits:
 
         from datannurpy.add_folder import _match_path_candidates
         from datannurpy.add_metadata import normalize_match_key
+        from datannurpy.scanner.timeseries import series_match_normalized_path
 
+        # Callers tag the generic placeholder with the series frequency before
+        # building candidates (here: a yearly group).
+        tagged = series_match_normalized_path(
+            "my_series_---PERIOD---.sas7bdat", ["2024"]
+        )
         candidates = _match_path_candidates(
             PureWindowsPath(r"\\SERVER\SHARE\data\my_series_2024.sas7bdat"),
             None,
-            series_normalized_path="my_series_---PERIOD---.sas7bdat",
+            series_normalized_path=tagged,
             root=PureWindowsPath(r"\\SERVER\SHARE\data"),
         )
-        absolute = r"\\SERVER\SHARE\data\my_series_---PERIOD---.sas7bdat"
+        absolute = rf"\\SERVER\SHARE\data\{tagged}"
         assert absolute in candidates
         # The absolute UNC candidate normalizes to the same key as a metadata
         # `_match_path` written as `\\SERVER\SHARE\data\my_series_[YYYY].sas7bdat`.
