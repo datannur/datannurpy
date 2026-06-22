@@ -41,7 +41,11 @@ jobs:
 
   test:
     name: CI (${{ matrix.python-version }}, ${{ matrix.resolution }})
-    runs-on: ubuntu-24.04-arm
+    # lowest rows run on x86_64: rasterio (geo extra) ships no manylinux-aarch64
+    # wheel before 1.4.4 (and none ever for cp39), so the >=1.4 floor forces a
+    # source build that needs system GDAL on ARM. highest resolves to a newer
+    # rasterio with aarch64 wheels, so it stays on ARM.
+    runs-on: ${{ matrix.resolution == 'lowest' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.14"]
