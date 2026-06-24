@@ -711,13 +711,17 @@ def _scan_time_series(
         peek, fallback_id, fallback_folder_id, create_folders
     )
 
-    # Remove old dataset if exists
+    # Remove old dataset if exists. A reloaded series is stored under its
+    # normalized metadata `_match_path`, not the latest physical file, so fall
+    # back to the resolved dataset id when path-based lookup misses.
     last_match_path = str(last_path)
     existing = catalog.dataset.get_by("_match_path", last_match_path)
     if existing is None:
         existing = catalog.dataset.get_by(
             "_match_path", _public_data_path(last_path, root, fs)
         )
+    if existing is None:
+        existing = catalog.dataset.get(dataset_id)
     if existing:
         remove_dataset_cascade(catalog, existing)
 

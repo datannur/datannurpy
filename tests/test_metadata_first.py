@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path, PurePosixPath
 from urllib.parse import urlsplit
 
@@ -474,6 +475,84 @@ class TestMetadataFirstTimeSeries:
         # not the yearly one (latest file base_2014.csv).
         assert matched.data_path is not None
         assert matched.data_path.endswith("base_202002.csv")
+
+
+class TestMetadataFirstTimeSeriesIncremental:
+    """Second-run incremental behavior for metadata-first time series."""
+
+    def _make_series(self, data_dir: Path) -> None:
+        for year in (2022, 2023, 2024):
+            (data_dir / f"series_{year}.csv").write_text("a,b\n1,2\n")
+
+    def test_unchanged_series_skipped_on_second_run(self, tmp_path: Path):
+        """On a second run over an unchanged db, the series must be skipped.
+
+        Reproduces the duplicate-id regression: after loading the existing db,
+        the time-series dataset is restored with its normalized metadata
+        ``_match_path`` (e.g. ``series_---PERIOD-Y---.csv``), but the scan plan
+        only looks it up via the concrete latest file (``series_2024.csv``). The
+        series is therefore rescanned and ``dataset.add`` raises
+        ``Row with id '...' already exists``.
+        """
+        db_dir = tmp_path / "db"
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        self._make_series(data_dir)
+
+        meta_dir = tmp_path / "meta"
+        meta_dir.mkdir()
+        (meta_dir / "dataset.csv").write_text(
+            "id,name,folder_id,_match_path\nseries-id,Series,f,series_[YYYY].csv\n"
+        )
+
+        # First run: empty db, scan the series, export to output_dir.
+        catalog1 = Catalog(output_dir=db_dir, metadata_path=meta_dir, quiet=True)
+        catalog1.add_folder(data_dir, create_folders=False)
+        catalog1.export_db()
+        assert [d.id for d in catalog1.dataset.all()] == ["series-id"]
+
+        # Second run: reload the db and rescan the unchanged series.
+        catalog2 = Catalog(output_dir=db_dir, metadata_path=meta_dir, quiet=True)
+        assert catalog2._loaded_from_db is True
+        catalog2.add_folder(data_dir, create_folders=False)
+
+        datasets = catalog2.dataset.all()
+        assert len(datasets) == 1
+        ds = datasets[0]
+        assert ds.id == "series-id"
+        assert getattr(ds, "_seen", False) is True
+
+    def test_modified_series_replaced_on_second_run(self, tmp_path: Path):
+        """A changed series is rescanned and replaced, not duplicated."""
+        db_dir = tmp_path / "db"
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        self._make_series(data_dir)
+
+        meta_dir = tmp_path / "meta"
+        meta_dir.mkdir()
+        (meta_dir / "dataset.csv").write_text(
+            "id,name,folder_id,_match_path\nseries-id,Series,f,series_[YYYY].csv\n"
+        )
+
+        catalog1 = Catalog(output_dir=db_dir, metadata_path=meta_dir, quiet=True)
+        catalog1.add_folder(data_dir, create_folders=False)
+        catalog1.export_db()
+
+        # Add a new period and bump the latest file mtime so the series changes.
+        new_file = data_dir / "series_2025.csv"
+        new_file.write_text("a,b\n1,2\n")
+        new_mtime = int(new_file.stat().st_mtime) + 10
+        os.utime(new_file, (new_mtime, new_mtime))
+
+        catalog2 = Catalog(output_dir=db_dir, metadata_path=meta_dir, quiet=True)
+        catalog2.add_folder(data_dir, create_folders=False)
+
+        datasets = catalog2.dataset.all()
+        assert len(datasets) == 1
+        ds = datasets[0]
+        assert ds.id == "series-id"
+        assert ds.nb_resources == 4
 
 
 class TestPeekFolderIdFallback:

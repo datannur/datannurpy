@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.27.2 (2026-06-24)
+
+- fix: on a second run, unchanged metadata-first time series are skipped instead of failing with a duplicate-id error — incremental planning now matches them on their normalized series key, not only the latest physical file
+
 ## 0.27.1 (2026-06-22)
 
 - fix: in metadata-first mode, a `[YYYY/MM]` `_match_path` no longer collapses onto a yearly `[YYYY]` series sharing the same filename skeleton — period match keys now carry the series frequency, so each granularity matches only its own group
