@@ -7,10 +7,16 @@ from pathlib import Path
 from datannurpy import Catalog
 from datannurpy.scanner.discovery import (
     DatasetInfo,
+    _match_path_index_keys,
     _match_path_keys,
     compute_scan_plan,
     discover_datasets,
 )
+
+
+def _info(path: Path, **kwargs: object) -> DatasetInfo:
+    """Build a minimal DatasetInfo for match-key tests."""
+    return DatasetInfo(path=path, format="csv", mtime=0, **kwargs)  # type: ignore[arg-type]
 
 
 class TestDatasetInfo:
@@ -106,18 +112,72 @@ class TestComputeScanPlan:
         csv_file.parent.mkdir()
         csv_file.write_text("a\n1\n")
 
-        assert _match_path_keys(csv_file, tmp_path) == [
-            str(csv_file),
+        assert _match_path_keys(_info(csv_file), tmp_path) == [
+            str(csv_file).replace("\\", "/"),
             "nested/data.csv",
         ]
 
     def test_match_path_keys_handle_root_and_outside_paths(self, tmp_path: Path):
         """Path aliases cover root folders and paths outside the scan root."""
         outside = tmp_path.parent / "outside.csv"
+        norm = lambda p: str(p).replace("\\", "/")  # noqa: E731
 
-        assert _match_path_keys(tmp_path, tmp_path) == [str(tmp_path), ""]
-        assert _match_path_keys(outside, tmp_path) == [str(outside)]
-        assert _match_path_keys(Path("data.csv"), Path(".")) == ["data.csv"]
+        assert _match_path_keys(_info(tmp_path), tmp_path) == [norm(tmp_path), ""]
+        assert _match_path_keys(_info(outside), tmp_path) == [norm(outside)]
+        assert _match_path_keys(_info(Path("data.csv")), Path(".")) == ["data.csv"]
+
+    def test_match_path_keys_include_series_normalized_keys(self, tmp_path: Path):
+        """A time series also yields its frequency-tagged normalized keys."""
+        latest = tmp_path / "series_2024.csv"
+        info = _info(
+            latest,
+            series_normalized_path="series_---PERIOD---.csv",
+            series_files=[("2022", tmp_path / "series_2022.csv"), ("2024", latest)],
+        )
+
+        keys = _match_path_keys(info, tmp_path)
+        # Frequency-tagged (yearly) normalized key, relative and absolute.
+        assert "series_---PERIOD-Y---.csv" in keys
+        assert str(tmp_path / "series_---PERIOD-Y---.csv").replace("\\", "/") in keys
+
+    def test_match_path_index_keys_split_url_path(self):
+        """A URL match path also indexes its path-only form for lookup."""
+        assert _match_path_index_keys(
+            "sftp://example.org/shared/data/series_---PERIOD-Y---.csv"
+        ) == [
+            "sftp://example.org/shared/data/series_---PERIOD-Y---.csv",
+            "/shared/data/series_---PERIOD-Y---.csv",
+        ]
+        # Non-URL keys pass through, separator-normalized.
+        assert _match_path_index_keys(r"C:\data\x.csv") == ["C:/data/x.csv"]
+        # A URL-like value without a path keeps only the full key.
+        assert _match_path_index_keys("sftp://example.org") == ["sftp://example.org"]
+
+    def test_match_path_keys_series_without_files_or_root(self):
+        """Series keys handle a missing periods list and a missing root."""
+        info = _info(
+            Path("/data/series_2024.csv"),
+            series_normalized_path="series_---PERIOD-Y---.csv",
+        )
+        # series_files None -> the normalized path is used as-is (no re-tagging);
+        # root None -> no absolute series candidate is added.
+        assert _match_path_keys(info, None) == [
+            "/data/series_2024.csv",
+            "series_---PERIOD-Y---.csv",
+        ]
+
+    def test_scan_plan_ignores_datasets_without_match_path(self, tmp_path: Path):
+        """Existing datasets with an empty _match_path are skipped in the index."""
+        from datannurpy.schema import Dataset
+
+        catalog = Catalog()
+        catalog.dataset.add(Dataset(id="no_match", name="No match"))
+
+        plan = compute_scan_plan([], catalog, refresh=False)
+
+        assert plan.to_scan == []
+        assert plan.to_skip == []
+        assert plan.existing_by_path == {}
 
 
 class TestDiscoverDatasets:
