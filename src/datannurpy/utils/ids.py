@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Callable
 from pathlib import PurePath
 
 import polars as pl
@@ -93,14 +94,27 @@ def build_frequency_id(variable_id: str, value: str | None) -> str:
     return make_id(variable_id, _hash_value(value))
 
 
-def compute_runtime_ids(df: pl.DataFrame, cols: list[str]) -> pl.DataFrame:
-    """Compute id column by concatenating cols with ID_SEPARATOR."""
+def compute_runtime_ids(
+    df: pl.DataFrame,
+    cols: list[str],
+    builder: Callable[..., str],
+) -> pl.DataFrame:
+    """Compute id column for composite-key tables whose id is not persisted.
+
+    The id is rebuilt with the same hashed builder add_metadata uses to find
+    existing rows (build_value_id / build_frequency_id); reconstructing it any
+    other way breaks incremental matching and re-adds the whole table.
+    """
     if df.is_empty() or "id" in df.columns:
         return df
-    expr = pl.col(cols[0])
-    for col in cols[1:]:
-        expr = expr + ID_SEPARATOR + pl.col(col).fill_null("_null_")
-    return df.with_columns(expr.alias("id"))
+    return df.with_columns(
+        pl.struct(cols)
+        .map_elements(
+            lambda row: builder(*(row[col] for col in cols)),
+            return_dtype=pl.String,
+        )
+        .alias("id")
+    )
 
 
 def get_folder_id(

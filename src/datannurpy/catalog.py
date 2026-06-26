@@ -17,7 +17,7 @@ from .finalize import finalize
 from .preview import PreviewRows, effective_preview_rows, validate_preview_rows
 from .schema import Config, DatannurDB
 from .utils import EnumerationManager, configure_logging
-from .utils.ids import compute_runtime_ids
+from .utils.ids import build_frequency_id, build_value_id, compute_runtime_ids
 from .utils.params import validate_params
 from .utils.schema_columns import ensure_schema_columns
 
@@ -237,10 +237,10 @@ class Catalog(DatannurDB):
 
         # Compute runtime id columns
         self.value._df = compute_runtime_ids(
-            self.value._df, ["enumeration_id", "value"]
+            self.value._df, ["enumeration_id", "value"], build_value_id
         )
         self.frequency._df = compute_runtime_ids(
-            self.frequency._df, ["variable_id", "value"]
+            self.frequency._df, ["variable_id", "value"], build_frequency_id
         )
 
     def __repr__(self) -> str:
