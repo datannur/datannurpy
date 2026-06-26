@@ -241,6 +241,74 @@ class TestIncrementalScanFiles:
         assert len(catalog2.dataset.all()) == 0
 
 
+class TestIncrementalCompositeKeyMetadata:
+    """Composite-key metadata tables must not duplicate on incremental runs.
+
+    ``value`` (enumeration_id + value) and ``frequency`` (variable_id + value)
+    have non-persisted, *hashed* ids. On reload from ``output_dir`` the runtime
+    ids must be rebuilt with the same hashed builders used by ``add_metadata``,
+    otherwise the second run fails to match existing rows and re-adds the whole
+    table, duplicating every key on each run.
+    """
+
+    def _write_value_metadata(self, meta_dir: Path) -> None:
+        meta_dir.mkdir(parents=True, exist_ok=True)
+        (meta_dir / "enumeration.csv").write_text("id,name\nen1,Enum1\n")
+        (meta_dir / "value.csv").write_text(
+            "enumeration_id,value,description\nen1,a,A\nen1,b,B\n"
+        )
+
+    def _write_frequency_metadata(self, meta_dir: Path) -> None:
+        meta_dir.mkdir(parents=True, exist_ok=True)
+        (meta_dir / "frequency.csv").write_text(
+            "variable_id,value,frequency\nv1,a,3\nv1,b,7\n"
+        )
+
+    def test_value_table_not_duplicated_on_second_run(self, tmp_path: Path):
+        from datannurpy.add_metadata import add_metadata
+
+        db_dir = tmp_path / "db"
+        meta_dir = tmp_path / "meta"
+        self._write_value_metadata(meta_dir)
+
+        # First run: empty db, apply metadata, export to output_dir.
+        catalog1 = Catalog(output_dir=db_dir, quiet=True)
+        add_metadata(catalog1, meta_dir, quiet=True)
+        catalog1.export_db()
+        assert catalog1.value.count == 2
+
+        # Second run: reload the db and re-apply the unchanged metadata.
+        catalog2 = Catalog(output_dir=db_dir, quiet=True)
+        assert catalog2._loaded_from_db is True
+        add_metadata(catalog2, meta_dir, quiet=True)
+
+        df = catalog2.value.df
+        assert catalog2.value.count == 2
+        keys = list(zip(df["enumeration_id"].to_list(), df["value"].to_list()))
+        assert len(keys) == len(set(keys))
+
+    def test_frequency_table_not_duplicated_on_second_run(self, tmp_path: Path):
+        from datannurpy.add_metadata import add_metadata
+
+        db_dir = tmp_path / "db"
+        meta_dir = tmp_path / "meta"
+        self._write_frequency_metadata(meta_dir)
+
+        catalog1 = Catalog(output_dir=db_dir, quiet=True)
+        add_metadata(catalog1, meta_dir, quiet=True)
+        catalog1.export_db()
+        assert catalog1.frequency.count == 2
+
+        catalog2 = Catalog(output_dir=db_dir, quiet=True)
+        assert catalog2._loaded_from_db is True
+        add_metadata(catalog2, meta_dir, quiet=True)
+
+        df = catalog2.frequency.df
+        assert catalog2.frequency.count == 2
+        keys = list(zip(df["variable_id"].to_list(), df["value"].to_list()))
+        assert len(keys) == len(set(keys))
+
+
 class TestIncrementalScanAddDataset:
     """Test incremental scan for add_dataset."""
 

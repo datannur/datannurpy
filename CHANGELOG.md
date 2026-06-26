@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.27.3 (2026-06-27)
+
+- fix: `value` and `frequency` tables no longer duplicate every row on each incremental run — reload now rebuilds their runtime ids with the same hashed builders used to match existing rows
+
 ## 0.27.2 (2026-06-24)
 
 - fix: on a second run, unchanged metadata-first time series are skipped instead of failing with a duplicate-id error — incremental planning now matches them on their normalized series key, not only the latest physical file
