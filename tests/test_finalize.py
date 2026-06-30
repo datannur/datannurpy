@@ -586,3 +586,130 @@ class TestFinalizeCalledByExport:
         catalog = Catalog(app_path=tmp_path, quiet=True)
         catalog.enumeration_manager.mark_datasets_seen(["ds1"])
         catalog.enumeration_manager.mark_datasets_seen([])
+
+
+class TestRemoveOrphanChildren:
+    """Tests for the referential-integrity backstop (remove_orphan_children)."""
+
+    def test_consistent_catalog_is_noop(self):
+        """A referentially consistent catalog loses nothing and reports 0."""
+        from datannurpy.schema import Dataset
+        from datannurpy.finalize import remove_orphan_children
+
+        catalog = Catalog(quiet=True)
+        catalog.dataset.add(Dataset(id="ds1", name="DS"))
+        catalog.variable.add(Variable(id="ds1---v1", name="v1", dataset_id="ds1"))
+
+        assert remove_orphan_children(catalog) == 0
+        assert len(catalog.variable.all()) == 1
+
+    def test_variable_with_missing_dataset_is_removed(self):
+        """A variable whose dataset is gone is dropped; a valid one is kept."""
+        from datannurpy.schema import Dataset
+        from datannurpy.finalize import remove_orphan_children
+
+        catalog = Catalog(quiet=True)
+        catalog.dataset.add(Dataset(id="ds1", name="DS"))
+        catalog.variable.add(Variable(id="ds1---ok", name="ok", dataset_id="ds1"))
+        catalog.variable.add(Variable(id="ghost---v", name="v", dataset_id="ghost"))
+
+        assert remove_orphan_children(catalog) == 1
+        assert [v.id for v in catalog.variable.all()] == ["ds1---ok"]
+
+    def test_orphan_variable_cascades_to_its_frequencies(self):
+        """Removing an orphan variable also removes its frequencies."""
+        from datannurpy.schema import Frequency
+        from datannurpy.finalize import remove_orphan_children
+        from datannurpy.utils.ids import build_frequency_id
+
+        catalog = Catalog(quiet=True)
+        catalog.variable.add(Variable(id="ghost---v", name="v", dataset_id="ghost"))
+        catalog.frequency.add(
+            Frequency(
+                id=build_frequency_id("ghost---v", "A"),
+                variable_id="ghost---v",
+                value="A",
+                frequency=3,
+            )
+        )
+
+        assert remove_orphan_children(catalog) == 1
+        assert len(catalog.variable.all()) == 0
+        assert len(catalog.frequency.all()) == 0
+
+    def test_empty_variable_table_is_noop(self):
+        """No variables means nothing to sweep."""
+        from datannurpy.finalize import remove_orphan_children
+
+        catalog = Catalog(quiet=True)
+        assert remove_orphan_children(catalog) == 0
+
+    def test_standalone_metadata_value_and_frequency_are_kept(self):
+        """value/frequency without a local parent are enrichment, not orphans."""
+        from datannurpy.schema import Dataset, Frequency
+        from datannurpy.finalize import remove_orphan_children
+        from datannurpy.utils.ids import build_frequency_id
+
+        # A consistent dataset/variable pair so the real sweep path runs (no
+        # early return) yet leaves the parentless value/frequency untouched.
+        catalog = Catalog(quiet=True)
+        catalog.dataset.add(Dataset(id="ds1", name="DS"))
+        catalog.variable.add(Variable(id="ds1---v1", name="v1", dataset_id="ds1"))
+        catalog.value.add(
+            Value(id=build_value_id("ghost", "A"), enumeration_id="ghost", value="A")
+        )
+        catalog.frequency.add(
+            Frequency(
+                id=build_frequency_id("ghost---v", "A"),
+                variable_id="ghost---v",
+                value="A",
+                frequency=1,
+            )
+        )
+
+        assert remove_orphan_children(catalog) == 0
+        assert len(catalog.variable.all()) == 1
+        assert len(catalog.value.all()) == 1
+        assert len(catalog.frequency.all()) == 1
+
+    def test_metadata_first_orphan_swept_on_export(self, tmp_path: Path):
+        """Metadata re-asserting a variable after its dataset is gone is cleaned.
+
+        Reproduces the reported phantom: once the dataset (and file) disappear, a
+        lingering variable.csv row re-adds variables with no parent on every run.
+        """
+        data_dir = tmp_path / "data"
+        meta_dir = tmp_path / "meta"
+        db_dir = tmp_path / "db"
+        for d in (data_dir, meta_dir, db_dir):
+            d.mkdir()
+        (data_dir / "emp.csv").write_text("id,age\n1,30\n")
+        (meta_dir / "dataset.csv").write_text(
+            "id,name,folder_id,_match_path\nD,Emp,f,emp.csv\n"
+        )
+        (meta_dir / "variable.csv").write_text(
+            "id,name,dataset_id\nD---id,id,D\nD---age,age,D\n"
+        )
+
+        def run():
+            c = Catalog(output_dir=str(db_dir), metadata_path=str(meta_dir), quiet=True)
+            c.add_folder(str(data_dir), create_folders=False, on_unmatched="skip")
+            c.export_db(str(db_dir))
+
+        run()  # baseline
+        # Dataset + file gone, but variable.csv still references D.
+        (meta_dir / "dataset.csv").write_text("id,name,folder_id,_match_path\n")
+        (data_dir / "emp.csv").unlink()
+        run()  # cascade clears D and its variables
+        run()  # metadata re-adds the now-parentless variables -> must be swept
+
+        reloaded = Catalog(output_dir=str(db_dir), quiet=True)
+        dataset_ids = (
+            set(reloaded.dataset.df["id"].to_list())
+            if not reloaded.dataset.is_empty
+            else set()
+        )
+        orphans = [
+            v for v in reloaded.variable.all() if v.dataset_id not in dataset_ids
+        ]
+        assert orphans == []
