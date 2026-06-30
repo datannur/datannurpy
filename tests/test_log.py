@@ -124,6 +124,35 @@ def test_log_file_receives_tracebacks(tmp_path):
     assert "type issue" in content
 
 
+def test_log_file_no_nonetype_for_untraced_error(tmp_path):
+    """An error logged outside an except block writes a clean line, no NoneType."""
+    log_path = tmp_path / "errors.log"
+    configure_logging(log_file=log_path)
+    try:
+        # Constructed but never raised, so it carries no traceback.
+        log_error("add_folder", ValueError("Folder not found: /missing"), quiet=True)
+    finally:
+        configure_logging()
+
+    content = log_path.read_text()
+    assert "add_folder — ValueError: Folder not found: /missing" in content
+    assert "NoneType: None" not in content
+    assert "Traceback" not in content
+
+
+def test_verbose_no_nonetype_for_untraced_error(capsys):
+    """Verbose mode must not print 'NoneType: None' for an untraced error."""
+    configure_logging(verbose=True)
+    try:
+        log_error("add_folder", ValueError("Folder not found: /missing"), quiet=False)
+    finally:
+        configure_logging(verbose=False)
+
+    err = capsys.readouterr().err
+    assert "✗  add_folder" in err
+    assert "NoneType: None" not in err
+
+
 def test_log_file_truncated_each_run(tmp_path):
     """configure_logging should truncate log file on each call."""
     log_path = tmp_path / "errors.log"

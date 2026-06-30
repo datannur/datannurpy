@@ -100,22 +100,30 @@ def _redact(text: str) -> str:
     return _CRED_RE.sub("://***@", text)
 
 
+def _format_traceback(error: BaseException) -> str:
+    """Render an error's own traceback, or "" when it has none (e.g. not raised)."""
+    if error.__traceback__ is None:
+        return ""
+    buf = io.StringIO()
+    traceback.print_exception(type(error), error, error.__traceback__, file=buf)
+    return buf.getvalue()
+
+
 def log_error(name: str, error: BaseException, quiet: bool) -> None:
     """Log a scan error (replaces the 'start' line)."""
     msg = _redact(str(error).split("\n")[0])
     header = f"\r  ✗{_ICON_SPACING}{name} — {type(error).__name__}: {msg}"
     if not quiet or _verbose:
         print(header, file=sys.stderr)
-    if _verbose:
-        traceback.print_exc(file=sys.stderr)
+    tb = _format_traceback(error) if (_verbose or _log_file_path is not None) else ""
+    if _verbose and tb:
+        print(tb, file=sys.stderr, end="")
     _write_log(
         f"  ✗{_ICON_SPACING}{name} — {type(error).__name__}: {_redact(str(error))}"
     )
-    if _log_file_path is not None:
-        buf = io.StringIO()
-        traceback.print_exc(file=buf)
+    if _log_file_path is not None and tb:
         with open(_log_file_path, "a", encoding="utf-8") as f:
-            f.write(_redact(buf.getvalue()))
+            f.write(_redact(tb))
 
 
 def log_summary(

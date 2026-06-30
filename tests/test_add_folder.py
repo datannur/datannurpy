@@ -282,6 +282,26 @@ class TestAddFolderOther:
         with pytest.raises(ConfigError):
             catalog.add_folder("/nonexistent/path")
 
+    def test_add_folder_not_found_logged_cleanly(self, tmp_path: Path):
+        """A missing folder writes one clean, traceback-free line to the log."""
+        from datannurpy.utils.log import configure_logging
+
+        log_path = tmp_path / "errors.log"
+        try:
+            catalog = Catalog(log_file=log_path)
+            with pytest.raises(ConfigError):
+                catalog.add_folder("/nonexistent/path")
+        finally:
+            configure_logging()
+
+        content = log_path.read_text()
+        assert (
+            "add_folder — ConfigError: Folder not found: /nonexistent/path" in content
+        )
+        assert "NoneType: None" not in content
+        assert "Traceback" not in content
+        assert "FileNotFoundError" not in content
+
     def test_add_folder_default_folder(self):
         """add_folder without folder arg should use directory name."""
         catalog = Catalog()

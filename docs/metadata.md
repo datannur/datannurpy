@@ -103,7 +103,14 @@ Use `!id` inside a relation list to remove one accumulated relation while keepin
 
 Relation removals are applied in metadata source order. If one row contains both `id` and `!id`, removal wins for that relation. Supported relation fields are `tag_ids`, `doc_ids`, `enumeration_ids`, and `source_variable_ids`.
 
-Use `_delete: true` to remove an entity from the final catalog:
+### Deletion
+
+The export [mirrors the current sources](/output#incremental-scan), but how an entity disappears depends on its kind:
+
+- **Parent entities** (`folder`, `dataset`, `enumeration`, `organization`, `tag`, `doc`, `concept`) are reconciled automatically: one no longer produced by the scan and absent from metadata is dropped on the next run.
+- **Child entities** (`variable`, `value`, `frequency`) are not tracked individually. Removing their row from a metadata file does **not** delete them — they only disappear when their parent is rescanned or removed (cascade), or, for variables, via an explicit `_delete`. As a safety net, a variable whose dataset no longer exists is removed at export so the catalog stays referentially consistent.
+
+Use `_delete: true` to remove an entity from the final catalog immediately:
 
 ```json
 [
@@ -114,7 +121,7 @@ Use `_delete: true` to remove an entity from the final catalog:
 ]
 ```
 
-Deletion is supported for all ID-keyed catalog entities. Composite tables (`value` and `frequency`) are not deleted directly; they are removed through cascades from their parent enumeration, variable, dataset, or folder.
+`_delete` is supported for all ID-keyed catalog entities (including `variable`). Composite tables (`value` and `frequency`) cannot be deleted directly; they are removed through cascades from their parent enumeration, variable, dataset, or folder.
 
 Cascades are applied before export:
 

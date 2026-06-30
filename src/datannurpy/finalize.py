@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
+import polars as pl
+
 if TYPE_CHECKING:
     from .catalog import Catalog
     from .schema import Dataset
@@ -201,6 +203,33 @@ def remove_organizations_cascade(
         _clear_scalar_ids(table, "owner_organization_id", removed)
         _clear_scalar_ids(table, "manager_organization_id", removed)
     catalog.organization.remove_all(ids)
+
+
+def remove_orphan_children(catalog: Catalog) -> int:
+    """Remove variables that reference a missing dataset (referential integrity).
+
+    Variables carry no ``_seen`` flag, so they are reconciled only through their
+    dataset's cascade. Metadata can re-assert a variable after its dataset is
+    gone (e.g. a ``variable.csv`` line pointing at a deleted dataset), leaving a
+    permanent orphan the unseen-sweep never reaches. This backstop drops such
+    variables (cascading to their frequencies) so the exported DB stays
+    referentially consistent. Returns the number of variables removed; a no-op
+    when the catalog is already consistent.
+
+    ``value``/``frequency`` rows are left untouched: metadata may legitimately
+    define them as standalone enrichment without a matching local parent row.
+    """
+    variables = catalog.variable.df
+    if variables.is_empty() or "dataset_id" not in variables.columns:
+        return 0
+    datasets = catalog.dataset.df
+    dataset_ids = datasets["id"].to_list() if not datasets.is_empty() else []
+    orphan_ids = variables.filter(~pl.col("dataset_id").is_in(dataset_ids))[
+        "id"
+    ].to_list()
+    if orphan_ids:
+        remove_variables_cascade(catalog, orphan_ids)
+    return len(orphan_ids)
 
 
 def _remove_ids_from_list_field(table: object, field: str, removed: set[str]) -> None:

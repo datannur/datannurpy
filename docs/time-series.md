@@ -6,12 +6,12 @@ datannurpy can group repeated files or database tables into one dataset when the
 
 The detector recognizes years, quarters, months, and full dates in names or paths:
 
-| Period type | Examples | Stored as |
-| ----------- | -------- | --------- |
-| Year | `sales_2024.csv`, `stats_2024` | `2024` |
-| Quarter | `sales_2024Q1.csv`, `stats_2024T2` | `2024Q1`, `2024Q2` |
-| Month | `sales_2024-03.csv`, `sales_202403` | `2024/03` |
-| Date | `sales_2024-03-15.csv`, `sales_20240315` | `2024/03/15` |
+| Period type | Examples | Stored as | Metadata-first pattern |
+| ----------- | -------- | --------- | ---------------------- |
+| Year | `sales_2024.csv`, `stats_2024` | `2024` | `[YYYY]` |
+| Quarter | `sales_2024Q1.csv`, `stats_2024T2` | `2024Q1`, `2024Q2` | `[YYYY]Q[N]` |
+| Month | `sales_2024-03.csv`, `sales_202403` | `2024/03` | `[YYYY/MM]` |
+| Date | `sales_2024-03-15.csv`, `sales_20240315` | `2024/03/15` | `[YYYY/MM/DD]` |
 
 Partial periods such as `01`, `02`, `Q1`, or `day15` can be used only when a full 4-digit year is available elsewhere in the same path or table name. A sequence such as `report_01.csv`, `report_02.csv` is kept as separate datasets because it has no year context.
 
@@ -66,7 +66,7 @@ For a grouped series, the dataset receives:
 - `end_date`: last detected period
 - `data_path`: the latest file or table, used as the canonical resource
 
-In metadata-first scans (`create_folders=False`), the technical `_match_path` in `metadata/dataset.csv` can use the same normalized series syntax, for example `sales_[YYYY].csv`, `sales_[YYYY/MM].csv`, `sales_[YYYY]Q[N].csv`, or `sales_[YYYY/MM/DD].csv`, to match the logical series instead of a specific latest file.
+In metadata-first scans (`create_folders=False`), the technical `_match_path` in `metadata/dataset.csv` can use the normalized series syntax from the [Metadata-first pattern](#supported-patterns) column above — for example `sales_[YYYY].csv` or `sales_[YYYY/MM].csv` — to match the logical series instead of a specific latest file.
 
 At `depth="stat"` or `depth="value"`, statistics and frequency tables are computed from the latest period only. Older periods are scanned in schema-only mode so datannurpy can detect variable availability over time.
 

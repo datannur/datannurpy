@@ -18,13 +18,14 @@ from typing import TYPE_CHECKING, Any
 import polars as pl
 from jsonjsdb.writer import export_hash_session, write_table_json_pair
 
-from .utils.log import _write_log
+from .utils.log import _write_log, log_warn
 from .utils.params import validate_params
 
 if TYPE_CHECKING:
     from .catalog import Catalog
 
 from .add_metadata import apply_metadata_tombstones, ensure_metadata_applied
+from .finalize import remove_orphan_children
 from .errors import ConfigError
 from .preview import apply_preview_flags, sync_preview_exports
 
@@ -559,6 +560,13 @@ def export_db(
         "value": "enumeration",
     }
     apply_metadata_tombstones(catalog)
+
+    # Referential-integrity backstop: drop variables orphaned by deletions in
+    # this or a previous run (e.g. metadata re-asserting a variable whose dataset
+    # is gone). Runs unconditionally so metadata-only exports are cleaned too.
+    orphans_removed = remove_orphan_children(catalog)
+    if orphans_removed:
+        log_warn(f"Removed {orphans_removed} orphan variable(s) with no dataset", q)
 
     if copy_assets is not None:
         export_dir = Path(path)

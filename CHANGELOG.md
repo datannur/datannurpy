@@ -1,5 +1,12 @@
 # datannurpy
 
+## 0.27.4 (2026-06-30)
+
+- docs: document the metadata-first `_match_path` pattern for each period type in the time-series supported-patterns table
+- fix: a missing folder in `add_folder()` now logs one clean, redacted error line instead of being absent from the log or showing traceback noise / `NoneType: None`
+- fix: variables orphaned by a deleted dataset (e.g. a metadata `variable.csv` row re-asserting a variable whose dataset is gone) are now swept at export, so the catalog stays referentially consistent instead of keeping phantom variables
+- docs: document the mirror model (each run reflects current scan + metadata) and the parent-vs-child deletion semantics
+
 ## 0.27.3 (2026-06-27)
 
 - fix: `value` and `frequency` tables no longer duplicate every row on each incremental run — reload now rebuilds their runtime ids with the same hashed builders used to match existing rows
