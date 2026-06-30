@@ -5,7 +5,7 @@ from __future__ import annotations
 import stat
 from collections.abc import Sequence
 from pathlib import Path, PurePath, PurePosixPath
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, NoReturn
 
 from .utils import (
     build_dataset_id_name,
@@ -65,6 +65,18 @@ if TYPE_CHECKING:
 _DIR_FORMATS = {"delta", "hive", "iceberg"}
 
 OnUnmatched = Literal["skip", "warn", "error"]
+
+
+def _raise_folder_config_error(message: str, quiet: bool) -> NoReturn:
+    """Log a clean root-folder validation error, then raise ``ConfigError``.
+
+    The error is logged before being raised, so ``log_error`` sees no traceback
+    and writes a single clean line; ``raise ... from None`` keeps the propagated
+    error free of any low-level filesystem/SFTP context.
+    """
+    error = ConfigError(message)
+    log_error("add_folder", error, quiet)
+    raise error from None
 
 
 def _build_series_folder_id(normalized: str, prefix: str) -> str:
@@ -253,9 +265,9 @@ def add_folder(
         try:
             is_dir = fs_info_is_dir(fs, fs.root)
         except FileNotFoundError:
-            raise ConfigError(f"Folder not found: {path}")
+            _raise_folder_config_error(f"Folder not found: {path}", q)
         if not is_dir:
-            raise ConfigError(f"Not a directory: {path}")
+            _raise_folder_config_error(f"Not a directory: {path}", q)
         # Use PurePosixPath to preserve forward slashes on Windows
         root = PurePosixPath(fs.root)
         root_name = fs.root.rstrip("/").rsplit("/", 1)[-1]
@@ -265,9 +277,9 @@ def add_folder(
         try:
             root_stat = root.stat()
         except FileNotFoundError:
-            raise ConfigError(f"Folder not found: {root}")
+            _raise_folder_config_error(f"Folder not found: {root}", q)
         if not stat.S_ISDIR(root_stat.st_mode):
-            raise ConfigError(f"Not a directory: {root}")
+            _raise_folder_config_error(f"Not a directory: {root}", q)
 
     # Reject if path is a dataset (Delta/Hive/Iceberg) - use add_dataset instead
     if (
