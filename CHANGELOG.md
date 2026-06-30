@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.27.4 (2026-06-30)
+
+- docs: document the metadata-first `_match_path` pattern for each period type in the time-series supported-patterns table
+
 ## 0.27.3 (2026-06-27)
 
 - fix: `value` and `frequency` tables no longer duplicate every row on each incremental run — reload now rebuilds their runtime ids with the same hashed builders used to match existing rows
