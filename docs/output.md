@@ -56,6 +56,8 @@ add:
 
 Use `refresh: true` to force a full rescan.
 
+**Each run mirrors the current sources.** The export reflects exactly what the current scan and metadata produce: an entity present in a previous run but no longer scanned and no longer in metadata is removed, not kept. The persisted DB is a performance cache for skipping unchanged files — not an accumulation store. Stop scanning a source and its datasets disappear on the next run. See [deletion semantics](/metadata#deletion) for how this differs between parent entities (datasets, folders, …) and child entities (variables, values, frequencies).
+
 Existing app exports update `data/db` by default and preserve local app state under `data/`. To refresh the bundled front-end app files after upgrading datannurpy, set `update_app: true` or call `catalog.export_app(update_app=True)`.
 
 When `app_path/data/db-ui` exists, it is loaded automatically as the last metadata source before export. See [Manual metadata](/metadata) for merge ordering and overlay instructions.
