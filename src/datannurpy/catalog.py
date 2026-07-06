@@ -15,6 +15,7 @@ from .add_geodatabase import add_geodatabase
 from .exporter import export_app, export_db
 from .finalize import finalize
 from .preview import PreviewRows, effective_preview_rows, validate_preview_rows
+from .scan_cache import scan_cache_load_path
 from .schema import Config, DatannurDB
 from .utils import EnumerationManager, configure_logging
 from .utils.ids import build_frequency_id, build_value_id, compute_runtime_ids
@@ -103,15 +104,13 @@ class Catalog(DatannurDB):
         else:
             self.db_path = None
 
-        # Load existing db if present (skip when refresh=True: full rescan)
+        # Load the scan-derived base if present (skip when refresh=True: full
+        # rescan). The incremental base is the pristine _scan cache, never the
+        # previously-exported final DB — that DB already carries metadata overlays
+        # and reusing it as a base is what left stale values behind.
         load_path: str | None = None
-        if not refresh and self.db_path:
-            try:
-                (self.db_path / "__table__.json").stat()
-            except FileNotFoundError:
-                pass
-            else:
-                load_path = str(self.db_path)
+        if not refresh:
+            load_path = scan_cache_load_path(self.db_path)
 
         try:
             super().__init__(load_path)
@@ -120,7 +119,7 @@ class Catalog(DatannurDB):
                 import warnings
 
                 warnings.warn(
-                    f"Could not load existing database at {load_path}. "
+                    f"Could not load the scan cache at {load_path}. "
                     "The schema may have changed after a datannurpy upgrade. "
                     "Starting fresh (use refresh=True to avoid this warning).",
                     stacklevel=2,

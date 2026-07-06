@@ -30,6 +30,25 @@ def finalize(catalog: Catalog) -> None:
         catalog._finalized = True
         return
 
+    prune_unseen(catalog)
+
+    # Remove unreferenced scan tags (auto---, db---). Reference-based, so it must
+    # run after metadata has been applied — not part of the pristine scan base.
+    _remove_orphan_scan_tags(catalog)
+
+    # Mark as finalized
+    catalog._finalized = True
+
+
+def prune_unseen(catalog: Catalog) -> None:
+    """Remove entities with _seen=False: the scan base's incremental cleanup.
+
+    This is the part of finalize that reconciles the scan base against what the
+    current scan actually saw, cascading through child rows. It carries no
+    dependency on metadata, so export runs it before caching the scan base;
+    ``finalize`` then runs it too (a no-op after that early call) alongside the
+    reference-based scan-tag cleanup that must wait until metadata is applied.
+    """
     # 1. Remove unseen folders
     removed_folder_ids = catalog.folder.ids_where("_seen", "==", False)
     if removed_folder_ids:
@@ -55,21 +74,15 @@ def finalize(catalog: Catalog) -> None:
     if unseen_tag_ids:
         remove_tags_cascade(catalog, unseen_tag_ids)
 
-    # 6. Remove unreferenced scan tags (auto---, db---)
-    _remove_orphan_scan_tags(catalog)
-
-    # 7. Remove unseen docs
+    # 6. Remove unseen docs
     unseen_doc_ids = catalog.doc.ids_where("_seen", "==", False)
     if unseen_doc_ids:
         remove_docs_cascade(catalog, unseen_doc_ids)
 
-    # 7b. Remove unseen concepts
+    # 7. Remove unseen concepts
     unseen_concept_ids = catalog.concept.ids_where("_seen", "==", False)
     if unseen_concept_ids:
         remove_concepts_cascade(catalog, unseen_concept_ids)
-
-    # Mark as finalized
-    catalog._finalized = True
 
 
 def remove_dataset_cascade(self: Catalog, dataset: Dataset) -> None:
