@@ -73,18 +73,18 @@ class TestCatalogAppPath:
         assert catalog.db_path is None
 
     def test_app_path_loads_existing_catalog(self, tmp_path: Path):
-        """Catalog with app_path should load existing entities from data/db/."""
-        # Create a catalog structure (db is in app_path/data/db/)
+        """Catalog with app_path should load the scan base from data/db/_scan/."""
+        # The incremental base lives in the _scan cache, not the final DB.
         app_dir = tmp_path / "app"
-        db_dir = app_dir / "data" / "db"
-        db_dir.mkdir(parents=True)
-        (db_dir / "__table__.json").write_text(
+        scan_dir = app_dir / "data" / "db" / "_scan"
+        scan_dir.mkdir(parents=True)
+        (scan_dir / "__table__.json").write_text(
             json.dumps([{"name": "folder"}, {"name": "dataset"}])
         )
-        (db_dir / "folder.json").write_text(
+        (scan_dir / "folder.json").write_text(
             json.dumps([{"id": "f1", "name": "Folder 1"}])
         )
-        (db_dir / "dataset.json").write_text(
+        (scan_dir / "dataset.json").write_text(
             json.dumps([{"id": "ds1", "name": "Dataset 1", "folder_id": "f1"}])
         )
 
@@ -101,10 +101,10 @@ class TestCatalogAppPath:
     ):
         """Reload should restore _match_path from metadata even without data_path."""
         app_dir = tmp_path / "app"
-        db_dir = app_dir / "data" / "db"
-        db_dir.mkdir(parents=True)
-        (db_dir / "__table__.json").write_text(json.dumps([{"name": "dataset"}]))
-        (db_dir / "dataset.json").write_text(
+        scan_dir = app_dir / "data" / "db" / "_scan"
+        scan_dir.mkdir(parents=True)
+        (scan_dir / "__table__.json").write_text(json.dumps([{"name": "dataset"}]))
+        (scan_dir / "dataset.json").write_text(
             json.dumps([{"id": "src---x_csv", "name": "X", "folder_id": "src"}])
         )
 
@@ -131,10 +131,10 @@ class TestCatalogAppPath:
     ):
         """Reload should keep _match_path unset when metadata has no usable match."""
         app_dir = tmp_path / "app"
-        db_dir = app_dir / "data" / "db"
-        db_dir.mkdir(parents=True)
-        (db_dir / "__table__.json").write_text(json.dumps([{"name": "dataset"}]))
-        (db_dir / "dataset.json").write_text(
+        scan_dir = app_dir / "data" / "db" / "_scan"
+        scan_dir.mkdir(parents=True)
+        (scan_dir / "__table__.json").write_text(json.dumps([{"name": "dataset"}]))
+        (scan_dir / "dataset.json").write_text(
             json.dumps([{"id": "src---x_csv", "name": "X", "folder_id": "src"}])
         )
 
@@ -203,12 +203,12 @@ class TestCatalogRefresh:
         assert len(catalog2.folder.all()) == 0
 
     def test_corrupted_db_falls_back_gracefully(self, tmp_path: Path):
-        """Catalog should warn and start fresh if existing db is corrupted."""
+        """Catalog should warn and start fresh if the scan cache is corrupted."""
         app_dir = tmp_path / "app"
-        db_dir = app_dir / "data" / "db"
-        db_dir.mkdir(parents=True)
-        (db_dir / "__table__.json").write_text('[{"name":"variable","last_modif":0}]')
-        (db_dir / "variable.json").write_text("NOT VALID JSON{{{{")
+        scan_dir = app_dir / "data" / "db" / "_scan"
+        scan_dir.mkdir(parents=True)
+        (scan_dir / "__table__.json").write_text('[{"name":"variable","last_modif":0}]')
+        (scan_dir / "variable.json").write_text("NOT VALID JSON{{{{")
 
         import warnings
 

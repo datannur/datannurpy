@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.28.0 (2026-07-06)
+
+- fix: an emptied metadata cell (or removed column) now falls back to the scanned value instead of keeping the previous override — empty means "no value from this source", not "no change"; `!` still clears the final value
+- change: the incremental base is now a scan-only cache under `data/db/_scan/`, so each publish rebuilds `data/db` from the current scan + metadata and never reuses its own overlays as the next run's base — the first run after upgrade rebuilds `_scan` with one full rescan
+
 ## 0.27.4 (2026-06-30)
 
 - docs: document the metadata-first `_match_path` pattern for each period type in the time-series supported-patterns table

@@ -59,7 +59,7 @@ The most common metadata columns are the same whether the source is CSV, Excel, 
 | `value` | `enumeration_id`, `value`, `description` |
 | `config` | `id`, `value` |
 
-Localized text fields can be provided with the app's `field:lang` convention. For example, keep `name` and `description` as the default/fallback language, then add `name:fr` or `description:fr` for French text. Datannurpy preserves localized columns for any entity field that already exists in the schema, such as `name:fr` and `description:fr` on datasets, variables, tags, organizations, concepts, enumerations, values, docs, and app filter labels. Empty localized cells leave existing localized values unchanged during metadata merges; use `!` to clear a localized value explicitly.
+Localized text fields can be provided with the app's `field:lang` convention. For example, keep `name` and `description` as the default/fallback language, then add `name:fr` or `description:fr` for French text. Datannurpy preserves localized columns for any entity field that already exists in the schema, such as `name:fr` and `description:fr` on datasets, variables, tags, organizations, concepts, enumerations, values, docs, and app filter labels. An empty localized cell contributes nothing from that source (the value falls back to a lower source or the scan); use `!` to clear a localized value explicitly.
 
 For folder-based metadata sources, name each file after the entity (`folder.csv`, `folder.xlsx`, `folder.json`, etc.). List fields such as `tag_ids`, `doc_ids`, and `enumeration_ids` can be written as comma-separated values in tabular files, or as arrays in JSON. For full schema details, use the linked datannur schemas as the reference.
 
@@ -68,7 +68,7 @@ For folder-based metadata sources, name each file after the entity (`folder.csv`
 - Existing entities are updated (manual values override auto-scanned values)
 - New entities are created
 - List fields (`tag_ids`, `doc_ids`, etc.) are merged
-- Empty cells and JSON empty arrays leave existing values unchanged
+- An empty cell, a JSON empty array, or a missing column means "no current value from this metadata source" — it contributes nothing, so the value falls back to what a lower metadata source or the scan provides. It does **not** freeze the previous export's value. Clear a cell to drop your override and return to the scanned value; use `!` to force the final value to empty even when the scan provides one
 
 **Ordering:** Metadata is automatically applied before export/finalization, after all `add_folder`, `add_dataset`, and `add_database` calls, so manual values take precedence. If `app_path/data/db-ui` exists, it is loaded automatically as the last metadata source, after configured `metadata_path` sources. This lets local app edits override scanned metadata without adding `data/db-ui` to the configuration. `data/db-ui` uses the same supported metadata formats as any other metadata source; `data/db` remains the generated export.
 

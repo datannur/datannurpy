@@ -25,9 +25,10 @@ if TYPE_CHECKING:
     from .catalog import Catalog
 
 from .add_metadata import apply_metadata_tombstones, ensure_metadata_applied
-from .finalize import remove_orphan_children
+from .finalize import prune_unseen, remove_orphan_children
 from .errors import ConfigError
 from .preview import apply_preview_flags, sync_preview_exports
+from .scan_cache import write_scan_cache
 
 _GZIP_CHUNK_SIZE = 1024 * 1024
 _MARKDOWN_LINK_RE = re.compile(
@@ -541,16 +542,24 @@ def export_db(
     quiet: bool | None = None,
 ) -> None:
     """Write all catalog entities to JSON files."""
-    ensure_metadata_applied(catalog)
-    # Only finalize (cleanup unseen entities) if a scan was performed
-    if catalog._has_scanned:
-        catalog.finalize()
-
     path = output_dir or catalog.db_path
     if path is None:
         msg = "output_dir is required when app_path was not set at init"
         raise ConfigError(msg)
     q = quiet if quiet is not None else catalog.quiet
+
+    # Cache the pristine scan base BEFORE applying metadata, so the next
+    # incremental run rebuilds the final DB from the current scan + current
+    # metadata rather than from a previously-overlaid export. Unseen scan rows are
+    # reconciled first so they never leak into the cache; the reference-based
+    # scan-tag cleanup is deferred to finalize() after metadata is applied.
+    if catalog._has_scanned:
+        prune_unseen(catalog)
+    if catalog.db_path is not None:
+        write_scan_cache(catalog, catalog.db_path, catalog._now)
+    ensure_metadata_applied(catalog)
+    if catalog._has_scanned:
+        catalog.finalize()
 
     # Parent relations for cascade suppression in evolution tracking
     parent_relations = {
@@ -561,9 +570,9 @@ def export_db(
     }
     apply_metadata_tombstones(catalog)
 
-    # Referential-integrity backstop: drop variables orphaned by deletions in
-    # this or a previous run (e.g. metadata re-asserting a variable whose dataset
-    # is gone). Runs unconditionally so metadata-only exports are cleaned too.
+    # Referential-integrity backstop: drop variables orphaned by a deletion this
+    # run (e.g. metadata re-asserting a variable whose dataset is gone or
+    # tombstoned). Runs unconditionally so metadata-only exports are cleaned too.
     orphans_removed = remove_orphan_children(catalog)
     if orphans_removed:
         log_warn(f"Removed {orphans_removed} orphan variable(s) with no dataset", q)
@@ -647,11 +656,7 @@ def export_app(
     quiet: bool | None = None,
 ) -> None:
     """Export a standalone datannur visualization app with catalog data."""
-    ensure_metadata_applied(catalog)
-    # Only finalize (cleanup unseen entities) if a scan was performed
-    if catalog._has_scanned:
-        catalog.finalize()
-
+    # Metadata application and unseen-cleanup are handled by export_db below.
     if output_dir is None:
         if catalog.app_path is None:
             msg = "output_dir is required when app_path was not set at init"
