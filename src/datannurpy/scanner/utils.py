@@ -6,16 +6,18 @@ import errno
 import fnmatch
 import os
 from collections.abc import Sequence
-from datetime import datetime, timezone
+from datetime import datetime
+from email.utils import parsedate_to_datetime
 from functools import lru_cache
 from pathlib import Path, PurePath, PurePosixPath
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Union
 
 import ibis
 import ibis.expr.datatypes as dt
 
 from ..schema import Variable
 from ..utils.log import log_warn
+from ..utils.time import timestamp_to_iso
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -23,6 +25,14 @@ if TYPE_CHECKING:
     import pyarrow as pa
 
     from .filesystem import FileSystem
+
+# A filesystem path carrier. Local paths are concrete ``Path`` objects; remote paths
+# are whatever fsspec expects as a string. Most remote backends expose a ``/``-rooted
+# POSIX path (safely a ``PurePosixPath``), but URL-rooted backends (http/https) expose
+# a full URL that ``PurePosixPath`` would corrupt by collapsing the ``//`` after the
+# scheme, so those are kept as the raw ``str``. Callers only ever ``str()`` a remote
+# path (local-only operations stay guarded behind ``isinstance(path, Path)``).
+FsPath = Union[str, PurePath]
 
 
 def _to_float(val: Any) -> float | None:
@@ -305,36 +315,57 @@ def _relative_fs_path(fs: FileSystem, path: str) -> str:
     return fs.relative_to_root(path).replace("\\", "/").lstrip("/")
 
 
-def get_mtime_iso(path: PurePath, fs: FileSystem | None = None) -> str:
-    """Get file modification time as UTC date-time string."""
+def _remote_mtime(fs: FileSystem, path: FsPath) -> float | None:
+    """Modification time (epoch seconds) of a remote path, or None when the backend
+    exposes none.
+
+    fsspec surfaces it inconsistently: a float/int or a ``datetime`` under ``mtime`` /
+    ``modified`` (local-like backends, S3, SFTP), or only the raw ``Last-Modified`` HTTP
+    header on a plain web server. A dynamic HTTP endpoint that sends no such header (nor
+    a malformed one) has no reliable modification time at all.
+    """
+    info = fs.info(str(path))
+    raw = info.get("mtime") or info.get("modified")
+    if raw is None:
+        header = next(
+            (v for k, v in info.items() if k.lower() == "last-modified"), None
+        )
+        if not header:
+            return None
+        try:
+            raw = parsedate_to_datetime(header)
+        except (TypeError, ValueError):
+            return None
+    if isinstance(raw, datetime):
+        return raw.timestamp()
+    return float(raw)
+
+
+def get_mtime_iso(path: FsPath, fs: FileSystem | None = None) -> str | None:
+    """Get file modification time as a UTC date-time string (None if unknown)."""
     if fs is not None:
-        info = fs.info(str(path))
-        mtime = info.get("mtime") or info.get("modified", 0)
-        # SFTP returns datetime, others return float
-        if isinstance(mtime, datetime):
-            return mtime.astimezone(timezone.utc).strftime("%Y/%m/%dT%H:%M:%S")
+        mtime = _remote_mtime(fs, path)
+        if mtime is None:
+            return None
     else:
         assert isinstance(path, Path)
         mtime = path.stat().st_mtime
-    dt_obj = datetime.fromtimestamp(mtime, tz=timezone.utc)
-    return dt_obj.strftime("%Y/%m/%dT%H:%M:%S")
+    return timestamp_to_iso(mtime)
 
 
-def get_mtime_timestamp(path: PurePath, fs: FileSystem | None = None) -> int:
-    """Get file modification time as Unix timestamp (seconds)."""
+def get_mtime_timestamp(path: FsPath, fs: FileSystem | None = None) -> int:
+    """Get file modification time as a Unix timestamp, or 0 when unknown."""
     if fs is not None:
-        info = fs.info(str(path))
-        mtime = info.get("mtime") or info.get("modified", 0)
-        # SFTP returns datetime, others return float
-        if isinstance(mtime, datetime):
-            return int(mtime.timestamp())
+        mtime = _remote_mtime(fs, path)
+        if mtime is None:
+            return 0
     else:
         assert isinstance(path, Path)
         mtime = path.stat().st_mtime
     return int(mtime)
 
 
-def get_data_size(path: PurePath, fs: FileSystem | None = None) -> int:
+def get_data_size(path: FsPath, fs: FileSystem | None = None) -> int:
     """Get file size in bytes."""
     if fs is not None:
         info = fs.info(str(path))

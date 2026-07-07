@@ -30,7 +30,7 @@ from .excel import (
 from .parquet import scan_parquet
 from .parquet.core import scan_delta, scan_hive, scan_iceberg
 from .statistical import scan_statistical
-from .utils import build_variables_from_schema
+from .utils import FsPath, build_variables_from_schema
 
 _PA_PY_FILE_SYSTEM = getattr(pa_fs_module, "PyFileSystem")
 _PA_FSSPEC_HANDLER = getattr(pa_fs_module, "FSSpecHandler")
@@ -67,7 +67,7 @@ class ScanResult:
 
 
 def scan_file(
-    path: PurePath,
+    path: FsPath,
     delivery_format: str,
     *,
     dataset_id: str,
@@ -271,7 +271,7 @@ def _scan_local(
 
 
 def _scan_with_ensure_local(
-    path: PurePath,
+    path: FsPath,
     delivery_format: str,
     *,
     dataset_id: str,
@@ -313,7 +313,7 @@ def _scan_with_ensure_local(
 
 
 def _scan_schema_only(
-    path: PurePath,
+    path: FsPath,
     delivery_format: str,
     dataset_id: str,
     csv_encoding: str | None = None,
@@ -355,7 +355,7 @@ def _scan_schema_only(
 
 
 def _scan_stat_schema_stream(
-    path: PurePath,
+    path: FsPath,
     delivery_format: str,
     dataset_id: str,
     fs: FileSystem,
@@ -408,7 +408,7 @@ def _scan_stat_schema_stream(
 
 
 def _scan_schema_only_remote(
-    path: PurePath,
+    path: FsPath,
     delivery_format: str,
     dataset_id: str,
     csv_encoding: str | None,

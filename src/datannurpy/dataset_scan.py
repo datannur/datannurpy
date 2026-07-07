@@ -38,7 +38,14 @@ def skip_unchanged(
     )
     if existing is None:
         return False
-    if not refresh and iso_to_timestamp(existing.last_update_date) == current_mtime:
+    # A source that exposes no modification time — e.g. an HTTP endpoint sending no
+    # Last-Modified header — yields mtime 0 and gives no reliable change signal, so
+    # always re-scan rather than risk skipping a file that changed upstream.
+    if (
+        not refresh
+        and current_mtime
+        and iso_to_timestamp(existing.last_update_date) == current_mtime
+    ):
         catalog.dataset.update(
             existing.id, _seen=True, _match_path=match_path, preview_rows=preview_rows
         )

@@ -472,6 +472,7 @@ class TestGetMtimeWithFileSystem:
         fs = FileSystem(tmp_path)
         result = get_mtime_iso(file_path, fs=fs)
         # Should be a full datetime string in YYYY/MM/DDTHH:MM:SS format
+        assert result is not None
         assert len(result) == 19
         assert result.count("/") == 2
         assert "T" in result

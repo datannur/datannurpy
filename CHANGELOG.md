@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.29.0 (2026-07-07)
+
+- add: scan a public HTTP(S) URL as a single `dataset:` (e.g. `dataset: https://.../data.csv`) — full scan pipeline, URL exported as `data_path`, format from the extension, redirects followed, a missing URL failing loudly like a missing local file; `aiohttp` is now a core dependency so it works out of the box
+- add: incremental scans of HTTP(S) URLs use the server's `Last-Modified` header — an unchanged URL is skipped (and it fills `last_update_date`); a source without it is always re-scanned
+
 ## 0.28.0 (2026-07-06)
 
 - fix: an emptied metadata cell (or removed column) now falls back to the scanned value instead of keeping the previous override — empty means "no value from this source", not "no change"; `!` still clears the final value
