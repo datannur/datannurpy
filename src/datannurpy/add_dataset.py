@@ -30,6 +30,7 @@ from .schema import Dataset, EntityMetadata
 from .scanner.filesystem import FileSystem, is_remote_url
 from .scanner.utils import (
     SUPPORTED_FORMATS,
+    FsPath,
     fs_info_is_dir,
     get_data_size,
     get_dir_data_size,
@@ -57,7 +58,7 @@ def _create_dataset(
     default_name: str,
     folder_id: str | None,
     data_path: str,
-    dataset_path: PurePath,
+    dataset_path: FsPath,
     current_mtime: int,
     delivery_format: str,
     metadata: EntityMetadata | None,
@@ -111,7 +112,7 @@ def _create_dataset(
 
 
 def _public_data_path(
-    dataset_path: PurePath, path_name: str, fs: FileSystem | None
+    dataset_path: FsPath, path_name: str, fs: FileSystem | None
 ) -> str:
     """Return the exported data_path while keeping local scan paths portable."""
     if fs is not None and not fs.is_local:
@@ -167,7 +168,10 @@ def add_dataset(
             is_dir = fs_info_is_dir(fs, fs.root)
         except FileNotFoundError:
             raise ConfigError(f"Path not found: {path}")
-        dataset_path = PurePosixPath(fs.root)
+        # URL-rooted backends (http/https) keep the raw root: PurePosixPath would
+        # collapse the '//' after the scheme and corrupt the URL. Everything downstream
+        # only str()s a remote path, so a plain string is the faithful carrier.
+        dataset_path: FsPath = fs.root if "://" in fs.root else PurePosixPath(fs.root)
         path_name = fs.root.rstrip("/").rsplit("/", 1)[-1]
     else:
         dataset_path = Path(path).resolve()

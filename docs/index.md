@@ -14,7 +14,7 @@ A lightweight catalog compatible with most data sources:
 | **Statistical**    | SAS (.sas7bdat), SPSS (.sav), Stata (.dta)            |
 | **Geospatial**     | GeoJSON, Shapefile, GeoPackage, GeoParquet, GeoTIFF, GML, KML, ESRI File Geodatabase |
 | **Databases**      | PostgreSQL, MySQL, Oracle, SQL Server, SQLite, DuckDB |
-| **Remote storage** | SFTP, Amazon S3, Azure Blob Storage, Google Cloud Storage |
+| **Remote storage** | Public HTTP(S) URLs, SFTP, Amazon S3, Azure Blob Storage, Google Cloud Storage |
 
 All scanned data formats support automatic schema inference and statistics computation.
 

@@ -163,7 +163,7 @@ csv_skip_copy: true
 
 ## Remote storage
 
-Scan files on SFTP servers or cloud storage (S3, Azure, GCS). The `storage_options` dict is passed directly to [fsspec](https://filesystem-spec.readthedocs.io/) — see provider docs for available options:
+Scan files on public HTTP(S) URLs, SFTP servers, or cloud storage (S3, Azure, GCS). The `storage_options` dict is passed directly to [fsspec](https://filesystem-spec.readthedocs.io/) — see provider docs for available options:
 
 - [SFTP](https://filesystem-spec.readthedocs.io/en/latest/api.html#fsspec.implementations.sftp.SFTPFileSystem)
 - [S3](https://s3fs.readthedocs.io/en/latest/)
@@ -219,6 +219,21 @@ add:
     storage_options:
       token: /path/to/credentials.json
 ```
+
+### Public HTTP(S) URLs
+
+Point a `dataset:` at a public URL and get documented variables, stats and a preview — the natural way to catalog open data already online (data portals, Zenodo, etc.). Works out of the box (no extra to install).
+
+```yaml
+add:
+  - dataset: https://data.example.org/opendata/sales.csv
+```
+
+- One URL is one file — `dataset:` only; `folder:` (directory listing) is not supported over HTTP.
+- Public, no authentication. The file format is recognized by the extension in the URL, so a recognized extension is required.
+- Redirects are followed; `https://` is recommended.
+- A missing URL (404, DNS error, timeout) fails the run with a non-zero exit code, just like a missing local file — a CI build fails red rather than publishing a truncated catalog.
+- Incremental scans use the server's `Last-Modified` header: a URL is skipped when it is unchanged, and its date populates `last_update_date`. A server that sends no `Last-Modified` (e.g. a dynamic endpoint) is re-scanned on every run.
 
 ### Single remote file
 
