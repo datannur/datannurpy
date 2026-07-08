@@ -19,6 +19,7 @@ import pytest
 
 from datannurpy import Catalog
 from datannurpy.errors import ConfigError
+from datannurpy.scanner.filesystem import _http_backend_available
 
 
 class _QuietHandler(http.server.SimpleHTTPRequestHandler):
@@ -115,7 +116,13 @@ def serve(tmp_path: Path) -> Iterator[ServeFn]:
 
     Port 0 lets the OS pick a free port so tests stay parallel-safe under xdist. The
     factory takes an optional handler class to vary the Last-Modified behavior.
+
+    Skipped when aiohttp is unavailable (Python < 3.10), where HTTP-URL scanning is
+    unsupported by design — the dedicated guard test covers that path instead.
     """
+    if not _http_backend_available():
+        pytest.skip("aiohttp not installed (Python < 3.10) — HTTP scanning unavailable")
+
     started: list[tuple[http.server.ThreadingHTTPServer, threading.Thread]] = []
 
     def _serve(handler_cls: type[_QuietHandler] = _QuietHandler) -> str:
@@ -192,6 +199,18 @@ def test_add_dataset_http_query_string_ids_are_distinct(
 
     ids = {ds.id for ds in catalog.dataset.all()}
     assert len(ids) == 2  # no collision on the shared "CSV" segment
+
+
+def test_http_url_without_aiohttp_raises_clear_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """On Python 3.9 (aiohttp absent), an HTTP URL fails with an actionable message
+    instead of a raw ImportError deep inside fsspec."""
+    from datannurpy.scanner import filesystem
+
+    monkeypatch.setattr(filesystem, "_http_backend_available", lambda: False)
+    with pytest.raises(ConfigError, match=r"aiohttp.*Python >= 3\.10"):
+        filesystem.FileSystem("https://example.com/data.csv")
 
 
 def test_add_dataset_http_404(serve: ServeFn) -> None:

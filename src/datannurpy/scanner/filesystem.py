@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import codecs
+import importlib.util
 import shutil
 import tempfile
 import time
@@ -12,6 +13,8 @@ from typing import IO, TYPE_CHECKING, Any
 from urllib.parse import urlsplit, urlunsplit
 
 import fsspec
+
+from ..errors import ConfigError
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Iterator
@@ -55,6 +58,7 @@ class FileSystem:
         # Expand ~ in path-like options (e.g., key_filename for SFTP)
         opts = _expand_home_in_options(storage_options) if storage_options else {}
         if self._is_http:
+            _ensure_http_support()
             opts = _with_http_timeout(opts)
         self.fs, self.root = fsspec.core.url_to_fs(path_str, **opts)
         # Normalize root path (remove trailing slash for consistency)
@@ -240,6 +244,27 @@ class FileSystem:
         if not path_str.startswith("/"):
             path_str = self._full_path(path_str)
         return urlunsplit((protocol, netloc, path_str, "", ""))
+
+
+def _http_backend_available() -> bool:
+    """Whether the aiohttp HTTP backend is importable in this environment."""
+    return importlib.util.find_spec("aiohttp") is not None
+
+
+def _ensure_http_support() -> None:
+    """Fail early with an actionable message when the HTTP backend is missing.
+
+    datannur declares ``aiohttp`` only on Python >= 3.10, because aiohttp's fixes
+    for its known CVEs land in 3.14+, which dropped Python 3.9. On 3.9 the package
+    is therefore absent, so scanning an HTTP(S) URL raises this clear error instead
+    of a raw ``ImportError`` surfacing deep inside fsspec's HTTP filesystem.
+    """
+    if not _http_backend_available():
+        raise ConfigError(
+            "Scanning an HTTP(S) URL needs the 'aiohttp' package, which datannur "
+            "installs only on Python >= 3.10 (aiohttp's security fixes require it). "
+            "Upgrade to Python >= 3.10, or install aiohttp manually on 3.9."
+        )
 
 
 def _with_http_timeout(opts: dict[str, Any]) -> dict[str, Any]:

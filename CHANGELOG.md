@@ -2,6 +2,7 @@
 
 ## 0.29.1 (2026-07-08)
 
+- change: HTTP(S) URL scanning now requires Python ≥ 3.10 — aiohttp's CVE fixes are 3.14+ only (which dropped 3.9), so aiohttp is installed only on 3.10+; on 3.9 an HTTP URL raises a clear error and every other feature keeps working
 - fix: the per-source scan summary reports real `scanned`/`unchanged` counts instead of net deltas — no more misleading `0 datasets, 0 variables` on an all-unchanged run
 - add: a whole-run `[summary]` line at export — catalogue totals plus this run's `scanned`/`unchanged`/`errors`, aggregated across all sources
 - add: a zipped Shapefile (`.zip` with one `.shp` + sidecars) is scanned as a single `dataset:` on any source — extracted safely (Zip Slip- and bomb-guarded) and read like a plain Shapefile, CRS included; multi-Shapefile zips and `folder:` auto-discovery stay out of scope
