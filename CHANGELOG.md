@@ -7,6 +7,7 @@
 - fix: the default `id`/`name` for a URL dataset strip the query string (readable name) and add a short URL hash to the id, so endpoints differing only by query string no longer collide
 - change: `data_size` is left empty (None) instead of `0` when the server sends no `Content-Length`
 - change: a `401`/`403` on an HTTP `dataset:` reports an authentication-required error (and a `5xx` a server error) instead of a misleading "not found"
+- add: incremental scans use the `ETag` as an extra freshness signal for an HTTP `dataset:` — an endpoint sending an `ETag` but no `Last-Modified` (dynamic API) is skipped when unchanged instead of re-scanned every run; when both are present the scan re-runs if *either* changes (so a sub-second change a 1s-granular `Last-Modified` would miss is still caught)
 - perf: a remote file's metadata is now read once per scan instead of ~4× — `info()` is memoized on the filesystem, cutting the redundant HEAD requests (HTTP/S3/SFTP)
 
 ## 0.29.0 (2026-07-07)

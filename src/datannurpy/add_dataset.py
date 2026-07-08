@@ -37,6 +37,7 @@ from .scanner.format_detect import resolve_delivery_format
 from .scanner.utils import (
     FsPath,
     fs_info_is_dir,
+    get_content_signature,
     get_data_size,
     get_dir_data_size,
     get_mtime_iso,
@@ -78,6 +79,7 @@ def _create_dataset(
     spatial_resolution: float | None = None,
     fs: FileSystem | None = None,
     match_path: str | None = None,
+    schema_signature: str | None = None,
 ) -> Dataset:
     """Create Dataset with common fields."""
     resolved_metadata = metadata or EntityMetadata()
@@ -111,6 +113,7 @@ def _create_dataset(
         end_date=resolved_metadata.end_date,
         updating_each=resolved_metadata.updating_each,
         no_more_update=resolved_metadata.no_more_update,
+        schema_signature=schema_signature,
         _seen=True,
         _match_path=match_path or data_path,
     )
@@ -236,8 +239,10 @@ def add_dataset(
         quiet=q,
     )
 
-    # Get current mtime
+    # Get current freshness signals: mtime, and an ETag content signature that lets
+    # incremental runs skip endpoints without a usable Last-Modified header.
     current_mtime = get_mtime_timestamp(dataset_path, fs=fs)
+    current_signature = get_content_signature(dataset_path, fs=fs)
     match_path = str(dataset_path)
     data_path_str = _public_data_path(dataset_path, path_name, fs)
 
@@ -251,6 +256,7 @@ def add_dataset(
         preview_rows=preview_limit,
         quiet=q,
         label=path_name,
+        current_signature=current_signature,
     ):
         return
 
@@ -294,6 +300,7 @@ def add_dataset(
             data_size=get_data_size(dataset_path, fs=fs),
             fs=fs,
             match_path=match_path,
+            schema_signature=current_signature,
         )
         catalog.dataset.add(dataset)
         log_done(path_name, q, start_time)
@@ -340,6 +347,7 @@ def add_dataset(
         spatial_resolution=result.spatial_resolution,
         fs=fs,
         match_path=match_path,
+        schema_signature=current_signature,
     )
     finalize_scanned_dataset(
         catalog,

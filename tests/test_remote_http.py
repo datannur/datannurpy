@@ -46,6 +46,31 @@ class _MalformedLastModifiedHandler(_QuietHandler):
         super().send_header(keyword, value)
 
 
+def _etag_handler(etag: list[str]) -> type[_QuietHandler]:
+    """A handler that sends a mutable ETag and no Last-Modified (dynamic endpoint).
+
+    ``etag`` is a one-element list so a test can flip the value between requests.
+    """
+
+    class _H(_NoLastModifiedHandler):
+        def end_headers(self) -> None:
+            self.send_header("ETag", etag[0])
+            super().end_headers()
+
+    return _H
+
+
+def _etag_with_last_modified_handler(etag: list[str]) -> type[_QuietHandler]:
+    """A handler that sends both a normal Last-Modified and a mutable ETag."""
+
+    class _H(_QuietHandler):
+        def end_headers(self) -> None:
+            self.send_header("ETag", etag[0])
+            super().end_headers()
+
+    return _H
+
+
 def _status_handler(code: int) -> type[_QuietHandler]:
     """A handler that answers every request with a fixed HTTP status code."""
 
@@ -236,6 +261,67 @@ def test_http_skips_when_last_modified_unchanged(
 
     assert len(catalog.dataset.all()) == 1
     assert [v.name for v in catalog.variable.all()] == ["a", "b"]
+
+
+def test_http_skips_when_etag_unchanged(serve: ServeFn, tmp_path: Path) -> None:
+    """An endpoint with no Last-Modified but a stable ETag is skipped when unchanged."""
+    csv = tmp_path / "data.csv"
+    csv.write_text("a,b\n1,2\n")
+    etag = ['"v1"']
+    base = serve(_etag_handler(etag))
+
+    catalog = Catalog(quiet=True)
+    catalog.add_dataset(f"{base}/data.csv")
+    assert [v.name for v in catalog.variable.all()] == ["a", "b"]
+
+    # Content changes but the ETag is unchanged (and there is no Last-Modified): the
+    # run trusts the ETag and keeps the previous scan.
+    csv.write_text("a,b,c\n1,2,3\n")
+    catalog.add_dataset(f"{base}/data.csv")
+
+    assert len(catalog.dataset.all()) == 1
+    assert [v.name for v in catalog.variable.all()] == ["a", "b"]
+
+
+def test_http_rescans_when_etag_changes(serve: ServeFn, tmp_path: Path) -> None:
+    """A changed ETag triggers a re-scan even without a Last-Modified header."""
+    csv = tmp_path / "data.csv"
+    csv.write_text("a,b\n1,2\n")
+    etag = ['"v1"']
+    base = serve(_etag_handler(etag))
+
+    catalog = Catalog(quiet=True)
+    catalog.add_dataset(f"{base}/data.csv")
+
+    csv.write_text("a,b,c\n1,2,3\n")
+    etag[0] = '"v2"'
+    catalog.add_dataset(f"{base}/data.csv")
+
+    assert len(catalog.dataset.all()) == 1  # same dataset, rebuilt
+    assert [v.name for v in catalog.variable.all()] == ["a", "b", "c"]
+
+
+def test_http_rescans_when_etag_changes_despite_stable_last_modified(
+    serve: ServeFn, tmp_path: Path
+) -> None:
+    """Every exposed signal must match to skip: a pinned Last-Modified does not mask a
+    changed ETag (catches sub-second changes the 1s-granular Last-Modified misses)."""
+    csv = tmp_path / "data.csv"
+    csv.write_text("a,b\n1,2\n")
+    orig = csv.stat().st_mtime
+    etag = ['"v1"']
+    base = serve(_etag_with_last_modified_handler(etag))
+
+    catalog = Catalog(quiet=True)
+    catalog.add_dataset(f"{base}/data.csv")
+
+    # Last-Modified is pinned unchanged, but the ETag changes → the scan is not skipped.
+    csv.write_text("a,b,c\n1,2,3\n")
+    os.utime(csv, (orig, orig))
+    etag[0] = '"v2"'
+    catalog.add_dataset(f"{base}/data.csv")
+
+    assert [v.name for v in catalog.variable.all()] == ["a", "b", "c"]
 
 
 def test_http_rescans_when_last_modified_changes(

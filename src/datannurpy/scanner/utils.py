@@ -375,6 +375,17 @@ def get_data_size(path: FsPath, fs: FileSystem | None = None) -> int | None:
     return path.stat().st_size
 
 
+def get_content_signature(path: FsPath, fs: FileSystem | None = None) -> str | None:
+    """A content signature for incremental skip when no reliable mtime exists: the
+    backend's ETag (HTTP/S3 expose it in ``info()``). None for local paths or backends
+    without one. Reuses the memoized ``info()``, so it adds no request."""
+    if fs is None:
+        return None
+    info = fs.info(str(path))
+    etag = next((v for k, v in info.items() if k.lower() == "etag"), None)
+    return str(etag) if etag is not None else None
+
+
 def get_dir_data_size(path: PurePath, fs: FileSystem | None = None) -> int:
     """Get total size of parquet files in a directory tree."""
     if fs is not None:
