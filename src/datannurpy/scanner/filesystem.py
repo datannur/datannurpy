@@ -216,6 +216,34 @@ class FileSystem:
         return urlunsplit((protocol, netloc, path_str, "", ""))
 
 
+def _http_status_in_chain(exc: BaseException) -> int | None:
+    """The HTTP status from a remote-access error, if any. fsspec collapses HTTP
+    failures into a bare FileNotFoundError but keeps the aiohttp ClientResponseError
+    (carrying ``status``) in the cause/context chain."""
+    cur: BaseException | None = exc
+    while cur is not None:
+        status = getattr(cur, "status", None)
+        if isinstance(status, int):
+            return status
+        cur = cur.__cause__ or cur.__context__
+    return None
+
+
+def remote_access_error_reason(exc: BaseException) -> str | None:
+    """An actionable reason for a remote-access failure — authentication for 401/403,
+    a server error for 5xx — or None for a plain not-found / unreachable error the
+    caller phrases itself (404, DNS, connection refused, timeout)."""
+    status = _http_status_in_chain(exc)
+    if status in (401, 403):
+        return (
+            f"authentication required (HTTP {status}); only public, unauthenticated "
+            f"URLs are supported"
+        )
+    if status is not None and status >= 500:
+        return f"server error (HTTP {status})"
+    return None
+
+
 def get_filesystem(
     path: str | Path, storage_options: dict[str, Any] | None = None
 ) -> FileSystem:

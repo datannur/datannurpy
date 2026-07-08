@@ -46,6 +46,18 @@ class _MalformedLastModifiedHandler(_QuietHandler):
         super().send_header(keyword, value)
 
 
+def _status_handler(code: int) -> type[_QuietHandler]:
+    """A handler that answers every request with a fixed HTTP status code."""
+
+    class _H(_QuietHandler):
+        def do_GET(self) -> None:
+            self.send_error(code)
+
+        do_HEAD = do_GET
+
+    return _H
+
+
 ServeFn = Callable[..., str]
 
 
@@ -132,8 +144,25 @@ def test_add_dataset_http_404(serve: ServeFn) -> None:
     """A missing URL fails loudly (ConfigError -> non-zero exit), like a missing file."""
     base = serve()
     catalog = Catalog(quiet=True)
-    with pytest.raises(ConfigError):
+    with pytest.raises(ConfigError, match="Path not found"):
         catalog.add_dataset(f"{base}/nope.csv")
+
+
+@pytest.mark.parametrize("code", [401, 403])
+def test_add_dataset_http_auth_required(serve: ServeFn, code: int) -> None:
+    """401/403 report an auth-required error, not a misleading 'not found'."""
+    base = serve(_status_handler(code))
+    catalog = Catalog(quiet=True)
+    with pytest.raises(ConfigError, match=f"authentication required .HTTP {code}."):
+        catalog.add_dataset(f"{base}/data.csv")
+
+
+def test_add_dataset_http_server_error(serve: ServeFn) -> None:
+    """A 5xx reports a server error distinctly from a missing URL."""
+    base = serve(_status_handler(500))
+    catalog = Catalog(quiet=True)
+    with pytest.raises(ConfigError, match="server error .HTTP 500."):
+        catalog.add_dataset(f"{base}/data.csv")
 
 
 def test_add_dataset_http_undetectable_format(serve: ServeFn, tmp_path: Path) -> None:

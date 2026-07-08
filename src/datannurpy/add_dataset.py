@@ -28,7 +28,11 @@ from .preview import (
     resolve_preview_rows,
 )
 from .schema import Dataset, EntityMetadata
-from .scanner.filesystem import FileSystem, is_remote_url
+from .scanner.filesystem import (
+    FileSystem,
+    is_remote_url,
+    remote_access_error_reason,
+)
 from .scanner.format_detect import resolve_delivery_format
 from .scanner.utils import (
     FsPath,
@@ -168,7 +172,10 @@ def add_dataset(
         fs = FileSystem(path, storage_options)
         try:
             is_dir = fs_info_is_dir(fs, fs.root)
-        except FileNotFoundError:
+        except FileNotFoundError as exc:
+            reason = remote_access_error_reason(exc)
+            if reason is not None:
+                raise ConfigError(f"Cannot access {path}: {reason}")
             raise ConfigError(f"Path not found: {path}")
         # URL-rooted backends (http/https) keep the raw root: PurePosixPath would
         # collapse the '//' after the scheme and corrupt the URL. Everything downstream
