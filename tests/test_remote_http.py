@@ -104,14 +104,54 @@ def test_add_dataset_http_404(serve: ServeFn) -> None:
         catalog.add_dataset(f"{base}/nope.csv")
 
 
-def test_add_dataset_http_unsupported_extension(serve: ServeFn, tmp_path: Path) -> None:
-    """A recognized extension is required; an unknown one raises a clear error."""
-    (tmp_path / "notes.txt").write_text("hello")
+def test_add_dataset_http_undetectable_format(serve: ServeFn, tmp_path: Path) -> None:
+    """When no signal resolves the format, the run fails asking for an explicit format:."""
+    (tmp_path / "notes.txt").write_text("hello")  # non-tabular, unknown extension
     base = serve()
 
     catalog = Catalog(quiet=True)
-    with pytest.raises(ConfigError, match="Unsupported format"):
+    with pytest.raises(ConfigError, match="Could not detect the format"):
         catalog.add_dataset(f"{base}/notes.txt")
+
+
+def test_add_dataset_http_explicit_format(serve: ServeFn, tmp_path: Path) -> None:
+    """An explicit format: scans an extension-less URL, overriding detection."""
+    (tmp_path / "export").write_bytes(b"id,amount\n1,100\n2,200\n")
+    base = serve()
+
+    catalog = Catalog(quiet=True)
+    catalog.add_dataset(f"{base}/export", format="csv")
+
+    ds = catalog.dataset.all()[0]
+    assert ds.delivery_format == "csv"
+    assert ds.nb_row == 2
+    assert [v.name for v in catalog.variable.all()] == ["id", "amount"]
+
+
+def test_add_dataset_http_format_token(serve: ServeFn, tmp_path: Path) -> None:
+    """An extension-less endpoint whose last segment is a format token is auto-detected."""
+    (tmp_path / "CSV").write_bytes(b"a,b\n1,2\n3,4\n")
+    base = serve()
+
+    catalog = Catalog(quiet=True)
+    catalog.add_dataset(f"{base}/CSV")
+
+    ds = catalog.dataset.all()[0]
+    assert ds.delivery_format == "csv"
+    assert [v.name for v in catalog.variable.all()] == ["a", "b"]
+
+
+def test_add_dataset_http_content_sniff(serve: ServeFn, tmp_path: Path) -> None:
+    """A tabular body with no extension/token/format is detected by content sniffing."""
+    (tmp_path / "download").write_bytes(b"x,y,z\n1,2,3\n4,5,6\n")
+    base = serve()
+
+    catalog = Catalog(quiet=True)
+    catalog.add_dataset(f"{base}/download")
+
+    ds = catalog.dataset.all()[0]
+    assert ds.delivery_format == "csv"
+    assert [v.name for v in catalog.variable.all()] == ["x", "y", "z"]
 
 
 def test_http_skips_when_last_modified_unchanged(

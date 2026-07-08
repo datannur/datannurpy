@@ -517,6 +517,31 @@ class TestGetMtimeWithFileSystem:
         result = get_mtime_timestamp(file_path, fs=fs)
         assert result == int(test_dt.timestamp())
 
+    def test_info_is_memoized_per_path(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Repeated info() on the same path hits the backend once (a scan reads it
+        several times; remote backends issue one HEAD per uncached call). The returned
+        dict is a fresh copy so a caller cannot poison the cache."""
+        from unittest.mock import MagicMock
+
+        file_path = tmp_path / "data.csv"
+        file_path.write_text("a,b\n1,2\n")
+
+        fs = FileSystem(tmp_path)
+        # Spy on the backend call; monkeypatch restores it (fs.fs is a shared singleton).
+        backend = MagicMock(return_value={"type": "file", "size": 8})
+        monkeypatch.setattr(fs.fs, "info", backend)
+
+        first = fs.info(str(file_path))
+        second = fs.info(str(file_path))
+        assert backend.call_count == 1  # memoized: a single real backend call
+        assert first == second == {"type": "file", "size": 8}
+
+        first["mutated"] = True  # mutating a returned dict must not leak into the cache
+        assert "mutated" not in fs.info(str(file_path))
+        assert backend.call_count == 1
+
 
 class TestFileSystemNonLocal:
     """Test FileSystem edge cases for non-local filesystems."""

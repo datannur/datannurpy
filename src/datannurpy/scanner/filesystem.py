@@ -44,6 +44,7 @@ class FileSystem:
         self.fs, self.root = fsspec.core.url_to_fs(path_str, **opts)
         # Normalize root path (remove trailing slash for consistency)
         self.root = self.root.rstrip("/")
+        self._info_cache: dict[str, dict[str, Any]] = {}
 
     @property
     def is_local(self) -> bool:
@@ -80,9 +81,20 @@ class FileSystem:
         return bool(self.fs.exists(full_path))
 
     def info(self, path: str) -> dict[str, Any]:
-        """Get file/directory metadata (size, mtime, type)."""
+        """Get file/directory metadata (size, mtime, type).
+
+        Memoized per resolved path: a single scan reads the same file's metadata
+        several times (is_dir, mtime, size, format detection) and remote backends
+        (e.g. HTTP) issue one network round-trip per uncached ``info`` call. A
+        FileSystem instance is scoped to one scanned path/tree, so the metadata is
+        stable for its lifetime.
+        """
         full_path = self._full_path(path)
-        return dict(self.fs.info(full_path))
+        cached = self._info_cache.get(full_path)
+        if cached is None:
+            cached = dict(self.fs.info(full_path))
+            self._info_cache[full_path] = cached
+        return dict(cached)
 
     def listdir(self, path: str) -> list[str]:
         """List directory contents (names only, not full paths)."""

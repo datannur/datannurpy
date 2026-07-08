@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.29.1 (2026-07-08)
+
+- add: an HTTP(S) `dataset:` without a usable extension now auto-detects its format (path-segment token, `?format=`, `Content-Type`, then content sniffing); set `format:` to override, and a `?query` after a known extension is handled too
+- perf: a remote file's metadata is now read once per scan instead of ~4× — `info()` is memoized on the filesystem, cutting the redundant HEAD requests (HTTP/S3/SFTP)
+
 ## 0.29.0 (2026-07-07)
 
 - add: scan a public HTTP(S) URL as a single `dataset:` (e.g. `dataset: https://.../data.csv`) — full scan pipeline, URL exported as `data_path`, format from the extension, redirects followed, a missing URL failing loudly like a missing local file; `aiohttp` is now a core dependency so it works out of the box

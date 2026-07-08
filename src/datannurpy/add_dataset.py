@@ -28,8 +28,8 @@ from .preview import (
 )
 from .schema import Dataset, EntityMetadata
 from .scanner.filesystem import FileSystem, is_remote_url
+from .scanner.format_detect import resolve_delivery_format
 from .scanner.utils import (
-    SUPPORTED_FORMATS,
     FsPath,
     fs_info_is_dir,
     get_data_size,
@@ -127,6 +127,7 @@ def add_dataset(
     *,
     metadata: EntityMetadata | None = None,
     depth: Depth | None = None,
+    format: str | None = None,
     csv_encoding: str | None = None,
     sample_size: int | None = _UNSET,
     auto_enumerations: bool | None = None,
@@ -215,14 +216,17 @@ def add_dataset(
         )
         return
 
-    # It's a file
-    suffix = Path(path_name).suffix.lower()
-    delivery_format = SUPPORTED_FORMATS.get(suffix)
-    if delivery_format is None:
-        raise ConfigError(
-            f"Unsupported format: {suffix}. "
-            f"Supported: {', '.join(SUPPORTED_FORMATS.keys())}"
-        )
+    # It's a file — resolve the delivery format. Locally the extension is trusted;
+    # for remote sources an explicit format: wins, else a detection cascade runs
+    # (content sniffing only when the depth already reads content).
+    delivery_format = resolve_delivery_format(
+        path_name,
+        explicit_format=format,
+        fs=fs,
+        remote_path=dataset_path,
+        allow_content_sniff=resolved_depth != "dataset",
+        quiet=q,
+    )
 
     # Get current mtime
     current_mtime = get_mtime_timestamp(dataset_path, fs=fs)
