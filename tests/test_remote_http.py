@@ -83,6 +83,29 @@ def _status_handler(code: int) -> type[_QuietHandler]:
     return _H
 
 
+def _flaky_handler(fail_times: int, code: int) -> type[_QuietHandler]:
+    """A handler that fails the first ``fail_times`` requests, then serves normally."""
+    state = {"remaining": fail_times}
+
+    class _H(_QuietHandler):
+        def _maybe_fail(self) -> bool:
+            if state["remaining"] > 0:
+                state["remaining"] -= 1
+                self.send_error(code)
+                return True
+            return False
+
+        def do_GET(self) -> None:
+            if not self._maybe_fail():
+                super().do_GET()
+
+        def do_HEAD(self) -> None:
+            if not self._maybe_fail():
+                super().do_HEAD()
+
+    return _H
+
+
 ServeFn = Callable[..., str]
 
 
@@ -110,6 +133,12 @@ def serve(tmp_path: Path) -> Iterator[ServeFn]:
             server.shutdown()
             server.server_close()
             thread.join()
+
+
+@pytest.fixture(autouse=True)
+def _fast_retries(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Neutralize retry backoff so retry paths never sleep during tests."""
+    monkeypatch.setattr("datannurpy.scanner.filesystem.time.sleep", lambda *_: None)
 
 
 def test_add_dataset_http_csv(serve: ServeFn, tmp_path: Path) -> None:
@@ -188,6 +217,30 @@ def test_add_dataset_http_server_error(serve: ServeFn) -> None:
     catalog = Catalog(quiet=True)
     with pytest.raises(ConfigError, match="server error .HTTP 500."):
         catalog.add_dataset(f"{base}/data.csv")
+
+
+def test_http_retries_transient_error(serve: ServeFn, tmp_path: Path) -> None:
+    """A transient 5xx is retried and the scan then succeeds (unattended-CI resilience)."""
+    (tmp_path / "data.csv").write_text("a,b\n1,2\n")
+    base = serve(_flaky_handler(fail_times=2, code=503))
+
+    catalog = Catalog(quiet=True)
+    catalog.add_dataset(f"{base}/data.csv")
+
+    assert [v.name for v in catalog.variable.all()] == ["a", "b"]
+
+
+def test_http_preserves_user_client_kwargs(serve: ServeFn, tmp_path: Path) -> None:
+    """User storage_options.client_kwargs coexist with the injected default timeout."""
+    (tmp_path / "data.csv").write_text("a,b\n1,2\n")
+    base = serve()
+
+    catalog = Catalog(quiet=True)
+    catalog.add_dataset(
+        f"{base}/data.csv", storage_options={"client_kwargs": {"trust_env": True}}
+    )
+
+    assert [v.name for v in catalog.variable.all()] == ["a", "b"]
 
 
 def test_add_dataset_http_undetectable_format(serve: ServeFn, tmp_path: Path) -> None:
