@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from pathlib import Path, PurePath
+from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Any
 
 import pyarrow as pa
@@ -27,6 +27,7 @@ from .excel import (
     _looks_like_html_xls_content,
     scan_excel,
 )
+from .format_detect import canonical_extension
 from .parquet import scan_parquet
 from .parquet.core import scan_delta, scan_hive, scan_iceberg
 from .statistical import scan_statistical
@@ -270,6 +271,14 @@ def _scan_local(
     )
 
 
+def _temp_local_name(path: FsPath, delivery_format: str, path_label: str | None) -> str:
+    """Safe temp filename for a downloaded remote file, carrying the resolved format's
+    extension so suffix-sensitive readers (Excel engine, pyogrio) work even when the
+    URL has no extension or a query string (which would corrupt the raw basename)."""
+    segment = path_label or PurePosixPath(str(path)).name
+    return f"data{canonical_extension(segment, delivery_format)}"
+
+
 def _scan_with_ensure_local(
     path: FsPath,
     delivery_format: str,
@@ -292,12 +301,15 @@ def _scan_with_ensure_local(
                 _warn_html_xls(path_label or PurePath(path).name, quiet)
                 return ScanResult(variables=[], nb_row=None)
     if delivery_format == "shapefile":
-        ctx = fs.ensure_local_siblings  # .shp needs its .shx/.dbf/.prj companions
+        # .shp needs its .shx/.dbf/.prj companions, kept under their real names.
+        cm = fs.ensure_local_siblings(str(path))
     elif delivery_format in _DIR_FORMATS:
-        ctx = fs.ensure_local_dir
+        cm = fs.ensure_local_dir(str(path))
     else:
-        ctx = fs.ensure_local
-    with ctx(str(path)) as local_path:
+        cm = fs.ensure_local(
+            str(path), _temp_local_name(path, delivery_format, path_label)
+        )
+    with cm as local_path:
         return _scan_local(
             local_path,
             delivery_format,
@@ -475,7 +487,8 @@ def _scan_schema_only_remote(
 
     # SPSS: must download full file (pd.read_spss wraps pyreadstat, no streaming)
     if delivery_format == "spss":
-        with fs.ensure_local(str(path)) as local_path:
+        name = _temp_local_name(path, delivery_format, path_label)
+        with fs.ensure_local(str(path), name) as local_path:
             return _scan_schema_only_local(
                 local_path, delivery_format, dataset_id, path_label=path_label
             )
@@ -500,9 +513,10 @@ def _scan_schema_only_remote(
 
     # Excel xlsx: download first so ZIP/XML access stays local.
     # xls: must download full file (xlrd doesn't support streaming)
+    name = _temp_local_name(path, delivery_format, path_label)
     suffix = PurePath(path).suffix.lower()
     if suffix != ".xls":
-        with fs.ensure_local(str(path)) as local_path:
+        with fs.ensure_local(str(path), name) as local_path:
             return _scan_schema_only_local(
                 local_path,
                 delivery_format,
@@ -515,7 +529,7 @@ def _scan_schema_only_remote(
         if _looks_like_html_xls_content(f.read(_XLS_SNIFF_BYTES)):
             _warn_html_xls(path_label or PurePath(path).name, quiet)
             return ScanResult(variables=[], nb_row=None)
-    with fs.ensure_local(str(path)) as local_path:
+    with fs.ensure_local(str(path), name) as local_path:
         return _scan_schema_only_local(
             local_path, delivery_format, dataset_id, csv_encoding, quiet, path_label
         )

@@ -365,11 +365,12 @@ def get_mtime_timestamp(path: FsPath, fs: FileSystem | None = None) -> int:
     return int(mtime)
 
 
-def get_data_size(path: FsPath, fs: FileSystem | None = None) -> int:
-    """Get file size in bytes."""
+def get_data_size(path: FsPath, fs: FileSystem | None = None) -> int | None:
+    """Get file size in bytes, or None when the backend reports no size (e.g. an HTTP
+    endpoint sending no Content-Length) — None means "unknown", not an empty file."""
     if fs is not None:
-        info = fs.info(str(path))
-        return int(info.get("size", 0))
+        size = fs.info(str(path)).get("size")
+        return int(size) if size is not None else None
     assert isinstance(path, Path)
     return path.stat().st_size
 

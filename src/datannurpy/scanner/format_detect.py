@@ -44,6 +44,23 @@ _FORMAT_ALIASES: dict[str, str] = {
 # Canonical delivery_format names, for user-facing messages.
 _VALID_FORMATS: list[str] = sorted(set(SUPPORTED_FORMATS.values()))
 
+
+def _default_extensions() -> dict[str, str]:
+    """One canonical extension per delivery_format (first spelling in SUPPORTED_FORMATS
+    wins: excel→.xlsx, parquet→.parquet, geotiff→.tif)."""
+    result: dict[str, str] = {}
+    for ext, fmt in SUPPORTED_FORMATS.items():
+        result.setdefault(fmt, ext)
+    return result
+
+
+# delivery_format → default extension, and bare token spelling → extension
+# (``xls`` → ``.xls``), both derived from SUPPORTED_FORMATS so they never drift.
+_DEFAULT_EXTENSION: dict[str, str] = _default_extensions()
+_EXTENSION_SPELLINGS: dict[str, str] = {
+    ext.lstrip("."): ext for ext in SUPPORTED_FORMATS
+}
+
 # HTTP ``Content-Type`` → delivery_format. Deliberately limited to unambiguous media
 # types: ambiguous ones (``application/vnd.ms-excel`` is sent for CSV too, generic
 # ``application/octet-stream``/``application/json``/``text/html``) are left to sniffing.
@@ -81,6 +98,21 @@ def format_from_extension(path_name: str) -> str | None:
     """delivery_format from a filename extension, ignoring any URL query string."""
     return SUPPORTED_FORMATS.get(
         PurePosixPath(_clean_segment(path_name)).suffix.lower()
+    )
+
+
+def canonical_extension(path_name: str, delivery_format: str) -> str:
+    """A filesystem-safe extension (with leading dot) for the resolved format, used to
+    name the local temp copy of a downloaded remote file so suffix-sensitive readers
+    (the Excel engine, pyogrio) work even when the URL has no extension or a query
+    string. Prefers the URL's own extension (authoritative for ``.xls`` vs ``.xlsx``),
+    then the last-segment token (``.../results/xls`` → ``.xls``), else the default."""
+    segment = _clean_segment(path_name)
+    suffix = PurePosixPath(segment).suffix.lower()
+    if suffix in SUPPORTED_FORMATS:
+        return suffix
+    return (
+        _EXTENSION_SPELLINGS.get(segment.lower()) or _DEFAULT_EXTENSION[delivery_format]
     )
 
 

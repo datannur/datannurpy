@@ -3,6 +3,9 @@
 ## 0.29.1 (2026-07-08)
 
 - add: an HTTP(S) `dataset:` without a usable extension now auto-detects its format (path-segment token, `?format=`, `Content-Type`, then content sniffing); set `format:` to override, and a `?query` after a known extension is handled too
+- fix: HTTP/API URLs with a query string are now scanned correctly — the temp download uses fsspec `get_file` (was `download`, which created a directory for such URLs → empty scan) under a safe name carrying the resolved format's extension, so suffix-based readers (Excel engine, pyogrio) work
+- fix: the default `id`/`name` for a URL dataset strip the query string (readable name) and add a short URL hash to the id, so endpoints differing only by query string no longer collide
+- change: `data_size` is left empty (None) instead of `0` when the server sends no `Content-Length`
 - perf: a remote file's metadata is now read once per scan instead of ~4× — `info()` is memoized on the filesystem, cutting the redundant HEAD requests (HTTP/S3/SFTP)
 
 ## 0.29.0 (2026-07-07)

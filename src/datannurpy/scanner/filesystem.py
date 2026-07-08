@@ -121,10 +121,14 @@ class FileSystem:
 
     @contextmanager
     def _local_copy(
-        self, path: str, download: Callable[[str, Path], None]
+        self,
+        path: str,
+        download: Callable[[str, Path], None],
+        local_name: str | None = None,
     ) -> Generator[Path, None, None]:
         """Yield a local copy of ``path``: the path itself when already local, or a
-        temp copy produced by ``download(remote_path, tmp_dir)`` (auto-cleaned)."""
+        temp copy produced by ``download(remote_path, tmp_dir)`` (auto-cleaned). The
+        temp file is named ``local_name`` when given, else the remote basename."""
         full_path = self._full_path(path)
         if self.is_local:
             yield Path(full_path)
@@ -132,15 +136,28 @@ class FileSystem:
         tmp_dir = Path(tempfile.mkdtemp())
         try:
             download(full_path, tmp_dir)
-            yield tmp_dir / PurePosixPath(full_path).name
+            yield tmp_dir / (local_name or PurePosixPath(full_path).name)
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
 
-    def ensure_local(self, path: str) -> AbstractContextManager[Path]:
-        """Ensure a single file is available locally (downloads it if remote)."""
+    def ensure_local(
+        self, path: str, local_name: str | None = None
+    ) -> AbstractContextManager[Path]:
+        """Ensure a single file is available locally (downloads it if remote).
+
+        ``local_name`` overrides the temp filename — used to give a downloaded URL a
+        safe name with the right extension (the raw basename may carry a query string
+        or lack the extension that suffix-based readers need).
+        """
+        # get_file (single-file copy) writes to the exact destination path; download()
+        # (= get) applies directory heuristics that, for a URL with a query string,
+        # create a directory and drop the file inside it under its raw name.
         return self._local_copy(
             path,
-            lambda src, tmp: self.fs.download(src, str(tmp / PurePosixPath(src).name)),
+            lambda src, tmp: self.fs.get_file(
+                src, str(tmp / (local_name or PurePosixPath(src).name))
+            ),
+            local_name=local_name,
         )
 
     def ensure_local_dir(self, path: str) -> AbstractContextManager[Path]:
@@ -165,7 +182,7 @@ class FileSystem:
         stem = PurePosixPath(src).stem
         for sibling in self.fs.ls(PurePosixPath(src).parent.as_posix(), detail=False):
             if PurePosixPath(sibling).stem == stem:
-                self.fs.download(sibling, str(tmp / PurePosixPath(sibling).name))
+                self.fs.get_file(sibling, str(tmp / PurePosixPath(sibling).name))
 
     def to_path(self, path: str) -> Path:
         """Convert filesystem path to Path object (local only)."""

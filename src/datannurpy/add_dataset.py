@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import stat
 from collections.abc import Sequence
 from pathlib import Path, PurePath, PurePosixPath
@@ -246,9 +247,16 @@ def add_dataset(
     ):
         return
 
-    # Build dataset ID
-    path_stem = Path(path_name).stem
+    # Build dataset ID and default name from a clean segment (URL query string
+    # stripped). Remote endpoints that differ only by query string (…/CSV?type=a vs
+    # …/CSV?type=b) would otherwise collide on id, so a short URL hash keeps the
+    # default id unique and stable across runs. Explicit metadata.id/name still win.
+    clean_segment = path_name.split("?", 1)[0].split("#", 1)[0]
+    path_stem = PurePosixPath(clean_segment).stem or clean_segment
     base_name = sanitize_id(path_stem)
+    if is_remote and "?" in path_name:
+        url_hash = hashlib.sha256(str(dataset_path).encode()).hexdigest()[:8]
+        base_name = f"{base_name}_{url_hash}"
     dataset_id = (
         metadata.id
         if metadata is not None and metadata.id is not None

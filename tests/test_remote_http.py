@@ -96,6 +96,38 @@ def test_add_dataset_http_csv(serve: ServeFn, tmp_path: Path) -> None:
     assert re.fullmatch(r"\d{4}/\d{2}/\d{2}T\d{2}:\d{2}:\d{2}", ds.last_update_date)
 
 
+def test_add_dataset_http_query_string(serve: ServeFn, tmp_path: Path) -> None:
+    """An API URL with a query string scans correctly (safe temp name via get_file) and
+    gets a clean, query-free name plus a query-hashed id (unique across query variants)."""
+    (tmp_path / "CSV").write_bytes(b"id,amount\n1,100\n2,200\n")
+    base = serve()
+
+    catalog = Catalog(quiet=True)
+    catalog.add_dataset(f"{base}/CSV?language=fr&levelFrom=1")
+
+    ds = catalog.dataset.all()[0]
+    assert ds.delivery_format == "csv"
+    assert ds.nb_row == 2  # the download/scan is not corrupted by the query string
+    assert ds.name == "CSV"  # query stripped from the default name
+    assert ds.id.startswith("CSV_") and ds.id != "CSV"  # query hash keeps id unique
+    assert ds.data_path == f"{base}/CSV?language=fr&levelFrom=1"
+
+
+def test_add_dataset_http_query_string_ids_are_distinct(
+    serve: ServeFn, tmp_path: Path
+) -> None:
+    """Two endpoints sharing a path but differing only by query get distinct ids."""
+    (tmp_path / "CSV").write_bytes(b"a,b\n1,2\n")
+    base = serve()
+
+    catalog = Catalog(quiet=True)
+    catalog.add_dataset(f"{base}/CSV?type=a")
+    catalog.add_dataset(f"{base}/CSV?type=b")
+
+    ids = {ds.id for ds in catalog.dataset.all()}
+    assert len(ids) == 2  # no collision on the shared "CSV" segment
+
+
 def test_add_dataset_http_404(serve: ServeFn) -> None:
     """A missing URL fails loudly (ConfigError -> non-zero exit), like a missing file."""
     base = serve()
