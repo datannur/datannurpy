@@ -27,6 +27,13 @@ from .excel import (
     _looks_like_html_xls_content,
     scan_excel,
 )
+from ..compression import (
+    bounded_gzip_stream,
+    compression_suffix,
+    decompressed_cap,
+    is_gzipped,
+    strip_compression_suffix,
+)
 from .format_detect import canonical_extension
 from .parquet import scan_parquet
 from .parquet.core import scan_delta, scan_hive, scan_iceberg
@@ -274,9 +281,12 @@ def _scan_local(
 def _temp_local_name(path: FsPath, delivery_format: str, path_label: str | None) -> str:
     """Safe temp filename for a downloaded remote file, carrying the resolved format's
     extension so suffix-sensitive readers (Excel engine, pyogrio) work even when the
-    URL has no extension or a query string (which would corrupt the raw basename)."""
+    URL has no extension or a query string (which would corrupt the raw basename). A
+    content-compression suffix is preserved (``…csv.gz``) so the local reader still sees
+    it as gzipped and decompresses it in turn."""
     segment = path_label or PurePosixPath(str(path)).name
-    return f"data{canonical_extension(segment, delivery_format)}"
+    inner = strip_compression_suffix(segment)
+    return f"data{canonical_extension(inner, delivery_format)}{compression_suffix(segment)}"
 
 
 def _scan_with_ensure_local(
@@ -498,8 +508,16 @@ def _scan_schema_only_remote(
         from .csv import _CSV_HEADER_SAMPLE_BYTES, _read_csv_header
 
         full_path = fs._full_path(str(path))
+        source_name = path_label or PurePosixPath(str(path)).name
         with fs.fs.open(full_path, "rb") as f:
-            header_bytes = f.read(_CSV_HEADER_SAMPLE_BYTES)
+            # A .gz header decompresses to well under the sample bound, so the read is
+            # self-limiting; the cap only matters on full-file decompression.
+            src = (
+                bounded_gzip_stream(f, decompressed_cap(0))
+                if is_gzipped(source_name)
+                else f
+            )
+            header_bytes = src.read(_CSV_HEADER_SAMPLE_BYTES)
         columns = _read_csv_header(header_bytes, csv_encoding)
         variables = [
             Variable(
@@ -570,7 +588,12 @@ def _scan_schema_only_local(
         from .csv import _CSV_HEADER_SAMPLE_BYTES, _read_csv_header
 
         with open(path, "rb") as f:
-            columns = _read_csv_header(f.read(_CSV_HEADER_SAMPLE_BYTES), csv_encoding)
+            src = (
+                bounded_gzip_stream(f, decompressed_cap(path.stat().st_size))
+                if is_gzipped(path.name)
+                else f
+            )
+            columns = _read_csv_header(src.read(_CSV_HEADER_SAMPLE_BYTES), csv_encoding)
         variables = [
             Variable(
                 id=f"{dataset_id}---{col}",

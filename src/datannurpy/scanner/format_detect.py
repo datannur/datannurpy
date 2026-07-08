@@ -26,7 +26,7 @@ from urllib.parse import urlsplit, parse_qs
 
 from ..errors import ConfigError
 from ..utils.log import log_warn
-from .utils import SUPPORTED_FORMATS
+from .utils import SUPPORTED_FORMATS, supported_format_for
 
 if TYPE_CHECKING:
     from .filesystem import FileSystem
@@ -95,10 +95,9 @@ def _clean_segment(path_name: str) -> str:
 
 
 def format_from_extension(path_name: str) -> str | None:
-    """delivery_format from a filename extension, ignoring any URL query string."""
-    return SUPPORTED_FORMATS.get(
-        PurePosixPath(_clean_segment(path_name)).suffix.lower()
-    )
+    """delivery_format from a filename extension, ignoring any URL query string and
+    seeing through a decompressible content-compression suffix (``sales.csv.gz`` → csv)."""
+    return supported_format_for(_clean_segment(path_name))
 
 
 def canonical_extension(path_name: str, delivery_format: str) -> str:

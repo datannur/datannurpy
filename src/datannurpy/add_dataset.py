@@ -18,6 +18,7 @@ from .utils import (
     sanitize_id,
 )
 from .utils.params import _UNSET, validate_params
+from .compression import strip_compression_suffix
 from .dataset_scan import finalize_scanned_dataset, skip_unchanged
 from .errors import ConfigError
 from .finalize import remove_dataset_cascade
@@ -264,7 +265,9 @@ def add_dataset(
     # stripped). Remote endpoints that differ only by query string (…/CSV?type=a vs
     # …/CSV?type=b) would otherwise collide on id, so a short URL hash keeps the
     # default id unique and stable across runs. Explicit metadata.id/name still win.
-    clean_segment = path_name.split("?", 1)[0].split("#", 1)[0]
+    clean_segment = strip_compression_suffix(
+        path_name.split("?", 1)[0].split("#", 1)[0]
+    )
     path_stem = PurePosixPath(clean_segment).stem or clean_segment
     base_name = sanitize_id(path_stem)
     if is_remote and "?" in path_name:

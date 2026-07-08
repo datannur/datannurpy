@@ -161,6 +161,18 @@ Avoid the UTF-8 temp copy when files are already local and UTF-8 (auto-fallback 
 csv_skip_copy: true
 ```
 
+## Compressed CSV
+
+A gzip-compressed CSV (`.csv.gz`) is scanned like any other file — on any source, at any [depth](./scan-depth.md) — and catalogs exactly like its uncompressed twin (same `id`/`name`, same variables):
+
+```yaml
+add:
+  - dataset: ./data/sales.csv.gz
+  - folder: sftp://user@host/exports    # *.csv.gz alongside *.csv
+```
+
+Only single-stream **gzip of CSV** is supported; other compressed forms (`.parquet.gz`, `.zip` archives, zipped Shapefiles) are not — extract them first. HTTP transport compression (`Content-Encoding: gzip`) is handled automatically and needs nothing special.
+
 ## Remote storage
 
 Scan files on public HTTP(S) URLs, SFTP servers, or cloud storage (S3, Azure, GCS). The `storage_options` dict is passed directly to [fsspec](https://filesystem-spec.readthedocs.io/) — see provider docs for available options:

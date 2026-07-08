@@ -10,6 +10,8 @@ from pathlib import PurePath
 
 import polars as pl
 
+from ..compression import strip_compression_suffix
+
 # Separator for path components (folder---dataset---variable)
 ID_SEPARATOR = "---"
 
@@ -136,6 +138,9 @@ def build_dataset_id_name(
     prefix: str,
 ) -> tuple[str, str]:
     """Build dataset ID and name from path."""
+    # Strip a content-compression suffix so ``sales.csv.gz`` yields the same id/name as
+    # its uncompressed twin (a no-op for normal files).
+    path = path.with_name(strip_compression_suffix(path.name))
     rel_path = path.relative_to(root)
     if path.suffix:  # File (has extension)
         path_parts = [sanitize_id(p) for p in rel_path.parts]

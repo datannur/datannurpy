@@ -2,6 +2,7 @@
 
 ## 0.29.1 (2026-07-08)
 
+- add: gzip-compressed CSV (`.csv.gz`) is scanned transparently on any source and depth — no longer silently skipped by `folder` scans, catalogued like its uncompressed twin, and bounded against decompression bombs; other compressed forms (`.parquet.gz`, `.zip`) stay out of scope
 - add: an HTTP(S) `dataset:` without a usable extension now auto-detects its format (path-segment token, `?format=`, `Content-Type`, then content sniffing); set `format:` to override, and a `?query` after a known extension is handled too
 - fix: HTTP/API URLs with a query string are now scanned correctly — the temp download uses fsspec `get_file` (was `download`, which created a directory for such URLs → empty scan) under a safe name carrying the resolved format's extension, so suffix-based readers (Excel engine, pyogrio) work
 - fix: the default `id`/`name` for a URL dataset strip the query string (readable name) and add a short URL hash to the id, so endpoints differing only by query string no longer collide
