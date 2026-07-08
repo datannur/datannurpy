@@ -46,6 +46,66 @@ class _MalformedLastModifiedHandler(_QuietHandler):
         super().send_header(keyword, value)
 
 
+def _etag_handler(etag: list[str]) -> type[_QuietHandler]:
+    """A handler that sends a mutable ETag and no Last-Modified (dynamic endpoint).
+
+    ``etag`` is a one-element list so a test can flip the value between requests.
+    """
+
+    class _H(_NoLastModifiedHandler):
+        def end_headers(self) -> None:
+            self.send_header("ETag", etag[0])
+            super().end_headers()
+
+    return _H
+
+
+def _etag_with_last_modified_handler(etag: list[str]) -> type[_QuietHandler]:
+    """A handler that sends both a normal Last-Modified and a mutable ETag."""
+
+    class _H(_QuietHandler):
+        def end_headers(self) -> None:
+            self.send_header("ETag", etag[0])
+            super().end_headers()
+
+    return _H
+
+
+def _status_handler(code: int) -> type[_QuietHandler]:
+    """A handler that answers every request with a fixed HTTP status code."""
+
+    class _H(_QuietHandler):
+        def do_GET(self) -> None:
+            self.send_error(code)
+
+        do_HEAD = do_GET
+
+    return _H
+
+
+def _flaky_handler(fail_times: int, code: int) -> type[_QuietHandler]:
+    """A handler that fails the first ``fail_times`` requests, then serves normally."""
+    state = {"remaining": fail_times}
+
+    class _H(_QuietHandler):
+        def _maybe_fail(self) -> bool:
+            if state["remaining"] > 0:
+                state["remaining"] -= 1
+                self.send_error(code)
+                return True
+            return False
+
+        def do_GET(self) -> None:
+            if not self._maybe_fail():
+                super().do_GET()
+
+        def do_HEAD(self) -> None:
+            if not self._maybe_fail():
+                super().do_HEAD()
+
+    return _H
+
+
 ServeFn = Callable[..., str]
 
 
@@ -75,6 +135,12 @@ def serve(tmp_path: Path) -> Iterator[ServeFn]:
             thread.join()
 
 
+@pytest.fixture(autouse=True)
+def _fast_retries(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Neutralize retry backoff so retry paths never sleep during tests."""
+    monkeypatch.setattr("datannurpy.scanner.filesystem.time.sleep", lambda *_: None)
+
+
 def test_add_dataset_http_csv(serve: ServeFn, tmp_path: Path) -> None:
     """A public CSV URL is scanned like a local file, exporting the URL as data_path."""
     (tmp_path / "sales.csv").write_text("id,amount\n1,100\n2,200\n3,300\n")
@@ -96,22 +162,135 @@ def test_add_dataset_http_csv(serve: ServeFn, tmp_path: Path) -> None:
     assert re.fullmatch(r"\d{4}/\d{2}/\d{2}T\d{2}:\d{2}:\d{2}", ds.last_update_date)
 
 
+def test_add_dataset_http_query_string(serve: ServeFn, tmp_path: Path) -> None:
+    """An API URL with a query string scans correctly (safe temp name via get_file) and
+    gets a clean, query-free name plus a query-hashed id (unique across query variants)."""
+    (tmp_path / "CSV").write_bytes(b"id,amount\n1,100\n2,200\n")
+    base = serve()
+
+    catalog = Catalog(quiet=True)
+    catalog.add_dataset(f"{base}/CSV?language=fr&levelFrom=1")
+
+    ds = catalog.dataset.all()[0]
+    assert ds.delivery_format == "csv"
+    assert ds.nb_row == 2  # the download/scan is not corrupted by the query string
+    assert ds.name == "CSV"  # query stripped from the default name
+    assert ds.id.startswith("CSV_") and ds.id != "CSV"  # query hash keeps id unique
+    assert ds.data_path == f"{base}/CSV?language=fr&levelFrom=1"
+
+
+def test_add_dataset_http_query_string_ids_are_distinct(
+    serve: ServeFn, tmp_path: Path
+) -> None:
+    """Two endpoints sharing a path but differing only by query get distinct ids."""
+    (tmp_path / "CSV").write_bytes(b"a,b\n1,2\n")
+    base = serve()
+
+    catalog = Catalog(quiet=True)
+    catalog.add_dataset(f"{base}/CSV?type=a")
+    catalog.add_dataset(f"{base}/CSV?type=b")
+
+    ids = {ds.id for ds in catalog.dataset.all()}
+    assert len(ids) == 2  # no collision on the shared "CSV" segment
+
+
 def test_add_dataset_http_404(serve: ServeFn) -> None:
     """A missing URL fails loudly (ConfigError -> non-zero exit), like a missing file."""
     base = serve()
     catalog = Catalog(quiet=True)
-    with pytest.raises(ConfigError):
+    with pytest.raises(ConfigError, match="Path not found"):
         catalog.add_dataset(f"{base}/nope.csv")
 
 
-def test_add_dataset_http_unsupported_extension(serve: ServeFn, tmp_path: Path) -> None:
-    """A recognized extension is required; an unknown one raises a clear error."""
-    (tmp_path / "notes.txt").write_text("hello")
+@pytest.mark.parametrize("code", [401, 403])
+def test_add_dataset_http_auth_required(serve: ServeFn, code: int) -> None:
+    """401/403 report an auth-required error, not a misleading 'not found'."""
+    base = serve(_status_handler(code))
+    catalog = Catalog(quiet=True)
+    with pytest.raises(ConfigError, match=f"authentication required .HTTP {code}."):
+        catalog.add_dataset(f"{base}/data.csv")
+
+
+def test_add_dataset_http_server_error(serve: ServeFn) -> None:
+    """A 5xx reports a server error distinctly from a missing URL."""
+    base = serve(_status_handler(500))
+    catalog = Catalog(quiet=True)
+    with pytest.raises(ConfigError, match="server error .HTTP 500."):
+        catalog.add_dataset(f"{base}/data.csv")
+
+
+def test_http_retries_transient_error(serve: ServeFn, tmp_path: Path) -> None:
+    """A transient 5xx is retried and the scan then succeeds (unattended-CI resilience)."""
+    (tmp_path / "data.csv").write_text("a,b\n1,2\n")
+    base = serve(_flaky_handler(fail_times=2, code=503))
+
+    catalog = Catalog(quiet=True)
+    catalog.add_dataset(f"{base}/data.csv")
+
+    assert [v.name for v in catalog.variable.all()] == ["a", "b"]
+
+
+def test_http_preserves_user_client_kwargs(serve: ServeFn, tmp_path: Path) -> None:
+    """User storage_options.client_kwargs coexist with the injected default timeout."""
+    (tmp_path / "data.csv").write_text("a,b\n1,2\n")
     base = serve()
 
     catalog = Catalog(quiet=True)
-    with pytest.raises(ConfigError, match="Unsupported format"):
+    catalog.add_dataset(
+        f"{base}/data.csv", storage_options={"client_kwargs": {"trust_env": True}}
+    )
+
+    assert [v.name for v in catalog.variable.all()] == ["a", "b"]
+
+
+def test_add_dataset_http_undetectable_format(serve: ServeFn, tmp_path: Path) -> None:
+    """When no signal resolves the format, the run fails asking for an explicit format:."""
+    (tmp_path / "notes.txt").write_text("hello")  # non-tabular, unknown extension
+    base = serve()
+
+    catalog = Catalog(quiet=True)
+    with pytest.raises(ConfigError, match="Could not detect the format"):
         catalog.add_dataset(f"{base}/notes.txt")
+
+
+def test_add_dataset_http_explicit_format(serve: ServeFn, tmp_path: Path) -> None:
+    """An explicit format: scans an extension-less URL, overriding detection."""
+    (tmp_path / "export").write_bytes(b"id,amount\n1,100\n2,200\n")
+    base = serve()
+
+    catalog = Catalog(quiet=True)
+    catalog.add_dataset(f"{base}/export", format="csv")
+
+    ds = catalog.dataset.all()[0]
+    assert ds.delivery_format == "csv"
+    assert ds.nb_row == 2
+    assert [v.name for v in catalog.variable.all()] == ["id", "amount"]
+
+
+def test_add_dataset_http_format_token(serve: ServeFn, tmp_path: Path) -> None:
+    """An extension-less endpoint whose last segment is a format token is auto-detected."""
+    (tmp_path / "CSV").write_bytes(b"a,b\n1,2\n3,4\n")
+    base = serve()
+
+    catalog = Catalog(quiet=True)
+    catalog.add_dataset(f"{base}/CSV")
+
+    ds = catalog.dataset.all()[0]
+    assert ds.delivery_format == "csv"
+    assert [v.name for v in catalog.variable.all()] == ["a", "b"]
+
+
+def test_add_dataset_http_content_sniff(serve: ServeFn, tmp_path: Path) -> None:
+    """A tabular body with no extension/token/format is detected by content sniffing."""
+    (tmp_path / "download").write_bytes(b"x,y,z\n1,2,3\n4,5,6\n")
+    base = serve()
+
+    catalog = Catalog(quiet=True)
+    catalog.add_dataset(f"{base}/download")
+
+    ds = catalog.dataset.all()[0]
+    assert ds.delivery_format == "csv"
+    assert [v.name for v in catalog.variable.all()] == ["x", "y", "z"]
 
 
 def test_http_skips_when_last_modified_unchanged(
@@ -135,6 +314,67 @@ def test_http_skips_when_last_modified_unchanged(
 
     assert len(catalog.dataset.all()) == 1
     assert [v.name for v in catalog.variable.all()] == ["a", "b"]
+
+
+def test_http_skips_when_etag_unchanged(serve: ServeFn, tmp_path: Path) -> None:
+    """An endpoint with no Last-Modified but a stable ETag is skipped when unchanged."""
+    csv = tmp_path / "data.csv"
+    csv.write_text("a,b\n1,2\n")
+    etag = ['"v1"']
+    base = serve(_etag_handler(etag))
+
+    catalog = Catalog(quiet=True)
+    catalog.add_dataset(f"{base}/data.csv")
+    assert [v.name for v in catalog.variable.all()] == ["a", "b"]
+
+    # Content changes but the ETag is unchanged (and there is no Last-Modified): the
+    # run trusts the ETag and keeps the previous scan.
+    csv.write_text("a,b,c\n1,2,3\n")
+    catalog.add_dataset(f"{base}/data.csv")
+
+    assert len(catalog.dataset.all()) == 1
+    assert [v.name for v in catalog.variable.all()] == ["a", "b"]
+
+
+def test_http_rescans_when_etag_changes(serve: ServeFn, tmp_path: Path) -> None:
+    """A changed ETag triggers a re-scan even without a Last-Modified header."""
+    csv = tmp_path / "data.csv"
+    csv.write_text("a,b\n1,2\n")
+    etag = ['"v1"']
+    base = serve(_etag_handler(etag))
+
+    catalog = Catalog(quiet=True)
+    catalog.add_dataset(f"{base}/data.csv")
+
+    csv.write_text("a,b,c\n1,2,3\n")
+    etag[0] = '"v2"'
+    catalog.add_dataset(f"{base}/data.csv")
+
+    assert len(catalog.dataset.all()) == 1  # same dataset, rebuilt
+    assert [v.name for v in catalog.variable.all()] == ["a", "b", "c"]
+
+
+def test_http_rescans_when_etag_changes_despite_stable_last_modified(
+    serve: ServeFn, tmp_path: Path
+) -> None:
+    """Every exposed signal must match to skip: a pinned Last-Modified does not mask a
+    changed ETag (catches sub-second changes the 1s-granular Last-Modified misses)."""
+    csv = tmp_path / "data.csv"
+    csv.write_text("a,b\n1,2\n")
+    orig = csv.stat().st_mtime
+    etag = ['"v1"']
+    base = serve(_etag_with_last_modified_handler(etag))
+
+    catalog = Catalog(quiet=True)
+    catalog.add_dataset(f"{base}/data.csv")
+
+    # Last-Modified is pinned unchanged, but the ETag changes → the scan is not skipped.
+    csv.write_text("a,b,c\n1,2,3\n")
+    os.utime(csv, (orig, orig))
+    etag[0] = '"v2"'
+    catalog.add_dataset(f"{base}/data.csv")
+
+    assert [v.name for v in catalog.variable.all()] == ["a", "b", "c"]
 
 
 def test_http_rescans_when_last_modified_changes(

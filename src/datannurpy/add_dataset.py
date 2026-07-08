@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import stat
 from collections.abc import Sequence
 from pathlib import Path, PurePath, PurePosixPath
@@ -17,6 +18,7 @@ from .utils import (
     sanitize_id,
 )
 from .utils.params import _UNSET, validate_params
+from .compression import strip_compression_suffix
 from .dataset_scan import finalize_scanned_dataset, skip_unchanged
 from .errors import ConfigError
 from .finalize import remove_dataset_cascade
@@ -27,11 +29,16 @@ from .preview import (
     resolve_preview_rows,
 )
 from .schema import Dataset, EntityMetadata
-from .scanner.filesystem import FileSystem, is_remote_url
+from .scanner.filesystem import (
+    FileSystem,
+    is_remote_url,
+    remote_access_error_reason,
+)
+from .scanner.format_detect import resolve_delivery_format
 from .scanner.utils import (
-    SUPPORTED_FORMATS,
     FsPath,
     fs_info_is_dir,
+    get_content_signature,
     get_data_size,
     get_dir_data_size,
     get_mtime_iso,
@@ -73,6 +80,7 @@ def _create_dataset(
     spatial_resolution: float | None = None,
     fs: FileSystem | None = None,
     match_path: str | None = None,
+    schema_signature: str | None = None,
 ) -> Dataset:
     """Create Dataset with common fields."""
     resolved_metadata = metadata or EntityMetadata()
@@ -106,6 +114,7 @@ def _create_dataset(
         end_date=resolved_metadata.end_date,
         updating_each=resolved_metadata.updating_each,
         no_more_update=resolved_metadata.no_more_update,
+        schema_signature=schema_signature,
         _seen=True,
         _match_path=match_path or data_path,
     )
@@ -127,6 +136,7 @@ def add_dataset(
     *,
     metadata: EntityMetadata | None = None,
     depth: Depth | None = None,
+    format: str | None = None,
     csv_encoding: str | None = None,
     sample_size: int | None = _UNSET,
     auto_enumerations: bool | None = None,
@@ -166,7 +176,10 @@ def add_dataset(
         fs = FileSystem(path, storage_options)
         try:
             is_dir = fs_info_is_dir(fs, fs.root)
-        except FileNotFoundError:
+        except FileNotFoundError as exc:
+            reason = remote_access_error_reason(exc)
+            if reason is not None:
+                raise ConfigError(f"Cannot access {path}: {reason}")
             raise ConfigError(f"Path not found: {path}")
         # URL-rooted backends (http/https) keep the raw root: PurePosixPath would
         # collapse the '//' after the scheme and corrupt the URL. Everything downstream
@@ -215,17 +228,22 @@ def add_dataset(
         )
         return
 
-    # It's a file
-    suffix = Path(path_name).suffix.lower()
-    delivery_format = SUPPORTED_FORMATS.get(suffix)
-    if delivery_format is None:
-        raise ConfigError(
-            f"Unsupported format: {suffix}. "
-            f"Supported: {', '.join(SUPPORTED_FORMATS.keys())}"
-        )
+    # It's a file — resolve the delivery format. Locally the extension is trusted;
+    # for remote sources an explicit format: wins, else a detection cascade runs
+    # (content sniffing only when the depth already reads content).
+    delivery_format = resolve_delivery_format(
+        path_name,
+        explicit_format=format,
+        fs=fs,
+        remote_path=dataset_path,
+        allow_content_sniff=resolved_depth != "dataset",
+        quiet=q,
+    )
 
-    # Get current mtime
+    # Get current freshness signals: mtime, and an ETag content signature that lets
+    # incremental runs skip endpoints without a usable Last-Modified header.
     current_mtime = get_mtime_timestamp(dataset_path, fs=fs)
+    current_signature = get_content_signature(dataset_path, fs=fs)
     match_path = str(dataset_path)
     data_path_str = _public_data_path(dataset_path, path_name, fs)
 
@@ -239,12 +257,22 @@ def add_dataset(
         preview_rows=preview_limit,
         quiet=q,
         label=path_name,
+        current_signature=current_signature,
     ):
         return
 
-    # Build dataset ID
-    path_stem = Path(path_name).stem
+    # Build dataset ID and default name from a clean segment (URL query string
+    # stripped). Remote endpoints that differ only by query string (…/CSV?type=a vs
+    # …/CSV?type=b) would otherwise collide on id, so a short URL hash keeps the
+    # default id unique and stable across runs. Explicit metadata.id/name still win.
+    clean_segment = strip_compression_suffix(
+        path_name.split("?", 1)[0].split("#", 1)[0]
+    )
+    path_stem = PurePosixPath(clean_segment).stem or clean_segment
     base_name = sanitize_id(path_stem)
+    if is_remote and "?" in path_name:
+        url_hash = hashlib.sha256(str(dataset_path).encode()).hexdigest()[:8]
+        base_name = f"{base_name}_{url_hash}"
     dataset_id = (
         metadata.id
         if metadata is not None and metadata.id is not None
@@ -275,6 +303,7 @@ def add_dataset(
             data_size=get_data_size(dataset_path, fs=fs),
             fs=fs,
             match_path=match_path,
+            schema_signature=current_signature,
         )
         catalog.dataset.add(dataset)
         log_done(path_name, q, start_time)
@@ -321,6 +350,7 @@ def add_dataset(
         spatial_resolution=result.spatial_resolution,
         fs=fs,
         match_path=match_path,
+        schema_signature=current_signature,
     )
     finalize_scanned_dataset(
         catalog,

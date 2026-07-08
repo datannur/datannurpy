@@ -119,12 +119,22 @@ add:
 | ------ | --------- | ---------- |
 | GeoJSON | `.geojson` | `folder` / `dataset` |
 | Shapefile | `.shp` (+ `.shx`/`.dbf`/`.prj`) | `folder` / `dataset` |
+| Zipped Shapefile | `.zip` (one `.shp` + sidecars) | `dataset` |
 | GML | `.gml` | `folder` / `dataset` |
 | KML | `.kml` | `folder` / `dataset` |
 | GeoTIFF (raster) | `.tif`, `.tiff` | `folder` / `dataset` |
 | GeoParquet | `.parquet` | `folder` / `dataset` |
 | GeoPackage | `.gpkg` | `database: sqlite:///…` |
 | ESRI File Geodatabase | `.gdb` | `geodatabase` |
+
+A Shapefile is often distributed as a single `.zip` (IGN, Census TIGER, Eurostat …). Point a `dataset:` at it and the inner Shapefile is extracted and scanned like a plain one — CRS reprojection included — on any source:
+
+```yaml
+add:
+  - dataset: https://data.example.org/ADMIN-EXPRESS_FRA.zip
+```
+
+The archive must hold exactly one Shapefile. Multi-Shapefile archives, and auto-discovery of zips inside a `folder:` scan, are not supported — extract those first.
 
 ### Spatial metadata
 
@@ -160,6 +170,18 @@ Avoid the UTF-8 temp copy when files are already local and UTF-8 (auto-fallback 
 ```yaml
 csv_skip_copy: true
 ```
+
+## Compressed CSV
+
+A gzip-compressed CSV (`.csv.gz`) is scanned like any other file — on any source, at any [depth](./scan-depth.md) — and catalogs exactly like its uncompressed twin (same `id`/`name`, same variables):
+
+```yaml
+add:
+  - dataset: ./data/sales.csv.gz
+  - folder: sftp://user@host/exports    # *.csv.gz alongside *.csv
+```
+
+Only single-stream **gzip of CSV** is supported; other compressed forms (`.parquet.gz`, `.zip` archives, zipped Shapefiles) are not — extract them first. HTTP transport compression (`Content-Encoding: gzip`) is handled automatically and needs nothing special.
 
 ## Remote storage
 
@@ -230,8 +252,26 @@ add:
 ```
 
 - One URL is one file — `dataset:` only; `folder:` (directory listing) is not supported over HTTP.
-- Public, no authentication. The file format is recognized by the extension in the URL, so a recognized extension is required.
+- Public, no authentication.
 - Redirects are followed; `https://` is recommended.
+
+**Format detection.** A URL with a recognized extension (`.csv`, `.xlsx`, …) just works — any query string is ignored (`.../sales.csv?token=…`). API endpoints often have no extension, so the format is then detected automatically, in order: the last path segment used as a token (`.../HCL_NOGA/multiplelevels/CSV`), a `?format=` query parameter, the HTTP `Content-Type`, and finally content sniffing of the first bytes (best-effort, logged with a warning; skipped at `depth: dataset`). When nothing is conclusive the run fails asking you to set `format:`.
+
+Set `format:` explicitly to override detection (or force it when signals disagree). It also skips the detection request — a small speed-up when you already know the format, worth it across many endpoints of the same API:
+
+```yaml
+add:
+  # CSV served by an API with no extension in the URL
+  - dataset: https://www.i14y.admin.ch/api/Nomenclatures/HCL_NOGA/multiplelevels/CSV?language=fr
+    format: csv
+    id: noga_08
+  # Excel served by a ".../xls?SnapshotDate=..." endpoint
+  - dataset: https://www.agvchapp.bfs.admin.ch/fr/state/results/xls?SnapshotDate=31.12.2025
+    format: excel
+    id: commune_district
+```
+
+Accepted `format:` values are the delivery formats (`csv`, `excel`, `parquet`, `sas`, `spss`, `stata`, `geojson`, `shapefile`, `gml`, `kml`, `geotiff`) or a matching extension spelling (`xlsx`, `xls`, `pq`, …).
 - A missing URL (404, DNS error, timeout) fails the run with a non-zero exit code, just like a missing local file — a CI build fails red rather than publishing a truncated catalog.
 - Incremental scans use the server's `Last-Modified` header: a URL is skipped when it is unchanged, and its date populates `last_update_date`. A server that sends no `Last-Modified` (e.g. a dynamic endpoint) is re-scanned on every run.
 

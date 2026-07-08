@@ -10,6 +10,8 @@ import pytest
 from datannurpy.scanner.filesystem import (
     FileSystem,
     _expand_home_in_options,
+    _is_transient,
+    _retry_transient,
     get_filesystem,
     is_remote_url,
 )
@@ -517,6 +519,31 @@ class TestGetMtimeWithFileSystem:
         result = get_mtime_timestamp(file_path, fs=fs)
         assert result == int(test_dt.timestamp())
 
+    def test_info_is_memoized_per_path(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Repeated info() on the same path hits the backend once (a scan reads it
+        several times; remote backends issue one HEAD per uncached call). The returned
+        dict is a fresh copy so a caller cannot poison the cache."""
+        from unittest.mock import MagicMock
+
+        file_path = tmp_path / "data.csv"
+        file_path.write_text("a,b\n1,2\n")
+
+        fs = FileSystem(tmp_path)
+        # Spy on the backend call; monkeypatch restores it (fs.fs is a shared singleton).
+        backend = MagicMock(return_value={"type": "file", "size": 8})
+        monkeypatch.setattr(fs.fs, "info", backend)
+
+        first = fs.info(str(file_path))
+        second = fs.info(str(file_path))
+        assert backend.call_count == 1  # memoized: a single real backend call
+        assert first == second == {"type": "file", "size": 8}
+
+        first["mutated"] = True  # mutating a returned dict must not leak into the cache
+        assert "mutated" not in fs.info(str(file_path))
+        assert backend.call_count == 1
+
 
 class TestFileSystemNonLocal:
     """Test FileSystem edge cases for non-local filesystems."""
@@ -734,3 +761,55 @@ class TestRemoteScanStatistical:
         mock_fs.ensure_local.assert_called_once()
         assert len(result.variables) > 0
         assert result.nb_row is not None
+
+
+def _exc_with_status(status: int) -> FileNotFoundError:
+    """A FileNotFoundError wrapping an HTTP-status-carrying cause (as fsspec does)."""
+    cause = Exception("http error")
+    cause.status = status  # type: ignore[attr-defined]
+    err = FileNotFoundError("url")
+    err.__cause__ = cause
+    return err
+
+
+class TestHttpRetry:
+    """Transient-error classification and retry-with-backoff for HTTP sources."""
+
+    def test_is_transient_classification(self) -> None:
+        assert (
+            _is_transient(OSError("boom")) is True
+        )  # no status → connection/DNS/timeout
+        assert _is_transient(_exc_with_status(503)) is True  # server error
+        assert _is_transient(_exc_with_status(429)) is True  # rate limited
+        assert _is_transient(_exc_with_status(404)) is False  # missing
+        assert _is_transient(_exc_with_status(403)) is False  # forbidden
+
+    def test_retry_recovers_after_transient_failures(self) -> None:
+        calls: list[int] = []
+
+        def op() -> str:
+            calls.append(1)
+            if len(calls) < 3:
+                raise OSError("blip")
+            return "ok"
+
+        assert _retry_transient(op, retries=3, backoff=0) == "ok"
+        assert len(calls) == 3
+
+    def test_retry_gives_up_after_exhausting_retries(self) -> None:
+        def op() -> None:
+            raise OSError("down")
+
+        with pytest.raises(OSError):
+            _retry_transient(op, retries=2, backoff=0)
+
+    def test_retry_does_not_retry_permanent_error(self) -> None:
+        calls: list[int] = []
+
+        def op() -> None:
+            calls.append(1)
+            raise _exc_with_status(404)
+
+        with pytest.raises(FileNotFoundError):
+            _retry_transient(op, retries=3, backoff=0)
+        assert len(calls) == 1  # a 404 is not retried

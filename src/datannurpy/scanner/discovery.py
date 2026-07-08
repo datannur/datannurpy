@@ -10,7 +10,7 @@ from urllib.parse import urlsplit
 
 from .parquet import discover_parquet_datasets
 from .timeseries import group_time_series, series_match_normalized_path
-from .utils import SUPPORTED_FORMATS, find_files, get_mtime_timestamp
+from .utils import find_files, get_mtime_timestamp, supported_format_for
 from ..utils import iso_to_timestamp
 
 if TYPE_CHECKING:
@@ -91,7 +91,10 @@ def discover_datasets(
         if in_excluded:
             continue
 
-        fmt = SUPPORTED_FORMATS[file_path.suffix.lower()]
+        # find_files already guaranteed support (through any .gz suffix); resolve the
+        # logical format so a .csv.gz is catalogued as csv, not skipped on a KeyError.
+        fmt = supported_format_for(file_path.name)
+        assert fmt is not None  # guaranteed by find_files
 
         result.append(
             DatasetInfo(

@@ -1,5 +1,20 @@
 # datannurpy
 
+## 0.29.1 (2026-07-08)
+
+- fix: the per-source scan summary reports real `scanned`/`unchanged` counts instead of net deltas — no more misleading `0 datasets, 0 variables` on an all-unchanged run
+- add: a whole-run `[summary]` line at export — catalogue totals plus this run's `scanned`/`unchanged`/`errors`, aggregated across all sources
+- add: a zipped Shapefile (`.zip` with one `.shp` + sidecars) is scanned as a single `dataset:` on any source — extracted safely (Zip Slip- and bomb-guarded) and read like a plain Shapefile, CRS included; multi-Shapefile zips and `folder:` auto-discovery stay out of scope
+- add: gzip-compressed CSV (`.csv.gz`) is scanned transparently on any source and depth — no longer silently skipped by `folder` scans, catalogued like its uncompressed twin, and bounded against decompression bombs; other compressed forms (`.parquet.gz`, `.zip`) stay out of scope
+- add: an HTTP(S) `dataset:` without a usable extension now auto-detects its format (path-segment token, `?format=`, `Content-Type`, then content sniffing); set `format:` to override, and a `?query` after a known extension is handled too
+- fix: HTTP/API URLs with a query string are now scanned correctly — the temp download uses fsspec `get_file` (was `download`, which created a directory for such URLs → empty scan) under a safe name carrying the resolved format's extension, so suffix-based readers (Excel engine, pyogrio) work
+- fix: the default `id`/`name` for a URL dataset strip the query string (readable name) and add a short URL hash to the id, so endpoints differing only by query string no longer collide
+- change: `data_size` is left empty (None) instead of `0` when the server sends no `Content-Length`
+- change: a `401`/`403` on an HTTP `dataset:` reports an authentication-required error (and a `5xx` a server error) instead of a misleading "not found"
+- add: HTTP `dataset:` sources are resilient in unattended runs (e.g. a GitHub Action) — a transient failure (connection blip, timeout, `5xx`/`429`) is retried with exponential backoff, and a hung endpoint fails fast (30s connect / 60s read timeout) instead of blocking on aiohttp's 5-minute default; a user-supplied `storage_options.client_kwargs` timeout is respected
+- add: incremental scans use the `ETag` as an extra freshness signal for an HTTP `dataset:` — an endpoint sending an `ETag` but no `Last-Modified` (dynamic API) is skipped when unchanged instead of re-scanned every run; when both are present the scan re-runs if *either* changes (so a sub-second change a 1s-granular `Last-Modified` would miss is still caught)
+- perf: a remote file's metadata is now read once per scan instead of ~4× — `info()` is memoized on the filesystem, cutting the redundant HEAD requests (HTTP/S3/SFTP)
+
 ## 0.29.0 (2026-07-07)
 
 - add: scan a public HTTP(S) URL as a single `dataset:` (e.g. `dataset: https://.../data.csv`) — full scan pipeline, URL exported as `data_path`, format from the extension, redirects followed, a missing URL failing loudly like a missing local file; `aiohttp` is now a core dependency so it works out of the box

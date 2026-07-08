@@ -15,6 +15,12 @@ import ibis
 import polars as pl
 import pyarrow as pa
 
+from ..compression import (
+    bounded_gzip_stream,
+    decompressed_cap,
+    is_gzipped,
+    strip_compression_suffix,
+)
 from ..utils import log_error, log_warn
 from ..preview import preview_from_arrow, preview_from_ibis
 from .excel import is_valid_tabular_dataset
@@ -111,7 +117,11 @@ def _csv_source(
     csv_skip_copy: bool,
 ) -> Generator[Path, None, None]:
     """Provide a local UTF-8 CSV file for DuckDB to read."""
-    if csv_skip_copy:
+    gzipped = is_gzipped(file_path.name)
+    # DuckDB can read a .gz directly, but that shortcut bypasses both the encoding
+    # transcode (a gzipped cp1252 CSV would break) and the decompression-bomb guard,
+    # so a gzipped source always goes through the transcode route below.
+    if csv_skip_copy and not gzipped:
         try:
             con = ibis.duckdb.connect()
             try:
@@ -124,10 +134,16 @@ def _csv_source(
             pass  # fallback to ensure_local_utf8
 
     tmp_dir = Path(tempfile.mkdtemp())
-    tmp_path = tmp_dir / file_path.name
+    tmp_path = tmp_dir / strip_compression_suffix(file_path.name)
     try:
-        with open(file_path, "rb") as fin, open(tmp_path, "wb") as fout:
-            ensure_local_utf8(fin, fout, csv_encoding)
+        with open(file_path, "rb") as raw:
+            fin = (
+                bounded_gzip_stream(raw, decompressed_cap(file_path.stat().st_size))
+                if gzipped
+                else raw
+            )
+            with open(tmp_path, "wb") as fout:
+                ensure_local_utf8(fin, fout, csv_encoding)
         yield tmp_path
     finally:
         tmp_path.unlink(missing_ok=True)

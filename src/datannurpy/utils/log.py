@@ -126,26 +126,79 @@ def log_error(name: str, error: BaseException, quiet: bool) -> None:
             f.write(_redact(tb))
 
 
+def _nonzero_parts(*pairs: tuple[int | None, str]) -> list[str]:
+    """Render ``(count, label)`` pairs, dropping any whose count is zero/None.
+
+    The shared "show a count only when it happened" rule behind both scan
+    summaries — e.g. an all-unchanged run omits ``0 scanned`` rather than
+    printing a misleading zero.
+    """
+    return [f"{n} {label}" for n, label in pairs if n]
+
+
 def log_summary(
-    datasets: int,
+    scanned: int,
     variables: int | None,
     quiet: bool,
     start_time: float,
     errors: int = 0,
     resource_count: int | None = None,
     resource_label: str | None = None,
+    unchanged: int = 0,
 ) -> None:
-    """Log final summary with elapsed time."""
+    """Log final summary with elapsed time.
+
+    ``scanned`` counts datasets newly scanned or updated this run; ``unchanged``
+    counts datasets an incremental run left untouched. Each count is shown only
+    when non-zero (like ``errors``), so an all-unchanged run reports its real work
+    (``7 unchanged``) instead of a misleading ``0 datasets``, and a fresh scan
+    stays terse (``2 scanned``) without a noisy ``0 unchanged``.
+    """
     elapsed = time.perf_counter() - start_time
     parts: list[str] = []
     if resource_count is not None and resource_label is not None:
         parts.append(f"{resource_count} {resource_label}")
-    parts.append(f"{datasets} datasets")
-    if variables is not None:
-        parts.append(f"{variables} variables")
-    if errors:
-        parts.append(f"{errors} errors")
+    parts += _nonzero_parts(
+        (scanned, "scanned"),
+        (unchanged, "unchanged"),
+        (variables, "variables"),
+        (errors, "errors"),
+    )
     text = f"\n  →{_ICON_SPACING}{', '.join(parts)} in {elapsed:.1f}s"
+    if not quiet:
+        print(text, file=sys.stderr)
+    _write_log(text)
+
+
+def log_run_summary(
+    folders: int,
+    datasets: int,
+    variables: int,
+    quiet: bool,
+    *,
+    scanned: int = 0,
+    unchanged: int = 0,
+    errors: int = 0,
+) -> None:
+    """Log a whole-run recap at export time.
+
+    Reports the catalogue's final totals (folders / datasets / variables) plus
+    how this run got there — ``scanned`` (new or updated), ``unchanged`` (skipped
+    by the incremental check) and ``errors``. Ventilation parts are shown only
+    when non-zero, matching ``log_summary``. Emitted once per export, so a run
+    spanning many ``add:`` sources ends with a single aggregated bilan instead of
+    only per-source lines.
+    """
+    breakdown = _nonzero_parts(
+        (scanned, "scanned"), (unchanged, "unchanged"), (errors, "errors")
+    )
+    text = f"\n[summary] {folders} folders, {datasets} datasets, {variables} variables"
+    if breakdown:
+        # Name the subject ("datasets") once so the run clause can't be misread
+        # as qualifying the variables total it follows.
+        count, label = breakdown[0].split(" ", 1)
+        clause = ", ".join([f"{count} datasets {label}", *breakdown[1:]])
+        text += f" ({clause} this run)"
     if not quiet:
         print(text, file=sys.stderr)
     _write_log(text)

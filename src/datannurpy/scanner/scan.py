@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from pathlib import Path, PurePath
+from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Any
 
 import pyarrow as pa
@@ -27,6 +27,15 @@ from .excel import (
     _looks_like_html_xls_content,
     scan_excel,
 )
+from ..compression import (
+    bounded_gzip_stream,
+    compression_suffix,
+    decompressed_cap,
+    is_gzipped,
+    strip_compression_suffix,
+)
+from .archive import is_zip, local_shapefile_from_zip
+from .format_detect import canonical_extension
 from .parquet import scan_parquet
 from .parquet.core import scan_delta, scan_hive, scan_iceberg
 from .statistical import scan_statistical
@@ -88,6 +97,25 @@ def scan_file(
         fs: Optional FileSystem for remote file access. Non-streamable formats
             (CSV, Excel, SAS/SPSS/Stata) will be downloaded to a temp file.
     """
+    # Zipped Shapefile: extract the inner .shp (+ sidecars) to a temp dir and scan it
+    # as a local Shapefile — the whole geo path (CRS, sidecars) is reused unchanged.
+    if delivery_format == "shapefile" and is_zip(
+        path_label or PurePosixPath(str(path)).name
+    ):
+        with local_shapefile_from_zip(path, fs) as shp_path:
+            return _scan_local(
+                shp_path,
+                delivery_format,
+                dataset_id=dataset_id,
+                freq_threshold=freq_threshold,
+                csv_encoding=csv_encoding,
+                sample_size=sample_size,
+                preview_rows=preview_rows,
+                csv_skip_copy=csv_skip_copy,
+                quiet=quiet,
+                path_label=path_label,
+            )
+
     # Schema-only mode: read metadata without scanning data. Geo formats have no
     # tabular schema path, so they always go through their own scanners.
     if schema_only and delivery_format not in _GEO_FORMATS:
@@ -270,6 +298,17 @@ def _scan_local(
     )
 
 
+def _temp_local_name(path: FsPath, delivery_format: str, path_label: str | None) -> str:
+    """Safe temp filename for a downloaded remote file, carrying the resolved format's
+    extension so suffix-sensitive readers (Excel engine, pyogrio) work even when the
+    URL has no extension or a query string (which would corrupt the raw basename). A
+    content-compression suffix is preserved (``…csv.gz``) so the local reader still sees
+    it as gzipped and decompresses it in turn."""
+    segment = path_label or PurePosixPath(str(path)).name
+    inner = strip_compression_suffix(segment)
+    return f"data{canonical_extension(inner, delivery_format)}{compression_suffix(segment)}"
+
+
 def _scan_with_ensure_local(
     path: FsPath,
     delivery_format: str,
@@ -292,12 +331,15 @@ def _scan_with_ensure_local(
                 _warn_html_xls(path_label or PurePath(path).name, quiet)
                 return ScanResult(variables=[], nb_row=None)
     if delivery_format == "shapefile":
-        ctx = fs.ensure_local_siblings  # .shp needs its .shx/.dbf/.prj companions
+        # .shp needs its .shx/.dbf/.prj companions, kept under their real names.
+        cm = fs.ensure_local_siblings(str(path))
     elif delivery_format in _DIR_FORMATS:
-        ctx = fs.ensure_local_dir
+        cm = fs.ensure_local_dir(str(path))
     else:
-        ctx = fs.ensure_local
-    with ctx(str(path)) as local_path:
+        cm = fs.ensure_local(
+            str(path), _temp_local_name(path, delivery_format, path_label)
+        )
+    with cm as local_path:
         return _scan_local(
             local_path,
             delivery_format,
@@ -475,7 +517,8 @@ def _scan_schema_only_remote(
 
     # SPSS: must download full file (pd.read_spss wraps pyreadstat, no streaming)
     if delivery_format == "spss":
-        with fs.ensure_local(str(path)) as local_path:
+        name = _temp_local_name(path, delivery_format, path_label)
+        with fs.ensure_local(str(path), name) as local_path:
             return _scan_schema_only_local(
                 local_path, delivery_format, dataset_id, path_label=path_label
             )
@@ -485,8 +528,16 @@ def _scan_schema_only_remote(
         from .csv import _CSV_HEADER_SAMPLE_BYTES, _read_csv_header
 
         full_path = fs._full_path(str(path))
+        source_name = path_label or PurePosixPath(str(path)).name
         with fs.fs.open(full_path, "rb") as f:
-            header_bytes = f.read(_CSV_HEADER_SAMPLE_BYTES)
+            # A .gz header decompresses to well under the sample bound, so the read is
+            # self-limiting; the cap only matters on full-file decompression.
+            src = (
+                bounded_gzip_stream(f, decompressed_cap(0))
+                if is_gzipped(source_name)
+                else f
+            )
+            header_bytes = src.read(_CSV_HEADER_SAMPLE_BYTES)
         columns = _read_csv_header(header_bytes, csv_encoding)
         variables = [
             Variable(
@@ -500,9 +551,10 @@ def _scan_schema_only_remote(
 
     # Excel xlsx: download first so ZIP/XML access stays local.
     # xls: must download full file (xlrd doesn't support streaming)
+    name = _temp_local_name(path, delivery_format, path_label)
     suffix = PurePath(path).suffix.lower()
     if suffix != ".xls":
-        with fs.ensure_local(str(path)) as local_path:
+        with fs.ensure_local(str(path), name) as local_path:
             return _scan_schema_only_local(
                 local_path,
                 delivery_format,
@@ -515,7 +567,7 @@ def _scan_schema_only_remote(
         if _looks_like_html_xls_content(f.read(_XLS_SNIFF_BYTES)):
             _warn_html_xls(path_label or PurePath(path).name, quiet)
             return ScanResult(variables=[], nb_row=None)
-    with fs.ensure_local(str(path)) as local_path:
+    with fs.ensure_local(str(path), name) as local_path:
         return _scan_schema_only_local(
             local_path, delivery_format, dataset_id, csv_encoding, quiet, path_label
         )
@@ -556,7 +608,12 @@ def _scan_schema_only_local(
         from .csv import _CSV_HEADER_SAMPLE_BYTES, _read_csv_header
 
         with open(path, "rb") as f:
-            columns = _read_csv_header(f.read(_CSV_HEADER_SAMPLE_BYTES), csv_encoding)
+            src = (
+                bounded_gzip_stream(f, decompressed_cap(path.stat().st_size))
+                if is_gzipped(path.name)
+                else f
+            )
+            columns = _read_csv_header(src.read(_CSV_HEADER_SAMPLE_BYTES), csv_encoding)
         variables = [
             Variable(
                 id=f"{dataset_id}---{col}",

@@ -5,6 +5,7 @@ from __future__ import annotations
 import codecs
 import shutil
 import tempfile
+import time
 from contextlib import AbstractContextManager, contextmanager
 from pathlib import Path, PurePath, PurePosixPath
 from typing import IO, TYPE_CHECKING, Any
@@ -14,6 +15,14 @@ import fsspec
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Iterator
+
+# Resilience defaults for HTTP(S) sources (e.g. an unattended CI publishing a catalog
+# from public URLs): a transient blip should retry rather than fail the whole run, and
+# a hung endpoint should fail fast instead of blocking on aiohttp's 5-minute default.
+_HTTP_MAX_RETRIES = 3
+_HTTP_RETRY_BACKOFF = 0.5  # seconds, doubled each attempt (0.5s, 1s, 2s)
+_HTTP_SOCK_CONNECT = 30  # seconds to establish the connection
+_HTTP_SOCK_READ = 60  # seconds between received chunks (no total cap → large files ok)
 
 
 def is_remote_url(path: str | Path) -> bool:
@@ -39,11 +48,23 @@ class FileSystem:
         """Initialize filesystem from a path (local or remote URL)."""
         path_str = str(path)
         self._url_parts = urlsplit(path_str) if is_remote_url(path_str) else None
+        self._is_http = self._url_parts is not None and self._url_parts.scheme in (
+            "http",
+            "https",
+        )
         # Expand ~ in path-like options (e.g., key_filename for SFTP)
         opts = _expand_home_in_options(storage_options) if storage_options else {}
+        if self._is_http:
+            opts = _with_http_timeout(opts)
         self.fs, self.root = fsspec.core.url_to_fs(path_str, **opts)
         # Normalize root path (remove trailing slash for consistency)
         self.root = self.root.rstrip("/")
+        self._info_cache: dict[str, dict[str, Any]] = {}
+
+    def _run_io(self, op: Callable[[], Any]) -> Any:
+        """Run a remote I/O op, retrying transient failures for HTTP backends (other
+        backends handle their own retries; their errors carry no HTTP status to judge)."""
+        return _retry_transient(op) if self._is_http else op()
 
     @property
     def is_local(self) -> bool:
@@ -80,9 +101,20 @@ class FileSystem:
         return bool(self.fs.exists(full_path))
 
     def info(self, path: str) -> dict[str, Any]:
-        """Get file/directory metadata (size, mtime, type)."""
+        """Get file/directory metadata (size, mtime, type).
+
+        Memoized per resolved path: a single scan reads the same file's metadata
+        several times (is_dir, mtime, size, format detection) and remote backends
+        (e.g. HTTP) issue one network round-trip per uncached ``info`` call. A
+        FileSystem instance is scoped to one scanned path/tree, so the metadata is
+        stable for its lifetime.
+        """
         full_path = self._full_path(path)
-        return dict(self.fs.info(full_path))
+        cached = self._info_cache.get(full_path)
+        if cached is None:
+            cached = dict(self._run_io(lambda: self.fs.info(full_path)))
+            self._info_cache[full_path] = cached
+        return dict(cached)
 
     def listdir(self, path: str) -> list[str]:
         """List directory contents (names only, not full paths)."""
@@ -109,10 +141,14 @@ class FileSystem:
 
     @contextmanager
     def _local_copy(
-        self, path: str, download: Callable[[str, Path], None]
+        self,
+        path: str,
+        download: Callable[[str, Path], None],
+        local_name: str | None = None,
     ) -> Generator[Path, None, None]:
         """Yield a local copy of ``path``: the path itself when already local, or a
-        temp copy produced by ``download(remote_path, tmp_dir)`` (auto-cleaned)."""
+        temp copy produced by ``download(remote_path, tmp_dir)`` (auto-cleaned). The
+        temp file is named ``local_name`` when given, else the remote basename."""
         full_path = self._full_path(path)
         if self.is_local:
             yield Path(full_path)
@@ -120,15 +156,30 @@ class FileSystem:
         tmp_dir = Path(tempfile.mkdtemp())
         try:
             download(full_path, tmp_dir)
-            yield tmp_dir / PurePosixPath(full_path).name
+            yield tmp_dir / (local_name or PurePosixPath(full_path).name)
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
 
-    def ensure_local(self, path: str) -> AbstractContextManager[Path]:
-        """Ensure a single file is available locally (downloads it if remote)."""
+    def ensure_local(
+        self, path: str, local_name: str | None = None
+    ) -> AbstractContextManager[Path]:
+        """Ensure a single file is available locally (downloads it if remote).
+
+        ``local_name`` overrides the temp filename — used to give a downloaded URL a
+        safe name with the right extension (the raw basename may carry a query string
+        or lack the extension that suffix-based readers need).
+        """
+        # get_file (single-file copy) writes to the exact destination path; download()
+        # (= get) applies directory heuristics that, for a URL with a query string,
+        # create a directory and drop the file inside it under its raw name.
         return self._local_copy(
             path,
-            lambda src, tmp: self.fs.download(src, str(tmp / PurePosixPath(src).name)),
+            lambda src, tmp: self._run_io(
+                lambda: self.fs.get_file(
+                    src, str(tmp / (local_name or PurePosixPath(src).name))
+                )
+            ),
+            local_name=local_name,
         )
 
     def ensure_local_dir(self, path: str) -> AbstractContextManager[Path]:
@@ -153,7 +204,11 @@ class FileSystem:
         stem = PurePosixPath(src).stem
         for sibling in self.fs.ls(PurePosixPath(src).parent.as_posix(), detail=False):
             if PurePosixPath(sibling).stem == stem:
-                self.fs.download(sibling, str(tmp / PurePosixPath(sibling).name))
+                self._run_io(
+                    lambda s=sibling: self.fs.get_file(
+                        s, str(tmp / PurePosixPath(s).name)
+                    )
+                )
 
     def to_path(self, path: str) -> Path:
         """Convert filesystem path to Path object (local only)."""
@@ -185,6 +240,76 @@ class FileSystem:
         if not path_str.startswith("/"):
             path_str = self._full_path(path_str)
         return urlunsplit((protocol, netloc, path_str, "", ""))
+
+
+def _with_http_timeout(opts: dict[str, Any]) -> dict[str, Any]:
+    """Add a default socket timeout to HTTP ``client_kwargs`` so a hung endpoint fails
+    fast (aiohttp's default is a 5-minute total). A user-provided timeout is kept."""
+    import aiohttp
+
+    client_kwargs = dict(opts.get("client_kwargs") or {})
+    client_kwargs.setdefault(
+        "timeout",
+        aiohttp.ClientTimeout(
+            sock_connect=_HTTP_SOCK_CONNECT, sock_read=_HTTP_SOCK_READ
+        ),
+    )
+    return {**opts, "client_kwargs": client_kwargs}
+
+
+def _is_transient(exc: BaseException) -> bool:
+    """Whether a remote error is worth retrying: a transient network/server condition
+    (connection reset, timeout, 5xx, 429), not a definitive 4xx (missing/forbidden)."""
+    status = _http_status_in_chain(exc)
+    if status is None:  # connection reset / DNS blip / timeout
+        return True
+    return status >= 500 or status == 429
+
+
+def _retry_transient(
+    op: Callable[[], Any],
+    *,
+    retries: int = _HTTP_MAX_RETRIES,
+    backoff: float = _HTTP_RETRY_BACKOFF,
+) -> Any:
+    """Call ``op()``, retrying transient failures with exponential backoff. Permanent
+    errors propagate immediately; the final attempt's error propagates as-is."""
+    for attempt in range(retries):
+        try:
+            return op()
+        except Exception as exc:
+            if not _is_transient(exc):
+                raise
+            time.sleep(backoff * 2**attempt)
+    return op()  # last attempt: any error propagates to the caller
+
+
+def _http_status_in_chain(exc: BaseException) -> int | None:
+    """The HTTP status from a remote-access error, if any. fsspec collapses HTTP
+    failures into a bare FileNotFoundError but keeps the aiohttp ClientResponseError
+    (carrying ``status``) in the cause/context chain."""
+    cur: BaseException | None = exc
+    while cur is not None:
+        status = getattr(cur, "status", None)
+        if isinstance(status, int):
+            return status
+        cur = cur.__cause__ or cur.__context__
+    return None
+
+
+def remote_access_error_reason(exc: BaseException) -> str | None:
+    """An actionable reason for a remote-access failure — authentication for 401/403,
+    a server error for 5xx — or None for a plain not-found / unreachable error the
+    caller phrases itself (404, DNS, connection refused, timeout)."""
+    status = _http_status_in_chain(exc)
+    if status in (401, 403):
+        return (
+            f"authentication required (HTTP {status}); only public, unauthenticated "
+            f"URLs are supported"
+        )
+    if status is not None and status >= 500:
+        return f"server error (HTTP {status})"
+    return None
 
 
 def get_filesystem(

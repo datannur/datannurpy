@@ -166,6 +166,77 @@ class TestExportSizeReportHelpers:
         assert calls == [tmp_path / "enabled"]
 
 
+class TestRunBilan:
+    """The whole-run bilan printed at export time."""
+
+    def _make_data(self, tmp_path: Path) -> Path:
+        data = tmp_path / "data"
+        (data / "sub").mkdir(parents=True)
+        (data / "one.csv").write_text("a,b\n1,2\n3,4\n")
+        (data / "two.csv").write_text("x,y\n5,6\n")
+        (data / "sub" / "three.csv").write_text("p,q,r\n7,8,9\n")
+        return data
+
+    def test_bilan_prints_once_with_totals_and_scanned(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        """export_app emits a single bilan line with real totals and scanned count."""
+        data = self._make_data(tmp_path)
+        catalog = Catalog(app_path=tmp_path / "app")
+        catalog.add_folder(data)
+        catalog.export_app()
+
+        err = capsys.readouterr().err
+        assert err.count("[summary]") == 1  # not doubled by nested export_db
+        assert "3 datasets" in err
+        assert "7 variables" in err
+        assert "3 datasets scanned this run" in err
+
+    def test_bilan_shows_real_totals_when_all_unchanged(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        """An all-unchanged incremental run still reports the real catalogue totals."""
+        data = self._make_data(tmp_path)
+        first = Catalog(app_path=tmp_path / "app")
+        first.add_folder(data)
+        first.export_app()
+        capsys.readouterr()  # drop first-run output
+
+        second = Catalog(app_path=tmp_path / "app")
+        second.add_folder(data)
+        second.export_app()
+        err = capsys.readouterr().err
+        assert "3 datasets" in err and "7 variables" in err
+        assert "3 datasets unchanged this run" in err
+        assert "scanned" not in err
+
+    def test_bilan_aggregates_across_multiple_sources(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        """Two add_folder calls produce one bilan summing both scopes."""
+        data = self._make_data(tmp_path)
+        other = tmp_path / "other"
+        other.mkdir()
+        (other / "four.csv").write_text("m,n\n1,2\n")
+
+        catalog = Catalog(app_path=tmp_path / "app")
+        catalog.add_folder(data)
+        catalog.add_folder(other)
+        catalog.export_app()
+
+        err = capsys.readouterr().err
+        assert err.count("[summary]") == 1
+        assert "4 datasets" in err  # 3 + 1 across both folders
+        assert "4 datasets scanned this run" in err
+
+    def test_no_bilan_without_scan(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        """A metadata-only / no-scan export stays quiet (no bilan)."""
+        Catalog().export_db(tmp_path / "empty", quiet=False)
+        assert "[summary]" not in capsys.readouterr().err
+
+
 class TestCopyAssetsHelpers:
     """Test copy_assets helper functions."""
 

@@ -292,7 +292,6 @@ def add_folder(
         )
 
     start_time = log_section("add_folder", str(root), q)
-    datasets_before = catalog.dataset.count
     vars_before = catalog.variable.count
 
     # Discover all datasets (parquet + other formats)
@@ -390,7 +389,10 @@ def add_folder(
         if skipped:
             catalog.dataset.upsert_all(skipped)
 
-        # Create or update modified datasets
+        # Create or update modified datasets. Count only datasets actually
+        # touched — an unmatched file (create_folders=False) is skipped, not
+        # scanned, so it must not inflate the tally.
+        scanned = 0
         for info in plan.to_scan:
             display_label = _display_dataset_label(info, root)
             t0 = log_start(display_label, q)
@@ -412,6 +414,7 @@ def add_folder(
                     _match_path=data_path_str,
                 )
                 log_done(display_label, q, t0)
+                scanned += 1
                 continue
 
             series_normalized_path: str | None = None
@@ -484,15 +487,18 @@ def add_folder(
             )
             catalog.dataset.add(dataset)
             log_done(display_label, q, t0)
+            scanned += 1
 
-        datasets_added = catalog.dataset.count - datasets_before
+        unchanged = len(plan.to_skip)
+        catalog._tally_scan(scanned, unchanged)
         log_summary(
-            datasets_added,
+            scanned,
             None,
             q,
             start_time,
             resource_count=resource_count,
             resource_label="files",
+            unchanged=unchanged,
         )
         return
 
@@ -530,13 +536,17 @@ def add_folder(
         resolved_sample_size = None
 
     scan_errors = 0
+    # Count only datasets actually created/updated. An unmatched file
+    # (create_folders=False) is skipped before any scan, so it is neither an
+    # error nor a scan and must not inflate the tally.
+    scanned = 0
 
     for info in plan.to_scan:
         display_path = _display_dataset_path(info, root)
         # Time series: special handling
         if info.series_files is not None:
             try:
-                _scan_time_series(
+                if _scan_time_series(
                     catalog=catalog,
                     info=info,
                     root=root,
@@ -552,7 +562,8 @@ def add_folder(
                     fs=fs,
                     create_folders=create_folders,
                     on_unmatched=on_unmatched,
-                )
+                ):
+                    scanned += 1
             except Exception as exc:
                 log_error(display_path, exc, q)
                 scan_errors += 1
@@ -624,6 +635,7 @@ def add_folder(
             _match_path=data_path_str,
         )
         catalog.dataset.add(dataset)
+        scanned += 1
         remember_preview(catalog, dataset.id, result.preview, label=display_path)
 
         var_id_mapping = build_variable_ids(result.variables, dataset.id)
@@ -652,16 +664,18 @@ def add_folder(
         else:
             log_warn(f"{display_path}: empty file", q)
 
-    datasets_added = catalog.dataset.count - datasets_before
     vars_added = catalog.variable.count - vars_before
+    unchanged = len(plan.to_skip)
+    catalog._tally_scan(scanned, unchanged, scan_errors)
     log_summary(
-        datasets_added,
+        scanned,
         vars_added,
         q,
         start_time,
         scan_errors,
         resource_count=resource_count,
         resource_label="files",
+        unchanged=unchanged,
     )
 
 
@@ -681,8 +695,12 @@ def _scan_time_series(
     fs: FileSystem | None,
     create_folders: bool,
     on_unmatched: OnUnmatched,
-) -> None:
-    """Scan a time series dataset (multiple files with temporal pattern)."""
+) -> bool:
+    """Scan a time series dataset (multiple files with temporal pattern).
+
+    Returns ``True`` when a dataset was created, ``False`` when the series was
+    skipped for want of a metadata match (``create_folders=False``).
+    """
     assert info.series_files is not None
     assert info.series_normalized_path is not None
     series_files = info.series_files
@@ -717,7 +735,7 @@ def _scan_time_series(
     )
     if peek is None and not create_folders:
         _handle_unmatched(display_path, on_unmatched, quiet)
-        return
+        return False
 
     dataset_id, folder_id = _resolve_ids_from_peek(
         peek, fallback_id, fallback_folder_id, create_folders
@@ -858,3 +876,5 @@ def _scan_time_series(
         )
     else:
         log_warn(f"{display_path}: empty file", quiet)
+
+    return True

@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any, Union
 import ibis
 import ibis.expr.datatypes as dt
 
+from ..compression import strip_compression_suffix
 from ..schema import Variable
 from ..utils.log import log_warn
 from ..utils.time import timestamp_to_iso
@@ -104,6 +105,24 @@ DEFAULT_EXCLUDE_DIRS = {
 }
 DEFAULT_EXCLUDE_PREFIXES = ("~$", ".~lock.")  # Office/LibreOffice temp/lock files
 _FS_DIR_TYPES = {"directory", "dir"}
+
+
+# delivery_formats whose scanner transparently decompresses a gzip source. Only these
+# may be reached through a ``.gz`` suffix; a ``data.parquet.gz`` stays unsupported rather
+# than being admitted and then failing to scan as raw gzip bytes.
+GZIP_INNER_FORMATS = frozenset({"csv"})
+
+
+def supported_format_for(name: str) -> str | None:
+    """delivery_format for a filename, seeing through a *decompressible* content
+    compression suffix (``sales.csv.gz`` → ``csv``). None when the inner extension is
+    unsupported, or when a gzip wraps a format we don't decompress (``x.parquet.gz``)."""
+    base = PurePosixPath(name).name
+    inner = strip_compression_suffix(base)
+    fmt = SUPPORTED_FORMATS.get(PurePosixPath(inner).suffix.lower())
+    if inner != base and fmt not in GZIP_INNER_FORMATS:
+        return None
+    return fmt
 
 
 def fs_info_is_dir(fs: FileSystem, path: str) -> bool:
@@ -365,13 +384,25 @@ def get_mtime_timestamp(path: FsPath, fs: FileSystem | None = None) -> int:
     return int(mtime)
 
 
-def get_data_size(path: FsPath, fs: FileSystem | None = None) -> int:
-    """Get file size in bytes."""
+def get_data_size(path: FsPath, fs: FileSystem | None = None) -> int | None:
+    """Get file size in bytes, or None when the backend reports no size (e.g. an HTTP
+    endpoint sending no Content-Length) — None means "unknown", not an empty file."""
     if fs is not None:
-        info = fs.info(str(path))
-        return int(info.get("size", 0))
+        size = fs.info(str(path)).get("size")
+        return int(size) if size is not None else None
     assert isinstance(path, Path)
     return path.stat().st_size
+
+
+def get_content_signature(path: FsPath, fs: FileSystem | None = None) -> str | None:
+    """A content signature for incremental skip when no reliable mtime exists: the
+    backend's ETag (HTTP/S3 expose it in ``info()``). None for local paths or backends
+    without one. Reuses the memoized ``info()``, so it adds no request."""
+    if fs is None:
+        return None
+    info = fs.info(str(path))
+    etag = next((v for k, v in info.items() if k.lower() == "etag"), None)
+    return str(etag) if etag is not None else None
 
 
 def get_dir_data_size(path: PurePath, fs: FileSystem | None = None) -> int:
@@ -407,13 +438,13 @@ def find_files(
 
     if recursive:
         candidates = [
-            f for f in safe_walk_local(root) if f.suffix.lower() in SUPPORTED_FORMATS
+            f for f in safe_walk_local(root) if supported_format_for(f.name) is not None
         ]
     else:
         candidates = [
             f
             for f in safe_iterdir_local(root)
-            if f.is_file() and f.suffix.lower() in SUPPORTED_FORMATS
+            if f.is_file() and supported_format_for(f.name) is not None
         ]
 
     # Apply default exclusions
@@ -454,7 +485,7 @@ def _find_files_with_fs(
     candidates = [
         p
         for p in safe_walk_fs(fs, root_str, recursive)
-        if PurePosixPath(p).suffix.lower() in SUPPORTED_FORMATS
+        if supported_format_for(PurePosixPath(p).name) is not None
     ]
 
     # Apply default exclusions

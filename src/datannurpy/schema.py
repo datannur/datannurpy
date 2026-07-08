@@ -121,6 +121,8 @@ class Dataset:
     last_update_date: str | None = None
     updating_each: str | None = None
     no_more_update: str | None = None
+    # Content signature for the incremental skip: a SQL schema hash for database
+    # datasets, the ETag for HTTP sources (skip when unchanged, even without mtime).
     schema_signature: str | None = None
     # Runtime fields (not persisted)
     _seen: bool = False

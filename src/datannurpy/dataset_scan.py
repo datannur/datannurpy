@@ -28,6 +28,7 @@ def skip_unchanged(
     preview_rows: int,
     quiet: bool,
     label: str,
+    current_signature: str | None = None,
 ) -> bool:
     """Skip-and-mark an unchanged dataset, or cascade-remove a stale one.
 
@@ -38,14 +39,17 @@ def skip_unchanged(
     )
     if existing is None:
         return False
-    # A source that exposes no modification time — e.g. an HTTP endpoint sending no
-    # Last-Modified header — yields mtime 0 and gives no reliable change signal, so
-    # always re-scan rather than risk skipping a file that changed upstream.
-    if (
-        not refresh
-        and current_mtime
-        and iso_to_timestamp(existing.last_update_date) == current_mtime
-    ):
+    # Skip only when *every* freshness signal the source exposes is unchanged; re-scan
+    # if any changed (a stale Last-Modified — 1s granularity — is caught by the ETag,
+    # and vice versa). Signals: the modification time (mtime 0 = none, e.g. an HTTP
+    # endpoint with no Last-Modified) and a content signature/ETag. A source exposing
+    # neither can't be judged, so always re-scan rather than keep a stale scan.
+    signals: list[bool] = []
+    if current_mtime:
+        signals.append(iso_to_timestamp(existing.last_update_date) == current_mtime)
+    if current_signature is not None:
+        signals.append(existing.schema_signature == current_signature)
+    if not refresh and signals and all(signals):
         catalog.dataset.update(
             existing.id, _seen=True, _match_path=match_path, preview_rows=preview_rows
         )
