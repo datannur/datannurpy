@@ -155,6 +155,31 @@ class TestMetadataFirstE2E:
         # No dataset created for the unmatched file
         assert len(catalog.dataset.all()) == 0
 
+    def test_unmatched_files_are_not_counted_as_scanned(self, tmp_path: Path):
+        """An unmatched file is skipped, not scanned — it must not inflate the tally.
+
+        Regression: the run bilan derived ``scanned`` from ``len(plan.to_scan)``,
+        which wrongly counted metadata-first files that never reach a scan.
+        """
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        matched = _write_csv(data_dir, "sales.csv")
+        _write_csv(data_dir, "orphan.csv")  # no metadata row → unmatched
+
+        meta_dir = tmp_path / "meta"
+        _write_metadata(
+            meta_dir,
+            folder_rows=[("f", "F")],
+            dataset_rows=[("sales", "Sales", "f", str(matched))],
+        )
+
+        catalog = Catalog(metadata_path=meta_dir, quiet=True)
+        catalog.add_folder(data_dir, create_folders=False, on_unmatched="skip")
+
+        assert len(catalog.dataset.all()) == 1
+        assert catalog._run_scanned == 1  # only the matched file, not the orphan
+        assert catalog._run_unchanged == 0
+
     def test_create_folders_false_unmatched_skip(self, tmp_path: Path):
         """on_unmatched='skip' silently ignores unmatched files."""
         data_dir = tmp_path / "data"

@@ -2,6 +2,8 @@
 
 ## 0.29.1 (2026-07-08)
 
+- fix: the per-source scan summary reports real `scanned`/`unchanged` counts instead of net deltas — no more misleading `0 datasets, 0 variables` on an all-unchanged run
+- add: a whole-run `[summary]` line at export — catalogue totals plus this run's `scanned`/`unchanged`/`errors`, aggregated across all sources
 - add: a zipped Shapefile (`.zip` with one `.shp` + sidecars) is scanned as a single `dataset:` on any source — extracted safely (Zip Slip- and bomb-guarded) and read like a plain Shapefile, CRS included; multi-Shapefile zips and `folder:` auto-discovery stay out of scope
 - add: gzip-compressed CSV (`.csv.gz`) is scanned transparently on any source and depth — no longer silently skipped by `folder` scans, catalogued like its uncompressed twin, and bounded against decompression bombs; other compressed forms (`.parquet.gz`, `.zip`) stay out of scope
 - add: an HTTP(S) `dataset:` without a usable extension now auto-detects its format (path-segment token, `?format=`, `Content-Type`, then content sniffing); set `format:` to override, and a `?query` after a known extension is handled too

@@ -176,6 +176,12 @@ class Catalog(DatannurDB):
         self._has_scanned = False
         self._finalized = False
 
+        # Run-level scan tallies, aggregated across every add_* call so the
+        # export can print one whole-run bilan (see log_run_summary).
+        self._run_scanned = 0
+        self._run_unchanged = 0
+        self._run_errors = 0
+
         self.enumeration_manager = EnumerationManager(self)
 
         if not self._loaded_from_db:
@@ -241,6 +247,12 @@ class Catalog(DatannurDB):
         self.frequency._df = compute_runtime_ids(
             self.frequency._df, ["variable_id", "value"], build_frequency_id
         )
+
+    def _tally_scan(self, scanned: int, unchanged: int, errors: int = 0) -> None:
+        """Fold one ``add_*`` call's outcome into the run-level bilan totals."""
+        self._run_scanned += scanned
+        self._run_unchanged += unchanged
+        self._run_errors += errors
 
     def __repr__(self) -> str:
         return (

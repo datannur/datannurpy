@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Any
 import polars as pl
 from jsonjsdb.writer import export_hash_session, write_table_json_pair
 
-from .utils.log import _write_log, log_warn
+from .utils.log import _write_log, log_run_summary, log_warn
 from .utils.params import validate_params
 
 if TYPE_CHECKING:
@@ -600,6 +600,27 @@ def export_db(
     _clean_stale_db_files(catalog, Path(path))
     if export_size_report:
         _print_export_size_report(Path(path), quiet=q)
+    _log_run_bilan(catalog, q)
+
+
+def _log_run_bilan(catalog: Catalog, quiet: bool) -> None:
+    """Emit the whole-run bilan once, only when this run actually scanned.
+
+    Reads the catalogue's final totals plus the run-level tallies accumulated by
+    each ``add_*`` call. Skipped for metadata-only / re-export flows so they stay
+    as quiet as before.
+    """
+    if not catalog._has_scanned:
+        return
+    log_run_summary(
+        catalog.folder.count,
+        catalog.dataset.count,
+        catalog.variable.count,
+        quiet,
+        scanned=catalog._run_scanned,
+        unchanged=catalog._run_unchanged,
+        errors=catalog._run_errors,
+    )
 
 
 def _get_app_path() -> Path:
@@ -691,6 +712,7 @@ def export_app(
     catalog.export_db(db_dir, quiet=True, track_evolution=track_evolution)
     if export_size_report:
         _print_export_size_report(db_dir, quiet=q)
+    _log_run_bilan(catalog, q)
 
     elapsed = time.perf_counter() - start_time
     index_uri = (output_dir / "index.html").resolve().as_uri()

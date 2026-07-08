@@ -8,6 +8,7 @@ from datannurpy.utils.log import (
     log_done,
     log_error,
     log_folder,
+    log_run_summary,
     log_section,
     log_skip,
     log_start,
@@ -47,7 +48,7 @@ def test_log_summary_with_errors(capsys):
     """log_summary should include error count when errors > 0."""
     log_summary(5, 10, quiet=False, start_time=time.perf_counter(), errors=2)
     err = capsys.readouterr().err
-    assert "5 datasets" in err and "2 errors" in err
+    assert "5 scanned" in err and "2 errors" in err
 
 
 def test_log_summary_without_errors(capsys):
@@ -68,8 +69,90 @@ def test_log_summary_with_resource_count_and_no_variables(capsys):
     )
     err = capsys.readouterr().err
     assert "141 files" in err
-    assert "13 datasets" in err
+    assert "13 scanned" in err
     assert "variables" not in err
+
+
+def test_log_summary_breakdown_shows_scanned_and_unchanged(capsys):
+    """A mixed incremental run shows both scanned and unchanged counts."""
+    log_summary(
+        3,
+        45,
+        quiet=False,
+        start_time=time.perf_counter(),
+        resource_count=12,
+        resource_label="files",
+        unchanged=9,
+    )
+    err = capsys.readouterr().err
+    assert "3 scanned, 9 unchanged" in err
+    assert "12 files" in err
+    assert "45 variables" in err
+
+
+def test_log_summary_omits_zero_counts(capsys):
+    """Zero-valued counts are omitted; an all-unchanged run shows only unchanged."""
+    log_summary(
+        0,
+        0,
+        quiet=False,
+        start_time=time.perf_counter(),
+        resource_count=7,
+        resource_label="files",
+        unchanged=7,
+    )
+    err = capsys.readouterr().err
+    assert "7 unchanged" in err
+    assert "scanned" not in err  # 0 scanned is omitted
+    assert "variables" not in err  # 0 variables is omitted
+
+
+def test_log_run_summary_shows_totals_and_breakdown(capsys):
+    """The run bilan reports catalogue totals plus this run's ventilation."""
+    log_run_summary(3, 12, 45, quiet=False, scanned=9, unchanged=3, errors=2)
+    err = capsys.readouterr().err
+    assert "[summary] 3 folders, 12 datasets, 45 variables" in err
+    assert "(9 datasets scanned, 3 unchanged, 2 errors this run)" in err
+
+
+def test_log_run_summary_all_unchanged_keeps_real_totals(capsys):
+    """An all-unchanged run still shows real totals — the point of the bilan."""
+    log_run_summary(2, 5, 20, quiet=False, scanned=0, unchanged=5)
+    err = capsys.readouterr().err
+    assert "2 folders, 5 datasets, 20 variables" in err
+    assert "(5 datasets unchanged this run)" in err
+    assert "scanned" not in err  # 0 scanned is omitted
+
+
+def test_log_run_summary_omits_breakdown_when_all_zero(capsys):
+    """With no run activity, only the totals are shown (no empty parentheses)."""
+    log_run_summary(1, 4, 10, quiet=False)
+    err = capsys.readouterr().err
+    assert "1 folders, 4 datasets, 10 variables" in err
+    assert "(" not in err
+
+
+def test_log_run_summary_quiet(capsys):
+    """quiet=True suppresses the bilan."""
+    log_run_summary(3, 12, 45, quiet=True, scanned=9)
+    assert capsys.readouterr().err == ""
+
+
+def test_log_summary_fresh_scan_omits_zero_unchanged(capsys):
+    """A fresh scan (nothing skipped) stays terse: no '0 unchanged' noise."""
+    log_summary(
+        4,
+        8,
+        quiet=False,
+        start_time=time.perf_counter(),
+        resource_count=4,
+        resource_label="files",
+        unchanged=0,
+    )
+    err = capsys.readouterr().err
+    assert "4 scanned" in err
+    assert "8 variables" in err
+    assert "unchanged" not in err
 
 
 def test_verbose_shows_traceback(capsys):
@@ -186,7 +269,7 @@ def test_log_file_captures_all_levels(tmp_path):
     assert "✓  scanning file.csv" in content
     assert "⚠  col has nulls" in content
     assert "⏭  cached.csv (unchanged)" in content
-    assert "2 datasets" in content
+    assert "2 scanned" in content
     assert "1 errors" in content
 
 
@@ -277,7 +360,7 @@ def test_log_icon_spacing_exact(capsys, tmp_path):
     assert "  ⏭  skip.csv (unchanged)" in err
     assert "\n  📁  folder" in err
     assert "\r  ·  debug.csv" in err
-    assert "\n  →  3 files, 1 datasets, 2 variables in " in err
+    assert "\n  →  3 files, 1 scanned, 2 variables in " in err
     assert "\r  ✗  error.csv — ValueError: boom" in err
 
     content = log_path.read_text()
@@ -286,5 +369,5 @@ def test_log_icon_spacing_exact(capsys, tmp_path):
     assert "  ⏭  skip.csv (unchanged)" in content
     assert "\n  📁  folder" in content
     assert "  ·  debug.csv" in content
-    assert "\n  →  3 files, 1 datasets, 2 variables in " in content
+    assert "\n  →  3 files, 1 scanned, 2 variables in " in content
     assert "  ✗  error.csv — ValueError: boom" in content

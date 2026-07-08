@@ -228,7 +228,6 @@ def _add_database_impl(
         db_name = get_database_name(connection, con, backend_name)
 
     start_time = log_section("add_database", f"{backend_name}://{db_name}", q)
-    datasets_before = catalog.dataset.count
     vars_before = catalog.variable.count
 
     # Get timestamp for folder/dataset
@@ -289,6 +288,8 @@ def _add_database_impl(
     # Process each schema
     scan_errors = 0
     resource_count = 0
+    scanned = 0
+    unchanged = 0
     for schema_name in schemas_to_scan:
         # Determine folder for this schema
         if schema_name is not None:
@@ -405,6 +406,7 @@ def _add_database_impl(
                             existing_dataset.id
                         )
                         collect_fk_refs(meta.fks, existing_dataset.id, raw_fk_refs)
+                    unchanged += 1
                     log_skip(table_name, q)
                     continue
 
@@ -458,6 +460,7 @@ def _add_database_impl(
                     table_to_dataset_id[(schema_name, table_name)] = dataset_id
                     collect_fk_refs(meta.fks, dataset_id, raw_fk_refs)
                 catalog.dataset.add(dataset)
+                scanned += 1
                 if table_vars:
                     build_variable_ids(table_vars, dataset.id)
                     catalog.variable.add_all(table_vars)
@@ -498,6 +501,7 @@ def _add_database_impl(
                     )
                     table_to_dataset_id[(schema_name, table_name)] = existing_dataset.id
                     collect_fk_refs(meta.fks, existing_dataset.id, raw_fk_refs)
+                    unchanged += 1
                     log_skip(table_name, q)
                     continue
 
@@ -572,6 +576,7 @@ def _add_database_impl(
             table_to_dataset_id[(schema_name, table_name)] = dataset_id
             collect_fk_refs(meta.fks, dataset_id, raw_fk_refs)
             catalog.dataset.add(dataset)
+            scanned += 1
             remember_preview(catalog, dataset.id, preview, label=table_name)
 
             var_id_mapping = build_variable_ids(table_vars, dataset.id)
@@ -599,7 +604,7 @@ def _add_database_impl(
             series_folder_id = (
                 prefix_folder_ids[table_prefix] if table_prefix else current_folder_id
             )
-            scan_errors += _scan_table_series(
+            series_error = _scan_table_series(
                 catalog,
                 con,
                 group,
@@ -614,6 +619,11 @@ def _add_database_impl(
                 preview_rows=preview_rows,
                 quiet=q,
             )
+            scan_errors += series_error
+            if series_error == 0:
+                # A series always rescans (no incremental skip), so success
+                # means exactly one dataset was (re)scanned.
+                scanned += 1
 
         # Flush batched cached-metadata updates (single rebuild)
         if cached_changed_vars:
@@ -635,16 +645,17 @@ def _add_database_impl(
     if isinstance(connection, str):
         close_connection(con)
 
-    datasets_added = catalog.dataset.count - datasets_before
     vars_added = catalog.variable.count - vars_before
+    catalog._tally_scan(scanned, unchanged, scan_errors)
     log_summary(
-        datasets_added,
+        scanned,
         None if resolved_depth == "dataset" else vars_added,
         q,
         start_time,
         scan_errors,
         resource_count=resource_count,
         resource_label="tables",
+        unchanged=unchanged,
     )
 
 
