@@ -26,6 +26,12 @@ from urllib.parse import urlsplit, parse_qs
 
 from ..errors import ConfigError
 from ..utils.log import log_warn
+from .archive import (
+    is_zip,
+    unsupported_zip_error,
+    zip_member_list,
+    zip_shapefile_member,
+)
 from .utils import SUPPORTED_FORMATS, supported_format_for
 
 if TYPE_CHECKING:
@@ -229,6 +235,15 @@ def resolve_delivery_format(
     fmt = format_from_extension(path_name)
     if fmt is not None:
         return fmt
+
+    # 2b. A .zip carries no format in its name — classify it by inspecting the archive's
+    # members (currently: a single Shapefile). Runs for local and remote, and at every
+    # depth, since the delivery_format cannot be known any other way.
+    if is_zip(path_name):
+        names = zip_member_list(remote_path, fs)
+        if zip_shapefile_member(names) is not None:
+            return "shapefile"
+        raise unsupported_zip_error(path_name, names)
 
     # Auto-detection is remote-only: local extensions are reliable, so fail fast.
     if fs is None or fs.is_local:

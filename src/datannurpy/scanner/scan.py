@@ -34,6 +34,7 @@ from ..compression import (
     is_gzipped,
     strip_compression_suffix,
 )
+from .archive import is_zip, local_shapefile_from_zip
 from .format_detect import canonical_extension
 from .parquet import scan_parquet
 from .parquet.core import scan_delta, scan_hive, scan_iceberg
@@ -96,6 +97,25 @@ def scan_file(
         fs: Optional FileSystem for remote file access. Non-streamable formats
             (CSV, Excel, SAS/SPSS/Stata) will be downloaded to a temp file.
     """
+    # Zipped Shapefile: extract the inner .shp (+ sidecars) to a temp dir and scan it
+    # as a local Shapefile — the whole geo path (CRS, sidecars) is reused unchanged.
+    if delivery_format == "shapefile" and is_zip(
+        path_label or PurePosixPath(str(path)).name
+    ):
+        with local_shapefile_from_zip(path, fs) as shp_path:
+            return _scan_local(
+                shp_path,
+                delivery_format,
+                dataset_id=dataset_id,
+                freq_threshold=freq_threshold,
+                csv_encoding=csv_encoding,
+                sample_size=sample_size,
+                preview_rows=preview_rows,
+                csv_skip_copy=csv_skip_copy,
+                quiet=quiet,
+                path_label=path_label,
+            )
+
     # Schema-only mode: read metadata without scanning data. Geo formats have no
     # tabular schema path, so they always go through their own scanners.
     if schema_only and delivery_format not in _GEO_FORMATS:

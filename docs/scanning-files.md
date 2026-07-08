@@ -119,12 +119,22 @@ add:
 | ------ | --------- | ---------- |
 | GeoJSON | `.geojson` | `folder` / `dataset` |
 | Shapefile | `.shp` (+ `.shx`/`.dbf`/`.prj`) | `folder` / `dataset` |
+| Zipped Shapefile | `.zip` (one `.shp` + sidecars) | `dataset` |
 | GML | `.gml` | `folder` / `dataset` |
 | KML | `.kml` | `folder` / `dataset` |
 | GeoTIFF (raster) | `.tif`, `.tiff` | `folder` / `dataset` |
 | GeoParquet | `.parquet` | `folder` / `dataset` |
 | GeoPackage | `.gpkg` | `database: sqlite:///…` |
 | ESRI File Geodatabase | `.gdb` | `geodatabase` |
+
+A Shapefile is often distributed as a single `.zip` (IGN, Census TIGER, Eurostat …). Point a `dataset:` at it and the inner Shapefile is extracted and scanned like a plain one — CRS reprojection included — on any source:
+
+```yaml
+add:
+  - dataset: https://data.example.org/ADMIN-EXPRESS_FRA.zip
+```
+
+The archive must hold exactly one Shapefile. Multi-Shapefile archives, and auto-discovery of zips inside a `folder:` scan, are not supported — extract those first.
 
 ### Spatial metadata
 
