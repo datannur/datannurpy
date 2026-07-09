@@ -74,7 +74,10 @@ class TestMarkdownLinkHelpers:
             "![Image](images/schema.png)", Path("docs/example/README.md")
         )
 
-        expected = (Path("docs/example/images/schema.png").absolute()).as_posix()
+        abs_posix = Path("docs/example/images/schema.png").absolute().as_posix()
+        # Windows drive paths (C:/…) are browser-rooted with a leading slash; POSIX
+        # absolute paths already start with one.
+        expected = abs_posix if abs_posix.startswith("/") else f"/{abs_posix}"
         assert rewritten == f"![Image]({expected})"
 
 
@@ -339,6 +342,7 @@ class TestCopyAssetsHelpers:
 
         assert list(_walk_copy_files(tmp_path)) == []
 
+    @pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="os.mkfifo is POSIX-only")
     def test_walk_copy_files_skips_non_regular_entries(self, tmp_path: Path):
         """Non-regular entries inside copy source directories are skipped."""
         fifo = tmp_path / "pipe"
@@ -346,6 +350,7 @@ class TestCopyAssetsHelpers:
 
         assert list(_walk_copy_files(tmp_path)) == []
 
+    @pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="os.mkfifo is POSIX-only")
     def test_iter_copy_files_ignores_non_regular_sources(self, tmp_path: Path):
         """Non-regular copy sources produce no copy work."""
         fifo = tmp_path / "pipe"

@@ -9,6 +9,7 @@ Catalog(
     metadata_path=None,
     depth="value",
     refresh=False,
+    on_scan_error="warn",
     freq_threshold=100,
     auto_enumerations=True,
     csv_encoding=None,
@@ -28,6 +29,7 @@ Catalog(
 | metadata_path  | str \| Path \| list[str \| Path] \| None | Metadata source folder, database URI, or list of sources |
 | depth          | "dataset" \| "variable" \| "stat" \| "value" | Default scan depth (default: "value")              |
 | refresh        | bool                              | Force full rescan ignoring cache (default: False)  |
+| on_scan_error  | "warn" \| "fail"                  | Scanning is always continue-on-error (a failed file/table is logged and skipped). `"warn"` (default) exits 0; `"fail"` makes the CLI exit 2 when any dataset failed, so CI won't publish a truncated catalogue green |
 | freq_threshold | int                               | Max distinct values for frequency and automatic enumeration detection. Strings above this threshold get pattern frequencies instead |
 | auto_enumerations | bool                           | Create automatic enumerations from value frequencies and attach them to variables (default: True) |
 | csv_encoding   | str \| None                       | Default CSV encoding (utf-8, cp1252, etc.)         |

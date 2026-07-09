@@ -115,11 +115,6 @@
     "name": "Belgium, France"
   },
   {
-    "id": "_enumerations---enum_377b0126b2",
-    "folder_id": "_enumerations",
-    "name": "Berlin, London, Madrid... (+2)"
-  },
-  {
     "id": "_enumerations---enum_3890764482",
     "folder_id": "_enumerations",
     "name": "Finance, IT, Marketing... (+1)"
@@ -385,11 +380,6 @@
     "name": "EU, US"
   },
   {
-    "id": "_enumerations---enum_9e6f60966a",
-    "folder_id": "_enumerations",
-    "name": "100.5, 150.75, 200... (+2)"
-  },
-  {
     "id": "_enumerations---enum_9ff855e637",
     "folder_id": "_enumerations",
     "name": "1583-01-01 0..., 1880-05-06 1..., 1960-01-01 0...... (+1)"
@@ -460,19 +450,9 @@
     "name": "7, 8, 9"
   },
   {
-    "id": "_enumerations---enum_c0e1a30973",
-    "folder_id": "_enumerations",
-    "name": "1, 2, 3... (+2)"
-  },
-  {
     "id": "_enumerations---enum_c60568ab09",
     "folder_id": "_enumerations",
     "name": "infra, rh"
-  },
-  {
-    "id": "_enumerations---enum_c83ffa1257",
-    "folder_id": "_enumerations",
-    "name": "Alice, Bob, Charlie... (+2)"
   },
   {
     "id": "_enumerations---enum_c8ab539531",

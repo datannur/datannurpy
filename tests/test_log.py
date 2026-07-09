@@ -1,8 +1,11 @@
 """Tests for logging utilities."""
 
+from __future__ import annotations
+
 import time
 
 from datannurpy.utils.log import (
+    _reconfigure_utf8,
     configure_logging,
     log_debug,
     log_done,
@@ -15,6 +18,53 @@ from datannurpy.utils.log import (
     log_summary,
     log_warn,
 )
+
+
+class _FakeStream:
+    """Minimal text-stream stub recording reconfigure() calls."""
+
+    def __init__(
+        self, encoding: str | None = "cp1252", *, has_reconfigure=True, raises=None
+    ):
+        self.encoding = encoding
+        self.calls: list[dict] = []
+        self._raises = raises
+        if not has_reconfigure:
+            # Emulate a stream that isn't a reconfigurable TextIOWrapper.
+            del self.reconfigure
+
+    def reconfigure(self, **kwargs):
+        if self._raises is not None:
+            raise self._raises
+        self.calls.append(kwargs)
+
+
+class TestReconfigureUtf8:
+    """A legacy-code-page stream is forced to UTF-8 so ✓/✗ never crash."""
+
+    def test_cp1252_stream_is_reconfigured(self):
+        stream = _FakeStream(encoding="cp1252")
+        _reconfigure_utf8(stream)
+        assert stream.calls == [{"encoding": "utf-8", "errors": "replace"}]
+
+    def test_utf8_stream_is_left_alone(self):
+        stream = _FakeStream(encoding="UTF-8")
+        _reconfigure_utf8(stream)
+        assert stream.calls == []
+
+    def test_stream_without_reconfigure_is_ignored(self):
+        # Object with no reconfigure attr (e.g. a pytest capture buffer).
+        _reconfigure_utf8(object())
+
+    def test_none_encoding_is_reconfigured(self):
+        stream = _FakeStream(encoding=None)
+        _reconfigure_utf8(stream)
+        assert stream.calls == [{"encoding": "utf-8", "errors": "replace"}]
+
+    def test_reconfigure_error_is_swallowed(self):
+        stream = _FakeStream(encoding="cp1252", raises=ValueError("detached"))
+        _reconfigure_utf8(stream)  # must not raise
+        assert stream.calls == []
 
 
 def test_quiet_mode_produces_no_output(capsys):
@@ -200,7 +250,7 @@ def test_log_file_receives_tracebacks(tmp_path):
     finally:
         configure_logging()
 
-    content = log_path.read_text()
+    content = log_path.read_text(encoding="utf-8")
     assert "data.csv" in content
     assert "TypeError" in content
     assert "Traceback" in content
@@ -217,7 +267,7 @@ def test_log_file_no_nonetype_for_untraced_error(tmp_path):
     finally:
         configure_logging()
 
-    content = log_path.read_text()
+    content = log_path.read_text(encoding="utf-8")
     assert "add_folder — ValueError: Folder not found: /missing" in content
     assert "NoneType: None" not in content
     assert "Traceback" not in content
@@ -244,7 +294,7 @@ def test_log_file_truncated_each_run(tmp_path):
     configure_logging(log_file=log_path)
     configure_logging()  # reset
 
-    assert log_path.read_text() == ""
+    assert log_path.read_text(encoding="utf-8") == ""
 
 
 def test_log_file_captures_all_levels(tmp_path):
@@ -263,7 +313,7 @@ def test_log_file_captures_all_levels(tmp_path):
     finally:
         configure_logging()
 
-    content = log_path.read_text()
+    content = log_path.read_text(encoding="utf-8")
     assert "[add_folder] /data" in content
     assert "📁  subdir" in content
     assert "✓  scanning file.csv" in content
@@ -284,7 +334,7 @@ def test_log_file_captures_when_quiet(tmp_path):
     finally:
         configure_logging()
 
-    content = log_path.read_text()
+    content = log_path.read_text(encoding="utf-8")
     assert "⚠  warning msg" in content
     assert "⏭  skipped.csv" in content
     assert "📁  dir" in content
@@ -313,7 +363,7 @@ def test_log_debug_silent_without_verbose(capsys, tmp_path):
         configure_logging()
 
     assert capsys.readouterr().err == ""
-    assert "·  hidden detail" in log_path.read_text()
+    assert "·  hidden detail" in log_path.read_text(encoding="utf-8")
 
 
 def test_log_debug_visible_with_verbose(capsys):
@@ -363,7 +413,7 @@ def test_log_icon_spacing_exact(capsys, tmp_path):
     assert "\n  →  3 files, 1 scanned, 2 variables in " in err
     assert "\r  ✗  error.csv — ValueError: boom" in err
 
-    content = log_path.read_text()
+    content = log_path.read_text(encoding="utf-8")
     assert "  ✓  done.csv in " in content
     assert "  ⚠  warn.csv" in content
     assert "  ⏭  skip.csv (unchanged)" in content

@@ -72,7 +72,7 @@ def finalize_scanned_dataset(
 ) -> None:
     """Add a scanned dataset together with its variables, enumerations and preview."""
     catalog.dataset.add(dataset)
-    remember_preview(catalog, dataset.id, preview, label=label)
+    remember_preview(catalog, dataset.id, preview, label=label, variables=variables)
     var_id_mapping = build_variable_ids(variables, dataset.id)
     if freq_table is not None:
         catalog.enumeration_manager.assign_from_freq(

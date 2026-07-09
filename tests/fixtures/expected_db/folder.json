@@ -64,22 +64,6 @@
     "data_path": "csv"
   },
   {
-    "id": "data---iceberg_warehouse",
-    "parent_id": "data",
-    "name": "iceberg_warehouse",
-    "description": null,
-    "type": "filesystem",
-    "data_path": "iceberg_warehouse"
-  },
-  {
-    "id": "data---iceberg_warehouse---default",
-    "parent_id": "data---iceberg_warehouse",
-    "name": "default",
-    "description": null,
-    "type": "filesystem",
-    "data_path": "iceberg_warehouse/default"
-  },
-  {
     "id": "data---metadata",
     "parent_id": "data",
     "name": "metadata",

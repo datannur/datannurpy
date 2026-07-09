@@ -27,10 +27,22 @@ def main() -> None:
     from .errors import ConfigError
 
     try:
-        run_config(sys.argv[1])
+        catalog = run_config(sys.argv[1])
     except ConfigError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
+
+    # Scanning is continue-on-error: a partial-scan run still exports a valid
+    # (truncated) catalogue and, by default (on_scan_error="warn"), exits 0. Set
+    # on_scan_error="fail" to make partial failures fail the run (exit 2) so CI
+    # doesn't publish a truncated catalogue green. ConfigError keeps exit 1.
+    if catalog.on_scan_error == "fail" and catalog.run_errors:
+        print(
+            f"Error: {catalog.run_errors} dataset(s) failed to scan "
+            f"(on_scan_error='fail')",
+            file=sys.stderr,
+        )
+        sys.exit(2)
 
 
 if __name__ == "__main__":  # pragma: no cover

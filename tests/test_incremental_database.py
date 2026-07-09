@@ -114,7 +114,7 @@ class TestIncrementalScanDatabase:
     def test_unchanged_table_is_skipped(self, sample_db: Path, tmp_path: Path):
         """Unchanged table should be skipped on second scan."""
         app_dir = tmp_path / "catalog"
-        conn_str = f"sqlite:////{sample_db}"
+        conn_str = f"sqlite:///{sample_db.as_posix()}"
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
@@ -140,7 +140,7 @@ class TestIncrementalScanDatabase:
     def test_modified_table_is_rescanned(self, sample_db: Path, tmp_path: Path):
         """Modified table (row count change) should be rescanned."""
         app_dir = tmp_path / "catalog"
-        conn_str = f"sqlite:////{sample_db}"
+        conn_str = f"sqlite:///{sample_db.as_posix()}"
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
@@ -176,7 +176,7 @@ class TestIncrementalScanDatabase:
     def test_schema_change_triggers_rescan(self, sample_db: Path, tmp_path: Path):
         """Schema change should trigger rescan."""
         app_dir = tmp_path / "catalog"
-        conn_str = f"sqlite:////{sample_db}"
+        conn_str = f"sqlite:///{sample_db.as_posix()}"
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
@@ -212,7 +212,7 @@ class TestIncrementalScanDatabase:
     def test_new_table_is_added(self, sample_db: Path, tmp_path: Path):
         """New table should be added on second scan."""
         app_dir = tmp_path / "catalog"
-        conn_str = f"sqlite:////{sample_db}"
+        conn_str = f"sqlite:///{sample_db.as_posix()}"
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
@@ -244,7 +244,7 @@ class TestIncrementalScanDatabase:
     def test_refresh_forces_rescan(self, sample_db: Path, tmp_path: Path):
         """refresh=True should force rescan even if unchanged."""
         app_dir = tmp_path / "catalog"
-        conn_str = f"sqlite:////{sample_db}"
+        conn_str = f"sqlite:///{sample_db.as_posix()}"
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
@@ -271,7 +271,7 @@ class TestIncrementalScanDatabase:
     def test_refresh_false_skips_unchanged(self, sample_db: Path, tmp_path: Path):
         """refresh=False should skip unchanged tables."""
         app_dir = tmp_path / "catalog"
-        conn_str = f"sqlite:////{sample_db}"
+        conn_str = f"sqlite:///{sample_db.as_posix()}"
 
         # First scan
         catalog1 = Catalog(app_path=app_dir, quiet=True)
@@ -292,7 +292,7 @@ class TestIncrementalScanDatabase:
     def test_data_path_stored_for_tables(self, sample_db: Path, tmp_path: Path):
         """Tables should have data_path stored for incremental tracking."""
         catalog = Catalog(quiet=True)
-        conn_str = f"sqlite:////{sample_db}"
+        conn_str = f"sqlite:///{sample_db.as_posix()}"
         catalog.add_database(
             conn_str, metadata=EntityMetadata(id="db", name="Database")
         )
@@ -304,7 +304,7 @@ class TestIncrementalScanDatabase:
     def test_schema_signature_stored(self, sample_db: Path, tmp_path: Path):
         """Tables should have schema_signature stored."""
         catalog = Catalog(quiet=True)
-        conn_str = f"sqlite:////{sample_db}"
+        conn_str = f"sqlite:///{sample_db.as_posix()}"
         catalog.add_database(
             conn_str, metadata=EntityMetadata(id="db", name="Database")
         )
@@ -316,7 +316,7 @@ class TestIncrementalScanDatabase:
     def test_first_scan_no_update_date(self, sample_db: Path, tmp_path: Path):
         """First scan should set last_update_date/timestamp to None."""
         catalog = Catalog(quiet=True)
-        conn_str = f"sqlite:////{sample_db}"
+        conn_str = f"sqlite:///{sample_db.as_posix()}"
         catalog.add_database(
             conn_str, metadata=EntityMetadata(id="db", name="Database")
         )
@@ -327,7 +327,7 @@ class TestIncrementalScanDatabase:
     def test_change_detected_sets_update_date(self, sample_db: Path, tmp_path: Path):
         """Rescan with change should populate last_update_date."""
         app_dir = tmp_path / "catalog"
-        conn_str = f"sqlite:////{sample_db}"
+        conn_str = f"sqlite:///{sample_db.as_posix()}"
 
         catalog1 = Catalog(app_path=app_dir, quiet=True)
         catalog1.add_database(
@@ -355,7 +355,7 @@ class TestIncrementalScanDatabase:
     ):
         """refresh=True on unchanged data should preserve last_update_date."""
         app_dir = tmp_path / "catalog"
-        conn_str = f"sqlite:////{sample_db}"
+        conn_str = f"sqlite:///{sample_db.as_posix()}"
 
         # Scan 1: first scan (timestamps are None)
         catalog1 = Catalog(app_path=app_dir, quiet=True)
@@ -543,7 +543,7 @@ class TestDepthParameterDatabase:
 
     def test_depth_dataset_creates_datasets_without_variables(self, sample_db: Path):
         """depth='dataset' should create datasets but no variables."""
-        conn_str = f"sqlite:////{sample_db}"
+        conn_str = f"sqlite:///{sample_db.as_posix()}"
 
         catalog = Catalog(quiet=True)
         catalog.add_database(conn_str, depth="dataset")
@@ -559,7 +559,7 @@ class TestDepthParameterDatabase:
 
     def test_depth_schema_creates_variables_without_stats(self, sample_db: Path):
         """depth='variable' should create variables without stats and no nb_row."""
-        conn_str = f"sqlite:////{sample_db}"
+        conn_str = f"sqlite:///{sample_db.as_posix()}"
 
         catalog = Catalog(quiet=True)
         catalog.add_database(conn_str, depth="variable")
@@ -579,7 +579,7 @@ class TestDepthParameterDatabase:
 
     def test_depth_at_catalog_level_affects_database(self, sample_db: Path):
         """depth set at Catalog level should affect add_database."""
-        conn_str = f"sqlite:////{sample_db}"
+        conn_str = f"sqlite:///{sample_db.as_posix()}"
 
         # Set depth at catalog level
         catalog = Catalog(depth="dataset", quiet=True)
@@ -590,7 +590,7 @@ class TestDepthParameterDatabase:
 
     def test_depth_override_at_add_database(self, sample_db: Path):
         """depth at add_database should override catalog.depth."""
-        conn_str = f"sqlite:////{sample_db}"
+        conn_str = f"sqlite:///{sample_db.as_posix()}"
 
         catalog = Catalog(depth="dataset", quiet=True)
         catalog.add_database(conn_str, depth="variable")
@@ -602,7 +602,7 @@ class TestDepthParameterDatabase:
         """depth='dataset' should not compute schema_signature or nb_row."""
         from unittest.mock import patch
 
-        conn_str = f"sqlite:////{sample_db}"
+        conn_str = f"sqlite:///{sample_db.as_posix()}"
         catalog = Catalog(quiet=True)
 
         with (
@@ -619,7 +619,7 @@ class TestDepthParameterDatabase:
         """depth='variable' should not compute schema_signature or nb_row."""
         from unittest.mock import patch
 
-        conn_str = f"sqlite:////{sample_db}"
+        conn_str = f"sqlite:///{sample_db.as_posix()}"
         catalog = Catalog(quiet=True)
 
         with (
@@ -635,7 +635,7 @@ class TestDepthParameterDatabase:
 
     def test_depth_stat_computes_stats_without_enumerations(self, sample_db: Path):
         """depth='stat' should compute stats but skip enumerations."""
-        conn_str = f"sqlite:////{sample_db}"
+        conn_str = f"sqlite:///{sample_db.as_posix()}"
 
         catalog = Catalog(freq_threshold=10, quiet=True)
         catalog.add_database(conn_str, depth="stat")
@@ -655,7 +655,7 @@ class TestDepthParameterDatabase:
 
     def test_depth_dataset_incremental_skips_unchanged(self, sample_db: Path):
         """depth='dataset' second run marks existing datasets as seen."""
-        conn_str = f"sqlite:////{sample_db}"
+        conn_str = f"sqlite:///{sample_db.as_posix()}"
         catalog = Catalog(quiet=True)
         catalog.add_database(conn_str, depth="dataset")
         assert len(catalog.dataset.all()) == 2
@@ -676,7 +676,7 @@ class TestDepthParameterDatabase:
         conn.commit()
         conn.close()
 
-        conn_str = f"sqlite:////{db_path}"
+        conn_str = f"sqlite:///{db_path.as_posix()}"
         catalog = Catalog(quiet=True)
         catalog.add_database(conn_str, depth="dataset")
 

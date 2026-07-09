@@ -21,6 +21,15 @@ from datannurpy.scanner.parquet.discovery import (
 
 DATA_DIR = Path(__file__).parent.parent.parent / "data"
 
+# pyiceberg resolves data/manifest paths via os.path.abspath and then infers a
+# FileIO from the resulting scheme; on Windows a drive letter (D:\…) is read as
+# the URI scheme "d", which it can't handle. This is an upstream pyiceberg
+# limitation with local tables on Windows, not a datannurpy bug.
+_skip_iceberg_on_windows = pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="pyiceberg can't read a local Iceberg table on Windows (drive letter parsed as URI scheme)",
+)
+
 
 class TestExtractParquetMetadata:
     """Test parquet metadata extraction."""
@@ -155,6 +164,7 @@ class TestScanIcebergExceptions:
         with pytest.raises(Exception):
             scan_iceberg(tmp_path, "test", infer_stats=True, freq_threshold=None)
 
+    @_skip_iceberg_on_windows
     def test_iceberg_absolute_location_no_chdir(self):
         """scan_iceberg skips chdir when metadata has an absolute location."""
         import json as json_mod
@@ -225,6 +235,7 @@ class TestParquetFormats:
         assert "region" in var_names
         assert catalog.dataset.all()[0].nb_row == 6
 
+    @_skip_iceberg_on_windows
     def test_scan_iceberg_table(self):
         """add_folder should detect and scan Iceberg tables."""
         iceberg_table_path = DATA_DIR / "iceberg_warehouse" / "default" / "test_table"
@@ -243,6 +254,7 @@ class TestParquetFormats:
         assert len(iceberg_datasets) == 1
         assert iceberg_datasets[0].name == "test_table"
 
+    @_skip_iceberg_on_windows
     def test_extract_iceberg_metadata(self):
         """add_folder should extract Iceberg table and column metadata."""
         iceberg_table_path = DATA_DIR / "iceberg_warehouse" / "default" / "test_table"
@@ -505,6 +517,7 @@ class TestParquetSampling:
         with pytest.raises(KeyError, match="OGC:CRS84"):
             parquet_core.scan_simple(path, dataset_id="test")
 
+    @_skip_iceberg_on_windows
     def test_iceberg_sampling(self):
         """scan_iceberg should support sampling on Iceberg tables."""
         from datannurpy.scanner.parquet.core import scan_iceberg

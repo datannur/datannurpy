@@ -1245,8 +1245,10 @@ class TestPostExport:
 
     def test_resolve_script_absolute(self, tmp_path: Path):
         """Absolute path is returned as-is."""
-        result = _resolve_script("/usr/local/bin/hook.py", tmp_path, tmp_path)
-        assert result == Path("/usr/local/bin/hook.py")
+        # Drive-anchored so it's absolute on Windows too (a bare /usr/... isn't).
+        abs_script = Path(tmp_path.anchor) / "usr" / "local" / "bin" / "hook.py"
+        result = _resolve_script(str(abs_script), tmp_path, tmp_path)
+        assert result == abs_script
 
     def test_post_export_runs_script(self, tmp_path: Path, data_dir: Path):
         """post_export runs a script after export_app."""

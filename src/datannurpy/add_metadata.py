@@ -17,7 +17,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, NamedTuple
 from urllib.parse import urlparse, urlsplit, urlunsplit
 
-import ibis
 import polars as pl
 
 from .schema import (
@@ -360,7 +359,9 @@ def _resolve_match_path(
     candidate = Path(s)
     if not candidate.is_absolute():
         candidate = (base_dir / candidate).resolve()
-    candidate_str = str(candidate)
+    # Canonicalize to the forward-slash key the scanned side matches against, so a
+    # native-separator Windows path still lines up with the scanned data path.
+    candidate_str = normalize_match_key(str(candidate))
     if exists_cache is None:
         return candidate_str if candidate.exists() else None
     exists = exists_cache.get(candidate_str)
@@ -422,7 +423,12 @@ def _load_tables_from_database(
     tables: dict[str, tuple[pd.DataFrame, str]] = {}
 
     try:
-        con = ibis.connect(connection)
+        # Use the project's connection helper (not ibis.connect): it strips the
+        # leading slash before a Windows drive (sqlite:///C:/… → C:/…), which
+        # ibis.connect keeps, silently opening an empty database on Windows.
+        from .scanner.database import connect as _connect_db
+
+        con, _ = _connect_db(connection)
     except Exception as e:
         log_error("database", e, quiet)
         return tables

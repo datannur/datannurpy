@@ -89,7 +89,9 @@ class TestFileSystem:
         """FileSystem should initialize with a local path."""
         fs = FileSystem(tmp_path)
         assert fs.is_local
-        assert fs.root == str(tmp_path)
+        # fsspec stores the root in POSIX form; compare as paths, not raw strings
+        # (str(tmp_path) is backslashed on Windows).
+        assert Path(fs.root) == tmp_path
 
     def test_canonical_url_for_path_local_returns_none(self, tmp_path: Path) -> None:
         """Local filesystems do not produce remote canonical URLs."""
@@ -312,7 +314,8 @@ class TestFileSystem:
         """_full_path() should not duplicate root."""
         fs = FileSystem(tmp_path)
         full = fs._full_path(str(tmp_path / "file.txt"))
-        assert full == str(tmp_path / "file.txt")
+        # _full_path returns POSIX form (fsspec convention); as_posix() == str() on Linux.
+        assert full == (tmp_path / "file.txt").as_posix()
 
 
 class TestGetFilesystem:

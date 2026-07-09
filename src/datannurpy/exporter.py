@@ -467,7 +467,9 @@ def _copy_assets_impl(
         if source_is_dir:
             try:
                 target_root.mkdir(parents=True, exist_ok=True)
-            except NotADirectoryError as exc:
+            except (NotADirectoryError, FileExistsError) as exc:
+                # A file where a directory is needed raises NotADirectoryError on
+                # POSIX but FileExistsError (WinError 183) on Windows.
                 raise ConfigError(
                     f"copy_assets destination parent is not a directory: {target_root.parent}"
                 ) from exc

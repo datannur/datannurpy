@@ -577,7 +577,9 @@ def _add_database_impl(
             collect_fk_refs(meta.fks, dataset_id, raw_fk_refs)
             catalog.dataset.add(dataset)
             scanned += 1
-            remember_preview(catalog, dataset.id, preview, label=table_name)
+            remember_preview(
+                catalog, dataset.id, preview, label=table_name, variables=table_vars
+            )
 
             var_id_mapping = build_variable_ids(table_vars, dataset.id)
             if freq_table is not None:
@@ -806,6 +808,7 @@ def _scan_table_series(
         dataset.id,
         preview if depth != "variable" else None,
         label=dataset_name,
+        variables=table_vars,
     )
 
     if table_vars:

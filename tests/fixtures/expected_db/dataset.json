@@ -288,24 +288,6 @@
     "schema_signature": null
   },
   {
-    "id": "data---iceberg_warehouse---default---test_table",
-    "folder_id": "data---iceberg_warehouse---default",
-    "name": "test_table",
-    "description": "Sample Iceberg table for testing",
-    "data_path": "iceberg_warehouse/default/test_table",
-    "crs": null,
-    "geometry_type": null,
-    "bbox": null,
-    "delivery_format": "iceberg",
-    "nb_row": 5,
-    "has_preview": 1,
-    "nb_resources": null,
-    "data_size": 2015,
-    "start_date": null,
-    "end_date": null,
-    "schema_signature": null
-  },
-  {
     "id": "data---metadata---organization_csv",
     "folder_id": "data---metadata",
     "name": "organization",

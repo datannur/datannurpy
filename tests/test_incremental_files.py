@@ -94,7 +94,8 @@ class TestIncrementalScanFiles:
         catalog2 = Catalog(app_path=app_dir, metadata_path=meta_dir, quiet=True)
         ds_before = catalog2.dataset.get_by("id", "src---test_csv")
         assert ds_before is not None
-        assert ds_before._match_path == str(csv_file)
+        # Metadata-derived match keys are canonicalized to forward slashes.
+        assert ds_before._match_path == csv_file.as_posix()
 
         catalog2.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
 

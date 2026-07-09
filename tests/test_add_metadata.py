@@ -688,7 +688,9 @@ class TestLoadTablesFromDatabase:
         conn.commit()
         conn.close()
 
-        tables = _load_tables_from_database(f"sqlite:///{db_path}", ALL_ENTITIES)
+        tables = _load_tables_from_database(
+            f"sqlite:///{db_path.as_posix()}", ALL_ENTITIES
+        )
 
         assert "variable" in tables
         assert len(tables["variable"][0]) == 1
@@ -710,7 +712,9 @@ class TestLoadTablesFromDatabase:
         conn.commit()
         conn.close()
 
-        tables = _load_tables_from_database(f"sqlite:///{db_path}", ALL_ENTITIES)
+        tables = _load_tables_from_database(
+            f"sqlite:///{db_path.as_posix()}", ALL_ENTITIES
+        )
         assert "other_table" not in tables
         # All entity types should have been checked but not found
         assert tables == {}
@@ -722,7 +726,9 @@ class TestLoadTablesFromDatabase:
         conn.commit()
         conn.close()
 
-        tables = _load_tables_from_database(f"sqlite:///{db_path}", ALL_ENTITIES)
+        tables = _load_tables_from_database(
+            f"sqlite:///{db_path.as_posix()}", ALL_ENTITIES
+        )
         assert tables == {}
 
     def test_connection_without_disconnect(self, tmp_path: Path):
@@ -733,12 +739,14 @@ class TestLoadTablesFromDatabase:
         conn.close()
 
         # Mock connection without disconnect method
-        with patch("datannurpy.add_metadata.ibis") as mock_ibis:
+        with patch("datannurpy.scanner.database.connect") as mock_connect:
             mock_con = MagicMock(spec=["list_tables", "table"])
             mock_con.list_tables.return_value = []
-            mock_ibis.connect.return_value = mock_con
+            mock_connect.return_value = (mock_con, "sqlite")
 
-            tables = _load_tables_from_database(f"sqlite:///{db_path}", ALL_ENTITIES)
+            tables = _load_tables_from_database(
+                f"sqlite:///{db_path.as_posix()}", ALL_ENTITIES
+            )
             assert tables == {}
             # Verify disconnect was not called (doesn't exist)
             assert not hasattr(mock_con, "disconnect")
@@ -1468,7 +1476,7 @@ class TestAddMetadataIntegration:
         conn.close()
 
         catalog = Catalog()
-        add_metadata(catalog, f"sqlite:///{db_path}", quiet=True)
+        add_metadata(catalog, f"sqlite:///{db_path.as_posix()}", quiet=True)
 
         assert len(catalog.folder.all()) == 1
         assert catalog.folder.all()[0].name == "Folder1"
@@ -1632,14 +1640,14 @@ class TestEdgeCases:
         conn.close()
 
         # Mock con.table to raise an exception
-        with patch("datannurpy.add_metadata.ibis") as mock_ibis:
+        with patch("datannurpy.scanner.database.connect") as mock_connect:
             mock_con = MagicMock()
             mock_con.list_tables.return_value = ["folder"]
             mock_con.table.side_effect = Exception("Table read error")
-            mock_ibis.connect.return_value = mock_con
+            mock_connect.return_value = (mock_con, "sqlite")
 
             tables = _load_tables_from_database(
-                f"sqlite:///{db_path}", ALL_ENTITIES, quiet=False
+                f"sqlite:///{db_path.as_posix()}", ALL_ENTITIES, quiet=False
             )
 
             captured = capsys.readouterr()
@@ -1823,7 +1831,7 @@ class TestEnsureMetadataApplied:
         conn.execute("INSERT INTO folder VALUES ('f1', 'Folder1')")
         conn.commit()
         conn.close()
-        catalog = Catalog(metadata_path=f"sqlite:///{db_path}", quiet=True)
+        catalog = Catalog(metadata_path=f"sqlite:///{db_path.as_posix()}", quiet=True)
         ensure_metadata_applied(catalog)
         assert catalog._metadata_applied
         assert len(catalog.folder.all()) == 1
@@ -2663,13 +2671,16 @@ class TestAppMetadataOverlayPath:
         db_ui = app_path / "data" / "db-ui"
         db_ui.mkdir(parents=True)
         (db_ui / "dataset.json").write_text(
-            '[{"id":"ds","name":"Dataset","name:fr":"Jeu de données"}]'
+            '[{"id":"ds","name":"Dataset","name:fr":"Jeu de données"}]',
+            encoding="utf-8",
         )
 
         catalog = Catalog(app_path=app_path, quiet=True)
         catalog.export_db()
 
-        rows = json.loads((app_path / "data" / "db" / "dataset.json").read_text())
+        rows = json.loads(
+            (app_path / "data" / "db" / "dataset.json").read_text(encoding="utf-8")
+        )
         assert rows == [
             {
                 "id": "ds",

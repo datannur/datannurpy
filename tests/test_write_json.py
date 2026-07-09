@@ -13,17 +13,19 @@ import pytest
 from datannurpy import Catalog, EntityMetadata, Folder
 from datannurpy.errors import ConfigError
 from datannurpy.preview import (
+    _SECURITY_PLACEHOLDER,
     _dataset_id_from_preview_file,
     _existing_preview_ids_from_paths,
     _json_safe_object,
     _preview_label,
     _remove_stale_preview_files,
+    mask_security_columns,
     normalize_preview_df,
     preview_from_ibis,
     sync_preview_exports,
     validate_preview_rows,
 )
-from datannurpy.schema import Dataset
+from datannurpy.schema import Dataset, Variable
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 CSV_DIR = DATA_DIR / "csv"
@@ -646,10 +648,16 @@ class TestCatalogWrite:
         catalog.export_db(tmp_path / "output")
 
         md_doc_json = tmp_path / "output" / "md-doc" / "readme.json"
-        image_path = (source_dir / "images" / "schema.png").absolute().as_posix()
-        details_path = (source_dir / "details.md").absolute().as_posix()
-        parent_path = (source_dir / ".." / "shared.md").absolute().as_posix()
-        wrapped_path = (source_dir / "assets" / "schema.svg").absolute().as_posix()
+
+        def _rooted(p: Path) -> str:
+            # Windows drive paths (C:/…) are browser-rooted with a leading slash.
+            s = p.absolute().as_posix()
+            return s if s.startswith("/") else f"/{s}"
+
+        image_path = _rooted(source_dir / "images" / "schema.png")
+        details_path = _rooted(source_dir / "details.md")
+        parent_path = _rooted(source_dir / ".." / "shared.md")
+        wrapped_path = _rooted(source_dir / "assets" / "schema.svg")
         assert json.loads(md_doc_json.read_text()) == [
             {
                 "content": f"![Image]({image_path})\n"
@@ -802,3 +810,52 @@ class TestEvolutionTracking:
         assert evolution[0]["variable"] == "name"
         assert evolution[0]["old_value"] == "Original"
         assert evolution[0]["new_value"] == "Modified"
+
+
+class TestMaskSecurityColumns:
+    """Preview must mask security-tagged columns, mirroring frequency suppression."""
+
+    @staticmethod
+    def _var(name: str, tag_ids: list[str]) -> Variable:
+        return Variable(id=name, name=name, dataset_id="d", tag_ids=tag_ids)
+
+    def test_security_column_values_replaced_with_placeholder(self):
+        preview = pl.DataFrame(
+            {
+                "password": ["$2a$10$abc", "$2a$10$def"],
+                "city": ["Paris", "Lyon"],
+            }
+        )
+        variables = [
+            self._var("password", ["auto---bcrypt"]),
+            self._var("city", []),
+        ]
+        masked = mask_security_columns(preview, variables)
+        assert masked is not None
+        # Raw secret values never survive; the column is kept and its shape too.
+        assert masked["password"].to_list() == [_SECURITY_PLACEHOLDER] * 2
+        assert not any(v.startswith("$2a$") for v in masked["password"].to_list())
+        # Non-sensitive column is untouched.
+        assert masked["city"].to_list() == ["Paris", "Lyon"]
+
+    def test_nulls_stay_null(self):
+        preview = pl.DataFrame({"token": ["abc", None]})
+        masked = mask_security_columns(preview, [self._var("token", ["auto---jwt"])])
+        assert masked is not None
+        assert masked["token"].to_list() == [_SECURITY_PLACEHOLDER, None]
+
+    def test_non_security_tag_not_masked(self):
+        # A non-security auto tag (e.g. email) stays fully visible.
+        preview = pl.DataFrame({"email": ["a@x.com", "b@y.com"]})
+        masked = mask_security_columns(preview, [self._var("email", ["auto---email"])])
+        assert masked is not None
+        assert masked["email"].to_list() == ["a@x.com", "b@y.com"]
+
+    def test_no_security_columns_returns_same_frame(self):
+        preview = pl.DataFrame({"a": [1, 2]})
+        masked = mask_security_columns(preview, [self._var("a", [])])
+        assert masked is not None
+        assert masked["a"].to_list() == [1, 2]
+
+    def test_none_preview_returns_none(self):
+        assert mask_security_columns(None, [self._var("x", ["auto---secret"])]) is None

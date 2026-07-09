@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import pyarrow as pa
@@ -236,6 +237,10 @@ class TestAddDatasetHive:
         assert dataset.sample_size == 100
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="pyiceberg can't read a local Iceberg table on Windows (drive letter parsed as URI scheme)",
+)
 class TestAddDatasetIceberg:
     """Test add_dataset with Iceberg table directories."""
 

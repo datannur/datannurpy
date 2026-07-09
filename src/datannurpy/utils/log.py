@@ -17,11 +17,37 @@ _ICON_SPACING = "  "
 _LOADING_SPACING = " "
 
 
+def _reconfigure_utf8(stream: object) -> None:
+    """Force one text stream to UTF-8 so status glyphs never raise on Windows.
+
+    Windows consoles default to a legacy code page (e.g. cp1252) that can't
+    encode glyphs like ✓/⏳/✗, so every log line would raise UnicodeEncodeError.
+    Reconfiguring the stream keeps the output readable and crash-free.
+    """
+    reconfigure = getattr(stream, "reconfigure", None)
+    if reconfigure is None:  # not a reconfigurable TextIOWrapper (e.g. pytest capture)
+        return
+    encoding = (getattr(stream, "encoding", "") or "").lower().replace("-", "")
+    if encoding == "utf8":
+        return
+    try:
+        reconfigure(encoding="utf-8", errors="replace")
+    except (ValueError, OSError):  # detached/closed stream — leave it as-is
+        pass
+
+
+def _ensure_utf8_output() -> None:
+    """Make stderr/stdout tolerate the Unicode status glyphs on any platform."""
+    _reconfigure_utf8(sys.stderr)
+    _reconfigure_utf8(sys.stdout)
+
+
 def configure_logging(
     *, verbose: bool = False, log_file: str | Path | None = None
 ) -> None:
     """Set logging verbosity and optional log file (truncated each run)."""
     global _verbose, _log_file_path  # noqa: PLW0603
+    _ensure_utf8_output()
     _verbose = verbose
     if log_file is not None:
         _log_file_path = Path(log_file)

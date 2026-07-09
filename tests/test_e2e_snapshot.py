@@ -92,7 +92,10 @@ def build_demo_catalog(app_dir: Path) -> tuple[Catalog, Path]:
         _now=FIXED_TIMESTAMP,
         metadata_path=DATA_DIR / "metadata",
     )
-    catalog.add_folder(DATA_DIR)
+    # Iceberg is excluded here (covered by the dedicated iceberg tests): pyiceberg
+    # can't read a local Iceberg table on Windows, so keeping it in this
+    # whole-pipeline snapshot would make the e2e unrunnable there.
+    catalog.add_folder(DATA_DIR, exclude=["iceberg_warehouse/**"])
     catalog.add_database(f"sqlite:///{DATA_DIR}/company.db")
     catalog.add_database(
         f"sqlite:///{DATA_DIR}/photovoltaik.gpkg",

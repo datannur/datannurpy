@@ -79,6 +79,9 @@ class FileSystem:
 
     def _full_path(self, path: str) -> str:
         """Convert relative path to full path on this filesystem."""
+        # fsspec normalizes its root to POSIX form even on Windows; reconcile a
+        # native-separator input so the startswith/join below don't mismatch.
+        path = path.replace("\\", "/")
         if path.startswith(self.root):
             return path
         return f"{self.root}/{path}".replace("//", "/")
@@ -223,6 +226,8 @@ class FileSystem:
 
     def relative_to_root(self, path: str) -> str:
         """Get path relative to root."""
+        # fsspec roots are POSIX even on Windows; reconcile a native-separator input.
+        path = path.replace("\\", "/")
         if path.startswith(self.root):
             rel = path[len(self.root) :].lstrip("/")
             return rel if rel else "."
