@@ -551,6 +551,7 @@ def add_folder(
                     info=info,
                     root=root,
                     prefix=prefix,
+                    existing_by_path=plan.existing_by_path,
                     schema_only=schema_only,
                     freq_threshold=freq_threshold,
                     csv_encoding=resolved_encoding,
@@ -690,6 +691,7 @@ def _scan_time_series(
     info: DatasetInfo,
     root: PurePath,
     prefix: str,
+    existing_by_path: dict[str, Any],
     schema_only: bool,
     freq_threshold: int | None,
     csv_encoding: str | None,
@@ -747,17 +749,11 @@ def _scan_time_series(
         peek, fallback_id, fallback_folder_id, create_folders
     )
 
-    # Remove old dataset if exists. A reloaded series is stored under its
-    # normalized metadata `_match_path`, not the latest physical file, so fall
-    # back to the resolved dataset id when path-based lookup misses.
-    last_match_path = str(last_path)
-    existing = catalog.dataset.get_by("_match_path", last_match_path)
-    if existing is None:
-        existing = catalog.dataset.get_by(
-            "_match_path", _public_data_path(last_path, root, fs)
-        )
-    if existing is None:
-        existing = catalog.dataset.get(dataset_id)
+    # Remove old dataset if exists. compute_scan_plan already resolved the
+    # multi-key match (path, normalized series pattern) and cached the result
+    # under str(info.path), so reuse it instead of re-reading catalog.dataset in
+    # the loop — a live read would flush the insert buffer every iteration.
+    existing = existing_by_path.get(str(info.path))
     if existing:
         remove_dataset_cascade(catalog, existing)
 
@@ -825,7 +821,7 @@ def _scan_time_series(
         start_date=first_period,
         end_date=last_period,
         _seen=True,
-        _match_path=last_match_path,
+        _match_path=str(last_path),
     )
     catalog.dataset.add(dataset)
     remember_preview(
