@@ -86,12 +86,11 @@ jobs:
           flags: core
           fail_ci_if_error: false
 
-  # Windows OS coverage: mirrors the Linux 3.14/highest cell step-for-step (uv
-  # sync highest, download-app, test-cov with the 100% gate) so Windows-specific
-  # path/tempfile regressions surface. Only the interpreter differs (3.13 — its
-  # native geo/db wheels are guaranteed on Windows, unlike cp314). A dedicated
-  # job rather than a matrix cell: the coverage-gate step keys on 3.14, and
-  # runs-on already branches on arch, so a separate job stays clearer.
+  # Windows OS coverage: runs the suite on windows-latest so Windows-specific
+  # path/tempfile/encoding regressions surface. Interpreter is 3.13 (its native
+  # geo/db wheels are guaranteed on Windows, unlike cp314). A dedicated job
+  # rather than a matrix cell keeps the runs-on/coverage logic simple; the 100%
+  # coverage gate stays on Linux/3.14 (Windows skips the local-Iceberg tests).
   test-windows:
     name: CI (windows, 3.13)
     runs-on: windows-latest
@@ -104,17 +103,8 @@ jobs:
       - run: choco install make
       - run: uv python install 3.13
       - run: uv sync --resolution highest
+      # `make test` (not test-cov): Windows skips the local-Iceberg + POSIX-only
+      # tests, so the 100% coverage gate (enforced on Linux/3.14) can't be met
+      # here. This job verifies the suite passes on Windows; Linux owns coverage.
       - run: make download-app
-      # TEMP diagnostics: with 60+ failures, `make test-cov`'s full tracebacks
-      # overflow and truncate the CI log. Surface instead a compact one-line-per-
-      # failure list and the exact e2e snapshot drift. Restore `make test-cov`
-      # (the real gate) once the Windows suite is green.
-      - run: uv run pytest --tb=line -q -rfE
-      - name: e2e snapshot drift (diagnostic)
-        if: always()
-        env:
-          UPDATE_SNAPSHOTS: "1"
-        run: |
-          uv run pytest tests/test_e2e_snapshot.py -q
-          git --no-pager diff --stat
-          git --no-pager diff -- tests
+      - run: make test

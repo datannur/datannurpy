@@ -5,8 +5,8 @@
 - fix: security-tagged columns (passwords, hashes, secrets) are now masked in the exported preview — values replaced by a `•••` placeholder, matching the frequency/enumeration suppression that already hid them
 - add: `on_scan_error` option (`"warn"` default, `"fail"`) — scanning stays continue-on-error (a failed file/table is logged and skipped), but `on_scan_error: fail` makes the CLI exit `2` when any dataset failed to scan, so CI no longer publishes a truncated catalogue green; the default keeps today's tolerant exit `0`, and a `ConfigError` still exits `1`
 - fix: scan logging no longer crashes on a legacy-code-page Windows console — the streams are forced to UTF-8 so the `✓`/`✗`/`⏳` status glyphs (which `cp1252` can't encode) print instead of raising `UnicodeEncodeError`
-- fix: Windows path handling — `FileSystem` now reconciles native `\` separators against its POSIX (fsspec) root, and a local partitioned-dataset (Delta/Hive/Iceberg) directory is named from its folder, not the whole backslashed path
-- ci: add a Windows job (Python 3.13) mirroring the Linux test cell — closes a Linux-only blind spot for this path/tempfile-heavy codebase (it immediately caught the cp1252 logging crash above)
+- fix: Windows support — reconcile `\`/`/` separators in `FileSystem`, metadata match keys and database URIs (`sqlite:///C:/…`), name partitioned datasets from their folder, and tolerate a temp-file lock in the statistical scanner
+- ci: add a required Windows job (Python 3.13) on `windows-latest`, closing a Linux-only blind spot; local Iceberg tables stay unsupported on Windows (upstream pyiceberg limitation)
 
 ## 0.29.1 (2026-07-08)
 
