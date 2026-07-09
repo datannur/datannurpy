@@ -47,7 +47,8 @@ def _file_series_output(
 
 def _single_file_output(singles, root: Path) -> list[str]:
     """Summarize single files as sorted relative paths."""
-    return sorted(str(path.relative_to(root)) for path, _ in singles)
+    # as_posix() so the comparison uses forward slashes on Windows too.
+    return sorted(path.relative_to(root).as_posix() for path, _ in singles)
 
 
 def _table_series_output(series) -> list[tuple[str, tuple[str, ...], str | None]]:

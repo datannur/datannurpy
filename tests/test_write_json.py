@@ -648,10 +648,16 @@ class TestCatalogWrite:
         catalog.export_db(tmp_path / "output")
 
         md_doc_json = tmp_path / "output" / "md-doc" / "readme.json"
-        image_path = (source_dir / "images" / "schema.png").absolute().as_posix()
-        details_path = (source_dir / "details.md").absolute().as_posix()
-        parent_path = (source_dir / ".." / "shared.md").absolute().as_posix()
-        wrapped_path = (source_dir / "assets" / "schema.svg").absolute().as_posix()
+
+        def _rooted(p: Path) -> str:
+            # Windows drive paths (C:/…) are browser-rooted with a leading slash.
+            s = p.absolute().as_posix()
+            return s if s.startswith("/") else f"/{s}"
+
+        image_path = _rooted(source_dir / "images" / "schema.png")
+        details_path = _rooted(source_dir / "details.md")
+        parent_path = _rooted(source_dir / ".." / "shared.md")
+        wrapped_path = _rooted(source_dir / "assets" / "schema.svg")
         assert json.loads(md_doc_json.read_text()) == [
             {
                 "content": f"![Image]({image_path})\n"

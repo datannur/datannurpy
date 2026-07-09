@@ -68,7 +68,9 @@ class TestAddFolderFormats:
         # The exported artifact on disk (the actual leak surface) is masked too.
         catalog.export_db(tmp_path / "out")
         exported = json.loads(
-            (tmp_path / "out" / "preview" / f"{password.dataset_id}.json").read_text()
+            (tmp_path / "out" / "preview" / f"{password.dataset_id}.json").read_text(
+                encoding="utf-8"
+            )
         )
         assert all(row["password"] == "•••" for row in exported)
         assert not any("$2a$" in json.dumps(row) for row in exported)
