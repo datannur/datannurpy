@@ -689,7 +689,7 @@ def _merge_localized_fields(
     if localized_df.is_empty():  # pragma: no cover - defensive after records guard
         return
 
-    df = catalog_table._df
+    df = catalog_table.df
     for column in localized_columns:
         if column not in df.columns:
             df = df.with_columns(pl.lit(None, dtype=pl.Utf8).alias(column))
@@ -708,7 +708,7 @@ def _merge_localized_fields(
             .alias(column)
         ).drop(update_column)
 
-    catalog_table._df = joined
+    catalog_table.df = joined
 
 
 def _string_keyed_rows(rows: list[dict[Hashable, Any]]) -> list[dict[str, Any]]:
@@ -723,7 +723,7 @@ def _existing_localized_rows(
     ids: set[str],
 ) -> list[dict[str, Any]]:
     """Return localized values already present on rows about to be replaced."""
-    df = catalog_table._df
+    df = catalog_table.df
     localized_columns = _localized_field_columns(df.columns, entity_class)
     if not localized_columns or df.is_empty():
         return []

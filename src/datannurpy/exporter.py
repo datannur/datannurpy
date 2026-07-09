@@ -40,13 +40,13 @@ _MARKDOWN_UNCHANGED_LINK_PREFIXES = ("http://", "https://", "/", "#", "mailto:")
 def _drop_empty_columns(catalog: Catalog) -> None:
     """Drop all-null/empty columns from catalog tables in place before export."""
     for table in catalog._tables.values():
-        df = table._df
+        df = table.df
         if df.is_empty():
             continue
         keep = table.runtime_fields | {"id"}
         cols = [c for c in df.columns if c in keep or not _is_empty_column(df[c])]
         if len(cols) != len(df.columns):
-            table._df = df.select(cols)
+            table.df = df.select(cols)
 
 
 def _is_empty_column(col: pl.Series) -> bool:

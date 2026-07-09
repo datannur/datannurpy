@@ -956,7 +956,7 @@ class TestProcessEntityTable:
         """Blank localized cells should leave existing localized values unchanged."""
         catalog = Catalog()
         catalog.folder.add(Folder(id="f1", name="Folder"))
-        catalog.folder._df = catalog.folder._df.with_columns(
+        catalog.folder.df = catalog.folder.df.with_columns(
             pl.lit("Ancien").alias("name:fr")
         )
         df = pd.DataFrame(
@@ -1106,7 +1106,7 @@ class TestProcessEntityTable:
         """Value localized fields should support clear and blank preserve semantics."""
         catalog = Catalog()
         catalog.value.add(Value(enumeration_id="m1", value="a", description="A"))
-        catalog.value._df = catalog.value._df.with_columns(
+        catalog.value.df = catalog.value.df.with_columns(
             pl.lit("Ancienne valeur").alias("description:fr")
         )
 
@@ -1177,7 +1177,7 @@ class TestProcessEntityTable:
             {"id": "f1", "name:fr": "Dossier", "description:fr": "Desc"}
         ]
         catalog.folder.add(Folder(id="f2", name="Folder 2"))
-        catalog.folder._df = catalog.folder._df.with_columns(
+        catalog.folder.df = catalog.folder.df.with_columns(
             pl.when(pl.col("id") == "f2")
             .then(pl.lit(None, dtype=pl.Utf8))
             .otherwise(pl.col("name:fr"))
