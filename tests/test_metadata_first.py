@@ -730,18 +730,20 @@ class TestHelperUnits:
     def test_find_loaded_dataset_by_match_path_reuses_built_index(self, tmp_path: Path):
         meta_dir = tmp_path / "meta"
         meta_dir.mkdir()
+        # Absolute paths (a bare /data/… isn't absolute on Windows, so it would be
+        # resolved against meta_dir and never match the query).
+        indexed = (tmp_path / "indexed.csv").as_posix()
+        missing = (tmp_path / "missing.csv").as_posix()
         (meta_dir / "dataset.csv").write_text(
-            "id,name,_match_path\nindexed,Indexed,/data/indexed.csv\n"
+            f"id,name,_match_path\nindexed,Indexed,{indexed}\n"
         )
 
         catalog = Catalog(metadata_path=meta_dir, quiet=True)
         from datannurpy.add_metadata import find_loaded_dataset_by_match_path
 
-        assert (
-            find_loaded_dataset_by_match_path(catalog, "/data/indexed.csv") is not None
-        )
+        assert find_loaded_dataset_by_match_path(catalog, indexed) is not None
         assert catalog._dataset_match_index is not None
-        assert find_loaded_dataset_by_match_path(catalog, "/data/missing.csv") is None
+        assert find_loaded_dataset_by_match_path(catalog, missing) is None
 
     def test_match_path_candidates_include_remote_series_url(self):
         from datannurpy.add_folder import _match_path_candidates
@@ -885,7 +887,8 @@ class TestHelperUnits:
         df = tables["dataset"][0]
 
         assert df.loc[0, "data_path"] == "missing.csv"
-        assert df.loc[0, "_match_path"] == str(match_path)
+        # The match key is canonicalized to forward slashes (str() is backslashed on Windows).
+        assert df.loc[0, "_match_path"] == match_path.as_posix()
 
     def test_optional_str_none(self):
         from datannurpy.add_metadata import _optional_str

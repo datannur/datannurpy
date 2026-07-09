@@ -739,10 +739,10 @@ class TestLoadTablesFromDatabase:
         conn.close()
 
         # Mock connection without disconnect method
-        with patch("datannurpy.add_metadata.ibis") as mock_ibis:
+        with patch("datannurpy.scanner.database.connect") as mock_connect:
             mock_con = MagicMock(spec=["list_tables", "table"])
             mock_con.list_tables.return_value = []
-            mock_ibis.connect.return_value = mock_con
+            mock_connect.return_value = (mock_con, "sqlite")
 
             tables = _load_tables_from_database(
                 f"sqlite:///{db_path.as_posix()}", ALL_ENTITIES
@@ -1640,11 +1640,11 @@ class TestEdgeCases:
         conn.close()
 
         # Mock con.table to raise an exception
-        with patch("datannurpy.add_metadata.ibis") as mock_ibis:
+        with patch("datannurpy.scanner.database.connect") as mock_connect:
             mock_con = MagicMock()
             mock_con.list_tables.return_value = ["folder"]
             mock_con.table.side_effect = Exception("Table read error")
-            mock_ibis.connect.return_value = mock_con
+            mock_connect.return_value = (mock_con, "sqlite")
 
             tables = _load_tables_from_database(
                 f"sqlite:///{db_path.as_posix()}", ALL_ENTITIES, quiet=False
