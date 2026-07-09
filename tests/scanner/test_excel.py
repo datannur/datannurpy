@@ -715,7 +715,9 @@ class TestScanExcelSchemaRemote:
         assert len(result.variables) == 0
         assert result.nb_row is None
         # Downloaded under a safe temp name carrying the resolved format's extension.
-        mock_fs.ensure_local.assert_called_once_with("/remote/pivot.xlsx", "data.xlsx")
+        mock_fs.ensure_local.assert_called_once_with(
+            str(Path("/remote/pivot.xlsx")), "data.xlsx"
+        )
 
     def test_remote_xls_html_schema_skipped_without_download(self, capsys):
         """Remote HTML renamed to .xls should be skipped before full download."""

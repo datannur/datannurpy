@@ -395,7 +395,9 @@ def _add_parquet_directory(
     """Add a partitioned Parquet directory (Delta, Hive, or Iceberg) to catalog."""
     current_mtime = get_mtime_timestamp(dir_path, fs=fs)
     match_path = str(dir_path)
-    dir_name = str(dir_path).rstrip("/").rsplit("/", 1)[-1]
+    # Normalize native separators first: a local Windows dir_path is backslashed,
+    # so a bare rsplit("/") would return the whole path instead of the folder name.
+    dir_name = str(dir_path).replace("\\", "/").rstrip("/").rsplit("/", 1)[-1]
     data_path_str = _public_data_path(dir_path, dir_name, fs)
 
     # Check for existing dataset (incremental scan)

@@ -596,7 +596,9 @@ class TestGetDatabasePath:
         """SQLite connection with file path returns resolved path."""
         result = get_database_path("sqlite:////tmp/test.db", "sqlite")
         assert result is not None
-        assert result.endswith("tmp/test.db")
+        # Path.resolve() yields native separators; normalize before the POSIX check
+        # (Windows gives C:\tmp\test.db).
+        assert result.replace("\\", "/").endswith("tmp/test.db")
 
     def test_sqlite_memory(self) -> None:
         """SQLite in-memory connection returns None."""
