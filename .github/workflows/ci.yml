@@ -105,4 +105,16 @@ jobs:
       - run: uv python install 3.13
       - run: uv sync --resolution highest
       - run: make download-app
-      - run: make test-cov
+      # TEMP diagnostics: with 60+ failures, `make test-cov`'s full tracebacks
+      # overflow and truncate the CI log. Surface instead a compact one-line-per-
+      # failure list and the exact e2e snapshot drift. Restore `make test-cov`
+      # (the real gate) once the Windows suite is green.
+      - run: uv run pytest --tb=line -q -rfE
+      - name: e2e snapshot drift (diagnostic)
+        if: always()
+        env:
+          UPDATE_SNAPSHOTS: "1"
+        run: |
+          uv run pytest tests/test_e2e_snapshot.py -q
+          git --no-pager diff --stat
+          git --no-pager diff -- tests
