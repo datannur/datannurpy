@@ -8,9 +8,15 @@ from __future__ import annotations
 
 import io
 import shutil
+import sys
 import urllib.request
 import zipfile
 from pathlib import Path
+
+# Windows consoles default to cp1252, which can't encode the ✓ status glyphs
+# printed below; force UTF-8 so this build script doesn't crash mid-download.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 _URL = "https://github.com/datannur/datannur/releases/download/pre-release/datannur-app-pre-release.zip"
 _APP_DIR = Path(__file__).resolve().parent.parent / "src" / "datannurpy" / "app"

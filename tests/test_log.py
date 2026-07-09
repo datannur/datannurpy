@@ -1,8 +1,11 @@
 """Tests for logging utilities."""
 
+from __future__ import annotations
+
 import time
 
 from datannurpy.utils.log import (
+    _reconfigure_utf8,
     configure_logging,
     log_debug,
     log_done,
@@ -15,6 +18,53 @@ from datannurpy.utils.log import (
     log_summary,
     log_warn,
 )
+
+
+class _FakeStream:
+    """Minimal text-stream stub recording reconfigure() calls."""
+
+    def __init__(
+        self, encoding: str | None = "cp1252", *, has_reconfigure=True, raises=None
+    ):
+        self.encoding = encoding
+        self.calls: list[dict] = []
+        self._raises = raises
+        if not has_reconfigure:
+            # Emulate a stream that isn't a reconfigurable TextIOWrapper.
+            del self.reconfigure
+
+    def reconfigure(self, **kwargs):
+        if self._raises is not None:
+            raise self._raises
+        self.calls.append(kwargs)
+
+
+class TestReconfigureUtf8:
+    """A legacy-code-page stream is forced to UTF-8 so ✓/✗ never crash."""
+
+    def test_cp1252_stream_is_reconfigured(self):
+        stream = _FakeStream(encoding="cp1252")
+        _reconfigure_utf8(stream)
+        assert stream.calls == [{"encoding": "utf-8", "errors": "replace"}]
+
+    def test_utf8_stream_is_left_alone(self):
+        stream = _FakeStream(encoding="UTF-8")
+        _reconfigure_utf8(stream)
+        assert stream.calls == []
+
+    def test_stream_without_reconfigure_is_ignored(self):
+        # Object with no reconfigure attr (e.g. a pytest capture buffer).
+        _reconfigure_utf8(object())
+
+    def test_none_encoding_is_reconfigured(self):
+        stream = _FakeStream(encoding=None)
+        _reconfigure_utf8(stream)
+        assert stream.calls == [{"encoding": "utf-8", "errors": "replace"}]
+
+    def test_reconfigure_error_is_swallowed(self):
+        stream = _FakeStream(encoding="cp1252", raises=ValueError("detached"))
+        _reconfigure_utf8(stream)  # must not raise
+        assert stream.calls == []
 
 
 def test_quiet_mode_produces_no_output(capsys):
