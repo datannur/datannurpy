@@ -2671,13 +2671,16 @@ class TestAppMetadataOverlayPath:
         db_ui = app_path / "data" / "db-ui"
         db_ui.mkdir(parents=True)
         (db_ui / "dataset.json").write_text(
-            '[{"id":"ds","name":"Dataset","name:fr":"Jeu de données"}]'
+            '[{"id":"ds","name":"Dataset","name:fr":"Jeu de données"}]',
+            encoding="utf-8",
         )
 
         catalog = Catalog(app_path=app_path, quiet=True)
         catalog.export_db()
 
-        rows = json.loads((app_path / "data" / "db" / "dataset.json").read_text())
+        rows = json.loads(
+            (app_path / "data" / "db" / "dataset.json").read_text(encoding="utf-8")
+        )
         assert rows == [
             {
                 "id": "ds",

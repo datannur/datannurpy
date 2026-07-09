@@ -988,26 +988,6 @@
     "value": "France"
   },
   {
-    "enumeration_id": "_enumerations---enum_377b0126b2",
-    "value": "Berlin"
-  },
-  {
-    "enumeration_id": "_enumerations---enum_377b0126b2",
-    "value": "London"
-  },
-  {
-    "enumeration_id": "_enumerations---enum_377b0126b2",
-    "value": "Madrid"
-  },
-  {
-    "enumeration_id": "_enumerations---enum_377b0126b2",
-    "value": "Paris"
-  },
-  {
-    "enumeration_id": "_enumerations---enum_377b0126b2",
-    "value": "Rome"
-  },
-  {
     "enumeration_id": "_enumerations---enum_3890764482",
     "value": "Finance"
   },
@@ -2844,26 +2824,6 @@
     "value": "US"
   },
   {
-    "enumeration_id": "_enumerations---enum_9e6f60966a",
-    "value": "100.5"
-  },
-  {
-    "enumeration_id": "_enumerations---enum_9e6f60966a",
-    "value": "150.75"
-  },
-  {
-    "enumeration_id": "_enumerations---enum_9e6f60966a",
-    "value": "200"
-  },
-  {
-    "enumeration_id": "_enumerations---enum_9e6f60966a",
-    "value": "250"
-  },
-  {
-    "enumeration_id": "_enumerations---enum_9e6f60966a",
-    "value": "300.25"
-  },
-  {
     "enumeration_id": "_enumerations---enum_9ff855e637",
     "value": "1583-01-01 00:00:00"
   },
@@ -3228,52 +3188,12 @@
     "value": "9"
   },
   {
-    "enumeration_id": "_enumerations---enum_c0e1a30973",
-    "value": "1"
-  },
-  {
-    "enumeration_id": "_enumerations---enum_c0e1a30973",
-    "value": "2"
-  },
-  {
-    "enumeration_id": "_enumerations---enum_c0e1a30973",
-    "value": "3"
-  },
-  {
-    "enumeration_id": "_enumerations---enum_c0e1a30973",
-    "value": "4"
-  },
-  {
-    "enumeration_id": "_enumerations---enum_c0e1a30973",
-    "value": "5"
-  },
-  {
     "enumeration_id": "_enumerations---enum_c60568ab09",
     "value": "infra"
   },
   {
     "enumeration_id": "_enumerations---enum_c60568ab09",
     "value": "rh"
-  },
-  {
-    "enumeration_id": "_enumerations---enum_c83ffa1257",
-    "value": "Alice"
-  },
-  {
-    "enumeration_id": "_enumerations---enum_c83ffa1257",
-    "value": "Bob"
-  },
-  {
-    "enumeration_id": "_enumerations---enum_c83ffa1257",
-    "value": "Charlie"
-  },
-  {
-    "enumeration_id": "_enumerations---enum_c83ffa1257",
-    "value": "Diana"
-  },
-  {
-    "enumeration_id": "_enumerations---enum_c83ffa1257",
-    "value": "Eve"
   },
   {
     "enumeration_id": "_enumerations---enum_c8ab539531",

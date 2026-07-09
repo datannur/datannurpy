@@ -848,7 +848,8 @@ class TestHelperUnits:
         path = tmp_path / "data.csv"
         path.write_text("id\n1\n")
 
-        assert _resolve_match_path(path, tmp_path) == str(path)
+        # _resolve_match_path canonicalizes to forward slashes (no-op on Linux).
+        assert _resolve_match_path(path, tmp_path) == path.as_posix()
 
     def test_resolve_match_path_uses_exists_cache(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch

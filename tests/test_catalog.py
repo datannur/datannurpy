@@ -123,7 +123,8 @@ class TestCatalogAppPath:
 
         dataset = catalog.dataset.get_by("id", "src---x_csv")
         assert dataset is not None
-        assert dataset._match_path == str(csv_file)
+        # Metadata-derived match keys are canonicalized to forward slashes.
+        assert dataset._match_path == csv_file.as_posix()
         assert len(catalog.dataset.all()) == 1
 
     def test_app_path_reload_keeps_null_match_path_without_metadata_match(
