@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, get_args
 
 import polars as pl
 
@@ -12,6 +12,7 @@ from .add_database import add_database
 from .add_dataset import add_dataset
 from .add_folder import add_folder
 from .add_geodatabase import add_geodatabase
+from .errors import ConfigError
 from .exporter import export_app, export_db
 from .finalize import finalize
 from .preview import PreviewRows, effective_preview_rows, validate_preview_rows
@@ -26,6 +27,7 @@ if TYPE_CHECKING:
     from .add_metadata import LoadedDatasetRef
 
 Depth = Literal["dataset", "variable", "stat", "value"]
+OnScanError = Literal["warn", "fail"]
 
 
 def _normalize_metadata_paths(
@@ -81,6 +83,7 @@ class Catalog(DatannurDB):
         metadata_path: str | Path | list[str | Path] | None = None,
         depth: Depth = "value",
         refresh: bool = False,
+        on_scan_error: OnScanError = "warn",
         freq_threshold: int = 100,
         auto_enumerations: bool = True,
         csv_encoding: str | None = None,
@@ -139,6 +142,11 @@ class Catalog(DatannurDB):
         # Config
         self.depth: Depth = depth
         self.refresh = refresh
+        if on_scan_error not in get_args(OnScanError):
+            raise ConfigError(
+                f"on_scan_error must be 'warn' or 'fail', got {on_scan_error!r}"
+            )
+        self.on_scan_error: OnScanError = on_scan_error
         self.freq_threshold = freq_threshold
         self.auto_enumerations = auto_enumerations
         self.csv_encoding = csv_encoding
@@ -253,6 +261,16 @@ class Catalog(DatannurDB):
         self._run_scanned += scanned
         self._run_unchanged += unchanged
         self._run_errors += errors
+
+    @property
+    def run_errors(self) -> int:
+        """Number of items (files/tables) that failed to scan this run.
+
+        Scanning is continue-on-error, so a failed item is logged and skipped
+        rather than aborting the run; this counter lets a caller (e.g. the CLI)
+        surface partial failures — see ``on_scan_error``.
+        """
+        return self._run_errors
 
     def __repr__(self) -> str:
         return (

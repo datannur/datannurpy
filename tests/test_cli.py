@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 from unittest.mock import patch
@@ -73,6 +74,58 @@ add:
     with patch.object(sys, "argv", ["datannurpy", str(config)]):
         main()
     assert (output / "data" / "db" / "dataset.json").exists()
+
+
+def _write_partial_scan_config(
+    tmp_path: Path, *, on_scan_error: str | None = None
+) -> tuple[Path, Path]:
+    """Config scanning one good CSV + one corrupted parquet (a real scan error)."""
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "good.csv").write_text("a,b\n1,2\n")
+    (data_dir / "bad.parquet").write_bytes(b"not a real parquet file")
+    output = tmp_path / "output"
+
+    lines = [f'output_dir: "{output}"']
+    if on_scan_error is not None:
+        lines.append(f'on_scan_error: "{on_scan_error}"')
+    lines += ["add:", "  - type: folder", f'    path: "{data_dir}"']
+    config = tmp_path / "test.yml"
+    config.write_text("\n".join(lines) + "\n")
+    return config, output
+
+
+def test_main_partial_scan_default_tolerant(tmp_path: Path) -> None:
+    """Default (on_scan_error='warn'): a partial scan still exits 0 with a valid catalogue."""
+    config, output = _write_partial_scan_config(tmp_path)
+    with patch.object(sys, "argv", ["datannurpy", str(config)]):
+        main()  # no SystemExit — tolerant by default
+    # The valid file is exported (continue-on-error), only the corrupted one dropped.
+    datasets = json.loads((output / "dataset.json").read_text())
+    assert len(datasets) == 1
+
+
+def test_main_partial_scan_fail_exits_2(tmp_path: Path, capsys) -> None:
+    """on_scan_error='fail': a partial scan exits 2 but still exports the valid catalogue."""
+    config, output = _write_partial_scan_config(tmp_path, on_scan_error="fail")
+    with patch.object(sys, "argv", ["datannurpy", str(config)]):
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+    assert exc_info.value.code == 2
+    assert "failed to scan" in capsys.readouterr().err
+    # Continue-on-error is preserved: the valid dataset is still exported.
+    datasets = json.loads((output / "dataset.json").read_text())
+    assert len(datasets) == 1
+
+
+def test_main_invalid_on_scan_error(tmp_path: Path, capsys) -> None:
+    """An invalid on_scan_error value is a ConfigError (exit 1)."""
+    config, _ = _write_partial_scan_config(tmp_path, on_scan_error="bogus")
+    with patch.object(sys, "argv", ["datannurpy", str(config)]):
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 1
+    assert "on_scan_error must be 'warn' or 'fail'" in capsys.readouterr().err
 
 
 def test_main_invalid_config_type(tmp_path: Path, capsys) -> None:
