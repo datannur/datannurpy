@@ -64,6 +64,7 @@ class FileSystem:
         # Normalize root path (remove trailing slash for consistency)
         self.root = self.root.rstrip("/")
         self._info_cache: dict[str, dict[str, Any]] = {}
+        self._listdir_cache: dict[str, list[dict[str, Any]]] = {}
 
     def _run_io(self, op: Callable[[], Any]) -> Any:
         """Run a remote I/O op, retrying transient failures for HTTP backends (other
@@ -123,18 +124,44 @@ class FileSystem:
             self._info_cache[full_path] = cached
         return dict(cached)
 
+    def _listdir(self, full_path: str) -> list[dict[str, Any]]:
+        """Directory listing (``ls(detail=True)``) memoized per directory.
+
+        A scan walks the tree more than once — parquet discovery first, then the
+        general pass — and each walk lists every directory. The contents are stable
+        for this FileSystem's lifetime (scoped to one scanned tree), so one listing
+        per directory serves both walks instead of a round-trip each time.
+        """
+        cached = self._listdir_cache.get(full_path)
+        if cached is None:
+            cached = list(self.fs.listdir(full_path))
+            self._listdir_cache[full_path] = cached
+        return cached
+
     def listdir(self, path: str) -> list[str]:
         """List directory contents (names only, not full paths)."""
-        full_path = self._full_path(path)
-        entries = self.fs.listdir(full_path)
+        entries = self._listdir(self._full_path(path))
         return [entry["name"].rsplit("/", 1)[-1] for entry in entries]
 
     def iterdir(self, path: str) -> Iterator[str]:
         """Iterate over directory contents (full paths)."""
-        full_path = self._full_path(path)
-        entries = self.fs.listdir(full_path)
-        for entry in entries:
-            yield entry["name"]
+        for name, _info in self.iterdir_detailed(path):
+            yield name
+
+    def iterdir_detailed(self, path: str) -> Iterator[tuple[str, dict[str, Any]]]:
+        """Iterate directory entries as ``(full_path, info)`` from one listing.
+
+        ``listdir`` (``ls(detail=True)``) already returns each entry's type and
+        mtime in a single round-trip; caching them here lets the later ``info()``
+        lookups (mtime for skip/scan, size, ETag) reuse this listing instead of
+        issuing a network round-trip per file — the dominant cost of an
+        all-incremental run on remote backends (SFTP/NAS).
+        """
+        for entry in self._listdir(self._full_path(path)):
+            name = entry["name"]
+            info = dict(entry)
+            self._info_cache[self._full_path(name)] = info
+            yield name, info
 
     @contextmanager
     def open(self, path: str, mode: str = "rb") -> Generator[Any, None, None]:

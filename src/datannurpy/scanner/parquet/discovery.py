@@ -150,12 +150,18 @@ def discover_parquet_datasets(
     exclude: Sequence[str] | None = None,
     recursive: bool = True,
     fs: FileSystem | None = None,
+    files: list[PurePath] | None = None,
 ) -> DiscoveryResult:
     """Discover all Parquet datasets in a directory.
 
-    Returns datasets and directories to exclude from folder creation.
+    Returns datasets and directories to exclude from folder creation. ``files`` is the
+    caller's already-walked file list; when given, parquet files are filtered from it
+    rather than walking the tree a second time.
     """
-    parquet_files = find_parquet_files(root, include, exclude, recursive, fs=fs)
+    if files is None:
+        parquet_files = find_parquet_files(root, include, exclude, recursive, fs=fs)
+    else:
+        parquet_files = [f for f in files if f.suffix.lower() in (".parquet", ".pq")]
 
     datasets: list[ParquetDatasetInfo] = []
     excluded_dirs: set[PurePath] = set()

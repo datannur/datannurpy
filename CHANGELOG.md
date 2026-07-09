@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.29.3 (2026-07-09)
+
+- perf: faster folder scans on network storage (SFTP, S3/GCS/Azure, NFS/SMB mounts) — discovery now lists each directory once and reads file dates from that listing, instead of a separate lookup per file. Biggest gain on incremental runs where nothing changed
+
 ## 0.29.2 (2026-07-09)
 
 - fix: security-tagged columns (passwords, hashes, secrets) are now masked in the exported preview — values replaced by a `•••` placeholder, matching the frequency/enumeration suppression that already hid them

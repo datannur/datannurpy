@@ -70,6 +70,48 @@ class TestMemoryFileSystem:
         assert not fs.isfile(f"{memory_root}/sub")
         assert not fs.isdir(f"{memory_root}/file.csv")
 
+    def test_iterdir_detailed_primes_info_cache(
+        self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
+    ) -> None:
+        """The single directory listing carries each entry's type/mtime and primes
+        the info cache, so later info() lookups need no per-file round-trip."""
+        from unittest.mock import patch
+
+        memory_fs.pipe(f"{memory_root}/a.csv", b"x\n1")
+        memory_fs.mkdir(f"{memory_root}/sub")
+
+        fs = FileSystem(f"memory://{memory_root}")
+        entries = dict(fs.iterdir_detailed(memory_root))
+
+        assert entries[f"{memory_root}/a.csv"]["type"] == "file"
+        assert entries[f"{memory_root}/sub"]["type"] == "directory"
+
+        # The listing already answered info(); touching the backend again is a bug.
+        with patch.object(
+            fs.fs, "info", side_effect=AssertionError("unexpected backend round-trip")
+        ):
+            assert fs.info(f"{memory_root}/a.csv")["type"] == "file"
+
+    def test_listdir_memoized_across_walks(
+        self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
+    ) -> None:
+        """A scan walks the tree twice (parquet discovery, then the general pass);
+        each directory must be listed once, not per walk."""
+        from unittest.mock import patch
+
+        memory_fs.pipe(f"{memory_root}/a.csv", b"x\n1")
+
+        fs = FileSystem(f"memory://{memory_root}")
+        list(fs.iterdir_detailed(memory_root))  # first walk lists the directory
+
+        with patch.object(
+            fs.fs, "listdir", side_effect=AssertionError("directory re-listed")
+        ):
+            assert [name for name, _ in fs.iterdir_detailed(memory_root)] == [
+                f"{memory_root}/a.csv"
+            ]
+            assert fs.listdir(memory_root) == ["a.csv"]  # names path shares the cache
+
     def test_exists_memory(
         self, memory_fs: fsspec.AbstractFileSystem, memory_root: str
     ) -> None:

@@ -105,6 +105,7 @@ DEFAULT_EXCLUDE_DIRS = {
 }
 DEFAULT_EXCLUDE_PREFIXES = ("~$", ".~lock.")  # Office/LibreOffice temp/lock files
 _FS_DIR_TYPES = {"directory", "dir"}
+_FS_FILE_TYPES = {"file"}
 
 
 # delivery_formats whose scanner transparently decompresses a gzip source. Only these
@@ -172,6 +173,19 @@ def safe_iterdir_fs(fs: FileSystem, path: str) -> Iterator[str]:
         raise
 
 
+def safe_iterdir_detailed_fs(
+    fs: FileSystem, path: str
+) -> Iterator[tuple[str, dict[str, Any]]]:
+    """Iterate `fs.iterdir_detailed(path)`, skipping with a warning on EACCES."""
+    try:
+        yield from fs.iterdir_detailed(path)
+    except OSError as exc:
+        if _is_permission_error(exc):
+            _warn_permission(path, exc)
+            return
+        raise
+
+
 def safe_iterdir_local(path: Path) -> Iterator[Path]:
     """Iterate over `path.iterdir()`, skipping with a warning on EACCES."""
     try:
@@ -216,31 +230,85 @@ def safe_glob_fs(fs: FileSystem, pattern: str) -> list[str]:
         raise
 
 
+def _scandir_walk_local(root: Path, recursive: bool) -> Iterator[os.DirEntry[str]]:
+    """Yield a ``DirEntry`` for every file under ``root``, pruning always-excluded
+    dirs and skipping unreadable subtrees with a warning.
+
+    ``scandir`` classifies entries from the single directory read (no per-entry
+    ``stat``) and carries each file's metadata, so the caller reads its mtime without
+    a second lookup — folded into ``readdir`` on network mounts (NFS/SMB). Directory
+    classification and recursion mirror ``os.walk(followlinks=False)``: a symlinked
+    directory is not descended, and a symlink to a file is yielded like any file.
+    """
+    try:
+        scandir_it = os.scandir(root)
+    except OSError as exc:
+        if _is_permission_error(exc):
+            _warn_permission(root, exc)
+            return
+        raise
+    with scandir_it:
+        entries = list(scandir_it)
+    for entry in entries:
+        try:
+            is_dir = entry.is_dir()
+        except OSError as exc:
+            if _is_permission_error(exc):
+                _warn_permission(entry.path, exc)
+                continue
+            raise
+        if is_dir:
+            if (
+                recursive
+                and entry.name not in DEFAULT_EXCLUDE_DIRS
+                and not entry.is_symlink()
+            ):
+                yield from _scandir_walk_local(Path(entry.path), recursive)
+        else:
+            yield entry
+
+
 def safe_walk_local(root: Path) -> Iterator[Path]:
     """Yield every file under `root`, skipping unreadable subtrees."""
+    for entry in _scandir_walk_local(root, recursive=True):
+        yield Path(entry.path)
 
-    def _onerror(exc: OSError) -> None:
-        if _is_permission_error(exc):
-            _warn_permission(getattr(exc, "filename", None) or root, exc)
-            return
-        raise exc
 
-    for dirpath, dirnames, filenames in os.walk(root, onerror=_onerror):
-        # Filter out always-excluded directories in-place so os.walk skips them.
-        dirnames[:] = [d for d in dirnames if d not in DEFAULT_EXCLUDE_DIRS]
-        for name in filenames:
-            yield Path(dirpath) / name
+def _fs_entry_kind(info: dict[str, Any]) -> str | None:
+    """Classify a listing entry as ``"dir"``/``"file"`` from its type, or ``None``
+    when the backend reports a type (e.g. a symlink) that must be resolved by stat."""
+    entry_type = str(info.get("type", "")).lower()
+    if entry_type in _FS_DIR_TYPES:
+        return "dir"
+    if entry_type in _FS_FILE_TYPES:
+        return "file"
+    return None
+
+
+def _probe_fs_entry_kind(fs: FileSystem, path: str) -> str | None:
+    """Resolve an entry the listing left ambiguous (e.g. a symlink) with a stat,
+    following it as the isdir/isfile walk did."""
+    if safe_is_dir_fs(fs, path):
+        return "dir"
+    if safe_is_file_fs(fs, path):
+        return "file"
+    return None
 
 
 def safe_walk_fs(fs: FileSystem, root: str, recursive: bool) -> Iterator[str]:
-    """Yield files under `root`, skipping unreadable and default-excluded dirs."""
-    for entry in safe_iterdir_fs(fs, root):
-        name = PurePosixPath(entry).name
-        if safe_is_dir_fs(fs, entry):
-            if name in DEFAULT_EXCLUDE_DIRS or not recursive:
+    """Yield files under `root`, skipping unreadable and default-excluded dirs.
+
+    Consumes the single per-directory listing (type + mtime already in hand) instead
+    of re-probing each entry with isdir/isfile, so a remote walk costs one round-trip
+    per directory rather than several per file.
+    """
+    for entry, info in safe_iterdir_detailed_fs(fs, root):
+        kind = _fs_entry_kind(info) or _probe_fs_entry_kind(fs, entry)
+        if kind == "dir":
+            if PurePosixPath(entry).name in DEFAULT_EXCLUDE_DIRS or not recursive:
                 continue
             yield from safe_walk_fs(fs, entry, recursive=True)
-        elif safe_is_file_fs(fs, entry):
+        elif kind == "file":
             yield entry
 
 
@@ -426,6 +494,25 @@ def find_files(
     fs: FileSystem | None = None,
 ) -> list[PurePath]:
     """Find files matching include/exclude patterns."""
+    return [
+        path
+        for path, _mtime in find_files_with_mtime(
+            root, include, exclude, recursive, fs=fs
+        )
+    ]
+
+
+def find_files_with_mtime(
+    root: PurePath,
+    include: Sequence[str] | None,
+    exclude: Sequence[str] | None,
+    recursive: bool,
+    fs: FileSystem | None = None,
+) -> list[tuple[PurePath, int]]:
+    """Find supported files, each paired with its mtime captured during the same
+    walk — so an incremental run needs no extra ``stat``/``info`` per file. Locally
+    the mtime comes from the ``scandir`` ``DirEntry``; remotely it is served from the
+    listing the walk already primed into the info cache."""
     # Normalize str → [str] to avoid iterating over characters
     if isinstance(include, str):
         include = [include]
@@ -436,40 +523,22 @@ def find_files(
         return _find_files_with_fs(fs, root, include, exclude, recursive)
     assert isinstance(root, Path)
 
-    if recursive:
-        candidates = [
-            f for f in safe_walk_local(root) if supported_format_for(f.name) is not None
-        ]
-    else:
-        candidates = [
-            f
-            for f in safe_iterdir_local(root)
-            if f.is_file() and supported_format_for(f.name) is not None
-        ]
-
-    # Apply default exclusions
-    candidates = [
-        f
-        for f in candidates
-        if not f.name.startswith(DEFAULT_EXCLUDE_PREFIXES)
-        and not any(d in f.parts for d in DEFAULT_EXCLUDE_DIRS)
-    ]
-
-    if include is not None:
-        candidates = [
-            f
-            for f in candidates
-            if _matches_any_scan_pattern(_relative_local_path(root, f), include)
-        ]
-
-    if exclude:
-        candidates = [
-            f
-            for f in candidates
-            if not _matches_any_scan_pattern(_relative_local_path(root, f), exclude)
-        ]
-
-    return list(candidates)  # type: ignore[return-value]  # Path is PurePath
+    result: list[tuple[PurePath, int]] = []
+    for entry in _scandir_walk_local(root, recursive):
+        name = entry.name
+        if supported_format_for(name) is None:
+            continue
+        if name.startswith(DEFAULT_EXCLUDE_PREFIXES):
+            continue
+        # Excluded directories are pruned by the walk, so no parts check is needed.
+        path = Path(entry.path)
+        rel_path = _relative_local_path(root, path)
+        if include is not None and not _matches_any_scan_pattern(rel_path, include):
+            continue
+        if exclude and _matches_any_scan_pattern(rel_path, exclude):
+            continue
+        result.append((path, int(entry.stat().st_mtime)))
+    return result
 
 
 def _find_files_with_fs(
@@ -478,7 +547,7 @@ def _find_files_with_fs(
     include: Sequence[str] | None,
     exclude: Sequence[str] | None,
     recursive: bool,
-) -> list[PurePath]:
+) -> list[tuple[PurePath, int]]:
     """Find files using FileSystem abstraction (for remote storage support)."""
     root_str = root.as_posix()
 
@@ -488,12 +557,11 @@ def _find_files_with_fs(
         if supported_format_for(PurePosixPath(p).name) is not None
     ]
 
-    # Apply default exclusions
+    # Apply default exclusions (excluded directories are pruned by the walk).
     candidates = [
         p
         for p in candidates
         if not PurePosixPath(p).name.startswith(DEFAULT_EXCLUDE_PREFIXES)
-        and not any(d in PurePosixPath(p).parts for d in DEFAULT_EXCLUDE_DIRS)
     ]
 
     if include is not None:
@@ -510,8 +578,12 @@ def _find_files_with_fs(
             if not _matches_any_scan_pattern(_relative_fs_path(fs, p), exclude)
         ]
 
-    # Use PurePosixPath to preserve forward slashes for remote paths
-    return sorted(PurePosixPath(p) for p in candidates)
+    # Use PurePosixPath to preserve forward slashes for remote paths. The mtime is a
+    # cache hit: safe_walk_fs already primed the info cache from the directory listing.
+    return [
+        (path, get_mtime_timestamp(path, fs=fs))
+        for path in sorted(PurePosixPath(p) for p in candidates)
+    ]
 
 
 # Geometry keywords from OGC SQL/MM standard (matched case-insensitively)
