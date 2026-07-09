@@ -328,10 +328,9 @@ class TestAddFolderOther:
         finally:
             configure_logging()
 
-        content = log_path.read_text()
-        assert (
-            "add_folder — ConfigError: Folder not found: /nonexistent/path" in content
-        )
+        content = log_path.read_text(encoding="utf-8")
+        # Path suffix is OS-native (D:\… on Windows); assert the OS-agnostic prefix.
+        assert "add_folder — ConfigError: Folder not found:" in content
         assert "NoneType: None" not in content
         assert "Traceback" not in content
         assert "FileNotFoundError" not in content

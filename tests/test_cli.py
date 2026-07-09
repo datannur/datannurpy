@@ -65,11 +65,12 @@ def test_main_run_config(tmp_path: Path) -> None:
     config = tmp_path / "test.yml"
     output = tmp_path / "output"
     data_path = Path(__file__).parent.parent / "data" / "csv"
+    # as_posix() so a Windows path's backslashes don't become YAML escapes.
     config.write_text(f"""
-app_path: "{output}"
+app_path: "{output.as_posix()}"
 add:
   - type: folder
-    path: "{data_path}"
+    path: "{data_path.as_posix()}"
 """)
     with patch.object(sys, "argv", ["datannurpy", str(config)]):
         main()
@@ -86,10 +87,11 @@ def _write_partial_scan_config(
     (data_dir / "bad.parquet").write_bytes(b"not a real parquet file")
     output = tmp_path / "output"
 
-    lines = [f'output_dir: "{output}"']
+    # as_posix() so a Windows path's backslashes don't become YAML escapes.
+    lines = [f'output_dir: "{output.as_posix()}"']
     if on_scan_error is not None:
         lines.append(f'on_scan_error: "{on_scan_error}"')
-    lines += ["add:", "  - type: folder", f'    path: "{data_dir}"']
+    lines += ["add:", "  - type: folder", f'    path: "{data_dir.as_posix()}"']
     config = tmp_path / "test.yml"
     config.write_text("\n".join(lines) + "\n")
     return config, output
