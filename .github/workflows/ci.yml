@@ -85,3 +85,24 @@ jobs:
           files: coverage.xml
           flags: core
           fail_ci_if_error: false
+
+  # Windows OS coverage: mirrors the Linux 3.14/highest cell step-for-step (uv
+  # sync highest, download-app, test-cov with the 100% gate) so Windows-specific
+  # path/tempfile regressions surface. Only the interpreter differs (3.13 — its
+  # native geo/db wheels are guaranteed on Windows, unlike cp314). A dedicated
+  # job rather than a matrix cell: the coverage-gate step keys on 3.14, and
+  # runs-on already branches on arch, so a separate job stays clearer.
+  test-windows:
+    name: CI (windows, 3.13)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          enable-cache: true
+          cache-suffix: 3.13-highest-windows
+      - run: choco install make
+      - run: uv python install 3.13
+      - run: uv sync --resolution highest
+      - run: make download-app
+      - run: make test-cov
