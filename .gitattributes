@@ -1,0 +1,7 @@
+# Keep text test data byte-identical across platforms. data_size (the on-disk
+# file size) is asserted in the e2e snapshot, and git's autocrlf would otherwise
+# check CSV/TSV out with \r\n on Windows, inflating their size and breaking the
+# comparison. Binary formats (parquet, sqlite, xlsx, gpkg, sas7bdat) are
+# auto-detected by git and left untouched.
+*.csv text eol=lf
+*.tsv text eol=lf

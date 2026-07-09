@@ -282,7 +282,12 @@ def _stat_to_parquet(
         writer.close()
         yield tmp_path
     finally:
-        tmp_path.unlink(missing_ok=True)
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except PermissionError:  # pragma: no cover - Windows-only file lock
+            # Windows keeps a lock until the reader (DuckDB) fully releases the
+            # file; it lives in the OS temp dir and gets reaped later.
+            pass
 
 
 def _fix_parquet_types(con: Any, table: ibis.Table, parquet_path: Path) -> ibis.Table:
