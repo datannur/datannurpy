@@ -636,7 +636,13 @@ def add_folder(
         )
         catalog.dataset.add(dataset)
         scanned += 1
-        remember_preview(catalog, dataset.id, result.preview, label=display_path)
+        remember_preview(
+            catalog,
+            dataset.id,
+            result.preview,
+            label=display_path,
+            variables=result.variables,
+        )
 
         var_id_mapping = build_variable_ids(result.variables, dataset.id)
         if result.freq_table is not None:
@@ -822,7 +828,13 @@ def _scan_time_series(
         _match_path=last_match_path,
     )
     catalog.dataset.add(dataset)
-    remember_preview(catalog, dataset.id, result.preview, label=display_path)
+    remember_preview(
+        catalog,
+        dataset.id,
+        result.preview,
+        label=display_path,
+        variables=result.variables,
+    )
 
     # Step 5: Build variables with start_date/end_date from var_periods
     # Union all variables from all periods (some may not be in last file)

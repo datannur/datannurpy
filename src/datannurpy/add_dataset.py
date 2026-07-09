@@ -496,7 +496,7 @@ def _add_parquet_directory(
     # Force the name (since _create_dataset uses meta.name or default_name)
     dataset.name = default_name
     catalog.dataset.add(dataset)
-    remember_preview(catalog, dataset.id, preview, label=dir_name)
+    remember_preview(catalog, dataset.id, preview, label=dir_name, variables=variables)
 
     var_id_mapping = build_variable_ids(variables, dataset.id)
     if freq_table is not None:

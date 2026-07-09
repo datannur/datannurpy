@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.29.2 (2026-07-09)
+
+- fix: security-tagged columns (passwords, hashes, secrets) are now masked in the exported preview — values replaced by a `•••` placeholder, matching the frequency/enumeration suppression that already hid them
+
 ## 0.29.1 (2026-07-08)
 
 - change: HTTP(S) URL scanning now requires Python ≥ 3.10 — aiohttp's CVE fixes are 3.14+ only (which dropped 3.9), so aiohttp is installed only on 3.10+; on 3.9 an HTTP URL raises a clear error and every other feature keeps working

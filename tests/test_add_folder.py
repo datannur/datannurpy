@@ -39,6 +39,40 @@ class TestAddFolderFormats:
         )
         assert len(catalog.variable.all()) > 0
 
+    def test_security_column_masked_in_preview(self, tmp_path: Path):
+        """A security-tagged column's raw values must not leak into the exported preview."""
+        import json
+
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        hashes = [f"$2a$10$salt{i:040d}hashvalue" for i in range(12)]
+        rows = "\n".join(
+            f"{name},{h}" for name, h in zip([f"user{i}" for i in range(12)], hashes)
+        )
+        (data_dir / "creds.csv").write_text(f"name,password\n{rows}\n")
+
+        catalog = Catalog()
+        catalog.add_folder(data_dir, metadata=EntityMetadata(id="test", name="Test"))
+
+        password = catalog.variable.get_by("name", "password")
+        assert password is not None
+        # Consistency with frequency suppression: detected as a security column.
+        assert "auto---bcrypt" in password.tag_ids
+
+        preview = catalog._dataset_previews[password.dataset_id]
+        # Raw hashes never appear; only the fixed placeholder does.
+        assert set(preview["password"].to_list()) == {"•••"}
+        # Non-sensitive column is preserved verbatim.
+        assert preview["name"].to_list()[0] == "user0"
+
+        # The exported artifact on disk (the actual leak surface) is masked too.
+        catalog.export_db(tmp_path / "out")
+        exported = json.loads(
+            (tmp_path / "out" / "preview" / f"{password.dataset_id}.json").read_text()
+        )
+        assert all(row["password"] == "•••" for row in exported)
+        assert not any("$2a$" in json.dumps(row) for row in exported)
+
     def test_add_folder_empty_excel(self, tmp_path: Path):
         """add_folder should handle empty Excel files (0 bytes)."""
         (tmp_path / "empty.xlsx").write_bytes(b"")

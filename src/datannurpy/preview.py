@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Union, cast
 
@@ -18,9 +19,15 @@ if TYPE_CHECKING:
     import pandas as pd
 
     from .catalog import Catalog
-    from .schema import Dataset
+    from .schema import Dataset, Variable
 
 PreviewRows = Union[int, Literal[False], None]
+
+# Placeholder shown in place of raw values for security-tagged columns. The scan
+# already suppresses these columns' raw values from frequency/enumeration output
+# (``scanner/utils.py``); masking keeps the preview consistent so a "secret"
+# column's raw values never leak through the exported preview artifact.
+_SECURITY_PLACEHOLDER = "•••"
 
 
 def validate_preview_rows(value: PreviewRows, *, allow_none: bool) -> int | None:
@@ -139,15 +146,64 @@ def _json_safe_object(value: Any) -> Any:
     return str(value)
 
 
+def _security_columns(variables: Sequence[Variable]) -> set[str]:
+    """Return names of columns auto-tagged as security-sensitive.
+
+    Mirrors the frequency-suppression logic in ``scanner/utils.py``: a column is
+    sensitive when its auto-detected tag belongs to ``_SECURITY_TAGS``. Uses the
+    scan-time ``tag_ids`` (auto detection), so it stays consistent with the
+    enumeration suppression regardless of any later user metadata merge.
+    """
+    from .scanner.autotag import _SECURITY_TAGS
+
+    return {
+        var.name
+        for var in variables
+        if var.name and _SECURITY_TAGS.intersection(var.tag_ids or ())
+    }
+
+
+def mask_security_columns(
+    preview: pl.DataFrame | None,
+    variables: Sequence[Variable],
+) -> pl.DataFrame | None:
+    """Replace security-tagged column values with a fixed placeholder.
+
+    The column is kept (its presence and shape are non-sensitive catalog signals)
+    but every non-null value becomes ``_SECURITY_PLACEHOLDER``. Nulls stay null so
+    they carry no raw value to leak.
+    """
+    if preview is None:
+        return None
+    security_cols = _security_columns(variables)
+    cols = [c for c in preview.columns if c in security_cols]
+    if not cols:
+        return preview
+    return preview.with_columns(
+        pl.when(pl.col(c).is_not_null())
+        .then(pl.lit(_SECURITY_PLACEHOLDER))
+        .otherwise(None)
+        .cast(pl.Utf8)
+        .alias(c)
+        for c in cols
+    )
+
+
 def remember_preview(
     catalog: Catalog,
     dataset_id: str,
     preview: pl.DataFrame | None,
     *,
     label: str,
+    variables: Sequence[Variable],
 ) -> None:
-    """Store runtime preview payload and log label on the catalog."""
+    """Store runtime preview payload and log label on the catalog.
+
+    Security-tagged columns are masked before storing so their raw values never
+    reach the exported preview (safe by default, no option to enable).
+    """
     catalog._dataset_preview_labels[dataset_id] = label
+    preview = mask_security_columns(preview, variables)
     if preview is not None:
         catalog._dataset_previews[dataset_id] = preview
 
