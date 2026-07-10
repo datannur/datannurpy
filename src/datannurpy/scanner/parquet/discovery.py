@@ -94,7 +94,10 @@ def is_hive_partitioned(path: PurePath | str, fs: FileSystem | None = None) -> b
             return False
         for child_path in safe_iterdir_fs(fs, path_str):
             child_name = child_path.rsplit("/", 1)[-1]
-            if fs.isdir(child_path) and _HIVE_PARTITION_PATTERN.match(child_name):
+            # Match the cheap `key=value` name pattern before the network isdir, so a
+            # flat folder of data files costs no per-entry stat round-trip on remote
+            # backends (a data file never matches the Hive partition pattern).
+            if _HIVE_PARTITION_PATTERN.match(child_name) and fs.isdir(child_path):
                 if safe_glob_fs(fs, f"{child_path}/**/*.parquet") or safe_glob_fs(
                     fs, f"{child_path}/**/*.pq"
                 ):
@@ -106,7 +109,7 @@ def is_hive_partitioned(path: PurePath | str, fs: FileSystem | None = None) -> b
     if not path_obj.is_dir():
         return False
     for child in safe_iterdir_local(path_obj):
-        if child.is_dir() and _HIVE_PARTITION_PATTERN.match(child.name):
+        if _HIVE_PARTITION_PATTERN.match(child.name) and child.is_dir():
             if safe_glob_local(child, "**/*.parquet") or safe_glob_local(
                 child, "**/*.pq"
             ):
