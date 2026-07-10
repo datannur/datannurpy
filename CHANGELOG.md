@@ -1,5 +1,11 @@
 # datannurpy
 
+## 0.29.3 (2026-07-09)
+
+- fix: an invalid metadata table no longer silently discards *all* curation — validation is now per-table, so a broken `dataset.csv` is skipped while a valid `tag.csv`/`variable.csv` still apply (previously one bad file dropped every table)
+- add: `on_metadata_error` option (`"warn"` default, `"fail"`) — metadata loading stays continue-on-error, but `on_metadata_error: fail` makes the CLI exit `3` when any metadata table fails validation, so CI no longer publishes a catalogue stripped of its curation green; the default keeps today's tolerant exit `0`
+- perf: faster folder scans on network storage (SFTP, S3/GCS/Azure, NFS/SMB mounts) — discovery now lists each directory once and reads file dates from that listing, instead of a separate lookup per file. Biggest gain on incremental runs where nothing changed
+
 ## 0.29.2 (2026-07-09)
 
 - fix: security-tagged columns (passwords, hashes, secrets) are now masked in the exported preview — values replaced by a `•••` placeholder, matching the frequency/enumeration suppression that already hid them

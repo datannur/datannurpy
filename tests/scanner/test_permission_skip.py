@@ -24,6 +24,7 @@ from datannurpy.scanner.utils import (
     safe_glob_local,
     safe_is_dir_fs,
     safe_is_file_fs,
+    safe_iterdir_detailed_fs,
     safe_iterdir_fs,
     safe_iterdir_local,
     safe_walk_fs,
@@ -125,6 +126,39 @@ class TestSafeIterdirFs:
         fs.iterdir.side_effect = boom
         with pytest.raises(OSError, match="missing"):
             list(safe_iterdir_fs(fs, "/missing"))
+
+
+class TestSafeIterdirDetailedFs:
+    """fs.iterdir_detailed wrapper (same EACCES tolerance, carries entry info)."""
+
+    def test_yields_entries_normally(self) -> None:
+        fs = MagicMock()
+        fs.iterdir_detailed.return_value = iter([("/a/x", {"type": "file"})])
+        assert list(safe_iterdir_detailed_fs(fs, "/a")) == [("/a/x", {"type": "file"})]
+
+    def test_swallows_permission_error(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        fs = MagicMock()
+
+        def boom(_path: str) -> Any:
+            raise PermissionError("denied")
+            yield  # pragma: no cover
+
+        fs.iterdir_detailed.side_effect = boom
+        assert list(safe_iterdir_detailed_fs(fs, "/locked")) == []
+        assert "permission denied" in capsys.readouterr().err
+
+    def test_reraises_unrelated_oserror(self) -> None:
+        fs = MagicMock()
+
+        def boom(_path: str) -> Any:
+            raise OSError(errno.ENOENT, "missing")
+            yield  # pragma: no cover
+
+        fs.iterdir_detailed.side_effect = boom
+        with pytest.raises(OSError, match="missing"):
+            list(safe_iterdir_detailed_fs(fs, "/missing"))
 
 
 class TestSafeIterdirLocal:
@@ -260,8 +294,39 @@ class TestSafeGlobLocal:
             safe_glob_local(tmp_path, "*")
 
 
+class _FakeScandir:
+    """Minimal stand-in for an ``os.scandir`` result: iterable + context manager."""
+
+    def __init__(self, entries: list[Any]) -> None:
+        self._entries = entries
+
+    def __iter__(self) -> Any:
+        return iter(self._entries)
+
+    def __enter__(self) -> _FakeScandir:
+        return self
+
+    def __exit__(self, *_exc: Any) -> bool:
+        return False
+
+
+class _FakeEntry:
+    """Minimal ``os.DirEntry`` stand-in whose ``is_dir`` raises a chosen error."""
+
+    def __init__(self, path: str, error: OSError) -> None:
+        self.name = path.rsplit("/", 1)[-1]
+        self.path = path
+        self._error = error
+
+    def is_dir(self) -> bool:
+        raise self._error
+
+    def is_symlink(self) -> bool:  # pragma: no cover - not reached before is_dir
+        return False
+
+
 class TestSafeWalkLocal:
-    """os.walk-based recursive file iterator."""
+    """scandir-based recursive file iterator."""
 
     def test_walks_all_files(self, tmp_path: Path) -> None:
         (tmp_path / "a.txt").write_text("x")
@@ -295,30 +360,90 @@ class TestSafeWalkLocal:
     def test_reraises_unrelated_oserror(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        # Force os.walk to invoke onerror with a non-permission OSError.
-        def fake_walk(_root: Any, onerror: Any = None, **_kw: Any) -> Any:
-            onerror(OSError(errno.ENOENT, "missing"))
-            return iter([])
+        # A non-permission scandir failure aborts the walk instead of being skipped.
+        def boom(_root: Any) -> Any:
+            raise OSError(errno.ENOENT, "missing")
 
-        monkeypatch.setattr(os, "walk", fake_walk)
-        with pytest.raises(OSError):
+        monkeypatch.setattr(os, "scandir", boom)
+        with pytest.raises(OSError, match="missing"):
+            list(safe_walk_local(tmp_path))
+
+    def test_skips_entry_whose_stat_denies_permission(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        entry = _FakeEntry(str(tmp_path / "weird"), PermissionError("denied"))
+        monkeypatch.setattr(os, "scandir", lambda _p: _FakeScandir([entry]))
+        assert list(safe_walk_local(tmp_path)) == []
+        assert "permission denied" in capsys.readouterr().err
+
+    def test_reraises_entry_stat_unrelated_oserror(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        entry = _FakeEntry(str(tmp_path / "weird"), OSError(errno.ENOENT, "missing"))
+        monkeypatch.setattr(os, "scandir", lambda _p: _FakeScandir([entry]))
+        with pytest.raises(OSError, match="missing"):
             list(safe_walk_local(tmp_path))
 
 
 class TestSafeWalkFs:
-    """fs.iterdir-based recursive file iterator."""
+    """iterdir_detailed-based recursive file iterator."""
 
     def test_skips_directories_when_not_recursive(self) -> None:
         fs = MagicMock()
-        fs.iterdir.return_value = ["/data/subdir", "/data/file.csv"]
-        fs.isdir.side_effect = lambda path: path.endswith("subdir")
-        fs.isfile.side_effect = lambda path: path.endswith("file.csv")
+        fs.iterdir_detailed.return_value = [
+            ("/data/subdir", {"type": "directory"}),
+            ("/data/file.csv", {"type": "file"}),
+        ]
 
         assert list(safe_walk_fs(fs, "/data", recursive=False)) == ["/data/file.csv"]
 
+    def test_classifies_from_listing_without_per_entry_stat(self) -> None:
+        """The listing already carries the type, so a file/dir walk must not issue
+        an isdir/isfile round-trip per entry (the whole point on SFTP/NAS)."""
+        fs = MagicMock()
+        fs.iterdir_detailed.side_effect = lambda path: {
+            "/data": [
+                ("/data/sub", {"type": "directory"}),
+                ("/data/a.csv", {"type": "file"}),
+            ],
+            "/data/sub": [("/data/sub/b.csv", {"type": "file"})],
+        }[path]
+
+        assert sorted(safe_walk_fs(fs, "/data", recursive=True)) == [
+            "/data/a.csv",
+            "/data/sub/b.csv",
+        ]
+        fs.isdir.assert_not_called()
+        fs.isfile.assert_not_called()
+
+    def test_resolves_ambiguous_entry_type_with_stat(self) -> None:
+        """A symlink (or any type the listing does not mark dir/file) falls back to
+        isdir/isfile so its target is followed as before."""
+        fs = MagicMock()
+        fs.iterdir_detailed.return_value = [("/data/link", {"type": "link"})]
+        fs.isdir.return_value = False
+        fs.isfile.return_value = True
+
+        assert list(safe_walk_fs(fs, "/data", recursive=True)) == ["/data/link"]
+
+    def test_resolves_ambiguous_entry_to_dir_and_recurses(self) -> None:
+        """A symlink pointing at a directory is descended, as isdir did before."""
+        fs = MagicMock()
+        fs.iterdir_detailed.side_effect = lambda path: {
+            "/data": [("/data/link", {"type": "link"})],
+            "/data/link": [("/data/link/f.csv", {"type": "file"})],
+        }[path]
+        fs.isdir.return_value = True
+        fs.isfile.return_value = False
+
+        assert list(safe_walk_fs(fs, "/data", recursive=True)) == ["/data/link/f.csv"]
+
     def test_skips_entries_that_are_neither_dir_nor_file(self) -> None:
         fs = MagicMock()
-        fs.iterdir.return_value = ["/data/socket"]
+        fs.iterdir_detailed.return_value = [("/data/socket", {"type": "other"})]
         fs.isdir.return_value = False
         fs.isfile.return_value = False
 

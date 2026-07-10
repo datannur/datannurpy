@@ -10,7 +10,7 @@ from urllib.parse import urlsplit
 
 from .parquet import discover_parquet_datasets
 from .timeseries import group_time_series, series_match_normalized_path
-from .utils import find_files, get_mtime_timestamp, supported_format_for
+from .utils import find_files_with_mtime, get_mtime_timestamp, supported_format_for
 from ..utils import iso_to_timestamp
 
 if TYPE_CHECKING:
@@ -59,24 +59,34 @@ def discover_datasets(
     """Discover all datasets (parquet and other formats) in a directory."""
     result: list[DatasetInfo] = []
 
-    # 1. Discover Parquet datasets (Delta, Hive, Iceberg, simple)
-    parquet_result = discover_parquet_datasets(root, include, exclude, recursive, fs=fs)
+    # Walk the tree once, capturing each file's mtime from the same listing/scan.
+    files_with_mtime = find_files_with_mtime(root, include, exclude, recursive, fs=fs)
+    all_files = [path for path, _ in files_with_mtime]
+    mtime_by_path: dict[PurePath, int] = dict(files_with_mtime)
+
+    # 1. Discover Parquet datasets (Delta, Hive, Iceberg, simple) from that same list.
+    parquet_result = discover_parquet_datasets(root, fs=fs, files=all_files)
     parquet_files: set[PurePath] = set()
 
     for pq_info in parquet_result.datasets:
         parquet_files.update(pq_info.files)
+        # A simple parquet file's mtime is already in hand; a Delta/Hive/Iceberg
+        # dataset's path is a directory, whose mtime is not part of the file walk.
+        mtime = (
+            mtime_by_path[pq_info.path]
+            if pq_info.path in mtime_by_path
+            else get_mtime_timestamp(pq_info.path, fs=fs)
+        )
         result.append(
             DatasetInfo(
                 path=pq_info.path,
                 format=pq_info.type.value,
-                mtime=get_mtime_timestamp(pq_info.path, fs=fs),
+                mtime=mtime,
                 resource_count=len(pq_info.files),
             )
         )
 
-    # 2. Find non-parquet files (CSV, Excel, statistical)
-    all_files = find_files(root, include, exclude, recursive, fs=fs)
-
+    # 2. Non-parquet files (CSV, Excel, statistical)
     for file_path in all_files:
         if file_path in parquet_files:
             continue
@@ -100,7 +110,7 @@ def discover_datasets(
             DatasetInfo(
                 path=file_path,
                 format=fmt,
-                mtime=get_mtime_timestamp(file_path, fs=fs),
+                mtime=mtime_by_path[file_path],
                 resource_count=1,
             )
         )

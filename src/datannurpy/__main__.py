@@ -44,6 +44,18 @@ def main() -> None:
         )
         sys.exit(2)
 
+    # Metadata loading is continue-on-error the same way: invalid tables are
+    # skipped and valid ones still applied, exiting 0 by default. Set
+    # on_metadata_error="fail" to make invalid metadata fail the run (exit 3) so
+    # CI doesn't publish a catalogue stripped of its curation green.
+    if catalog.on_metadata_error == "fail" and catalog.metadata_errors:
+        print(
+            f"Error: {catalog.metadata_errors} metadata table(s) failed validation "
+            f"(on_metadata_error='fail')",
+            file=sys.stderr,
+        )
+        sys.exit(3)
+
 
 if __name__ == "__main__":  # pragma: no cover
     main()

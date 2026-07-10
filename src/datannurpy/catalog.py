@@ -28,6 +28,7 @@ if TYPE_CHECKING:
 
 Depth = Literal["dataset", "variable", "stat", "value"]
 OnScanError = Literal["warn", "fail"]
+OnMetadataError = Literal["warn", "fail"]
 
 
 def _normalize_metadata_paths(
@@ -84,6 +85,7 @@ class Catalog(DatannurDB):
         depth: Depth = "value",
         refresh: bool = False,
         on_scan_error: OnScanError = "warn",
+        on_metadata_error: OnMetadataError = "warn",
         freq_threshold: int = 100,
         auto_enumerations: bool = True,
         csv_encoding: str | None = None,
@@ -135,8 +137,8 @@ class Catalog(DatannurDB):
         # Ensure all schema columns exist on loaded tables
         if load_path is not None:
             for table in self._tables.values():
-                table._df = ensure_schema_columns(
-                    table._df, table._entity_type, skip=table.runtime_fields
+                table.df = ensure_schema_columns(
+                    table.df, table._entity_type, skip=table.runtime_fields
                 )
 
         # Config
@@ -147,6 +149,11 @@ class Catalog(DatannurDB):
                 f"on_scan_error must be 'warn' or 'fail', got {on_scan_error!r}"
             )
         self.on_scan_error: OnScanError = on_scan_error
+        if on_metadata_error not in get_args(OnMetadataError):
+            raise ConfigError(
+                f"on_metadata_error must be 'warn' or 'fail', got {on_metadata_error!r}"
+            )
+        self.on_metadata_error: OnMetadataError = on_metadata_error
         self.freq_threshold = freq_threshold
         self.auto_enumerations = auto_enumerations
         self.csv_encoding = csv_encoding
@@ -160,7 +167,7 @@ class Catalog(DatannurDB):
         self._now = _now if _now is not None else int(time.time())
 
         # Populate config table
-        self.config._df = self.config._df.clear()
+        self.config.df = self.config.df.clear()
         if app_config is not None:
             for key, val in app_config.items():
                 self.config.add(Config(id=key, value=val))
@@ -189,6 +196,10 @@ class Catalog(DatannurDB):
         self._run_scanned = 0
         self._run_unchanged = 0
         self._run_errors = 0
+        # Metadata loading is continue-on-error too: invalid tables are skipped
+        # while valid ones still apply. This tallies skipped tables so the CLI
+        # can fail the run under on_metadata_error="fail".
+        self._metadata_errors = 0
 
         self.enumeration_manager = EnumerationManager(self)
 
@@ -198,7 +209,7 @@ class Catalog(DatannurDB):
         # Dataset-only mode: clear variable-level tables
         if depth == "dataset":
             for t in [self.variable, self.enumeration, self.value, self.frequency]:
-                t._df = t._df.clear()
+                t.df = t.df.clear()
 
         # Add _seen runtime column to trackable tables
         for table in [
@@ -211,30 +222,30 @@ class Catalog(DatannurDB):
             self.concept,
         ]:
             if "_seen" in table.runtime_fields and not table.is_empty:
-                table._df = table._df.with_columns(pl.lit(False).alias("_seen"))
+                table.df = table.df.with_columns(pl.lit(False).alias("_seen"))
 
         # Restore _match_path (runtime field, not persisted).
         # data_path is the default match key, then metadata-loaded dataset.csv
         # rows override it with their resolved absolute scan path before any
         # incremental discovery runs.
         if not self.dataset.is_empty:
-            self.dataset._df = self.dataset._df.with_columns(
+            self.dataset.df = self.dataset.df.with_columns(
                 pl.col("data_path").alias("_match_path")
             )
-            self.dataset._df = self.dataset._df.with_columns(
+            self.dataset.df = self.dataset.df.with_columns(
                 pl.lit(effective_preview_rows(self.preview_rows, self.depth)).alias(
                     "preview_rows"
                 )
             )
 
-            if self.metadata_path is not None and "id" in self.dataset._df.columns:
+            if self.metadata_path is not None and "id" in self.dataset.df.columns:
                 from .add_metadata import _build_dataset_match_paths_by_id
 
                 metadata_match_paths = _build_dataset_match_paths_by_id(
                     self._loaded_metadata
                 )
                 if metadata_match_paths:
-                    self.dataset._df = self.dataset._df.with_columns(
+                    self.dataset.df = self.dataset.df.with_columns(
                         pl.col("id")
                         .map_elements(
                             lambda dataset_id: metadata_match_paths.get(
@@ -249,11 +260,11 @@ class Catalog(DatannurDB):
         self.enumeration_manager.rebuild_index()
 
         # Compute runtime id columns
-        self.value._df = compute_runtime_ids(
-            self.value._df, ["enumeration_id", "value"], build_value_id
+        self.value.df = compute_runtime_ids(
+            self.value.df, ["enumeration_id", "value"], build_value_id
         )
-        self.frequency._df = compute_runtime_ids(
-            self.frequency._df, ["variable_id", "value"], build_frequency_id
+        self.frequency.df = compute_runtime_ids(
+            self.frequency.df, ["variable_id", "value"], build_frequency_id
         )
 
     def _tally_scan(self, scanned: int, unchanged: int, errors: int = 0) -> None:
@@ -271,6 +282,17 @@ class Catalog(DatannurDB):
         surface partial failures — see ``on_scan_error``.
         """
         return self._run_errors
+
+    @property
+    def metadata_errors(self) -> int:
+        """Number of metadata tables that failed validation this run.
+
+        Metadata loading is continue-on-error: an invalid table is logged and
+        skipped while valid tables are still applied, rather than discarding all
+        curation. This counter lets a caller (e.g. the CLI) surface those
+        failures — see ``on_metadata_error``.
+        """
+        return self._metadata_errors
 
     def __repr__(self) -> str:
         return (

@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
+from typing import Any
+
+import pytest
 
 from datannurpy import Catalog
 from datannurpy.scanner.discovery import (
@@ -12,6 +16,50 @@ from datannurpy.scanner.discovery import (
     compute_scan_plan,
     discover_datasets,
 )
+
+
+class TestLocalDiscoveryIsSingleWalkNoPerFileStat:
+    """The local discovery walks each directory once and reads mtime from the
+    scandir entry — no double walk, no per-file stat (matters on NFS/SMB mounts)."""
+
+    def test_lists_each_dir_once_and_captures_mtime_from_scandir(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        for sub in ("", "a", "b", "b/deep"):
+            base = tmp_path / sub
+            base.mkdir(parents=True, exist_ok=True)
+            for i in range(2):
+                (base / f"f{i}.csv").write_text("x,y\n1,2")
+
+        scandir_dirs: list[str] = []
+        real_scandir = os.scandir
+        real_path_stat = Path.stat
+        stat_calls = 0
+
+        def counting_scandir(path: str | os.PathLike[str]) -> Any:
+            scandir_dirs.append(str(path))
+            return real_scandir(path)
+
+        def counting_path_stat(self: Path, *a: Any, **k: Any) -> Any:
+            nonlocal stat_calls
+            stat_calls += 1
+            return real_path_stat(self, *a, **k)
+
+        monkeypatch.setattr(os, "scandir", counting_scandir)
+        monkeypatch.setattr(Path, "stat", counting_path_stat)
+
+        result = discover_datasets(tmp_path, fs=None)
+
+        assert len(result.datasets) == 8
+        # 4 directories, each listed exactly once (no second walk for parquet).
+        assert len(scandir_dirs) == 4
+        assert len(set(scandir_dirs)) == 4
+        # mtime came from the scandir DirEntry, not a per-file Path.stat.
+        assert stat_calls == 0
+        # And the captured mtimes are correct.
+        monkeypatch.setattr(Path, "stat", real_path_stat)
+        for ds in result.datasets:
+            assert ds.mtime == int(Path(ds.path).stat().st_mtime)
 
 
 def _info(path: Path, **kwargs: object) -> DatasetInfo:

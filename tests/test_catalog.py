@@ -37,7 +37,7 @@ class TestCatalogExtraColumns:
         """Extra localized columns should not break typed entity materialization."""
         catalog = Catalog()
         catalog.folder.add(Folder(id="f1", name="Folder"))
-        catalog.folder._df = catalog.folder._df.with_columns(
+        catalog.folder.df = catalog.folder.df.with_columns(
             pl.lit("Dossier").alias("name:fr")
         )
 

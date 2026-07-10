@@ -689,7 +689,7 @@ def _merge_localized_fields(
     if localized_df.is_empty():  # pragma: no cover - defensive after records guard
         return
 
-    df = catalog_table._df
+    df = catalog_table.df
     for column in localized_columns:
         if column not in df.columns:
             df = df.with_columns(pl.lit(None, dtype=pl.Utf8).alias(column))
@@ -708,7 +708,7 @@ def _merge_localized_fields(
             .alias(column)
         ).drop(update_column)
 
-    catalog_table._df = joined
+    catalog_table.df = joined
 
 
 def _string_keyed_rows(rows: list[dict[Hashable, Any]]) -> list[dict[str, Any]]:
@@ -723,7 +723,7 @@ def _existing_localized_rows(
     ids: set[str],
 ) -> list[dict[str, Any]]:
     """Return localized values already present on rows about to be replaced."""
-    df = catalog_table._df
+    df = catalog_table.df
     localized_columns = _localized_field_columns(df.columns, entity_class)
     if not localized_columns or df.is_empty():
         return []
@@ -1216,12 +1216,26 @@ def _apply_tables(
     if not tables:
         return
 
-    errors = _validate_all_tables(catalog, tables)
-    if errors:
-        s = "s" if len(errors) > 1 else ""
-        log_warn(f"Invalid metadata - {len(errors)} error{s}:", quiet)
-        for err in errors:
-            print(f"    • {err}", file=sys.stderr)
+    # Validate per table and skip only the invalid ones: a single broken file
+    # must not silently discard unrelated, valid curation. Each skipped table is
+    # tallied into catalog.metadata_errors so the CLI can fail the run when
+    # on_metadata_error="fail" (otherwise the run stays tolerant and exits 0).
+    valid_tables: dict[str, tuple[pd.DataFrame, str]] = {}
+    for entity_name, (table, file_name) in tables.items():
+        errors = _validate_entity_table(catalog, entity_name, table, file_name)
+        if errors:
+            s = "s" if len(errors) > 1 else ""
+            log_warn(
+                f"Invalid metadata in {file_name} - {len(errors)} error{s}:", quiet
+            )
+            for err in errors:
+                print(f"    • {err}", file=sys.stderr)
+            catalog._metadata_errors += 1
+            continue
+        valid_tables[entity_name] = (table, file_name)
+
+    tables = valid_tables
+    if not tables:
         return
 
     _merge_tombstones(

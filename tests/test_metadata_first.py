@@ -51,7 +51,7 @@ class TestMatchPathRuntimeField:
         csv = _write_csv(tmp_path)
         catalog = Catalog()
         catalog.add_folder(tmp_path, metadata=EntityMetadata(id="src", name="Src"))
-        df = catalog.dataset._df
+        df = catalog.dataset.df
         assert "_match_path" in df.columns
         match_paths = df["_match_path"].to_list()
         assert str(csv) in match_paths

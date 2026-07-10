@@ -113,7 +113,7 @@ add:
   - folder: ./data
 ```
 
-Most projects start with this flow: choose the sources in `add`, choose a [scan depth](/scan-depth), optionally enrich the catalog with [manual metadata](/metadata), then export either a complete app or JSON metadata.
+Most projects start with this flow: choose the sources in `add`, choose a [scan depth](/scan-depth), optionally enrich the catalog with [manual metadata](/metadata), then export either a complete app or JSON metadata. Whether the output is a disposable CI artefact or a long-lived in-place installation shapes what you may edit — see [Catalog lifecycle](/output#catalog-lifecycle).
 
 Or use the Python API:
 
