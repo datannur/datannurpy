@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import shutil
 from collections.abc import Sequence
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Union, cast
 
@@ -20,6 +21,11 @@ if TYPE_CHECKING:
 
     from .catalog import Catalog
     from .schema import Dataset, Variable
+
+# Preview export is O(datasets) independent file writes with no shared state, so on a
+# high-latency mount (NAS/SMB) overlapping them recovers the dominant part of the
+# export wall-clock. Bounded so a shared filesystem is not saturated.
+_PREVIEW_WRITE_WORKERS = 8
 
 PreviewRows = Union[int, Literal[False], None]
 
@@ -238,30 +244,60 @@ def sync_preview_exports(catalog: Catalog, output_dir: str | Path) -> set[str]:
     )
 
     preview_ids: set[str] = set()
+    to_write: list[tuple[str, pl.DataFrame]] = []
     for dataset_id in sorted(eligible_ids):
         preview = catalog._dataset_previews.get(dataset_id)
         if preview is not None:
-            if not preview_dir_exists:
-                preview_dir.mkdir(parents=True, exist_ok=True)
-                preview_dir_exists = True
-            dataset = datasets_by_id[dataset_id]
-            try:
-                write_table_json(preview, preview_dir / f"{dataset_id}.json")
-                write_table_jsonjs(
-                    preview, dataset_id, preview_dir / f"{dataset_id}.json.js"
-                )
-                preview_ids.add(dataset_id)
-            except Exception as exc:  # pragma: no cover - filesystem/json edge cases
-                label = _preview_label(catalog, dataset)
-                log_warn(f"{label}: preview export skipped ({exc})", catalog.quiet)
-                (preview_dir / f"{dataset_id}.json").unlink(missing_ok=True)
-                (preview_dir / f"{dataset_id}.json.js").unlink(missing_ok=True)
+            to_write.append((dataset_id, preview))
         elif dataset_id in remaining_existing_ids:
             preview_ids.add(dataset_id)
+
+    if to_write:
+        preview_dir.mkdir(parents=True, exist_ok=True)
+        preview_dir_exists = True
+        preview_ids.update(
+            _write_previews(catalog, preview_dir, datasets_by_id, to_write)
+        )
 
     if preview_dir_exists and not preview_ids:
         preview_dir.rmdir()
     return preview_ids
+
+
+def _write_previews(
+    catalog: Catalog,
+    preview_dir: Path,
+    datasets_by_id: dict[str, Any],
+    to_write: list[tuple[str, pl.DataFrame]],
+) -> set[str]:
+    """Write the preview JSON/JSON-JS pairs, returning the ids actually written.
+
+    The writes are independent files with no shared state, so they run in parallel
+    to overlap write latency on a high-latency mount; the export's dominant cost on
+    NAS/SMB is these O(datasets) writes.
+    """
+
+    def _write_one(dataset_id: str, preview: pl.DataFrame) -> str | None:
+        try:
+            write_table_json(preview, preview_dir / f"{dataset_id}.json")
+            write_table_jsonjs(
+                preview, dataset_id, preview_dir / f"{dataset_id}.json.js"
+            )
+            return dataset_id
+        except Exception as exc:  # pragma: no cover - filesystem/json edge cases
+            label = _preview_label(catalog, datasets_by_id[dataset_id])
+            log_warn(f"{label}: preview export skipped ({exc})", catalog.quiet)
+            (preview_dir / f"{dataset_id}.json").unlink(missing_ok=True)
+            (preview_dir / f"{dataset_id}.json.js").unlink(missing_ok=True)
+            return None
+
+    workers = min(_PREVIEW_WRITE_WORKERS, len(to_write))
+    if workers <= 1:
+        results = [_write_one(did, preview) for did, preview in to_write]
+    else:
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            results = list(executor.map(lambda item: _write_one(*item), to_write))
+    return {r for r in results if r is not None}
 
 
 def apply_preview_flags(catalog: Catalog, preview_ids: set[str]) -> None:
