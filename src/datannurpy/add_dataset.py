@@ -259,6 +259,7 @@ def add_dataset(
         label=path_name,
         current_signature=current_signature,
     ):
+        catalog._tally_scan(0, 1)
         return
 
     # Build dataset ID and default name from a clean segment (URL query string
@@ -306,6 +307,7 @@ def add_dataset(
             schema_signature=current_signature,
         )
         catalog.dataset.add(dataset)
+        catalog._tally_scan(1, 0)
         log_done(path_name, q, start_time)
         return
 
@@ -361,6 +363,7 @@ def add_dataset(
         label=path_name,
         auto_enumerations=resolved_auto_enumerations,
     )
+    catalog._tally_scan(1, 0)
 
     # Log result
     var_count = len(result.variables)
@@ -413,6 +416,7 @@ def _add_parquet_directory(
                 preview_rows=preview_rows,
             )
             catalog.enumeration_manager.mark_dataset_seen(existing.id)
+            catalog._tally_scan(0, 1)
             log_skip(dir_name, quiet)
             return
         remove_dataset_cascade(catalog, existing)
@@ -455,6 +459,7 @@ def _add_parquet_directory(
             match_path=match_path,
         )
         catalog.dataset.add(dataset)
+        catalog._tally_scan(1, 0)
         log_done(dir_name, quiet, start_time)
         return
 
@@ -509,6 +514,7 @@ def _add_parquet_directory(
             auto_enumerations=auto_enumerations,
         )
     catalog.variable.add_all(variables)
+    catalog._tally_scan(1, 0)
 
     # Log result
     var_count = len(variables)

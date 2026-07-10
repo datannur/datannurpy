@@ -137,6 +137,7 @@ def add_geodatabase(
                 quiet=q,
                 label=label,
             ):
+                catalog._tally_scan(0, 1)
                 continue
             variables, nb_row, freq_table, geo, preview = scan_geo_vector(
                 source,
@@ -173,4 +174,5 @@ def add_geodatabase(
                 label=label,
                 auto_enumerations=resolved_auto_enumerations,
             )
+            catalog._tally_scan(1, 0)
     log_done(f"{gdb_name} ({len(layers)} layers)", q, start_time)
