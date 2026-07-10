@@ -1,4 +1,7 @@
-# Hybrid demo: scan the local data/ folder and merge it with the editorial
+# Mode: hybrid — regenerated output, but merges in-app editorial metadata
+# (db-source) and refreshes bundled app files (see docs: Catalog lifecycle)
+#
+# Scan the local data/ folder and merge it with the editorial
 # metadata shipped with the datannur front app (rich descriptions, tags,
 # Organizations, concepts, etc.), plus a small local overlay.
 #

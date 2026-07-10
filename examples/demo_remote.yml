@@ -1,3 +1,4 @@
+# Mode: artefact — disposable output, regenerated each run (see docs: Catalog lifecycle)
 app_path: ./output_remote
 metadata_path: ../data/metadata
 env_file: ../.env
