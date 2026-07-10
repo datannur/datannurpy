@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.29.4 (2026-07-10)
+
+- fix: geo scans no longer emit polars' `geoarrow.wkb` extension-type warning — the annotation is stripped at read time, keeping the raw WKB binary the pipeline expects and immunizing against polars 2.0's `load_as_extension` default; the `POLARS_UNKNOWN_EXTENSION_TYPE_BEHAVIOR` workaround is no longer needed
+
 ## 0.29.3 (2026-07-09)
 
 - fix: an invalid metadata table no longer silently discards *all* curation — validation is now per-table, so a broken `dataset.csv` is skipped while a valid `tag.csv`/`variable.csv` still apply (previously one bad file dropped every table)

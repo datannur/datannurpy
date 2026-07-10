@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import json
 import sys
+import warnings
 from pathlib import Path
 from typing import Any
 
+import pyarrow as pa
 import pytest
 
 pytest.importorskip("pyogrio", reason="pyogrio (geo extra) not installed")
@@ -14,7 +16,7 @@ pytest.importorskip("pyogrio", reason="pyogrio (geo extra) not installed")
 from pyogrio.raw import read_arrow, write_arrow
 
 from datannurpy import Catalog
-from datannurpy.scanner.geo_vector import scan_geo_vector
+from datannurpy.scanner.geo_vector import _extension_types_to_storage, scan_geo_vector
 
 _SQUARE = [[[7.4, 46.0], [7.7, 46.0], [7.7, 46.2], [7.4, 46.2], [7.4, 46.0]]]
 # A square in Swiss LV95 (EPSG:2056) metres and its WGS84 reprojection.
@@ -237,3 +239,57 @@ class TestScanGeoVector:
         monkeypatch.setitem(sys.modules, "pyogrio", None)
         with pytest.raises(ImportError, match="datannurpy\\[geo\\]"):
             scan_geo_vector("any.geojson", dataset_id="ds")
+
+
+class TestGeoArrowExtensionType:
+    """The ``geoarrow.wkb`` annotation pyogrio puts on the geometry column must not
+    reach polars: it warns on the unknown extension type (polars ≥ 1.40) and will
+    materialize it as an extension dtype in polars 2.0, breaking the WKB pipeline."""
+
+    def test_scan_emits_no_extension_warning(self, tmp_path: Path) -> None:
+        src = tmp_path / "x.geojson"
+        _write_geojson(src, [_polygon("a", _SQUARE)])
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error", message=".*[Ee]xtension type.*")
+            *_, preview = scan_geo_vector(
+                src, dataset_id="ds", preview_rows=5, return_preview=True
+            )
+        assert preview is not None
+
+    def test_geometry_extension_annotation_is_stripped(self, tmp_path: Path) -> None:
+        src = tmp_path / "x.geojson"
+        _write_geojson(src, [_polygon("a", _SQUARE)])
+        _, table = read_arrow(src)
+        geom_field = table.schema.field("wkb_geometry")
+        assert b"ARROW:extension:name" in (geom_field.metadata or {})  # precondition
+        stripped = _extension_types_to_storage(table)
+        for field in stripped.schema:
+            assert b"ARROW:extension:name" not in (field.metadata or {})
+        # Values are untouched — the WKB bytes are the storage the pipeline expects.
+        assert stripped["wkb_geometry"].to_pylist() == table["wkb_geometry"].to_pylist()
+
+    def test_plain_table_is_returned_unchanged(self) -> None:
+        table = pa.table({"name": ["a"], "geom": [b"\x01"]})
+        assert _extension_types_to_storage(table) is table
+
+    def test_registered_extension_type_is_cast_to_storage(self) -> None:
+        class _WkbLike(pa.ExtensionType):
+            def __init__(self) -> None:
+                super().__init__(pa.binary(), "test.wkb_like")
+
+            def __arrow_ext_serialize__(self) -> bytes:
+                return b""
+
+            @classmethod
+            def __arrow_ext_deserialize__(
+                cls, storage_type: pa.DataType, serialized: bytes
+            ) -> _WkbLike:
+                return cls()
+
+        storage = pa.array([b"\x01\x02", None], pa.binary())
+        ext_array = pa.ExtensionArray.from_storage(_WkbLike(), storage)
+        table = pa.table({"geom": ext_array, "name": ["a", "b"]})
+        stripped = _extension_types_to_storage(table)
+        assert stripped.schema.field("geom").type == pa.binary()
+        assert stripped["geom"].to_pylist() == [b"\x01\x02", None]
+        assert stripped["name"].to_pylist() == ["a", "b"]

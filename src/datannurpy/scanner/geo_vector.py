@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import ibis
+import pyarrow as pa
 
 from ..preview import preview_from_ibis
 from ..utils import log_error
@@ -28,6 +29,41 @@ _INSTALL_HINT = (
     "pyogrio is required to read vector geo formats. "
     "Install it with: pip install datannurpy[geo]"
 )
+
+
+def _extension_types_to_storage(table: pa.Table) -> pa.Table:
+    """Replace Arrow extension-typed columns by their plain storage type.
+
+    pyogrio annotates the geometry column as ``geoarrow.wkb``; downstream the
+    pipeline wants the raw WKB binary, and polars warns on the unknown extension
+    type today and will materialize it as an extension dtype in polars 2.0.
+    Stripping the annotation here pins the storage behavior regardless of the
+    polars version and of whether the geoarrow types are registered.
+    """
+    fields: list[pa.Field] = []
+    columns: list[pa.ChunkedArray] = []
+    changed = False
+    for i, field in enumerate(table.schema):
+        column = table.column(i)
+        if isinstance(field.type, pa.ExtensionType):
+            columns.append(
+                pa.chunked_array(
+                    [chunk.storage for chunk in column.chunks],
+                    type=field.type.storage_type,
+                )
+            )
+            fields.append(pa.field(field.name, field.type.storage_type))
+            changed = True
+            continue
+        if field.metadata and b"ARROW:extension:name" in field.metadata:
+            field = field.remove_metadata()
+            changed = True
+        fields.append(field)
+        columns.append(column)
+    if not changed:
+        return table
+    schema = pa.schema(fields, metadata=table.schema.metadata)
+    return pa.Table.from_arrays(columns, schema=schema)
 
 
 def list_geo_layers(path: str | Path) -> list[str]:
@@ -70,6 +106,8 @@ def scan_geo_vector(
     except Exception as e:
         log_error(label, e, quiet)
         return [], 0, None, None, None
+
+    arrow = _extension_types_to_storage(arrow)
 
     table = ibis.memtable(arrow)
     nb_row = arrow.num_rows
