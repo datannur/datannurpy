@@ -1546,6 +1546,25 @@ class TestAddMetadataIntegration:
         assert "Invalid metadata" in captured.err
         assert len(catalog.variable.all()) == 0  # Not processed
 
+    def test_add_metadata_skips_only_invalid_table(self, tmp_path: Path, capsys):
+        """A broken table is skipped while valid tables still apply, and the
+        failure is tallied into catalog.metadata_errors."""
+        (tmp_path / "tag.csv").write_text("id,name\nt1,Tag One\n")
+        # dataset.csv is missing the required 'id' column -> invalid.
+        (tmp_path / "dataset.csv").write_text("name,description\nDS,No id here\n")
+
+        catalog = Catalog()
+        add_metadata(catalog, tmp_path, quiet=False)
+
+        captured = capsys.readouterr()
+        assert "Invalid metadata in dataset.csv" in captured.err
+        # Valid table is applied despite the broken sibling.
+        assert any(t.id == "t1" for t in catalog.tag.all())
+        # Broken table is skipped, not applied.
+        assert len(catalog.dataset.all()) == 0
+        # Exactly one table failed validation.
+        assert catalog.metadata_errors == 1
+
     def test_add_metadata_quiet_mode(self, tmp_path: Path, capsys):
         """Should suppress output in quiet mode."""
         (tmp_path / "folder.csv").write_text("id,name\nf1,Folder1\n")

@@ -1216,12 +1216,26 @@ def _apply_tables(
     if not tables:
         return
 
-    errors = _validate_all_tables(catalog, tables)
-    if errors:
-        s = "s" if len(errors) > 1 else ""
-        log_warn(f"Invalid metadata - {len(errors)} error{s}:", quiet)
-        for err in errors:
-            print(f"    • {err}", file=sys.stderr)
+    # Validate per table and skip only the invalid ones: a single broken file
+    # must not silently discard unrelated, valid curation. Each skipped table is
+    # tallied into catalog.metadata_errors so the CLI can fail the run when
+    # on_metadata_error="fail" (otherwise the run stays tolerant and exits 0).
+    valid_tables: dict[str, tuple[pd.DataFrame, str]] = {}
+    for entity_name, (table, file_name) in tables.items():
+        errors = _validate_entity_table(catalog, entity_name, table, file_name)
+        if errors:
+            s = "s" if len(errors) > 1 else ""
+            log_warn(
+                f"Invalid metadata in {file_name} - {len(errors)} error{s}:", quiet
+            )
+            for err in errors:
+                print(f"    • {err}", file=sys.stderr)
+            catalog._metadata_errors += 1
+            continue
+        valid_tables[entity_name] = (table, file_name)
+
+    tables = valid_tables
+    if not tables:
         return
 
     _merge_tombstones(

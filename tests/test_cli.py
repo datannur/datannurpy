@@ -130,6 +130,67 @@ def test_main_invalid_on_scan_error(tmp_path: Path, capsys) -> None:
     assert "on_scan_error must be 'warn' or 'fail'" in capsys.readouterr().err
 
 
+def _write_metadata_config(
+    tmp_path: Path, *, on_metadata_error: str | None = None
+) -> tuple[Path, Path]:
+    """Config with a valid tag.csv and a broken dataset.csv (missing id column)."""
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "good.csv").write_text("a,b\n1,2\n")
+
+    meta_dir = tmp_path / "metadata"
+    meta_dir.mkdir()
+    (meta_dir / "tag.csv").write_text("id,name\nt1,Tag One\n")
+    # Missing the required 'id' column -> validation error for this table only.
+    (meta_dir / "dataset.csv").write_text("name,description\nDS,No id here\n")
+
+    output = tmp_path / "output"
+    # as_posix() so a Windows path's backslashes don't become YAML escapes.
+    lines = [
+        f'app_path: "{output.as_posix()}"',
+        f'metadata_path: "{meta_dir.as_posix()}"',
+    ]
+    if on_metadata_error is not None:
+        lines.append(f'on_metadata_error: "{on_metadata_error}"')
+    lines += ["add:", "  - type: folder", f'    path: "{data_dir.as_posix()}"']
+    config = tmp_path / "test.yml"
+    config.write_text("\n".join(lines) + "\n")
+    return config, output
+
+
+def test_main_invalid_metadata_default_tolerant(tmp_path: Path) -> None:
+    """Default (on_metadata_error='warn'): a broken metadata table is skipped,
+    valid tables still apply, and the run exits 0."""
+    config, output = _write_metadata_config(tmp_path)
+    with patch.object(sys, "argv", ["datannurpy", str(config)]):
+        main()  # no SystemExit — tolerant by default
+    tags = json.loads((output / "data" / "db" / "tag.json").read_text())
+    assert any(t.get("id") == "t1" for t in tags)
+
+
+def test_main_invalid_metadata_fail_exits_3(tmp_path: Path, capsys) -> None:
+    """on_metadata_error='fail': a broken metadata table exits 3, but valid
+    tables are still applied (continue-on-error preserved)."""
+    config, output = _write_metadata_config(tmp_path, on_metadata_error="fail")
+    with patch.object(sys, "argv", ["datannurpy", str(config)]):
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+    assert exc_info.value.code == 3
+    assert "failed validation" in capsys.readouterr().err
+    tags = json.loads((output / "data" / "db" / "tag.json").read_text())
+    assert any(t.get("id") == "t1" for t in tags)
+
+
+def test_main_invalid_on_metadata_error(tmp_path: Path, capsys) -> None:
+    """An invalid on_metadata_error value is a ConfigError (exit 1)."""
+    config, _ = _write_metadata_config(tmp_path, on_metadata_error="bogus")
+    with patch.object(sys, "argv", ["datannurpy", str(config)]):
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 1
+    assert "on_metadata_error must be 'warn' or 'fail'" in capsys.readouterr().err
+
+
 def test_main_invalid_config_type(tmp_path: Path, capsys) -> None:
     """main() shows clean error for invalid config type."""
     config = tmp_path / "test.yml"

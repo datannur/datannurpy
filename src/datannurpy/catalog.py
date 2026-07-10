@@ -28,6 +28,7 @@ if TYPE_CHECKING:
 
 Depth = Literal["dataset", "variable", "stat", "value"]
 OnScanError = Literal["warn", "fail"]
+OnMetadataError = Literal["warn", "fail"]
 
 
 def _normalize_metadata_paths(
@@ -84,6 +85,7 @@ class Catalog(DatannurDB):
         depth: Depth = "value",
         refresh: bool = False,
         on_scan_error: OnScanError = "warn",
+        on_metadata_error: OnMetadataError = "warn",
         freq_threshold: int = 100,
         auto_enumerations: bool = True,
         csv_encoding: str | None = None,
@@ -147,6 +149,11 @@ class Catalog(DatannurDB):
                 f"on_scan_error must be 'warn' or 'fail', got {on_scan_error!r}"
             )
         self.on_scan_error: OnScanError = on_scan_error
+        if on_metadata_error not in get_args(OnMetadataError):
+            raise ConfigError(
+                f"on_metadata_error must be 'warn' or 'fail', got {on_metadata_error!r}"
+            )
+        self.on_metadata_error: OnMetadataError = on_metadata_error
         self.freq_threshold = freq_threshold
         self.auto_enumerations = auto_enumerations
         self.csv_encoding = csv_encoding
@@ -189,6 +196,10 @@ class Catalog(DatannurDB):
         self._run_scanned = 0
         self._run_unchanged = 0
         self._run_errors = 0
+        # Metadata loading is continue-on-error too: invalid tables are skipped
+        # while valid ones still apply. This tallies skipped tables so the CLI
+        # can fail the run under on_metadata_error="fail".
+        self._metadata_errors = 0
 
         self.enumeration_manager = EnumerationManager(self)
 
@@ -271,6 +282,17 @@ class Catalog(DatannurDB):
         surface partial failures — see ``on_scan_error``.
         """
         return self._run_errors
+
+    @property
+    def metadata_errors(self) -> int:
+        """Number of metadata tables that failed validation this run.
+
+        Metadata loading is continue-on-error: an invalid table is logged and
+        skipped while valid tables are still applied, rather than discarding all
+        curation. This counter lets a caller (e.g. the CLI) surface those
+        failures — see ``on_metadata_error``.
+        """
+        return self._metadata_errors
 
     def __repr__(self) -> str:
         return (
