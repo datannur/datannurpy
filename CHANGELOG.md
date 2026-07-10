@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.29.5 (2026-07-10)
+
+- fix: the run `[summary]` now counts `add_dataset` and `add_geodatabase` sources — a dataset added individually (single file, HTTP URL, zipped Shapefile, partitioned directory, `.gdb` layer) was missing from the `scanned`/`unchanged` tallies, understating them on incremental runs
+
 ## 0.29.4 (2026-07-10)
 
 - fix: geo scans no longer emit polars' `geoarrow.wkb` extension-type warning — the annotation is stripped at read time, keeping the raw WKB binary the pipeline expects and immunizing against polars 2.0's `load_as_extension` default; the `POLARS_UNKNOWN_EXTENSION_TYPE_BEHAVIOR` workaround is no longer needed

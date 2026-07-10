@@ -363,6 +363,34 @@ class TestAddDatasetDepth:
         assert catalog.dataset.all()[0].nb_row is None  # No row count in schema mode
 
 
+class TestRunTally:
+    """Every add_dataset outcome feeds the run bilan, like add_folder/add_database."""
+
+    def test_file_scanned_then_unchanged(self, tmp_path: Path) -> None:
+        src = tmp_path / "single.csv"
+        src.write_text("a,b\n1,2\n")
+        catalog = Catalog(quiet=True)
+        catalog.add_dataset(src)
+        catalog.add_dataset(src)  # unchanged → skipped
+        assert (catalog._run_scanned, catalog._run_unchanged) == (1, 1)
+
+    def test_dataset_depth_counts_as_scanned(self) -> None:
+        catalog = Catalog(quiet=True)
+        catalog.add_dataset(CSV_DIR / "employees.csv", depth="dataset")
+        assert (catalog._run_scanned, catalog._run_unchanged) == (1, 0)
+
+    def test_partitioned_directory_scanned_then_unchanged(self, tmp_path: Path) -> None:
+        hive_dir = tmp_path / "sales"
+        (hive_dir / "year=2024").mkdir(parents=True)
+        pq.write_table(
+            pa.table({"id": [1, 2]}), hive_dir / "year=2024" / "part-0.parquet"
+        )
+        catalog = Catalog(quiet=True)
+        catalog.add_dataset(hive_dir)
+        catalog.add_dataset(hive_dir)  # unchanged → skipped
+        assert (catalog._run_scanned, catalog._run_unchanged) == (1, 1)
+
+
 class TestRemoteStorage:
     """Test remote storage URL handling."""
 

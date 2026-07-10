@@ -239,6 +239,30 @@ class TestRunBilan:
         Catalog().export_db(tmp_path / "empty", quiet=False)
         assert "[summary]" not in capsys.readouterr().err
 
+    def test_bilan_counts_add_dataset_sources(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        """add_dataset sources count in the bilan, scanned and unchanged alike."""
+        data = self._make_data(tmp_path)
+        single = tmp_path / "single.csv"
+        single.write_text("m,n\n1,2\n")
+
+        first = Catalog(app_path=tmp_path / "app")
+        first.add_folder(data)
+        first.add_dataset(str(single))
+        first.export_app()
+        err = capsys.readouterr().err
+        assert "4 datasets scanned this run" in err
+
+        # Incremental re-run: the dataset: source must count as unchanged too.
+        second = Catalog(app_path=tmp_path / "app")
+        second.add_folder(data)
+        second.add_dataset(str(single))
+        second.export_app()
+        err = capsys.readouterr().err
+        assert "4 datasets unchanged this run" in err
+        assert "scanned" not in err
+
 
 class TestCopyAssetsHelpers:
     """Test copy_assets helper functions."""

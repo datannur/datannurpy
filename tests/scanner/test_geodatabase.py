@@ -110,6 +110,8 @@ class TestAddGeodatabase:
         catalog.add_geodatabase(str(tmp_path / "store.gdb"))
         catalog.add_geodatabase(str(tmp_path / "store.gdb"))  # unchanged → skipped
         assert [d.name for d in catalog.dataset.all()] == ["roads"]
+        # Both layer outcomes feed the run bilan: 1 scanned, then 1 unchanged.
+        assert (catalog._run_scanned, catalog._run_unchanged) == (1, 1)
 
     def test_not_a_geodatabase_path(self, tmp_path: Path) -> None:
         plain = tmp_path / "plain"
