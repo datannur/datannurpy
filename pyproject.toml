@@ -121,7 +121,7 @@ extend-select = ["B", "C4", "C90", "PERF", "RET", "SIM"]
 ignore = ["PERF203", "B009"]
 
 [tool.ruff.lint.mccabe]
-# Ratchet: existing offenders carry an explicit `# noqa: C901`; lower as they get refactored
+# Every function passes without noqa; lower the ceiling as the worst ones get simplified
 max-complexity = 20
 
 [tool.hatch.build.targets.wheel]

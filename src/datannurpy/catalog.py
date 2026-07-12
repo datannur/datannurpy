@@ -76,7 +76,7 @@ class Catalog(DatannurDB):
     finalize = finalize
 
     @validate_params
-    def __init__(  # noqa: C901 — ratchet: refactor pending
+    def __init__(
         self,
         *,
         app_path: str | Path | None = None,
@@ -98,48 +98,7 @@ class Catalog(DatannurDB):
         log_file: str | Path | None = None,
         _now: int | None = None,
     ) -> None:
-        # Paths. The persistent db lives under app_path/data/db for app exports,
-        # or directly at output_dir for db-only exports — either way db_path is
-        # both the previous-state source (incremental scans) and export target.
-        self.app_path = Path(app_path) if app_path is not None else None
-        if self.app_path is not None:
-            self.db_path: Path | None = self.app_path / "data" / "db"
-        elif output_dir is not None:
-            self.db_path = Path(output_dir)
-        else:
-            self.db_path = None
-
-        # Load the scan-derived base if present (skip when refresh=True: full
-        # rescan). The incremental base is the pristine _scan cache, never the
-        # previously-exported final DB — that DB already carries metadata overlays
-        # and reusing it as a base is what left stale values behind.
-        load_path: str | None = None
-        if not refresh:
-            load_path = scan_cache_load_path(self.db_path)
-
-        try:
-            super().__init__(load_path)
-        except Exception:
-            if load_path is not None:
-                import warnings
-
-                warnings.warn(
-                    f"Could not load the scan cache at {load_path}. "
-                    "The schema may have changed after a datannurpy upgrade. "
-                    "Starting fresh (use refresh=True to avoid this warning).",
-                    stacklevel=2,
-                )
-                load_path = None
-                super().__init__(None)
-            else:
-                raise
-
-        # Ensure all schema columns exist on loaded tables
-        if load_path is not None:
-            for table in self._tables.values():
-                table.df = ensure_schema_columns(
-                    table.df, table._entity_type, skip=table.runtime_fields
-                )
+        load_path = self._init_db_base(app_path, output_dir, refresh)
 
         # Config
         self.depth: Depth = depth
@@ -203,11 +162,66 @@ class Catalog(DatannurDB):
 
         self.enumeration_manager = EnumerationManager(self)
 
-        if not self._loaded_from_db:
-            return
+        if self._loaded_from_db:
+            self._restore_loaded_state()
 
+    def _init_db_base(
+        self,
+        app_path: str | Path | None,
+        output_dir: str | Path | None,
+        refresh: bool,
+    ) -> str | None:
+        """Resolve db paths and load the incremental scan cache when present.
+
+        Returns the load path, or None when starting fresh."""
+        # Paths. The persistent db lives under app_path/data/db for app exports,
+        # or directly at output_dir for db-only exports — either way db_path is
+        # both the previous-state source (incremental scans) and export target.
+        self.app_path = Path(app_path) if app_path is not None else None
+        if self.app_path is not None:
+            self.db_path: Path | None = self.app_path / "data" / "db"
+        elif output_dir is not None:
+            self.db_path = Path(output_dir)
+        else:
+            self.db_path = None
+
+        # Load the scan-derived base if present (skip when refresh=True: full
+        # rescan). The incremental base is the pristine _scan cache, never the
+        # previously-exported final DB — that DB already carries metadata overlays
+        # and reusing it as a base is what left stale values behind.
+        load_path: str | None = None
+        if not refresh:
+            load_path = scan_cache_load_path(self.db_path)
+
+        try:
+            super().__init__(load_path)
+        except Exception:
+            if load_path is not None:
+                import warnings
+
+                warnings.warn(
+                    f"Could not load the scan cache at {load_path}. "
+                    "The schema may have changed after a datannurpy upgrade. "
+                    "Starting fresh (use refresh=True to avoid this warning).",
+                    stacklevel=2,
+                )
+                load_path = None
+                super().__init__(None)
+            else:
+                raise
+
+        # Ensure all schema columns exist on loaded tables
+        if load_path is not None:
+            for table in self._tables.values():
+                table.df = ensure_schema_columns(
+                    table.df, table._entity_type, skip=table.runtime_fields
+                )
+        return load_path
+
+    def _restore_loaded_state(self) -> None:
+        """Reset the runtime columns and indexes on a cache-loaded database."""
         # Dataset-only mode: clear variable-level tables
-        if depth == "dataset":
+        if self.depth == "dataset":
             for t in [self.variable, self.enumeration, self.value, self.frequency]:
                 t.df = t.df.clear()
 
