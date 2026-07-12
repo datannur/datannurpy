@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import stat
 from collections.abc import Sequence
+from dataclasses import dataclass
 from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Any, Literal, NoReturn
 
@@ -38,7 +39,13 @@ from .preview import (
     resolve_preview_rows,
 )
 from .schema import Dataset, EntityMetadata, Folder, folder_from_metadata
-from .scanner.discovery import DatasetInfo, compute_scan_plan, discover_datasets
+from .scanner.discovery import (
+    DatasetInfo,
+    DiscoveryResult,
+    ScanPlan,
+    compute_scan_plan,
+    discover_datasets,
+)
 from .scanner.filesystem import FileSystem, is_remote_url
 from .scanner.timeseries import (
     _build_series_dataset_id_with_suffix,
@@ -214,8 +221,386 @@ def _resolve_ids_from_peek(
     return peek.id, folder_id
 
 
+def _resolve_folder_root(
+    path: str | Path, storage_options: dict[str, Any] | None, quiet: bool
+) -> tuple[PurePath, str, FileSystem | None]:
+    """Resolve the scan root (local path or remote filesystem) and reject
+    paths that are themselves a dataset."""
+    fs: FileSystem | None = None
+    if is_remote_url(path) or storage_options:
+        fs = FileSystem(path, storage_options)
+        try:
+            is_dir = fs_info_is_dir(fs, fs.root)
+        except FileNotFoundError:
+            _raise_folder_config_error(f"Folder not found: {path}", quiet)
+        if not is_dir:
+            _raise_folder_config_error(f"Not a directory: {path}", quiet)
+        # Use PurePosixPath to preserve forward slashes on Windows
+        root: PurePath = PurePosixPath(fs.root)
+        root_name = fs.root.rstrip("/").rsplit("/", 1)[-1]
+    else:
+        root = Path(path).resolve()
+        root_name = root.name
+        try:
+            root_stat = root.stat()
+        except FileNotFoundError:
+            _raise_folder_config_error(f"Folder not found: {root}", quiet)
+        if not stat.S_ISDIR(root_stat.st_mode):
+            _raise_folder_config_error(f"Not a directory: {root}", quiet)
+
+    # Reject if path is a dataset (Delta/Hive/Iceberg) - use add_dataset instead
+    if (
+        is_delta_table(root, fs=fs)
+        or is_hive_partitioned(root, fs=fs)
+        or is_iceberg_table(root, fs=fs)
+    ):
+        raise ConfigError(
+            f"Path is a dataset, not a folder: {root}. Use add_dataset() instead."
+        )
+    return root, root_name, fs
+
+
+def _create_folder_tree(
+    catalog: Catalog,
+    metadata: EntityMetadata | None,
+    *,
+    root: PurePath,
+    root_name: str,
+    fs: FileSystem | None,
+    discovery: DiscoveryResult,
+) -> tuple[str, dict[PurePath, str]]:
+    """Create the root folder and one folder per discovered sub-directory.
+
+    Returns (root folder id, subdir path -> folder id)."""
+    # Create default folder from directory name if not provided
+    if metadata is None:
+        folder = Folder(id=sanitize_id(root_name), name=root_name)
+    else:
+        folder = folder_from_metadata(
+            metadata,
+            default_id=sanitize_id(root_name),
+            default_name=root_name,
+        )
+
+    # Set data_path for root folder
+    folder.data_path = _public_data_path(root, root, fs)
+    folder.type = folder.type or "filesystem"
+
+    # Add or update root folder
+    upsert_folder(catalog, folder)
+    prefix = folder.id
+
+    # Extract subdirs from discovered datasets (skip time series temporal paths)
+    subdirs: set[PurePath] = set()
+    for info in discovery.datasets:
+        # Determine starting parent for folder traversal
+        start_parent: PurePath | None = None
+        if info.series_files is not None:
+            # For time series: only add non-temporal parent folders
+            assert info.series_normalized_path is not None
+            non_temporal_parts = get_series_folder_parts(info.series_normalized_path)
+            if non_temporal_parts:
+                start_parent = root / "/".join(non_temporal_parts)
+        else:
+            start_parent = info.path.parent
+
+        # Add parent folders up to root
+        if start_parent is not None:
+            parent = start_parent
+            while parent != root and parent not in discovery.excluded_dirs:
+                if parent not in subdirs:
+                    subdirs.add(parent)
+                parent = parent.parent
+
+    # Create sub-folders
+    subdir_ids: dict[PurePath, str] = {}
+    for subdir in sorted(subdirs):
+        rel_path = subdir.relative_to(root)
+        parts = [sanitize_id(p) for p in rel_path.parts]
+        folder_id = make_id(prefix, *parts)
+
+        parent_path = subdir.parent
+        parent_id = (
+            prefix if parent_path == root else subdir_ids.get(parent_path, prefix)
+        )
+
+        upsert_folder(
+            catalog,
+            Folder(
+                id=folder_id,
+                name=subdir.name,
+                parent_id=parent_id,
+                type="filesystem",
+                data_path=_public_data_path(subdir, root, fs),
+            ),
+        )
+        subdir_ids[subdir] = folder_id
+    return prefix, subdir_ids
+
+
+def _structure_only_scan(
+    catalog: Catalog,
+    plan: ScanPlan,
+    *,
+    root: PurePath,
+    fs: FileSystem | None,
+    prefix: str,
+    subdir_ids: dict[PurePath, str],
+    create_folders: bool,
+    on_unmatched: OnUnmatched,
+    quiet: bool,
+) -> int:
+    """Depth "dataset": create or update dataset entries without scanning
+    content. Returns the number of datasets actually touched — an unmatched
+    file (create_folders=False) is skipped, not scanned, so it must not
+    inflate the tally."""
+    # Skip unchanged datasets (single batch upsert instead of per-dataset update)
+    skipped: list[Dataset] = []
+    for info in plan.to_skip:
+        existing = plan.existing_by_path.get(str(info.path))
+        assert existing is not None
+        existing._seen = True
+        existing.preview_rows = 0
+        existing._match_path = str(info.path)
+        skipped.append(existing)
+        log_skip(_display_dataset_label(info, root), quiet)
+    if skipped:
+        catalog.dataset.upsert_all(skipped)
+
+    scanned = 0
+    for info in plan.to_scan:
+        display_label = _display_dataset_label(info, root)
+        t0 = log_start(display_label, quiet)
+        data_path_str = str(info.path)
+        existing = plan.existing_by_path.get(data_path_str)
+        if existing:
+            # Update metadata for modified dataset
+            data_size = (
+                get_dir_data_size(info.path, fs=fs)
+                if info.format in _DIR_FORMATS
+                else get_data_size(info.path, fs=fs)
+            )
+            catalog.dataset.update(
+                existing.id,
+                last_update_date=timestamp_to_iso(info.mtime),
+                data_size=data_size,
+                preview_rows=0,
+                _seen=True,
+                _match_path=data_path_str,
+            )
+            log_done(display_label, quiet, t0)
+            scanned += 1
+            continue
+
+        series_normalized_path: str | None = None
+        if info.series_files is not None:
+            assert info.series_normalized_path is not None
+            series_normalized_path = series_match_normalized_path(
+                info.series_normalized_path,
+                [period for period, _ in info.series_files],
+            )
+        # Metadata-first peek: reuse pre-loaded id/folder_id if available.
+        peek = find_loaded_dataset_by_match_paths(
+            catalog,
+            _match_path_candidates(
+                info.path,
+                fs,
+                series_normalized_path=series_normalized_path,
+                root=root,
+            ),
+        )
+        if peek is None and not create_folders:
+            _handle_unmatched(display_label, on_unmatched, quiet)
+            continue
+
+        # Compute name and time-series fields (always needed)
+        if info.series_files is not None:
+            periods = [period for period, _ in info.series_files]
+            assert info.series_normalized_path is not None
+            normalized = info.series_normalized_path
+            dataset_name = build_series_dataset_name(normalized, periods)
+            nb_resources = len(info.series_files)
+            start_date = periods[0]
+            end_date = periods[-1]
+            fallback_id = _build_series_dataset_id_with_suffix(
+                normalized,
+                prefix,
+                info.series_id_suffix,
+            )
+            fallback_folder_id = _build_series_folder_id(normalized, prefix)
+        else:
+            fallback_id, dataset_name = build_dataset_id_name(info.path, root, prefix)
+            nb_resources = None
+            start_date = None
+            end_date = None
+            fallback_folder_id = get_folder_id(info.path, root, prefix, subdir_ids)
+
+        dataset_id, folder_id = _resolve_ids_from_peek(
+            peek, fallback_id, fallback_folder_id, create_folders
+        )
+
+        dataset = Dataset(
+            id=dataset_id,
+            name=dataset_name,
+            folder_id=folder_id,
+            data_path=_public_data_path(info.path, root, fs),
+            last_update_date=timestamp_to_iso(info.mtime),
+            delivery_format=info.format,
+            nb_resources=nb_resources,
+            preview_rows=0,
+            data_size=(
+                get_dir_data_size(info.path, fs=fs)
+                if info.format in _DIR_FORMATS
+                else get_data_size(info.path, fs=fs)
+            ),
+            start_date=start_date,
+            end_date=end_date,
+            _seen=True,
+            _match_path=data_path_str,
+        )
+        catalog.dataset.add(dataset)
+        log_done(display_label, quiet, t0)
+        scanned += 1
+    return scanned
+
+
+@dataclass
+class _FolderScan:
+    """Shared context and accumulators for one add_folder content scan."""
+
+    catalog: Catalog
+    root: PurePath
+    fs: FileSystem | None
+    prefix: str
+    subdir_ids: dict[PurePath, str]
+    existing_by_path: dict[str, Any]
+    quiet: bool
+    create_folders: bool
+    on_unmatched: OnUnmatched
+    schema_only: bool
+    freq_threshold: int | None
+    csv_encoding: str | None
+    sample_size: int | None
+    auto_enumerations: bool
+    preview_rows: int
+    csv_skip_copy: bool
+    # Count only datasets actually created/updated. An unmatched file
+    # (create_folders=False) is skipped before any scan, so it is neither an
+    # error nor a scan and must not inflate the tally.
+    scanned: int = 0
+    scan_errors: int = 0
+
+
+def _scan_single_file(run: _FolderScan, info: DatasetInfo, display_path: str) -> None:
+    """Scan one regular file and upsert its dataset and variables."""
+    data_path_str = str(info.path)
+
+    t0 = log_start(display_path, run.quiet)
+
+    # Metadata-first peek: reuse pre-loaded id/folder_id if available.
+    peek = find_loaded_dataset_by_match_paths(
+        run.catalog, _match_path_candidates(info.path, run.fs)
+    )
+    if peek is None and not run.create_folders:
+        _handle_unmatched(display_path, run.on_unmatched, run.quiet)
+        return
+
+    fallback_id, dataset_name = build_dataset_id_name(info.path, run.root, run.prefix)
+    fallback_folder_id = get_folder_id(info.path, run.root, run.prefix, run.subdir_ids)
+    dataset_id, folder_id = _resolve_ids_from_peek(
+        peek, fallback_id, fallback_folder_id, run.create_folders
+    )
+
+    # Scan dataset
+    errors_before = error_count()
+    try:
+        result = scan_file(
+            info.path,
+            info.format,
+            dataset_id=dataset_id,
+            schema_only=run.schema_only,
+            freq_threshold=run.freq_threshold,
+            csv_encoding=run.csv_encoding,
+            sample_size=run.sample_size,
+            preview_rows=run.preview_rows,
+            csv_skip_copy=run.csv_skip_copy,
+            fs=run.fs,
+            quiet=run.quiet,
+            path_label=display_path,
+        )
+    except Exception as exc:
+        log_error(display_path, exc, run.quiet)
+        run.scan_errors += min(1, error_count() - errors_before)
+        return
+    # One mechanism for both paths — a ✗ logged during the scan, swallowed
+    # by the scanner or caught just above, marks the dataset failed (at
+    # most once, however many ✗ the scan logged).
+    run.scan_errors += min(1, error_count() - errors_before)
+
+    # Remove old dataset only after successful scan
+    existing = run.existing_by_path.get(data_path_str)
+    if existing:
+        remove_dataset_cascade(run.catalog, existing)
+
+    # Create dataset
+    dataset = Dataset(
+        id=dataset_id,
+        name=result.name or dataset_name,
+        folder_id=folder_id,
+        data_path=_public_data_path(info.path, run.root, run.fs),
+        last_update_date=timestamp_to_iso(info.mtime),
+        delivery_format=info.format,
+        description=result.description,
+        nb_row=result.nb_row,
+        sample_size=result.sample_size,
+        preview_rows=run.preview_rows,
+        data_size=(
+            result.data_size
+            if info.format in _DIR_FORMATS
+            else get_data_size(info.path, fs=run.fs)
+        ),
+        _seen=True,
+        _match_path=data_path_str,
+    )
+    run.catalog.dataset.add(dataset)
+    run.scanned += 1
+    remember_preview(
+        run.catalog,
+        dataset.id,
+        result.preview,
+        label=display_path,
+        variables=result.variables,
+    )
+
+    var_id_mapping = build_variable_ids(result.variables, dataset.id)
+    if result.freq_table is not None:
+        run.catalog.enumeration_manager.assign_from_freq(
+            result.variables,
+            result.freq_table,
+            var_id_mapping,
+            auto_enumerations=run.auto_enumerations,
+        )
+    run.catalog.variable.add_all(result.variables)
+
+    # Log result
+    if run.schema_only:
+        log_done(f"{display_path} ({len(result.variables)} vars)", run.quiet, t0)
+    elif result.nb_row is None:
+        # Scanner already emitted a warning or error explaining why the
+        # file could not be scanned (untreatable, malformed, etc.).
+        pass
+    elif result.nb_row > 0:
+        log_done(
+            f"{display_path} ({result.nb_row:,} rows, {len(result.variables)} vars)",
+            run.quiet,
+            t0,
+        )
+    else:
+        log_warn(_no_rows_message(display_path, dataset.data_size), run.quiet)
+
+
 @validate_params
-def add_folder(  # noqa: C901 — ratchet: refactor pending
+def add_folder(
     catalog: Catalog,
     path: str | Path | Sequence[str | Path],
     metadata: EntityMetadata | None = None,
@@ -265,40 +650,7 @@ def add_folder(  # noqa: C901 — ratchet: refactor pending
         resolve_preview_rows(preview_rows, catalog.preview_rows), resolved_depth
     )
 
-    # Handle remote URLs vs local paths
-    is_remote = is_remote_url(path)
-    fs: FileSystem | None = None
-
-    if is_remote or storage_options:
-        fs = FileSystem(path, storage_options)
-        try:
-            is_dir = fs_info_is_dir(fs, fs.root)
-        except FileNotFoundError:
-            _raise_folder_config_error(f"Folder not found: {path}", q)
-        if not is_dir:
-            _raise_folder_config_error(f"Not a directory: {path}", q)
-        # Use PurePosixPath to preserve forward slashes on Windows
-        root = PurePosixPath(fs.root)
-        root_name = fs.root.rstrip("/").rsplit("/", 1)[-1]
-    else:
-        root = Path(path).resolve()
-        root_name = root.name
-        try:
-            root_stat = root.stat()
-        except FileNotFoundError:
-            _raise_folder_config_error(f"Folder not found: {root}", q)
-        if not stat.S_ISDIR(root_stat.st_mode):
-            _raise_folder_config_error(f"Not a directory: {root}", q)
-
-    # Reject if path is a dataset (Delta/Hive/Iceberg) - use add_dataset instead
-    if (
-        is_delta_table(root, fs=fs)
-        or is_hive_partitioned(root, fs=fs)
-        or is_iceberg_table(root, fs=fs)
-    ):
-        raise ConfigError(
-            f"Path is a dataset, not a folder: {root}. Use add_dataset() instead."
-        )
+    root, root_name, fs = _resolve_folder_root(path, storage_options, q)
 
     start_time = log_section("add_folder", str(root), q)
     vars_before = catalog.variable.count
@@ -309,71 +661,14 @@ def add_folder(  # noqa: C901 — ratchet: refactor pending
     )
 
     if create_folders:
-        # Create default folder from directory name if not provided
-        if metadata is None:
-            folder = Folder(id=sanitize_id(root_name), name=root_name)
-        else:
-            folder = folder_from_metadata(
-                metadata,
-                default_id=sanitize_id(root_name),
-                default_name=root_name,
-            )
-
-        # Set data_path for root folder
-        folder.data_path = _public_data_path(root, root, fs)
-        folder.type = folder.type or "filesystem"
-
-        # Add or update root folder
-        upsert_folder(catalog, folder)
-        prefix = folder.id
-
-        # Extract subdirs from discovered datasets (skip time series temporal paths)
-        subdirs: set[PurePath] = set()
-        for info in discovery.datasets:
-            # Determine starting parent for folder traversal
-            start_parent: PurePath | None = None
-            if info.series_files is not None:
-                # For time series: only add non-temporal parent folders
-                assert info.series_normalized_path is not None
-                non_temporal_parts = get_series_folder_parts(
-                    info.series_normalized_path
-                )
-                if non_temporal_parts:
-                    start_parent = root / "/".join(non_temporal_parts)
-            else:
-                start_parent = info.path.parent
-
-            # Add parent folders up to root
-            if start_parent is not None:
-                parent = start_parent
-                while parent != root and parent not in discovery.excluded_dirs:
-                    if parent not in subdirs:
-                        subdirs.add(parent)
-                    parent = parent.parent
-
-        # Create sub-folders
-        subdir_ids: dict[PurePath, str] = {}
-        for subdir in sorted(subdirs):
-            rel_path = subdir.relative_to(root)
-            parts = [sanitize_id(p) for p in rel_path.parts]
-            folder_id = make_id(prefix, *parts)
-
-            parent_path = subdir.parent
-            parent_id = (
-                prefix if parent_path == root else subdir_ids.get(parent_path, prefix)
-            )
-
-            upsert_folder(
-                catalog,
-                Folder(
-                    id=folder_id,
-                    name=subdir.name,
-                    parent_id=parent_id,
-                    type="filesystem",
-                    data_path=_public_data_path(subdir, root, fs),
-                ),
-            )
-            subdir_ids[subdir] = folder_id
+        prefix, subdir_ids = _create_folder_tree(
+            catalog,
+            metadata,
+            root=root,
+            root_name=root_name,
+            fs=fs,
+            discovery=discovery,
+        )
     else:
         # Metadata-first mode: do not create any folder; rely on peek for ids.
         prefix = ""
@@ -385,119 +680,17 @@ def add_folder(  # noqa: C901 — ratchet: refactor pending
 
     # Structure-only mode: create/update datasets without scanning
     if resolved_depth == "dataset":
-        # Skip unchanged datasets (single batch upsert instead of per-dataset update)
-        skipped: list[Dataset] = []
-        for info in plan.to_skip:
-            existing = plan.existing_by_path.get(str(info.path))
-            assert existing is not None
-            existing._seen = True
-            existing.preview_rows = 0
-            existing._match_path = str(info.path)
-            skipped.append(existing)
-            log_skip(_display_dataset_label(info, root), q)
-        if skipped:
-            catalog.dataset.upsert_all(skipped)
-
-        # Create or update modified datasets. Count only datasets actually
-        # touched — an unmatched file (create_folders=False) is skipped, not
-        # scanned, so it must not inflate the tally.
-        scanned = 0
-        for info in plan.to_scan:
-            display_label = _display_dataset_label(info, root)
-            t0 = log_start(display_label, q)
-            data_path_str = str(info.path)
-            existing = plan.existing_by_path.get(data_path_str)
-            if existing:
-                # Update metadata for modified dataset
-                data_size = (
-                    get_dir_data_size(info.path, fs=fs)
-                    if info.format in _DIR_FORMATS
-                    else get_data_size(info.path, fs=fs)
-                )
-                catalog.dataset.update(
-                    existing.id,
-                    last_update_date=timestamp_to_iso(info.mtime),
-                    data_size=data_size,
-                    preview_rows=0,
-                    _seen=True,
-                    _match_path=data_path_str,
-                )
-                log_done(display_label, q, t0)
-                scanned += 1
-                continue
-
-            series_normalized_path: str | None = None
-            if info.series_files is not None:
-                assert info.series_normalized_path is not None
-                series_normalized_path = series_match_normalized_path(
-                    info.series_normalized_path,
-                    [period for period, _ in info.series_files],
-                )
-            # Metadata-first peek: reuse pre-loaded id/folder_id if available.
-            peek = find_loaded_dataset_by_match_paths(
-                catalog,
-                _match_path_candidates(
-                    info.path,
-                    fs,
-                    series_normalized_path=series_normalized_path,
-                    root=root,
-                ),
-            )
-            if peek is None and not create_folders:
-                _handle_unmatched(display_label, on_unmatched, q)
-                continue
-
-            # Compute name and time-series fields (always needed)
-            if info.series_files is not None:
-                periods = [period for period, _ in info.series_files]
-                assert info.series_normalized_path is not None
-                normalized = info.series_normalized_path
-                dataset_name = build_series_dataset_name(normalized, periods)
-                nb_resources = len(info.series_files)
-                start_date = periods[0]
-                end_date = periods[-1]
-                fallback_id = _build_series_dataset_id_with_suffix(
-                    normalized,
-                    prefix,
-                    info.series_id_suffix,
-                )
-                fallback_folder_id = _build_series_folder_id(normalized, prefix)
-            else:
-                fallback_id, dataset_name = build_dataset_id_name(
-                    info.path, root, prefix
-                )
-                nb_resources = None
-                start_date = None
-                end_date = None
-                fallback_folder_id = get_folder_id(info.path, root, prefix, subdir_ids)
-
-            dataset_id, folder_id = _resolve_ids_from_peek(
-                peek, fallback_id, fallback_folder_id, create_folders
-            )
-
-            dataset = Dataset(
-                id=dataset_id,
-                name=dataset_name,
-                folder_id=folder_id,
-                data_path=_public_data_path(info.path, root, fs),
-                last_update_date=timestamp_to_iso(info.mtime),
-                delivery_format=info.format,
-                nb_resources=nb_resources,
-                preview_rows=0,
-                data_size=(
-                    get_dir_data_size(info.path, fs=fs)
-                    if info.format in _DIR_FORMATS
-                    else get_data_size(info.path, fs=fs)
-                ),
-                start_date=start_date,
-                end_date=end_date,
-                _seen=True,
-                _match_path=data_path_str,
-            )
-            catalog.dataset.add(dataset)
-            log_done(display_label, q, t0)
-            scanned += 1
-
+        scanned = _structure_only_scan(
+            catalog,
+            plan,
+            root=root,
+            fs=fs,
+            prefix=prefix,
+            subdir_ids=subdir_ids,
+            create_folders=create_folders,
+            on_unmatched=on_unmatched,
+            quiet=q,
+        )
         unchanged = len(plan.to_skip)
         catalog._tally_scan(scanned, unchanged)
         log_summary(
@@ -528,27 +721,31 @@ def add_folder(  # noqa: C901 — ratchet: refactor pending
         catalog.enumeration_manager.mark_datasets_seen(skip_seen_ids)
 
     # Process datasets to scan
-    schema_only = resolved_depth == "variable"
-    freq_threshold = catalog.freq_threshold if resolved_depth == "value" else None
-    resolved_encoding = (
-        csv_encoding if csv_encoding is not None else catalog.csv_encoding
-    )
-    resolved_csv_skip_copy = (
-        csv_skip_copy if csv_skip_copy is not None else catalog.csv_skip_copy
-    )
-    resolved_sample_size: int | None
+    resolved_sample_size: int | None = None
     if resolved_depth == "value":
         resolved_sample_size = (
             sample_size if sample_size is not _UNSET else catalog.sample_size
         )
-    else:
-        resolved_sample_size = None
-
-    scan_errors = 0
-    # Count only datasets actually created/updated. An unmatched file
-    # (create_folders=False) is skipped before any scan, so it is neither an
-    # error nor a scan and must not inflate the tally.
-    scanned = 0
+    run = _FolderScan(
+        catalog=catalog,
+        root=root,
+        fs=fs,
+        prefix=prefix,
+        subdir_ids=subdir_ids,
+        existing_by_path=plan.existing_by_path,
+        quiet=q,
+        create_folders=create_folders,
+        on_unmatched=on_unmatched,
+        schema_only=resolved_depth == "variable",
+        freq_threshold=catalog.freq_threshold if resolved_depth == "value" else None,
+        csv_encoding=csv_encoding if csv_encoding is not None else catalog.csv_encoding,
+        sample_size=resolved_sample_size,
+        auto_enumerations=resolved_auto_enumerations,
+        preview_rows=preview_limit,
+        csv_skip_copy=(
+            csv_skip_copy if csv_skip_copy is not None else catalog.csv_skip_copy
+        ),
+    )
 
     for info in plan.to_scan:
         display_path = _display_dataset_path(info, root)
@@ -562,143 +759,40 @@ def add_folder(  # noqa: C901 — ratchet: refactor pending
                     root=root,
                     prefix=prefix,
                     existing_by_path=plan.existing_by_path,
-                    schema_only=schema_only,
-                    freq_threshold=freq_threshold,
-                    csv_encoding=resolved_encoding,
-                    sample_size=resolved_sample_size,
-                    auto_enumerations=resolved_auto_enumerations,
-                    preview_rows=preview_limit,
-                    csv_skip_copy=resolved_csv_skip_copy,
+                    schema_only=run.schema_only,
+                    freq_threshold=run.freq_threshold,
+                    csv_encoding=run.csv_encoding,
+                    sample_size=run.sample_size,
+                    auto_enumerations=run.auto_enumerations,
+                    preview_rows=run.preview_rows,
+                    csv_skip_copy=run.csv_skip_copy,
                     quiet=q,
                     fs=fs,
                     create_folders=create_folders,
                     on_unmatched=on_unmatched,
                 ):
-                    scanned += 1
+                    run.scanned += 1
             except Exception as exc:
                 log_error(display_path, exc, q)
             # One mechanism for both paths — a ✗ logged during the scan,
             # swallowed by the scanner or caught just above, marks the dataset
             # failed. Clamped: a series re-scans files (schema pass + full
             # pass), so one bad file may log several ✗ for one dataset.
-            scan_errors += min(1, error_count() - errors_before)
+            run.scan_errors += min(1, error_count() - errors_before)
             continue
 
         # Single file: standard handling
-        data_path_str = str(info.path)
-
-        t0 = log_start(display_path, q)
-
-        # Metadata-first peek: reuse pre-loaded id/folder_id if available.
-        peek = find_loaded_dataset_by_match_paths(
-            catalog, _match_path_candidates(info.path, fs)
-        )
-        if peek is None and not create_folders:
-            _handle_unmatched(display_path, on_unmatched, q)
-            continue
-
-        fallback_id, dataset_name = build_dataset_id_name(info.path, root, prefix)
-        fallback_folder_id = get_folder_id(info.path, root, prefix, subdir_ids)
-        dataset_id, folder_id = _resolve_ids_from_peek(
-            peek, fallback_id, fallback_folder_id, create_folders
-        )
-
-        # Scan dataset
-        errors_before = error_count()
-        try:
-            result = scan_file(
-                info.path,
-                info.format,
-                dataset_id=dataset_id,
-                schema_only=schema_only,
-                freq_threshold=freq_threshold,
-                csv_encoding=resolved_encoding,
-                sample_size=resolved_sample_size,
-                preview_rows=preview_limit,
-                csv_skip_copy=resolved_csv_skip_copy,
-                fs=fs,
-                quiet=q,
-                path_label=display_path,
-            )
-        except Exception as exc:
-            log_error(display_path, exc, q)
-            scan_errors += min(1, error_count() - errors_before)
-            continue
-        # One mechanism for both paths — a ✗ logged during the scan, swallowed
-        # by the scanner or caught just above, marks the dataset failed (at
-        # most once, however many ✗ the scan logged).
-        scan_errors += min(1, error_count() - errors_before)
-
-        # Remove old dataset only after successful scan
-        existing = plan.existing_by_path.get(data_path_str)
-        if existing:
-            remove_dataset_cascade(catalog, existing)
-
-        # Create dataset
-        dataset = Dataset(
-            id=dataset_id,
-            name=result.name or dataset_name,
-            folder_id=folder_id,
-            data_path=_public_data_path(info.path, root, fs),
-            last_update_date=timestamp_to_iso(info.mtime),
-            delivery_format=info.format,
-            description=result.description,
-            nb_row=result.nb_row,
-            sample_size=result.sample_size,
-            preview_rows=preview_limit,
-            data_size=(
-                result.data_size
-                if info.format in _DIR_FORMATS
-                else get_data_size(info.path, fs=fs)
-            ),
-            _seen=True,
-            _match_path=data_path_str,
-        )
-        catalog.dataset.add(dataset)
-        scanned += 1
-        remember_preview(
-            catalog,
-            dataset.id,
-            result.preview,
-            label=display_path,
-            variables=result.variables,
-        )
-
-        var_id_mapping = build_variable_ids(result.variables, dataset.id)
-        if result.freq_table is not None:
-            catalog.enumeration_manager.assign_from_freq(
-                result.variables,
-                result.freq_table,
-                var_id_mapping,
-                auto_enumerations=resolved_auto_enumerations,
-            )
-        catalog.variable.add_all(result.variables)
-
-        # Log result
-        if schema_only:
-            log_done(f"{display_path} ({len(result.variables)} vars)", q, t0)
-        elif result.nb_row is None:
-            # Scanner already emitted a warning or error explaining why the
-            # file could not be scanned (untreatable, malformed, etc.).
-            pass
-        elif result.nb_row > 0:
-            log_done(
-                f"{display_path} ({result.nb_row:,} rows, {len(result.variables)} vars)",
-                q,
-                t0,
-            )
-        else:
-            log_warn(_no_rows_message(display_path, dataset.data_size), q)
+        _scan_single_file(run, info, display_path)
 
     vars_added = catalog.variable.count - vars_before
     unchanged = len(plan.to_skip)
-    catalog._tally_scan(scanned, unchanged, scan_errors)
+    catalog._tally_scan(run.scanned, unchanged, run.scan_errors)
     log_summary(
-        scanned,
+        run.scanned,
         vars_added,
         q,
         start_time,
-        scan_errors,
+        run.scan_errors,
         resource_count=resource_count,
         resource_label="files",
         unchanged=unchanged,
