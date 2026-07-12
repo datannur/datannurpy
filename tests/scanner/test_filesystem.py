@@ -237,15 +237,20 @@ class TestFileSystem:
 
     def test_ensure_local_remote_fs(self, tmp_path: Path) -> None:
         """ensure_local() should download remote files to temp location."""
-        # Use memory filesystem to simulate remote
+        # Use memory filesystem to simulate remote. Unique root: the memory
+        # filesystem is a process-wide singleton, so a fixed path would leak
+        # into (and collide with) any later run in the same process.
+        import uuid
+
         import fsspec
 
+        root = uuid.uuid4().hex
         mem_fs = fsspec.filesystem("memory")
-        mem_fs.mkdir("/test")
-        mem_fs.pipe("/test/data.csv", b"x,y\n3,4")
+        mem_fs.mkdir(f"/{root}")
+        mem_fs.pipe(f"/{root}/data.csv", b"x,y\n3,4")
 
-        fs = FileSystem("memory://test")
-        with fs.ensure_local("/test/data.csv") as local_path:
+        fs = FileSystem(f"memory://{root}")
+        with fs.ensure_local(f"/{root}/data.csv") as local_path:
             assert local_path.suffix == ".csv"
             assert local_path.read_text() == "x,y\n3,4"
         # Temp file should be cleaned up
@@ -261,15 +266,18 @@ class TestFileSystem:
 
     def test_ensure_local_siblings_remote_fs(self) -> None:
         """ensure_local_siblings() downloads same-stem companions (e.g. shapefile)."""
+        import uuid
+
         import fsspec
 
+        root = uuid.uuid4().hex  # unique: the memory filesystem is a singleton
         mem_fs = fsspec.filesystem("memory")
-        mem_fs.mkdir("/siblings")
+        mem_fs.mkdir(f"/{root}")
         for ext in ("shp", "shx", "dbf", "prj"):
-            mem_fs.pipe(f"/siblings/parcels.{ext}", ext.encode())
-        mem_fs.pipe("/siblings/other.txt", b"x")  # different stem → not fetched
-        fs = FileSystem("memory://siblings")
-        with fs.ensure_local_siblings("/siblings/parcels.shp") as local_path:
+            mem_fs.pipe(f"/{root}/parcels.{ext}", ext.encode())
+        mem_fs.pipe(f"/{root}/other.txt", b"x")  # different stem → not fetched
+        fs = FileSystem(f"memory://{root}")
+        with fs.ensure_local_siblings(f"/{root}/parcels.shp") as local_path:
             assert local_path.name == "parcels.shp"
             downloaded = {p.name for p in local_path.parent.iterdir()}
             assert downloaded == {

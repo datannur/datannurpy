@@ -121,18 +121,21 @@ class TestShapefileViaCatalog:
 
 class TestRemoteVector:
     def test_remote_shapefile_fetches_sidecars(self, tmp_path: Path) -> None:
+        import uuid
+
         import fsspec
 
         _write_ogr(
             tmp_path / "parcels.shp", _SQUARE, driver="ESRI Shapefile", crs="EPSG:4326"
         )
+        root = f"rmt_shp_{uuid.uuid4().hex}"  # unique: the memory fs is a singleton
         mem_fs = fsspec.filesystem("memory")
-        mem_fs.mkdir("/rmt_shp")
+        mem_fs.mkdir(f"/{root}")
         for f in tmp_path.iterdir():
             if f.stem == "parcels":
-                mem_fs.upload(str(f), f"/rmt_shp/{f.name}")
+                mem_fs.upload(str(f), f"/{root}/{f.name}")
         catalog = Catalog(app_path=tmp_path / "app", quiet=True)
-        catalog.add_dataset("memory:///rmt_shp/parcels.shp")
+        catalog.add_dataset(f"memory:///{root}/parcels.shp")
         dataset = catalog.dataset.get_by("name", "parcels")
         assert dataset is not None
         assert dataset.crs == "EPSG:4326"
