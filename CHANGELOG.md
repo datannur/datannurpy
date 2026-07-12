@@ -2,16 +2,11 @@
 
 ## 0.30.0 (2026-07-12)
 
-- add: ODS spreadsheets (`.ods`) are scanned like Excel on every source and depth (new core dependency `odfpy`)
-- add: a `.zip` holding exactly one data file (CSV, Excel, ODS, Parquet …) is scanned as a `dataset:` — generalizes the zipped-Shapefile support, same Zip Slip / zip-bomb guards; multi-file archives stay out of scope
-- add: GPX (`.gpx`) joins the vector geo formats (`geo` extra) — the first non-empty layer is scanned, bbox included
+- add: new scannable formats — ODS spreadsheets (`.ods`, new core dependency `odfpy`), GPX (`.gpx`, `geo` extra; the first non-empty layer is scanned, bbox included, without pyogrio's multi-layer warning), and `.zip` archives holding exactly one data file (CSV, Excel, ODS, Parquet …), generalizing the zipped-Shapefile support with the same Zip Slip / zip-bomb guards
 - add: WFS `GetFeature` URLs are detected as GeoJSON (`outputFormat=json`/`application/json` on an OGC request); `format`/`fmt`/`outputFormat` query keys are now case-insensitive and accept media types
-- fix: multi-layer vector containers scanned as a single dataset no longer emit pyogrio's "more than one layer" warning
-- add: messy CSVs degrade instead of failing — on type-conversion errors the scan drops the unconvertible rows (accepted only when marginal, warning with the count), then falls back to all-text columns (every parseable row kept); values are never altered
-- fix: zero-row warnings tell the truth — `empty file (0 bytes)` only for genuinely empty files, `no data rows` otherwise; a scanner-reported failure (`✗`) is no longer re-reported as "empty file" and its dataset keeps `nb_row` null instead of a false `0`
-- fix: scan errors handled inside a scanner (logged `✗` but invisible to the tally) now count in the run `[summary]` and the `on_scan_error: fail` exit code
+- add: scans degrade instead of failing — a messy CSV retries by dropping its unconvertible rows (only when marginal, warning with the count) then with all-text columns (every parseable row kept, values never altered), and a numeric column with extreme magnitudes empties the overflowing stats (`STDDEV_SAMP` raising, `AVG` reaching inf) instead of aborting the file
+- fix: truthful scan logs — `empty file (0 bytes)` only for genuinely empty files, `no data rows` otherwise, no duplicate warning after a scanner-reported failure (`✗`, whose dataset keeps `nb_row` null instead of a false `0`), and internally-handled scan errors now count in the run `[summary]` and the `on_scan_error: fail` exit code
 - fix: GeoParquet with a PROJJSON CRS (e.g. Swiss LV95) scans on the DuckDB fast path instead of the slower PyArrow fallback, whose debug message no longer embeds the full PROJJSON blob
-- fix: a numeric column with extreme magnitudes no longer aborts the whole scan — on `STDDEV_SAMP` overflow the stats are retried without std (warning, std left empty), and a non-finite mean (`AVG` overflowing to inf) is exported as null instead of invalid JSON
 
 ## 0.29.5 (2026-07-10)
 
