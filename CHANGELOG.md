@@ -7,6 +7,7 @@
 - add: scans degrade instead of failing — a messy CSV retries by dropping its unconvertible rows (only when marginal, warning with the count) then with all-text columns (every parseable row kept, values never altered), and a numeric column with extreme magnitudes empties the overflowing stats (`STDDEV_SAMP` raising, `AVG` reaching inf) instead of aborting the file
 - fix: truthful scan logs — `empty file (0 bytes)` only for genuinely empty files, `no data rows` otherwise, no duplicate warning after a scanner-reported failure (`✗`, whose dataset keeps `nb_row` null instead of a false `0`), and internally-handled scan errors now count in the run `[summary]` and the `on_scan_error: fail` exit code
 - fix: GeoParquet with a PROJJSON CRS (e.g. Swiss LV95) scans on the DuckDB fast path instead of the slower PyArrow fallback, whose debug message no longer embeds the full PROJJSON blob
+- internal: stricter lint ruleset (bugbear, simplifications, perf) with a cyclomatic-complexity ceiling of 20, and the seven most complex functions split into per-phase helpers — no behavior change
 
 ## 0.29.5 (2026-07-10)
 
