@@ -124,3 +124,30 @@ class TestAddDatabaseScanError:
         catalog.add_database(duckdb_con, depth="dataset")
         catalog.add_database(duckdb_con, depth="dataset", refresh=True)
         assert catalog.dataset.count == 2
+
+
+class TestAggregateOverflow:
+    """One extreme numeric column must not cost the dataset its scan."""
+
+    def test_stddev_overflow_degrades_not_fails(self, tmp_path: Path, capsys):
+        # x: the variance overflows float64 and STDDEV_SAMP raises; z: AVG
+        # silently overflows to inf (nulled — strict JSON cannot carry it).
+        extreme = tmp_path / "extreme.csv"
+        extreme.write_text("x,z,ok\n1e308,1e308,1\n-1e308,1e308,2\n")
+
+        catalog = Catalog()
+        catalog.add_dataset(extreme, quiet=False)
+
+        captured = capsys.readouterr()
+        assert "numeric overflow computing the standard deviation" in captured.err
+        assert catalog.run_errors == 0
+        dataset = catalog.dataset.all()[0]
+        assert dataset.nb_row == 2
+
+        stats = {v.name: v for v in catalog.variable.all()}
+        assert stats["x"].min == -1e308  # min/max/mean survive the retry
+        assert stats["x"].mean == 0.0
+        assert stats["x"].std is None
+        assert stats["z"].mean is None  # inf, not exportable
+        assert stats["ok"].mean == 1.5
+        assert stats["ok"].nb_distinct == 2

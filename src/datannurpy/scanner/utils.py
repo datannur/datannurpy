@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import errno
 import fnmatch
+import math
 import os
 from collections.abc import Sequence
 from datetime import datetime
@@ -14,6 +15,8 @@ from typing import TYPE_CHECKING, Any, Union
 
 import ibis
 import ibis.expr.datatypes as dt
+
+import duckdb as _duckdb
 
 from ..compression import strip_compression_suffix
 from ..schema import Variable
@@ -37,17 +40,21 @@ FsPath = Union[str, PurePath]
 
 
 def _to_float(val: Any) -> float | None:
-    """Convert a raw aggregation result to float, or None if null."""
+    """Convert a raw aggregation result to float, or None if null or non-finite
+    (an AVG over extreme magnitudes silently overflows to inf, which strict JSON
+    cannot carry)."""
     if val is None:
         return None
-    return float(val)
+    result = float(val)
+    return result if math.isfinite(result) else None
 
 
 def _round6(val: Any) -> float | None:
-    """Convert to float rounded to 6 decimals, or None if null."""
+    """Convert to float rounded to 6 decimals, or None if null or non-finite."""
     if val is None:
         return None
-    return round(float(val), 6)
+    result = float(val)
+    return round(result, 6) if math.isfinite(result) else None
 
 
 def _table_to_arrow(table: ibis.Table) -> pa.Table:
@@ -793,25 +800,44 @@ def build_variables(
                 cardinality_aggs.append(table[col].nunique().name(f"{col}__distinct"))
 
         if streaming_aggs or cardinality_aggs:
+
+            def _execute_aggs(aggs: list[Any]) -> dict[str, Any]:
+                if full_table is None:
+                    # No sampling: single combined query on table
+                    agg_table = table.aggregate(aggs + cardinality_aggs)
+                else:
+                    # Sampling: streaming aggs + approx_nunique on full_table
+                    agg_table = streaming_source.aggregate(aggs)
+                try:
+                    return agg_table.to_pyarrow().to_pylist()[0]
+                except _duckdb.OutOfRangeException:
+                    raise
+                except Exception:
+                    # Oracle: Decimal values can't convert via PyArrow
+                    return dict(agg_table.execute().iloc[0])
+
             try:
                 streaming_row: dict[str, Any] = {}
 
-                if full_table is None:
-                    # No sampling: single combined query on table
-                    all_aggs = streaming_aggs + cardinality_aggs
-                    agg_table = table.aggregate(all_aggs)
-                    try:
-                        streaming_row = agg_table.to_pyarrow().to_pylist()[0]
-                    except Exception:
-                        # Oracle: Decimal values can't convert via PyArrow
-                        streaming_row = dict(agg_table.execute().iloc[0])
-                else:
-                    # Sampling: streaming aggs + approx_nunique on full_table
-                    agg_table = streaming_source.aggregate(streaming_aggs)
-                    try:
-                        streaming_row = agg_table.to_pyarrow().to_pylist()[0]
-                    except Exception:  # pragma: no cover
-                        streaming_row = dict(agg_table.execute().iloc[0])
+                try:
+                    streaming_row = _execute_aggs(streaming_aggs)
+                except _duckdb.OutOfRangeException:
+                    # One extreme column must not cost the dataset. STDDEV is
+                    # the only aggregate that raises on overflow (AVG yields
+                    # inf, nulled by _to_float) — retry without it; the file's
+                    # std stays empty, everything else survives.
+                    log_warn(
+                        f"{dataset_id}: numeric overflow computing the standard "
+                        f"deviation; std left empty",
+                        quiet=False,
+                    )
+                    streaming_row = _execute_aggs(
+                        [
+                            agg
+                            for agg in streaming_aggs
+                            if not agg.get_name().endswith("__std")
+                        ]
+                    )
 
                 for col in cols_for_stats:
                     nb_distinct = int(streaming_row[f"{col}__distinct"])

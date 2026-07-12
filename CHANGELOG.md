@@ -11,6 +11,7 @@
 - fix: zero-row warnings tell the truth — `empty file (0 bytes)` only for genuinely empty files, `no data rows` otherwise; a scanner-reported failure (`✗`) is no longer re-reported as "empty file" and its dataset keeps `nb_row` null instead of a false `0`
 - fix: scan errors handled inside a scanner (logged `✗` but invisible to the tally) now count in the run `[summary]` and the `on_scan_error: fail` exit code
 - fix: GeoParquet with a PROJJSON CRS (e.g. Swiss LV95) scans on the DuckDB fast path instead of the slower PyArrow fallback, whose debug message no longer embeds the full PROJJSON blob
+- fix: a numeric column with extreme magnitudes no longer aborts the whole scan — on `STDDEV_SAMP` overflow the stats are retried without std (warning, std left empty), and a non-finite mean (`AVG` overflowing to inf) is exported as null instead of invalid JSON
 
 ## 0.29.5 (2026-07-10)
 
