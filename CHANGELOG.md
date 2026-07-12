@@ -7,6 +7,7 @@
 - add: GPX (`.gpx`) joins the vector geo formats (`geo` extra) — the first non-empty layer is scanned, bbox included
 - add: WFS `GetFeature` URLs are detected as GeoJSON (`outputFormat=json`/`application/json` on an OGC request); `format`/`fmt`/`outputFormat` query keys are now case-insensitive and accept media types
 - fix: multi-layer vector containers scanned as a single dataset no longer emit pyogrio's "more than one layer" warning
+- add: messy CSVs degrade instead of failing — on type-conversion errors the scan drops the unconvertible rows (accepted only when marginal, warning with the count), then falls back to all-text columns (every parseable row kept); values are never altered
 
 ## 0.29.5 (2026-07-10)
 

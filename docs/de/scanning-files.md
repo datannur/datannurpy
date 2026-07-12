@@ -174,6 +174,10 @@ Die temporäre UTF-8-Kopie vermeiden, wenn Dateien bereits lokal und UTF-8-kodie
 csv_skip_copy: true
 ```
 
+### Unsaubere CSVs
+
+Wenn eine Spalte nicht in ihren erkannten Typ konvertiert werden kann (eine verirrte Fussnotenzeile in einer numerischen Spalte, gemischte Datumsformate), degradiert der Scan, statt zu scheitern. Zuerst wird erneut gelesen und die nicht konvertierbaren Zeilen werden verworfen — akzeptiert nur, wenn es marginal bleibt (höchstens 10 Zeilen oder 0,1 %, und nie die ganze Datei), mit einer Warnung samt genauer Anzahl — danach werden alle Spalten als Text gelesen: jede parsbare Zeile bleibt erhalten, typisierte Statistiken entfallen schlicht. Werte werden nie verändert: ein degradiertes Dataset ist unvollständig oder untypisiert, nie falsch. Eine Datei, die selbst daran scheitert, wird wie bisher mit einer Warnung übersprungen.
+
 ## Komprimierte CSV-Dateien
 
 Eine gzip-komprimierte CSV-Datei (`.csv.gz`) wird wie jede andere Datei gescannt — auf jeder Quelle, in jeder [Tiefe](/de/scan-depth) — und katalogisiert sich exakt wie ihr unkomprimiertes Gegenstück (gleiche `id`/`name`, gleiche Variablen):

@@ -174,6 +174,10 @@ Avoid the UTF-8 temp copy when files are already local and UTF-8 (auto-fallback 
 csv_skip_copy: true
 ```
 
+### Messy CSVs
+
+When a column cannot be converted to its detected type (a stray footnote row in a numeric column, mixed date formats), the scan degrades instead of failing. It first retries dropping the unconvertible rows — accepted only when marginal (at most 10 rows or 0.1%, and never the whole file), with a warning giving the exact count — then falls back to reading every column as text: every parseable row survives, typed statistics are simply absent. Values are never altered, so a degraded dataset is incomplete or untyped, never wrong. A file failing even that is skipped with a warning, as before.
+
 ## Compressed CSV
 
 A gzip-compressed CSV (`.csv.gz`) is scanned like any other file — on any source, at any [depth](./scan-depth.md) — and catalogs exactly like its uncompressed twin (same `id`/`name`, same variables):

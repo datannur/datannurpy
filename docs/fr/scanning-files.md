@@ -174,6 +174,10 @@ Les sources géospatiales fonctionnent sur le [stockage distant](#remote-storage
 csv_skip_copy: true
 ```
 
+### CSV sales
+
+Quand une colonne ne peut pas être convertie vers son type détecté (une note de bas de page égarée dans une colonne numérique, des formats de date mélangés), le scan se dégrade au lieu d'échouer. Il réessaie d'abord en écartant les lignes non convertibles — accepté seulement si c'est marginal (au plus 10 lignes ou 0,1 %, et jamais le fichier entier), avec un avertissement donnant le compte exact — puis se replie sur une lecture de toutes les colonnes en texte : toutes les lignes analysables survivent, les statistiques typées sont simplement absentes. Les valeurs ne sont jamais altérées : un dataset dégradé est incomplet ou non typé, jamais faux. Un fichier qui échoue même à cela est ignoré avec un avertissement, comme avant.
+
 ## CSV compressé
 
 Un CSV compressé en gzip (`.csv.gz`) est scanné comme tout autre fichier — depuis n'importe quelle source, à n'importe quelle [profondeur](./scan-depth.md) — et est catalogué exactement comme son jumeau non compressé (mêmes `id`/`name`, mêmes variables) :

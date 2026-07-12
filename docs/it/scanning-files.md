@@ -174,6 +174,10 @@ Evitare la copia temporanea UTF-8 quando i file sono già locali e in UTF-8 (fal
 csv_skip_copy: true
 ```
 
+### CSV sporchi
+
+Quando una colonna non può essere convertita nel tipo rilevato (una riga di nota a piè di pagina in una colonna numerica, formati di data misti), la scansione degrada invece di fallire. Prima riprova scartando le righe non convertibili — accettato solo se marginale (al massimo 10 righe o lo 0,1%, e mai l'intero file), con un avviso che indica il conteggio esatto — poi ripiega sulla lettura di tutte le colonne come testo: tutte le righe analizzabili sopravvivono, le statistiche tipizzate sono semplicemente assenti. I valori non vengono mai alterati: un dataset degradato è incompleto o non tipizzato, mai sbagliato. Un file che fallisce anche questo viene saltato con un avviso, come prima.
+
 ## CSV compressi
 
 Un CSV compresso con gzip (`.csv.gz`) viene scansionato come qualsiasi altro file — su qualsiasi sorgente, a qualsiasi [profondità](/it/scan-depth) — e viene catalogato esattamente come il suo gemello non compresso (stessi `id`/`name`, stesse variabili):
