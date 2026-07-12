@@ -113,6 +113,17 @@ filterwarnings = [
 target-version = "py39"
 exclude = ["examples/output"]
 
+[tool.ruff.lint]
+extend-select = ["B", "C4", "C90", "PERF", "RET", "SIM"]
+# PERF203: try/except inside scan loops is the error-degradation strategy, not an accident
+# B009: getattr with a literal is used deliberately for dynamic backend attributes
+# (ibis BaseBackend.raw_sql/sql/con, pyarrow re-exports) that the type stubs don't carry
+ignore = ["PERF203", "B009"]
+
+[tool.ruff.lint.mccabe]
+# Ratchet: existing offenders carry an explicit `# noqa: C901`; lower as they get refactored
+max-complexity = 20
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/datannurpy"]
 
