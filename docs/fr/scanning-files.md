@@ -103,7 +103,7 @@ GeoPackage et GeoParquet sont lus sans l'extra ; leur `bbox` n'est reprojetée e
 ```yaml
 add:
   # Les fichiers vectoriels et raster sont auto-détectés par add_folder, comme tout autre format
-  - folder: ./geodata          # *.geojson, *.shp, *.gml, *.kml, *.tif, *.parquet
+  - folder: ./geodata          # *.geojson, *.shp, *.gml, *.kml, *.gpx, *.tif, *.parquet
 
   # Un fichier géospatial unique
   - dataset: ./geodata/parcels.shp
@@ -122,6 +122,7 @@ add:
 | Shapefile zippé | `.zip` (un `.shp` + fichiers annexes) | `dataset` |
 | GML | `.gml` | `folder` / `dataset` |
 | KML | `.kml` | `folder` / `dataset` |
+| GPX | `.gpx` | `folder` / `dataset` |
 | GeoTIFF (raster) | `.tif`, `.tiff` | `folder` / `dataset` |
 | GeoParquet | `.parquet` | `folder` / `dataset` |
 | GeoPackage | `.gpkg` | `database: sqlite:///…` |
@@ -134,7 +135,9 @@ add:
   - dataset: https://data.example.org/ADMIN-EXPRESS_FRA.zip
 ```
 
-L'archive doit contenir exactement un Shapefile. Les archives multi-Shapefile et la découverte automatique de zips lors d'un scan `folder:` ne sont pas prises en charge — extrayez-les d'abord.
+La même approche fonctionne pour toute [archive zip](#archives-zip) contenant exactement un fichier scannable.
+
+Les fichiers GPX, KML et GML peuvent contenir plusieurs couches (un GPX expose toujours waypoints, routes et tracks) ; scannés comme un seul `dataset:`, c'est la première couche non vide qui est lue — un enregistrement de trace sans waypoints livre donc bien ses tracks.
 
 ### Métadonnées spatiales
 
@@ -181,7 +184,18 @@ add:
   - folder: sftp://user@host/exports    # *.csv.gz aux côtés de *.csv
 ```
 
-Seul le **gzip de CSV** à flux unique est pris en charge ; les autres formes compressées (`.parquet.gz`, archives `.zip`, Shapefiles zippés) ne le sont pas — extrayez-les d'abord. La compression au niveau du transport HTTP (`Content-Encoding: gzip`) est gérée automatiquement et ne nécessite rien de particulier.
+Seul le **gzip de CSV** à flux unique est pris en charge pour `.gz` ; `.parquet.gz` ne l'est pas — extrayez-le d'abord. La compression au niveau du transport HTTP (`Content-Encoding: gzip`) est gérée automatiquement et ne nécessite rien de particulier.
+
+## Archives zip
+
+Un `.zip` contenant exactement un fichier de données — un fichier CSV, Excel, ODS ou Parquet, ou un Shapefile avec ses fichiers annexes — est scanné comme un `dataset:` depuis n'importe quelle source. Le membre est extrait de manière sûre (protection contre le Zip Slip et les bombes de décompression) et scanné comme un fichier ordinaire, à n'importe quelle [profondeur](./scan-depth.md) :
+
+```yaml
+add:
+  - dataset: https://data.example.org/exports/sales.csv.zip
+```
+
+Les archives contenant plusieurs fichiers de données et la découverte automatique de zips lors d'un scan `folder:` ne sont pas prises en charge — extrayez-les d'abord.
 
 ## Stockage distant {#remote-storage}
 
@@ -255,7 +269,7 @@ add:
 - Public, sans authentification.
 - Les redirections sont suivies ; `https://` est recommandé.
 
-**Détection de format.** Une URL avec une extension reconnue (`.csv`, `.xlsx`, …) fonctionne directement — toute chaîne de requête est ignorée (`.../sales.csv?token=…`). Les points de terminaison d'API n'ont souvent pas d'extension, le format est alors détecté automatiquement, dans l'ordre : le dernier segment de chemin utilisé comme jeton (`.../HCL_NOGA/multiplelevels/CSV`), un paramètre de requête `?format=`, le `Content-Type` HTTP, et enfin l'analyse des premiers octets du contenu (au mieux, journalisée avec un avertissement ; ignorée à `depth: dataset`). Quand rien n'est concluant, l'exécution échoue en vous demandant de définir `format:`.
+**Détection de format.** Une URL avec une extension reconnue (`.csv`, `.xlsx`, …) fonctionne directement — toute chaîne de requête est ignorée (`.../sales.csv?token=…`). Les points de terminaison d'API n'ont souvent pas d'extension, le format est alors détecté automatiquement, dans l'ordre : le dernier segment de chemin utilisé comme jeton (`.../HCL_NOGA/multiplelevels/CSV`), un paramètre de requête `?format=` (ou WFS `?outputFormat=`), le `Content-Type` HTTP, et enfin l'analyse des premiers octets du contenu (au mieux, journalisée avec un avertissement ; ignorée à `depth: dataset`). Quand rien n'est concluant, l'exécution échoue en vous demandant de définir `format:`.
 
 Définissez `format:` explicitement pour contourner la détection (ou la forcer quand les signaux se contredisent). Cela évite aussi la requête de détection — un petit gain de vitesse quand vous connaissez déjà le format, appréciable sur de nombreux points de terminaison d'une même API :
 
@@ -269,9 +283,13 @@ add:
   - dataset: https://www.agvchapp.bfs.admin.ch/fr/state/results/xls?SnapshotDate=31.12.2025
     format: excel
     id: commune_district
+  # Couche WFS : une URL GetFeature renvoyant du GeoJSON est un dataset ordinaire
+  # (outputFormat=application/json ou json est détecté automatiquement comme geojson)
+  - dataset: https://wfs.geo.example.ch/?service=WFS&version=2.0.0&request=GetFeature&typeName=ns:parcels&outputFormat=application/json
+    id: parcels
 ```
 
-Les valeurs `format:` acceptées sont les formats de livraison (`csv`, `excel`, `parquet`, `sas`, `spss`, `stata`, `geojson`, `shapefile`, `gml`, `kml`, `geotiff`) ou une graphie d'extension correspondante (`xlsx`, `xls`, `pq`, …).
+Les valeurs `format:` acceptées sont les formats de livraison (`csv`, `excel`, `ods`, `parquet`, `sas`, `spss`, `stata`, `geojson`, `shapefile`, `gml`, `kml`, `gpx`, `geotiff`) ou une graphie d'extension correspondante (`xlsx`, `xls`, `pq`, …).
 - Une URL manquante (404, erreur DNS, timeout) fait échouer l'exécution avec un code de sortie non nul, exactement comme un fichier local manquant — un build CI échoue en rouge plutôt que de publier un catalogue tronqué.
 - Les scans incrémentaux utilisent l'en-tête `Last-Modified` du serveur : une URL est ignorée quand elle est inchangée, et sa date alimente `last_update_date`. Un serveur qui n'envoie pas de `Last-Modified` (par exemple un point de terminaison dynamique) est rescanné à chaque exécution.
 

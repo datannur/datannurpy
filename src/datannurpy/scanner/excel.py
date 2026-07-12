@@ -1,4 +1,4 @@
-"""Excel reader using pandas + openpyxl/xlrd."""
+"""Excel/OpenDocument spreadsheet reader using pandas + openpyxl/xlrd/odf."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from contextlib import contextmanager, redirect_stdout
 from dataclasses import dataclass
 from datetime import time as dt_time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 from xml.etree import ElementTree as ET
 from zipfile import ZipFile
 
@@ -30,6 +30,11 @@ if TYPE_CHECKING:
     import polars as pl
 
 _MIDNIGHT = dt_time(0, 0)
+
+# Suffix-specific pandas engines; anything else (.xlsx/.xlsm) reads via openpyxl.
+# Neither engine can stream a preview, so these suffixes validate after the full
+# pandas read instead of through the pre-read streaming check.
+_PANDAS_ENGINES: dict[str, Literal["xlrd", "odf"]] = {".xls": "xlrd", ".ods": "odf"}
 
 _MAX_PREVIEW_ROWS = 10
 _XLS_SNIFF_BYTES = 256
@@ -339,7 +344,7 @@ def read_excel(
     if file_path.stat().st_size == 0:
         return None
 
-    engine = "xlrd" if suffix == ".xls" else "openpyxl"
+    engine: Literal["xlrd", "openpyxl", "odf"] = _PANDAS_ENGINES.get(suffix, "openpyxl")
 
     if suffix == ".xls" and _looks_like_html_xls_content(_read_file_header(file_path)):
         _warn_html_xls(label, quiet)
@@ -416,7 +421,7 @@ def scan_excel(
         return result([], None, None, None)
 
     # Pre-read validation for .xlsx (streaming, avoids full read if invalid)
-    if suffix != ".xls":
+    if suffix not in _PANDAS_ENGINES:
         try:
             rows = _read_preview_rows(file_path, quiet=quiet, path_label=label)
         except Exception as e:
@@ -435,8 +440,8 @@ def scan_excel(
     if df is None:
         return result([], 0, None, None)
 
-    # Post-read validation for .xls (no streaming available)
-    if suffix == ".xls":
+    # Post-read validation for .xls/.ods (no streaming available)
+    if suffix in _PANDAS_ENGINES:
         header_row = tuple(df.columns)
         data_rows = [
             tuple(row) for row in df.head(_MAX_PREVIEW_ROWS).itertuples(index=False)

@@ -16,7 +16,7 @@ import ibis
 import pyarrow as pa
 
 from ..preview import preview_from_ibis
-from ..utils import log_error
+from ..utils import log_debug, log_error
 from .geo import build_geo_fields
 from .utils import build_variables
 
@@ -66,13 +66,32 @@ def _extension_types_to_storage(table: pa.Table) -> pa.Table:
     return pa.Table.from_arrays(columns, schema=schema)
 
 
-def list_geo_layers(path: str | Path) -> list[str]:
-    """Return the layer names of a vector container (e.g. a File Geodatabase)."""
+def _require_pyogrio() -> None:
+    """Fail fast with an actionable hint when the ``geo`` extra is missing."""
     try:
-        from pyogrio import list_layers
+        import pyogrio  # noqa: F401
     except ImportError as e:
         raise ImportError(_INSTALL_HINT) from e
+
+
+def list_geo_layers(path: str | Path) -> list[str]:
+    """Return the layer names of a vector container (e.g. a File Geodatabase)."""
+    _require_pyogrio()
+    from pyogrio import list_layers
+
     return [str(name) for name in list_layers(Path(path))[:, 0]]
+
+
+def _read_layer(path: Path, layer: str) -> tuple[Any, pa.Table]:
+    """Read one layer's spatial metadata and attribute table. ``force_total_bounds``
+    only computes an extent when the driver has none at low cost (GPX …) and exits
+    immediately for geometry-less layers, so the flag is free elsewhere."""
+    from pyogrio import read_info
+    from pyogrio.raw import read_arrow
+
+    info = read_info(path, layer=layer, force_total_bounds=True)
+    _, arrow = read_arrow(path, layer=layer)
+    return info, arrow
 
 
 def scan_geo_vector(
@@ -88,21 +107,32 @@ def scan_geo_vector(
 ) -> tuple[list[Variable], int, Any, dict[str, Any] | None, pl.DataFrame | None]:
     """Scan a vector file/layer into (variables, nb_row, freq_table, geo, preview).
 
-    ``layer`` selects a layer inside a multi-layer container (default: the first);
-    ``geo`` is ``{crs, geometry_type, bbox}`` (or ``None`` on read failure); the
-    geometry column itself is kept as a binary variable and skipped from stats.
+    ``layer`` selects a layer inside a multi-layer container (default: the first
+    non-empty one); ``geo`` is ``{crs, geometry_type, bbox}`` (or ``None`` on read
+    failure); the geometry column itself is kept as a binary variable and skipped
+    from stats.
     """
-    try:
-        from pyogrio import read_info
-        from pyogrio.raw import read_arrow
-    except ImportError as e:
-        raise ImportError(_INSTALL_HINT) from e
-
+    _require_pyogrio()
     file_path = Path(path)
     label = path_label or file_path.name
     try:
-        info = read_info(file_path, layer=layer)
-        _, arrow = read_arrow(file_path, layer=layer)
+        layers = [layer] if layer is not None else list_geo_layers(file_path)
+        # The first *populated* layer wins: multi-layer containers scanned as a
+        # single dataset (GPX, KML folders …) keep their data in later layers when
+        # the leading one is empty — a track-recording GPX has no waypoints.
+        selected = layers[0]
+        info, arrow = _read_layer(file_path, selected)
+        for name in layers[1:]:
+            if arrow.num_rows:
+                break
+            selected = name
+            info, arrow = _read_layer(file_path, selected)
+        if len(layers) > 1:
+            log_debug(
+                f"{label}: {len(layers)} layers; scanned {selected!r} "
+                f"(the first non-empty one)",
+                quiet,
+            )
     except Exception as e:
         log_error(label, e, quiet)
         return [], 0, None, None, None

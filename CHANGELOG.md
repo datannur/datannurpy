@@ -1,5 +1,13 @@
 # datannurpy
 
+## 0.30.0 (2026-07-12)
+
+- add: ODS spreadsheets (`.ods`) are scanned like Excel on every source and depth (new core dependency `odfpy`)
+- add: a `.zip` holding exactly one data file (CSV, Excel, ODS, Parquet …) is scanned as a `dataset:` — generalizes the zipped-Shapefile support, same Zip Slip / zip-bomb guards; multi-file archives stay out of scope
+- add: GPX (`.gpx`) joins the vector geo formats (`geo` extra) — the first non-empty layer is scanned, bbox included
+- add: WFS `GetFeature` URLs are detected as GeoJSON (`outputFormat=json`/`application/json` on an OGC request); `format`/`fmt`/`outputFormat` query keys are now case-insensitive and accept media types
+- fix: multi-layer vector containers scanned as a single dataset no longer emit pyogrio's "more than one layer" warning
+
 ## 0.29.5 (2026-07-10)
 
 - fix: the run `[summary]` now counts `add_dataset` and `add_geodatabase` sources — a dataset added individually (single file, HTTP URL, zipped Shapefile, partitioned directory, `.gdb` layer) was missing from the `scanned`/`unchanged` tallies, understating them on incremental runs

@@ -162,6 +162,62 @@ class TestGmlKmlViaCatalog:
         assert dataset.geometry_type in (None, "polygon")
         assert dataset.bbox in (None, [7.4, 46.0, 7.7, 46.2])
 
+    def test_gpx_is_enriched(self, tmp_path: Path) -> None:
+        # GPX is a fixed multi-layer container; the first non-empty layer
+        # (waypoints here) is scanned, with its extent force-computed (the GPX
+        # driver has no cheap one).
+        (tmp_path / "peaks.gpx").write_text(
+            '<?xml version="1.0"?>'
+            '<gpx version="1.1" creator="test" '
+            'xmlns="http://www.topografix.com/GPX/1/1">'
+            '<wpt lat="46.0" lon="7.4"><name>A</name><ele>500</ele></wpt>'
+            '<wpt lat="46.2" lon="7.7"><name>B</name><ele>600</ele></wpt>'
+            "</gpx>"
+        )
+        catalog = Catalog(app_path=tmp_path / "app", quiet=True)
+        catalog.add_dataset(str(tmp_path / "peaks.gpx"))
+        dataset = catalog.dataset.get_by("name", "peaks")
+        assert dataset is not None
+        assert dataset.delivery_format == "gpx"
+        assert dataset.nb_row == 2
+        assert dataset.crs == "EPSG:4326"
+        assert dataset.geometry_type == "point"
+        assert dataset.bbox == [7.4, 46.0, 7.7, 46.2]
+        assert "name" in [v.name for v in catalog.variable.all()]
+
+    def test_gpx_track_recording_scans_tracks_layer(self, tmp_path: Path) -> None:
+        # The dominant real-world GPX (Strava/Garmin recordings) has no waypoints:
+        # the empty leading layers are skipped and the tracks layer is scanned.
+        (tmp_path / "ride.gpx").write_text(
+            '<?xml version="1.0"?>'
+            '<gpx version="1.1" creator="test" '
+            'xmlns="http://www.topografix.com/GPX/1/1">'
+            "<trk><name>morning ride</name><trkseg>"
+            '<trkpt lat="46.0" lon="7.4"><ele>500</ele></trkpt>'
+            '<trkpt lat="46.2" lon="7.7"><ele>600</ele></trkpt>'
+            "</trkseg></trk></gpx>"
+        )
+        catalog = Catalog(app_path=tmp_path / "app", quiet=True)
+        catalog.add_dataset(str(tmp_path / "ride.gpx"))
+        dataset = catalog.dataset.get_by("name", "ride")
+        assert dataset is not None
+        assert dataset.nb_row == 1  # the track feature, not an empty waypoints layer
+        assert dataset.geometry_type == "multilinestring"
+
+    def test_gpx_without_features_scans_empty(self, tmp_path: Path) -> None:
+        # All layers empty: the scan completes with an empty dataset, no crash.
+        (tmp_path / "empty.gpx").write_text(
+            '<?xml version="1.0"?>'
+            '<gpx version="1.1" creator="test" '
+            'xmlns="http://www.topografix.com/GPX/1/1"></gpx>'
+        )
+        catalog = Catalog(app_path=tmp_path / "app", quiet=True)
+        catalog.add_dataset(str(tmp_path / "empty.gpx"))
+        dataset = catalog.dataset.get_by("name", "empty")
+        assert dataset is not None
+        assert dataset.nb_row == 0
+        assert dataset.bbox is None
+
 
 class TestScanGeoVector:
     def test_returns_geo_and_variables(self, tmp_path: Path) -> None:

@@ -98,6 +98,17 @@ def test_format_from_token(path_name: str, expected: str | None) -> None:
         ("http://x/y?format=csv", "csv"),
         ("http://x/y?fmt=xlsx", "excel"),
         ("http://x/y?format=weird", None),
+        # WFS GetFeature: outputFormat (case-insensitive key) spells GeoJSON as a
+        # JSON media type or plain "json" — but only on an OGC request; the same
+        # value on a generic API (or a plain ?format=json) stays unmapped.
+        ("http://x/wfs?request=GetFeature&outputFormat=application/json", "geojson"),
+        ("http://x/wfs?SERVICE=WFS&outputformat=json", "geojson"),
+        ("http://x/api?outputFormat=json", None),
+        ("http://x/wfs?outputFormat=csv", "csv"),
+        ("http://x/wfs?request=GetFeature&outputFormat=text/xml", None),
+        ("http://x/y?format=json", None),
+        # Media-type spellings resolve through the Content-Type table.
+        ("http://x/y?format=text/csv", "csv"),
     ],
 )
 def test_format_from_query(url: str, expected: str | None) -> None:
@@ -115,6 +126,18 @@ def test_content_type_from_mimetype() -> None:
 def test_content_type_from_header_case_insensitive() -> None:
     fs = _FakeFS(info={"Content-Type": "application/parquet"})
     assert content_type_to_format(cast(FileSystem, fs), "http://x/y") == "parquet"
+
+
+@pytest.mark.parametrize(
+    ("content_type", "expected"),
+    [
+        ("application/vnd.oasis.opendocument.spreadsheet", "ods"),
+        ("application/gpx+xml", "gpx"),
+    ],
+)
+def test_content_type_new_formats(content_type: str, expected: str) -> None:
+    fs = _FakeFS(info={"mimetype": content_type})
+    assert content_type_to_format(cast(FileSystem, fs), "http://x/y") == expected
 
 
 def test_content_type_unknown_returns_none() -> None:
@@ -139,6 +162,12 @@ def test_content_type_info_failure_returns_none() -> None:
     ("header", "expected"),
     [
         (b"PK\x03\x04rest", "excel"),
+        (
+            b"PK\x03\x04"
+            + b"\x00" * 26
+            + b"mimetypeapplication/vnd.oasis.opendocument.spreadsheet",
+            "ods",
+        ),
         (b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1rest", "excel"),
         (b"PAR1rest", "parquet"),
         (b"<html><body>", None),

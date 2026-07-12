@@ -807,3 +807,46 @@ class TestScanExcelSchemaRemote:
 
         assert result == expected
         mock_fs.ensure_local.assert_called_once()
+
+
+class TestScanOds:
+    """OpenDocument spreadsheets ride the Excel pipeline via the pandas odf engine."""
+
+    @staticmethod
+    def _write_ods(path: Path, df: pd.DataFrame) -> None:
+        with pd.ExcelWriter(path, engine="odf") as writer:
+            df.to_excel(writer, index=False)
+
+    def test_value_depth(self, tmp_path: Path):
+        ods = tmp_path / "sales.ods"
+        self._write_ods(
+            ods, pd.DataFrame({"city": ["Bern", "Sion"], "amount": [10, 20]})
+        )
+        catalog = Catalog(quiet=True)
+        catalog.add_dataset(ods)
+        ds = catalog.dataset.all()[0]
+        assert ds.delivery_format == "ods"
+        assert ds.nb_row == 2
+        assert [v.name for v in catalog.variable.all()] == ["city", "amount"]
+
+    def test_variable_depth_via_folder(self, tmp_path: Path):
+        """Folder discovery picks .ods up; schema-only reads through pandas/odf."""
+        self._write_ods(
+            tmp_path / "sales.ods", pd.DataFrame({"city": ["Bern"], "amount": [10]})
+        )
+        catalog = Catalog(depth="variable", quiet=True)
+        catalog.add_folder(tmp_path)
+        ds = catalog.dataset.all()[0]
+        assert ds.delivery_format == "ods"
+        assert ds.nb_row is None  # not scanned at variable depth
+        assert [v.name for v in catalog.variable.all()] == ["city", "amount"]
+
+    def test_invalid_tabular_skipped(self, tmp_path: Path, capsys):
+        """Numeric headers fail the post-read validation, like .xls."""
+        ods = tmp_path / "pivot.ods"
+        self._write_ods(ods, pd.DataFrame({2023: [100], 2024: [200]}))
+        catalog = Catalog(quiet=True)
+        catalog.add_dataset(ods, quiet=False)
+        captured = capsys.readouterr()
+        assert "not a valid tabular dataset" in captured.err
+        assert len(catalog.variable.all()) == 0

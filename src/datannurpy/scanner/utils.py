@@ -75,6 +75,7 @@ SUPPORTED_FORMATS: dict[str, str] = {
     ".csv": "csv",
     ".xlsx": "excel",
     ".xls": "excel",
+    ".ods": "ods",
     ".parquet": "parquet",
     ".pq": "parquet",
     ".sas7bdat": "sas",
@@ -84,6 +85,7 @@ SUPPORTED_FORMATS: dict[str, str] = {
     ".shp": "shapefile",
     ".gml": "gml",
     ".kml": "kml",
+    ".gpx": "gpx",
     ".tif": "geotiff",
     ".tiff": "geotiff",
 }
