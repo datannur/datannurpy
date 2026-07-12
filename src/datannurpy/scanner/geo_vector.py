@@ -104,7 +104,7 @@ def scan_geo_vector(
     return_preview: bool = False,
     quiet: bool = False,
     path_label: str | None = None,
-) -> tuple[list[Variable], int, Any, dict[str, Any] | None, pl.DataFrame | None]:
+) -> tuple[list[Variable], int | None, Any, dict[str, Any] | None, pl.DataFrame | None]:
     """Scan a vector file/layer into (variables, nb_row, freq_table, geo, preview).
 
     ``layer`` selects a layer inside a multi-layer container (default: the first
@@ -135,7 +135,7 @@ def scan_geo_vector(
             )
     except Exception as e:
         log_error(label, e, quiet)
-        return [], 0, None, None, None
+        return [], None, None, None, None
 
     arrow = _extension_types_to_storage(arrow)
 

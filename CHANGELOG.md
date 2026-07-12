@@ -8,6 +8,8 @@
 - add: WFS `GetFeature` URLs are detected as GeoJSON (`outputFormat=json`/`application/json` on an OGC request); `format`/`fmt`/`outputFormat` query keys are now case-insensitive and accept media types
 - fix: multi-layer vector containers scanned as a single dataset no longer emit pyogrio's "more than one layer" warning
 - add: messy CSVs degrade instead of failing — on type-conversion errors the scan drops the unconvertible rows (accepted only when marginal, warning with the count), then falls back to all-text columns (every parseable row kept); values are never altered
+- fix: zero-row warnings tell the truth — `empty file (0 bytes)` only for genuinely empty files, `no data rows` otherwise; a scanner-reported failure (`✗`) is no longer re-reported as "empty file" and its dataset keeps `nb_row` null instead of a false `0`
+- fix: scan errors handled inside a scanner (logged `✗` but invisible to the tally) now count in the run `[summary]` and the `on_scan_error: fail` exit code
 
 ## 0.29.5 (2026-07-10)
 

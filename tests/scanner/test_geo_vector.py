@@ -263,7 +263,7 @@ class TestScanGeoVector:
         bad.write_text("{ not valid geojson", encoding="utf-8")
         assert scan_geo_vector(bad, dataset_id="ds", quiet=True) == (
             [],
-            0,
+            None,  # unknown, not zero: the failure is already reported as an error
             None,
             None,
             None,

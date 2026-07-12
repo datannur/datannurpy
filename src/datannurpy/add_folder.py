@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, Literal, NoReturn
 from .utils import (
     build_dataset_id_name,
     build_variable_ids,
+    error_count,
     get_folder_id,
     log_done,
     log_error,
@@ -65,6 +66,14 @@ if TYPE_CHECKING:
 _DIR_FORMATS = {"delta", "hive", "iceberg"}
 
 OnUnmatched = Literal["skip", "warn", "error"]
+
+
+def _no_rows_message(display_path: str, data_size: int | None) -> str:
+    """A truthful zero-row warning: "empty file" only when the file really is
+    empty on disk; a header-only or unparsed-to-zero file says "no data rows"."""
+    if data_size == 0:
+        return f"{display_path}: empty file (0 bytes)"
+    return f"{display_path}: no data rows"
 
 
 def _raise_folder_config_error(message: str, quiet: bool) -> NoReturn:
@@ -545,6 +554,7 @@ def add_folder(
         display_path = _display_dataset_path(info, root)
         # Time series: special handling
         if info.series_files is not None:
+            errors_before = error_count()
             try:
                 if _scan_time_series(
                     catalog=catalog,
@@ -567,7 +577,11 @@ def add_folder(
                     scanned += 1
             except Exception as exc:
                 log_error(display_path, exc, q)
-                scan_errors += 1
+            # One mechanism for both paths — a ✗ logged during the scan,
+            # swallowed by the scanner or caught just above, marks the dataset
+            # failed. Clamped: a series re-scans files (schema pass + full
+            # pass), so one bad file may log several ✗ for one dataset.
+            scan_errors += min(1, error_count() - errors_before)
             continue
 
         # Single file: standard handling
@@ -590,6 +604,7 @@ def add_folder(
         )
 
         # Scan dataset
+        errors_before = error_count()
         try:
             result = scan_file(
                 info.path,
@@ -607,8 +622,12 @@ def add_folder(
             )
         except Exception as exc:
             log_error(display_path, exc, q)
-            scan_errors += 1
+            scan_errors += min(1, error_count() - errors_before)
             continue
+        # One mechanism for both paths — a ✗ logged during the scan, swallowed
+        # by the scanner or caught just above, marks the dataset failed (at
+        # most once, however many ✗ the scan logged).
+        scan_errors += min(1, error_count() - errors_before)
 
         # Remove old dataset only after successful scan
         existing = plan.existing_by_path.get(data_path_str)
@@ -659,8 +678,8 @@ def add_folder(
         if schema_only:
             log_done(f"{display_path} ({len(result.variables)} vars)", q, t0)
         elif result.nb_row is None:
-            # Scanner already emitted a warning explaining why the file
-            # could not be scanned (untreatable, malformed, etc.).
+            # Scanner already emitted a warning or error explaining why the
+            # file could not be scanned (untreatable, malformed, etc.).
             pass
         elif result.nb_row > 0:
             log_done(
@@ -669,7 +688,7 @@ def add_folder(
                 t0,
             )
         else:
-            log_warn(f"{display_path}: empty file", q)
+            log_warn(_no_rows_message(display_path, dataset.data_size), q)
 
     vars_added = catalog.variable.count - vars_before
     unchanged = len(plan.to_skip)
@@ -876,13 +895,16 @@ def _scan_time_series(
             quiet,
             t0,
         )
-    elif result.nb_row and result.nb_row > 0:
+    elif result.nb_row is None:
+        # Scanner already emitted a warning or error explaining the failure.
+        pass
+    elif result.nb_row > 0:
         log_done(
             f"{display_path} ({result.nb_row:,} rows, {len(result.variables)} vars, {len(series_files)} files)",
             quiet,
             t0,
         )
     else:
-        log_warn(f"{display_path}: empty file", quiet)
+        log_warn(_no_rows_message(display_path, dataset.data_size), quiet)
 
     return True

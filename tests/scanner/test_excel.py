@@ -841,6 +841,14 @@ class TestScanOds:
         assert ds.nb_row is None  # not scanned at variable depth
         assert [v.name for v in catalog.variable.all()] == ["city", "amount"]
 
+    def test_empty_sheet_scans_as_zero_rows(self, tmp_path: Path):
+        """No streaming preflight for .ods: an empty sheet resolves post-read."""
+        ods = tmp_path / "empty.ods"
+        self._write_ods(ods, pd.DataFrame())
+        catalog = Catalog(quiet=True)
+        catalog.add_dataset(ods)
+        assert catalog.dataset.all()[0].nb_row == 0
+
     def test_invalid_tabular_skipped(self, tmp_path: Path, capsys):
         """Numeric headers fail the post-read validation, like .xls."""
         ods = tmp_path / "pivot.ods"
@@ -850,3 +858,22 @@ class TestScanOds:
         captured = capsys.readouterr()
         assert "not a valid tabular dataset" in captured.err
         assert len(catalog.variable.all()) == 0
+
+
+class TestReadExcelHelper:
+    """read_excel (used by metadata loading) returns None on empty or broken input."""
+
+    def test_zero_byte_file_returns_none(self, tmp_path: Path):
+        from datannurpy.scanner.excel import read_excel
+
+        empty = tmp_path / "empty.xlsx"
+        empty.write_bytes(b"")
+        assert read_excel(empty, quiet=True) is None
+
+    def test_read_error_returns_none(self, tmp_path: Path, capsys):
+        from datannurpy.scanner.excel import read_excel
+
+        bad = tmp_path / "bad.xlsx"
+        bad.write_bytes(b"not a real excel file")
+        assert read_excel(bad, quiet=False) is None
+        assert "✗  bad.xlsx" in capsys.readouterr().err

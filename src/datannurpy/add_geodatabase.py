@@ -25,6 +25,7 @@ from .schema import Dataset, EntityMetadata, Folder, folder_from_metadata
 from .scanner.filesystem import FileSystem, is_remote_url
 from .scanner.utils import get_mtime_timestamp
 from .utils import (
+    error_count,
     log_done,
     log_error,
     log_section,
@@ -106,6 +107,7 @@ def add_geodatabase(
             layers = filter_by_patterns(list_geo_layers(source), include, exclude)
         except Exception as e:
             log_error(gdb_name, e, q)
+            catalog._tally_scan(0, 0, 1)
             return
 
         # Container folder, mirroring how add_database nests tables under the database.
@@ -139,6 +141,7 @@ def add_geodatabase(
             ):
                 catalog._tally_scan(0, 1)
                 continue
+            errors_before = error_count()
             variables, nb_row, freq_table, geo, preview = scan_geo_vector(
                 source,
                 dataset_id=dataset_id,
@@ -174,5 +177,7 @@ def add_geodatabase(
                 label=label,
                 auto_enumerations=resolved_auto_enumerations,
             )
-            catalog._tally_scan(1, 0)
+            # Internally-handled layer errors still count for the run tally —
+            # at most one per layer dataset.
+            catalog._tally_scan(1, 0, min(1, error_count() - errors_before))
     log_done(f"{gdb_name} ({len(layers)} layers)", q, start_time)

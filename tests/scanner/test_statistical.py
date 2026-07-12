@@ -105,7 +105,8 @@ class TestScanStatisticalExceptions:
         assert "✗  corrupted.sas7bdat" in captured.err
 
         assert len(catalog.dataset.all()) == 1
-        assert catalog.dataset.all()[0].nb_row == 0
+        # Unknown, not zero: the failure is already reported as a scan error.
+        assert catalog.dataset.all()[0].nb_row is None
         assert len(catalog.variable.all()) == 0
 
     def test_nested_corrupted_file_warning_uses_relative_path(
@@ -227,7 +228,7 @@ class TestScanStatisticalEdgeCases:
         captured = capsys.readouterr()
         assert "✗  ok.sav" in captured.err
         assert variables == []
-        assert row_count == 0
+        assert row_count is None  # unknown, not zero: the ✗ carries the failure
 
     def test_string_only_file_no_fix_needed(self, tmp_path: Path):
         """_fix_parquet_types should return early when no float or time columns."""

@@ -386,10 +386,10 @@ def scan_csv(
             # A ConversionException that survives even all_varchar (which casts
             # nothing) is not a CSV problem — surface it as a real scan error.
             log_error(label, last_error, quiet)
-            return result([], 0, None, None, None)
+            return result([], None, None, None, None)
     except Exception as e:
         log_error(label, e, quiet)
-        return result([], 0, None, None, None)
+        return result([], None, None, None, None)
 
 
 def _scan_csv_table(

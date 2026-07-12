@@ -480,7 +480,7 @@ class TestScanCsvErrorPath:
             csv_file, dataset_id="test", infer_stats=True, quiet=True
         )
         assert variables == []
-        assert nb_row == 0
+        assert nb_row is None  # unknown, not zero: the error is already reported
 
 
 class TestReadCsvErrorPath:
@@ -590,5 +590,5 @@ class TestScanCsvDegradedProfiles:
         captured = capsys.readouterr()
         assert "unscannable" not in captured.err
         assert "internal cast" in captured.err
-        assert nb_row == 0  # error path, not the nb_row=None warning path
+        assert nb_row is None  # unknown row count; the ✗ line carries the failure
         assert variables == []

@@ -94,6 +94,10 @@ class TestAddFolderFormats:
 
         captured = capsys.readouterr()
         assert "✗  corrupted.xlsx" in captured.err
+        # Reported once: no zero-row relabel, and the run error tally sees it.
+        assert "empty file" not in captured.err
+        assert "no data rows" not in captured.err
+        assert catalog.run_errors == 1
 
         assert len(catalog.dataset.all()) == 1
         assert len(catalog.variable.all()) == 0
@@ -1061,3 +1065,80 @@ class TestAddFolderMetadata:
                 metadata=EntityMetadata(id="x"),
                 create_folders=False,
             )
+
+
+class TestScanLogTruthfulness:
+    """Zero-row warnings tell the truth, and swallowed scan errors count."""
+
+    def test_truly_empty_file_says_0_bytes(self, tmp_path: Path, capsys):
+        (tmp_path / "void.csv").write_bytes(b"")
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, quiet=False)
+        captured = capsys.readouterr()
+        assert "void.csv: empty file (0 bytes)" in captured.err
+        assert catalog.run_errors == 0
+
+    def test_header_only_csv_says_no_data_rows(self, tmp_path: Path, capsys):
+        (tmp_path / "header.csv").write_text("a,b\n")
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, quiet=False)
+        captured = capsys.readouterr()
+        assert "header.csv: no data rows" in captured.err
+        assert "empty file" not in captured.err
+        assert catalog.run_errors == 0
+
+    def test_zero_byte_xlsx_is_empty_not_an_error(self, tmp_path: Path, capsys):
+        # A 0-byte .xlsx must behave like a 0-byte .csv/.ods — "empty file",
+        # not a BadZipFile scan error from the pre-read validation.
+        (tmp_path / "void.xlsx").write_bytes(b"")
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, quiet=False)
+        captured = capsys.readouterr()
+        assert "void.xlsx: empty file (0 bytes)" in captured.err
+        assert "✗" not in captured.err
+        assert catalog.run_errors == 0
+
+    def test_corrupt_series_counts_one_error(self, tmp_path: Path, capsys):
+        # A series re-scans files (schema pass, then the latest in full), so a
+        # corrupt series logs several ✗ — but it is ONE failed dataset.
+        pytest.importorskip("pyreadstat", reason="pyreadstat (stat extra)")
+        (tmp_path / "enquete_2020.sas7bdat").write_bytes(b"garbage")
+        (tmp_path / "enquete_2021.sas7bdat").write_bytes(b"garbage")
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, quiet=False)
+        captured = capsys.readouterr()
+        assert "✗" in captured.err
+        assert catalog.run_errors == 1
+
+    def test_swallowed_error_counts_in_add_dataset(self, tmp_path: Path, capsys):
+        corrupted = tmp_path / "corrupted.xlsx"
+        corrupted.write_bytes(b"not a real excel file")
+        catalog = Catalog()
+        catalog.add_dataset(corrupted, quiet=False)
+        captured = capsys.readouterr()
+        assert "✗  corrupted.xlsx" in captured.err
+        assert catalog.run_errors == 1
+
+    def test_time_series_no_data_rows(self, tmp_path: Path, capsys):
+        (tmp_path / "enquete_2020.csv").write_text("a,b\n")
+        (tmp_path / "enquete_2021.csv").write_text("a,b\n")
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, quiet=False)
+        captured = capsys.readouterr()
+        assert "no data rows" in captured.err
+        assert "empty file" not in captured.err
+
+    def test_time_series_scanner_reported_failure_not_relabelled(
+        self, tmp_path: Path, capsys
+    ):
+        # The series scanner warns "not a valid tabular dataset" itself; the
+        # caller must not re-report it as an empty/zero-row dataset.
+        (tmp_path / "enquete_2020.csv").write_text("a,a\n1,2\n")
+        (tmp_path / "enquete_2021.csv").write_text("a,a\n1,2\n")
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, quiet=False)
+        captured = capsys.readouterr()
+        assert "not a valid tabular dataset" in captured.err
+        assert "empty file" not in captured.err
+        assert "no data rows" not in captured.err
+        assert catalog.run_errors == 0

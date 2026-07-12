@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from .utils import (
     build_variable_ids,
+    error_count,
     log_done,
     log_section,
     log_skip,
@@ -317,6 +318,7 @@ def add_dataset(
     sample_size_for_scan: int | None = (
         resolved_sample_size if resolved_depth == "value" else None
     )
+    errors_before = error_count()
     result = scan_file(
         dataset_path,
         delivery_format,
@@ -363,7 +365,9 @@ def add_dataset(
         label=path_name,
         auto_enumerations=resolved_auto_enumerations,
     )
-    catalog._tally_scan(1, 0)
+    # Errors the scanner handled internally (logged the ✗ itself and returned
+    # an empty result) still count for the run tally — at most one per dataset.
+    catalog._tally_scan(1, 0, min(1, error_count() - errors_before))
 
     # Log result
     var_count = len(result.variables)

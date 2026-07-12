@@ -16,6 +16,7 @@ from .ids import (
 from .folder import upsert_folder
 from .log import (
     configure_logging,
+    error_count,
     log_debug,
     log_done,
     log_error,
@@ -49,6 +50,7 @@ __all__ = [
     # log
     "configure_logging",
     "log_debug",
+    "error_count",
     "log_done",
     "log_error",
     "log_folder",

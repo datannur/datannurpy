@@ -128,7 +128,7 @@ def scan_statistical(
 
     def result(
         variables: list[Variable],
-        nb_row: int,
+        nb_row: int | None,
         actual_sample_size: int | None,
         freq_table: pa.Table | None,
         metadata: StatisticalMetadata,
@@ -159,7 +159,7 @@ def scan_statistical(
         _, meta = reader(file_path, metadataonly=True)
     except Exception as e:
         log_error(label, e, quiet)
-        return result([], 0, None, None, StatisticalMetadata(), None)
+        return result([], None, None, None, StatisticalMetadata(), None)
 
     column_labels: dict[str, str | None] = meta.column_names_to_labels
     stat_metadata = StatisticalMetadata(description=meta.file_label or None)
@@ -200,7 +200,7 @@ def scan_statistical(
         )
     except Exception as e:
         log_error(label, e, quiet)
-        return result([], 0, None, None, StatisticalMetadata(), None)
+        return result([], None, None, None, StatisticalMetadata(), None)
 
 
 def _build_from_parquet(

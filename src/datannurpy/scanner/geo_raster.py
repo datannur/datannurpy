@@ -27,7 +27,7 @@ def scan_geo_raster(
     dataset_id: str,
     quiet: bool = False,
     path_label: str | None = None,
-) -> tuple[list[Variable], int, dict[str, Any] | None, float | None]:
+) -> tuple[list[Variable], int | None, dict[str, Any] | None, float | None]:
     """Scan a raster into ``(variables, nb_row, geo, spatial_resolution)``.
 
     One Variable per band (``type="band"``) carries the band statistics; ``nb_row``
@@ -56,7 +56,7 @@ def scan_geo_raster(
             ]
     except Exception as e:
         log_error(label, e, quiet)
-        return [], 0, None, None
+        return [], None, None, None
     return variables, nb_row, geo, spatial_resolution
 
 

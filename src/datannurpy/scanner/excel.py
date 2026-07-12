@@ -329,6 +329,21 @@ def is_valid_tabular_dataset(rows: Sequence[tuple[object, ...]]) -> tuple[bool, 
     return True, ""
 
 
+def _read_excel_frame(
+    file_path: Path, sheet_name: str | int, label: str, quiet: bool
+) -> pd.DataFrame:
+    """Read a spreadsheet into a DataFrame with the suffix's engine, raising on
+    failure — callers choose what a read error means (``read_excel`` returns
+    None for metadata loading; ``scan_excel`` reports a scan error)."""
+    import pandas as pd
+
+    engine: Literal["xlrd", "openpyxl", "odf"] = _PANDAS_ENGINES.get(
+        file_path.suffix.lower(), "openpyxl"
+    )
+    with _capture_excel_diagnostics(label, quiet):
+        return pd.read_excel(file_path, sheet_name=sheet_name, engine=engine)
+
+
 def read_excel(
     path: str | Path,
     *,
@@ -344,17 +359,12 @@ def read_excel(
     if file_path.stat().st_size == 0:
         return None
 
-    engine: Literal["xlrd", "openpyxl", "odf"] = _PANDAS_ENGINES.get(suffix, "openpyxl")
-
     if suffix == ".xls" and _looks_like_html_xls_content(_read_file_header(file_path)):
         _warn_html_xls(label, quiet)
         return None
 
     try:
-        import pandas as pd
-
-        with _capture_excel_diagnostics(label, quiet):
-            df = pd.read_excel(file_path, sheet_name=sheet_name, engine=engine)
+        df = _read_excel_frame(file_path, sheet_name, label, quiet)
         if df.empty:
             return None
         return df
@@ -416,6 +426,11 @@ def scan_excel(
             return variables, nb_row, freq_table, preview_df
         return variables, nb_row, freq_table
 
+    # Before any parsing: a 0-byte file is "empty", not a read error (the xlsx
+    # pre-read validation below would otherwise raise BadZipFile on it).
+    if file_path.stat().st_size == 0:
+        return result([], 0, None, None)
+
     if suffix == ".xls" and _looks_like_html_xls_content(_read_file_header(file_path)):
         _warn_html_xls(label, quiet)
         return result([], None, None, None)
@@ -436,8 +451,14 @@ def scan_excel(
             )
             return result([], None, None, None)
 
-    df = read_excel(path, sheet_name=sheet_name, quiet=quiet, path_label=label)
-    if df is None:
+    # Read via the raising helper (not ``read_excel``) so a read failure — a
+    # real scan error — stays distinguishable from a genuinely empty sheet.
+    try:
+        df = _read_excel_frame(file_path, sheet_name, label, quiet)
+    except Exception as e:
+        log_error(label, e, quiet)
+        return result([], None, None, None)
+    if df.empty:
         return result([], 0, None, None)
 
     # Post-read validation for .xls/.ods (no streaming available)

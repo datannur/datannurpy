@@ -104,7 +104,12 @@ class TestScanGeoRaster:
     def test_read_failure_returns_empty(self, tmp_path: Path) -> None:
         bad = tmp_path / "broken.tif"
         bad.write_bytes(b"not a tiff")
-        assert scan_geo_raster(bad, dataset_id="ds", quiet=True) == ([], 0, None, None)
+        assert scan_geo_raster(bad, dataset_id="ds", quiet=True) == (
+            [],
+            None,  # unknown, not zero: the failure is already reported as an error
+            None,
+            None,
+        )
 
     def test_missing_rasterio_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setitem(sys.modules, "rasterio", None)
