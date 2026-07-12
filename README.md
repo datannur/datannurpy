@@ -15,8 +15,8 @@ datannurpy is the Python builder for [datannur](https://github.com/datannur/data
 
 **Key features:**
 
-- **Broad format support** - CSV, Excel, Parquet, Delta Lake, Iceberg, SAS, SPSS, Stata
-- **Geospatial** - GeoJSON, Shapefile, GeoPackage, GeoParquet, GeoTIFF, GML, KML, ESRI File Geodatabase
+- **Broad format support** - CSV, Excel, ODS, Parquet, Delta Lake, Iceberg, SAS, SPSS, Stata
+- **Geospatial** - GeoJSON, Shapefile, GeoPackage, GeoParquet, GeoTIFF, GML, KML, GPX, ESRI File Geodatabase
 - **Database introspection** - PostgreSQL, MySQL, Oracle, SQL Server, SQLite, DuckDB
 - **Remote and cloud storage** - public HTTP(S) URLs, SFTP, S3, Azure Blob, GCS via fsspec
 - **Metadata extraction** - Schemas, statistics, frequencies, enumerations, auto-tagging

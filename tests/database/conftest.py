@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 import pyarrow as pa
 import pytest
+import contextlib
 
 if TYPE_CHECKING:
     import ibis
@@ -82,14 +83,10 @@ def create_test_tables(con: ibis.BaseBackend, backend: str | None = None) -> Non
         # Oracle: use raw SQL to control identifiers (avoid case-sensitivity issues)
         # Drop existing objects (ignore errors if they don't exist)
         for table in ["EMPLOYEES", "DEPARTMENTS", "EMPTY_TABLE"]:
-            try:
+            with contextlib.suppress(Exception):
                 raw_sql(f"DROP TABLE {table} PURGE")
-            except Exception:
-                pass
-        try:
+        with contextlib.suppress(Exception):
             raw_sql("DROP VIEW EMPLOYEE_SUMMARY")
-        except Exception:
-            pass
 
         # Create tables - don't catch errors here so we see what fails
         raw_sql("""
@@ -145,15 +142,11 @@ def create_test_tables(con: ibis.BaseBackend, backend: str | None = None) -> Non
     if backend == "mssql":
         # SQL Server: use raw SQL for proper table/view handling
         # Drop existing objects (ignore errors if they don't exist)
-        try:
+        with contextlib.suppress(Exception):
             raw_sql("DROP VIEW IF EXISTS employee_summary")
-        except Exception:
-            pass
         for table in ["employees", "departments", "empty_table"]:
-            try:
+            with contextlib.suppress(Exception):
                 raw_sql(f"DROP TABLE IF EXISTS {table}")
-            except Exception:
-                pass
 
         raw_sql("""
             CREATE TABLE employees (
@@ -206,19 +199,15 @@ def create_test_tables(con: ibis.BaseBackend, backend: str | None = None) -> Non
 
     # Non-Oracle/MSSQL backends: use Ibis
     for table in ["employees", "departments", "empty_table"]:
-        try:
+        with contextlib.suppress(Exception):
             con.drop_table(table, force=True)
-        except Exception:
-            pass
 
     con.create_table("employees", EMPLOYEES_DATA)
     con.create_table("departments", DEPARTMENTS_DATA)
     con.create_table("empty_table", EMPTY_TABLE_DATA)
 
-    try:
+    with contextlib.suppress(Exception):
         raw_sql("DROP VIEW IF EXISTS employee_summary")
-    except Exception:
-        pass
     raw_sql("""
         CREATE VIEW employee_summary AS
         SELECT department, COUNT(*) as count
@@ -233,39 +222,27 @@ def drop_test_tables(con: ibis.BaseBackend, backend: str | None = None) -> None:
     backend = backend or ""
 
     if backend == "mssql":
-        try:
+        with contextlib.suppress(Exception):
             raw_sql("DROP VIEW IF EXISTS employee_summary")
-        except Exception:
-            pass
         for table in ["employees", "departments", "empty_table"]:
-            try:
+            with contextlib.suppress(Exception):
                 raw_sql(f"DROP TABLE IF EXISTS {table}")
-            except Exception:
-                pass
         return
 
     if backend == "oracle":
-        try:
+        with contextlib.suppress(Exception):
             raw_sql("DROP VIEW EMPLOYEE_SUMMARY")
-        except Exception:
-            pass
         for table in ["EMPLOYEES", "DEPARTMENTS", "EMPTY_TABLE"]:
-            try:
+            with contextlib.suppress(Exception):
                 raw_sql(f"DROP TABLE {table} PURGE")
-            except Exception:
-                pass
         return
 
-    try:
+    with contextlib.suppress(Exception):
         raw_sql("DROP VIEW IF EXISTS employee_summary")
-    except Exception:
-        pass
 
     for table in ["employees", "departments", "empty_table"]:
-        try:
+        with contextlib.suppress(Exception):
             con.drop_table(table, force=True)
-        except Exception:
-            pass
 
 
 def create_schema_tables(con: ibis.BaseBackend, backend: str) -> None:
@@ -287,19 +264,13 @@ def create_schema_tables(con: ibis.BaseBackend, backend: str) -> None:
         # Drop tables first, then schemas
         for schema in ["sales", "inventory"]:
             for table in ["orders", "customers", "products"]:
-                try:
+                with contextlib.suppress(Exception):
                     raw_sql(f"DROP TABLE IF EXISTS {schema}.{table}")
-                except Exception:
-                    pass
-            try:
+            with contextlib.suppress(Exception):
                 raw_sql(f"DROP SCHEMA IF EXISTS {schema}")
-            except Exception:
-                pass
             raw_sql(f"CREATE SCHEMA {schema}")
-        try:
+        with contextlib.suppress(Exception):
             raw_sql("DROP TABLE IF EXISTS main_table")
-        except Exception:
-            pass
 
         raw_sql("""
             CREATE TABLE sales.orders (
@@ -332,10 +303,8 @@ def create_schema_tables(con: ibis.BaseBackend, backend: str) -> None:
     elif backend == "oracle":
         # Oracle: schemas are users, create them with DBA privileges
         for schema in ["sales", "inventory"]:
-            try:
+            with contextlib.suppress(Exception):
                 raw_sql(f"DROP USER {schema} CASCADE")
-            except Exception:
-                pass
             raw_sql(f"CREATE USER {schema} IDENTIFIED BY test")
             raw_sql(f"GRANT CONNECT, RESOURCE, UNLIMITED TABLESPACE TO {schema}")
         # Oracle: create tables via raw SQL in other users' schemas
@@ -365,10 +334,8 @@ def create_schema_tables(con: ibis.BaseBackend, backend: str) -> None:
         """)
         raw_sql("INSERT INTO inventory.products VALUES (1, 'Widget', 100)")
         # Main table in current user schema (SYSTEM)
-        try:
+        with contextlib.suppress(Exception):
             raw_sql("DROP TABLE MAIN_TABLE PURGE")
-        except Exception:
-            pass
         raw_sql("CREATE TABLE MAIN_TABLE (id NUMBER(10))")
         raw_sql("INSERT INTO MAIN_TABLE VALUES (1)")
         return
@@ -382,20 +349,16 @@ def create_schema_tables(con: ibis.BaseBackend, backend: str) -> None:
         ("sales", "customers"),
         ("inventory", "products"),
     ]:
-        try:
+        with contextlib.suppress(Exception):
             con.drop_table(table, database=schema, force=True)
-        except Exception:
-            pass
 
     con.create_table("orders", ORDERS_DATA, database="sales")
     con.create_table("customers", CUSTOMERS_DATA, database="sales")
     con.create_table("products", PRODUCTS_DATA, database="inventory")
 
     # Main table in default schema
-    try:
+    with contextlib.suppress(Exception):
         con.drop_table("main_table", force=True)
-    except Exception:
-        pass
     con.create_table("main_table", pa.table({"id": [1]}))
 
 
@@ -411,59 +374,41 @@ def drop_schema_tables(con: ibis.BaseBackend, backend: str) -> None:
             ("sales", "customers"),
             ("inventory", "products"),
         ]:
-            try:
+            with contextlib.suppress(Exception):
                 raw_sql(f"DROP TABLE IF EXISTS {schema}.{table}")
-            except Exception:
-                pass
-        try:
+        with contextlib.suppress(Exception):
             raw_sql("DROP TABLE IF EXISTS main_table")
-        except Exception:
-            pass
         for schema in ["sales", "inventory"]:
-            try:
+            with contextlib.suppress(Exception):
                 raw_sql(f"DROP SCHEMA IF EXISTS {schema}")
-            except Exception:
-                pass
         return
-    elif backend == "oracle":
-        try:
+    if backend == "oracle":
+        with contextlib.suppress(Exception):
             raw_sql("DROP TABLE MAIN_TABLE PURGE")
-        except Exception:
-            pass
     else:
         for schema, table in [
             ("sales", "orders"),
             ("sales", "customers"),
             ("inventory", "products"),
         ]:
-            try:
+            with contextlib.suppress(Exception):
                 con.drop_table(table, database=schema, force=True)
-            except Exception:
-                pass
-        try:
+        with contextlib.suppress(Exception):
             con.drop_table("main_table", force=True)
-        except Exception:
-            pass
 
     # Drop schemas
     if backend == "mysql":
         for schema in ["sales", "inventory"]:
-            try:
+            with contextlib.suppress(Exception):
                 raw_sql(f"DROP DATABASE IF EXISTS {schema}")
-            except Exception:
-                pass
     elif backend == "oracle":
         for schema in ["sales", "inventory"]:
-            try:
+            with contextlib.suppress(Exception):
                 raw_sql(f"DROP USER {schema} CASCADE")
-            except Exception:
-                pass
     else:
         for schema in ["sales", "inventory"]:
-            try:
+            with contextlib.suppress(Exception):
                 raw_sql(f"DROP SCHEMA IF EXISTS {schema} CASCADE")
-            except Exception:
-                pass
 
 
 @pytest.fixture

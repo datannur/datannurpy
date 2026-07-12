@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
@@ -190,6 +191,477 @@ def add_database(
     )
 
 
+@dataclass
+class _DbScan:
+    """Shared context and accumulators for one add_database run."""
+
+    catalog: Catalog
+    con: ibis.BaseBackend
+    backend_name: str
+    db_name: str
+    depth: Depth
+    quiet: bool
+    refresh: bool
+    introspect: bool
+    now_iso: str
+    freq_threshold: int | None
+    sample_size: int | None
+    auto_enumerations: bool
+    preview_rows: int
+    raw_fk_refs: list[tuple[str, str | None, str, str]] = field(default_factory=list)
+    table_to_dataset_id: dict[tuple[str | None, str], str] = field(default_factory=dict)
+    # Variables mutated by `collect_cached_var_changes` are accumulated and
+    # flushed once per schema to avoid per-table rebuilds.
+    cached_changed_vars: list[Variable] = field(default_factory=list)
+    scanned: int = 0
+    unchanged: int = 0
+    scan_errors: int = 0
+    resource_count: int = 0
+
+
+@dataclass
+class _SchemaCtx:
+    """Per-schema lookup tables shared by the table-scanning helpers."""
+
+    name: str | None
+    folder_id: str
+    meta: dict[str, TableMetadata]
+    size_cache: dict[str, int]
+    count_cache: dict[str, int]
+    prefix_folder_ids: dict[str, str]
+    valid_prefixes: set[str]
+    prefix_sep: str
+    seen_ids: list[str] = field(default_factory=list)
+
+
+def _upsert_database_root_folder(
+    catalog: Catalog,
+    metadata: EntityMetadata | None,
+    *,
+    db_name: str,
+    backend_name: str,
+    connection: str | ibis.BaseBackend,
+    remote_path: str | None,
+) -> str:
+    """Create or refresh the root folder for the database; returns its id."""
+    if metadata is None:
+        folder = Folder(id=sanitize_id(db_name), name=db_name)
+    else:
+        folder = folder_from_metadata(
+            metadata,
+            default_id=sanitize_id(db_name),
+            default_name=db_name,
+        )
+
+    # Set public data_path while keeping local file paths internal-only.
+    if remote_path:
+        folder.data_path = sanitize_connection_url(remote_path)
+        folder.last_update_date = None  # Can't get mtime from remote
+    else:
+        local_database_path = (
+            get_database_path(connection, backend_name)
+            if isinstance(connection, str)
+            else None
+        )
+        folder.data_path = f"{backend_name}://{db_name}"
+        # Use mtime of database file for last_update_date (null for non-file connections)
+        if local_database_path:
+            folder.last_update_date = get_mtime_iso(Path(local_database_path))
+        else:
+            folder.last_update_date = None
+    folder.type = folder.type or backend_name
+
+    upsert_folder(catalog, folder)
+    return folder.id
+
+
+def _create_prefix_folders(
+    catalog: Catalog,
+    tables: list[str],
+    series_table_names: set[str],
+    series_groups: list[TableSeriesGroup],
+    *,
+    group_by_prefix: bool | str,
+    prefix_sep: str,
+    prefix_min_tables: int,
+    parent_folder_id: str,
+) -> tuple[dict[str, str], set[str]]:
+    """Create folders for grouped table-name prefixes.
+
+    Returns (prefix -> folder_id, valid prefixes)."""
+    if not group_by_prefix:
+        return {}, set()
+
+    # Use effective table list: exclude series tables, add one
+    # representative per series so prefixes reflect grouped names
+    effective_tables = [t for t in tables if t not in series_table_names]
+    effective_tables.extend(
+        group.normalized_name.replace(PERIOD_PLACEHOLDER, "PERIOD")
+        for group in series_groups
+    )
+    prefix_folders = get_prefix_folders(
+        effective_tables, sep=prefix_sep, min_count=prefix_min_tables
+    )
+
+    prefix_folder_ids: dict[str, str] = {}  # prefix → folder_id
+    for pf in prefix_folders:
+        if pf.parent_prefix is not None:
+            parent_id = prefix_folder_ids[pf.parent_prefix]
+        else:
+            parent_id = parent_folder_id
+
+        folder_id = make_id(parent_id, sanitize_id(pf.prefix))
+        prefix_folder_ids[pf.prefix] = folder_id
+
+        upsert_folder(
+            catalog,
+            Folder(
+                id=folder_id,
+                name=pf.prefix,
+                parent_id=parent_id,
+                type="table_prefix",
+            ),
+        )
+    return prefix_folder_ids, {pf.prefix for pf in prefix_folders}
+
+
+def _table_folder_id(sc: _SchemaCtx, table_name: str) -> str:
+    """Folder for a table: its prefix folder when grouped, else the schema folder."""
+    table_prefix: str | None = None
+    if sc.valid_prefixes:
+        table_prefix = get_table_prefix(
+            table_name, sc.valid_prefixes, sep=sc.prefix_sep
+        )
+    return sc.prefix_folder_ids[table_prefix] if table_prefix else sc.folder_id
+
+
+def _record_unchanged(
+    run: _DbScan, sc: _SchemaCtx, existing_id: str, table_name: str
+) -> None:
+    """Bookkeeping for a cache hit: keep the dataset, refresh cached metadata."""
+    sc.seen_ids.append(existing_id)
+    if run.introspect:
+        meta = sc.meta[table_name]
+        run.cached_changed_vars.extend(
+            collect_cached_var_changes(run.catalog, existing_id, meta)
+        )
+        run.table_to_dataset_id[(sc.name, table_name)] = existing_id
+        collect_fk_refs(meta.fks, existing_id, run.raw_fk_refs)
+    run.unchanged += 1
+    log_skip(table_name, run.quiet)
+
+
+def _scan_table_structure(
+    run: _DbScan,
+    sc: _SchemaCtx,
+    table_name: str,
+    table_data_path: str,
+    existing_dataset: Any,
+    t0: float,
+) -> None:
+    """Dataset/variable depth: no signature, no row count, no incremental check."""
+    if existing_dataset is not None and not run.refresh:
+        _record_unchanged(run, sc, existing_dataset.id, table_name)
+        return
+
+    table_folder_id = _table_folder_id(sc, table_name)
+    dataset_id = make_id(table_folder_id, sanitize_id(table_name))
+
+    # Variable mode: scan columns
+    table_vars = []
+    if run.depth == "variable":
+        try:
+            table_vars, _, _, _ = scan_table(
+                run.con,
+                table_name,
+                schema=sc.name,
+                dataset_id=dataset_id,
+                infer_stats=False,
+            )
+        except Exception as exc:
+            log_error(table_name, exc, run.quiet)
+            run.scan_errors += 1
+            return
+
+    is_change = existing_dataset is not None
+    if is_change:
+        remove_dataset_cascade(run.catalog, existing_dataset)
+    dataset = Dataset(
+        id=dataset_id,
+        name=table_name,
+        folder_id=table_folder_id,
+        delivery_format=run.backend_name,
+        last_update_date=run.now_iso if is_change else None,
+        data_path=table_data_path,
+        data_size=get_table_data_size(run.con, table_name, sc.name),
+        preview_rows=0,
+        _seen=True,
+        _match_path=table_data_path,
+    )
+    if run.introspect:
+        meta = sc.meta[table_name]
+        apply_metadata_to_new_vars(table_vars, dataset, meta)
+        run.table_to_dataset_id[(sc.name, table_name)] = dataset_id
+        collect_fk_refs(meta.fks, dataset_id, run.raw_fk_refs)
+    run.catalog.dataset.add(dataset)
+    run.scanned += 1
+    if table_vars:
+        build_variable_ids(table_vars, dataset.id)
+        run.catalog.variable.add_all(table_vars)
+        log_done(f"{table_name} ({len(table_vars)} vars)", run.quiet, t0)
+    else:
+        log_done(table_name, run.quiet, t0)
+
+
+def _scan_table_stats(
+    run: _DbScan,
+    sc: _SchemaCtx,
+    table_name: str,
+    table_data_path: str,
+    existing_dataset: Any,
+    t0: float,
+) -> None:
+    """Stat/value depth: full scan with an incremental check on signature + rows."""
+    # Compute signature and exact row count for incremental check
+    try:
+        current_signature = compute_schema_signature(run.con, table_name, sc.name)
+        current_nb_row = (
+            sc.count_cache[table_name]
+            if table_name in sc.count_cache
+            else get_table_row_count(run.con, table_name, sc.name)
+        )
+    except Exception as exc:
+        log_error(table_name, exc, run.quiet)
+        run.scan_errors += 1
+        return
+
+    # Preserve timestamp if data unchanged (for stable evolution tracking)
+    preserved_date: str | None = None
+
+    if existing_dataset is not None:
+        data_unchanged = (
+            existing_dataset.schema_signature == current_signature
+            and existing_dataset.nb_row == current_nb_row
+        )
+
+        if not run.refresh and data_unchanged:
+            _record_unchanged(run, sc, existing_dataset.id, table_name)
+            return
+
+        if data_unchanged:
+            preserved_date = existing_dataset.last_update_date
+
+    table_folder_id = _table_folder_id(sc, table_name)
+    dataset_id = make_id(table_folder_id, sanitize_id(table_name))
+
+    # Timestamps
+    if existing_dataset is None:
+        effective_date = None
+    elif preserved_date is not None:
+        effective_date = preserved_date
+    else:
+        effective_date = run.now_iso
+
+    try:
+        table_vars, nb_row, actual_sample_size, freq_table, preview = scan_table(
+            run.con,
+            table_name,
+            schema=sc.name,
+            dataset_id=dataset_id,
+            infer_stats=True,
+            freq_threshold=run.freq_threshold,
+            sample_size=run.sample_size,
+            preview_rows=run.preview_rows,
+            return_preview=True,
+            quiet=run.quiet,
+            row_count=current_nb_row,
+        )
+    except Exception as exc:
+        log_error(table_name, exc, run.quiet)
+        run.scan_errors += 1
+        return
+
+    if existing_dataset is not None:
+        remove_dataset_cascade(run.catalog, existing_dataset)
+
+    dataset = Dataset(
+        id=dataset_id,
+        name=table_name,
+        folder_id=table_folder_id,
+        delivery_format=run.backend_name,
+        last_update_date=effective_date,
+        data_path=table_data_path,
+        nb_row=nb_row,
+        data_size=sc.size_cache.get(table_name)
+        or get_table_data_size(run.con, table_name, sc.name),
+        sample_size=actual_sample_size,
+        preview_rows=run.preview_rows,
+        schema_signature=current_signature,
+        _seen=True,
+        _match_path=table_data_path,
+    )
+    meta = sc.meta[table_name]
+    apply_metadata_to_new_vars(table_vars, dataset, meta)
+    run.table_to_dataset_id[(sc.name, table_name)] = dataset_id
+    collect_fk_refs(meta.fks, dataset_id, run.raw_fk_refs)
+    run.catalog.dataset.add(dataset)
+    run.scanned += 1
+    remember_preview(
+        run.catalog, dataset.id, preview, label=table_name, variables=table_vars
+    )
+
+    var_id_mapping = build_variable_ids(table_vars, dataset.id)
+    if freq_table is not None:
+        run.catalog.enumeration_manager.assign_from_freq(
+            table_vars,
+            freq_table,
+            var_id_mapping,
+            auto_enumerations=run.auto_enumerations,
+        )
+    run.catalog.variable.add_all(table_vars)
+
+    log_done(f"{table_name} ({nb_row:,} rows, {len(table_vars)} vars)", run.quiet, t0)
+
+
+def _scan_schema(
+    run: _DbScan,
+    schema_name: str | None,
+    *,
+    root_folder_id: str,
+    include: Sequence[str] | None,
+    exclude: Sequence[str] | None,
+    time_series: bool,
+    group_by_prefix: bool | str,
+    prefix_min_tables: int,
+) -> None:
+    """Scan one schema: its tables, series groups and per-schema bookkeeping."""
+    if schema_name is not None:
+        log_folder(f"{schema_name} (schema)", run.quiet)
+        # Multiple schemas: create sub-folder for each
+        current_folder_id = make_id(root_folder_id, sanitize_id(schema_name))
+        upsert_folder(
+            run.catalog,
+            Folder(
+                id=current_folder_id,
+                name=schema_name,
+                parent_id=root_folder_id,
+                type="schema",
+            ),
+        )
+    else:
+        current_folder_id = root_folder_id
+
+    tables = list_tables(run.con, schema_name, include, exclude, run.backend_name)
+    run.resource_count += len(tables)
+
+    # Group tables by time series if enabled
+    series_table_names: set[str] = set()
+    series_groups: list[TableSeriesGroup] = []
+    if time_series:
+        series_groups, _singles = group_table_time_series(tables)
+        for group in series_groups:
+            for _, tname in group.tables:
+                series_table_names.add(tname)
+
+    # Batch introspection: one pass per schema instead of per table
+    if run.introspect:
+        schema_meta = introspect_schema(run.con, run.backend_name, schema_name, tables)
+    else:
+        schema_meta = {t: TableMetadata() for t in tables}
+
+    # Batch data size and row counts in bulk queries
+    size_cache: dict[str, int] = {}
+    count_cache: dict[str, int] = {}
+    if run.depth in ("stat", "value"):
+        size_cache = batch_table_data_size(run.con, tables, schema_name)
+        count_cache = batch_table_row_count(run.con, tables, schema_name)
+
+    prefix_sep = "_" if group_by_prefix is True else group_by_prefix or "_"
+    prefix_folder_ids, valid_prefixes = _create_prefix_folders(
+        run.catalog,
+        tables,
+        series_table_names,
+        series_groups,
+        group_by_prefix=group_by_prefix,
+        prefix_sep=prefix_sep,
+        prefix_min_tables=prefix_min_tables,
+        parent_folder_id=current_folder_id,
+    )
+
+    sc = _SchemaCtx(
+        name=schema_name,
+        folder_id=current_folder_id,
+        meta=schema_meta,
+        size_cache=size_cache,
+        count_cache=count_cache,
+        prefix_folder_ids=prefix_folder_ids,
+        valid_prefixes=valid_prefixes,
+        prefix_sep=prefix_sep,
+    )
+
+    existing_by_path: dict[str, Any] = {
+        ds._match_path: ds for ds in run.catalog.dataset.all() if ds._match_path
+    }
+    for table_name in tables:
+        if table_name in series_table_names:
+            continue
+        t0 = log_start(table_name, run.quiet)
+
+        # Build data_path for incremental lookup
+        table_data_path = build_table_data_path(
+            run.backend_name, run.db_name, schema_name, table_name
+        )
+        existing_dataset = existing_by_path.get(table_data_path)
+
+        if run.depth in ("stat", "value"):
+            _scan_table_stats(
+                run, sc, table_name, table_data_path, existing_dataset, t0
+            )
+        else:
+            _scan_table_structure(
+                run, sc, table_name, table_data_path, existing_dataset, t0
+            )
+
+    if sc.seen_ids:
+        run.catalog.dataset.update_many(
+            sc.seen_ids, _seen=True, preview_rows=run.preview_rows
+        )
+        run.catalog.enumeration_manager.mark_datasets_seen(sc.seen_ids)
+
+    # Process time series groups
+    for group in series_groups:
+        rep = group.normalized_name.replace(PERIOD_PLACEHOLDER, "PERIOD")
+        series_error = _scan_table_series(
+            run.catalog,
+            run.con,
+            group,
+            folder_id=_table_folder_id(sc, rep),
+            schema_name=schema_name,
+            backend_name=run.backend_name,
+            db_name=run.db_name,
+            depth=run.depth,
+            freq_threshold=run.freq_threshold,
+            sample_size=run.sample_size,
+            auto_enumerations=run.auto_enumerations,
+            preview_rows=run.preview_rows,
+            quiet=run.quiet,
+        )
+        run.scan_errors += series_error
+        if series_error == 0:
+            # A series always rescans (no incremental skip), so success
+            # means exactly one dataset was (re)scanned.
+            run.scanned += 1
+
+    # Flush batched cached-metadata updates (single rebuild)
+    if run.cached_changed_vars:
+        run.catalog.variable.remove_all([v.id for v in run.cached_changed_vars])
+        run.catalog.variable.add_all(run.cached_changed_vars)
+        run.cached_changed_vars.clear()
+
+    # Resolve FK refs
+    resolve_foreign_keys(run.catalog, run.raw_fk_refs, run.table_to_dataset_id)
+
+
 def _add_database_impl(
     catalog: Catalog,
     connection: str | ibis.BaseBackend,
@@ -213,7 +685,6 @@ def _add_database_impl(
     """Implementation of add_database (local or already-downloaded remote)."""
     catalog._has_scanned = True
     q = quiet if quiet is not None else catalog.quiet
-    do_refresh = refresh if refresh is not None else catalog.refresh
     resolved_depth: Depth = depth if depth is not None else catalog.depth
     # Connect to database
     con, backend_name = connect(connection, oracle_client_path=oracle_client_path)
@@ -230,46 +701,17 @@ def _add_database_impl(
     start_time = log_section("add_database", f"{backend_name}://{db_name}", q)
     vars_before = catalog.variable.count
 
-    # Get timestamp for folder/dataset
-    now_iso = timestamp_to_iso(catalog._now)
-
     # Determine schemas to scan
     schemas_to_scan = get_schemas_to_scan(con, schema, backend_name)
 
-    # Create root folder for database
-    if metadata is None:
-        root_folder_id = sanitize_id(db_name)
-        folder = Folder(id=root_folder_id, name=db_name)
-    else:
-        folder = folder_from_metadata(
-            metadata,
-            default_id=sanitize_id(db_name),
-            default_name=db_name,
-        )
-        root_folder_id = folder.id
-
-    # Set public data_path while keeping local file paths internal-only.
-    if remote_path:
-        folder.data_path = sanitize_connection_url(remote_path)
-        folder.last_update_date = None  # Can't get mtime from remote
-    else:
-        local_database_path = (
-            get_database_path(connection, backend_name)
-            if isinstance(connection, str)
-            else None
-        )
-        folder.data_path = f"{backend_name}://{db_name}"
-        # Use mtime of database file for last_update_date (null for non-file connections)
-        if local_database_path:
-            folder.last_update_date = get_mtime_iso(Path(local_database_path))
-        else:
-            folder.last_update_date = None
-    folder.type = folder.type or backend_name
-
-    # Add or update root folder
-    upsert_folder(catalog, folder)
-
-    freq_threshold = catalog.freq_threshold if resolved_depth == "value" else None
+    root_folder_id = _upsert_database_root_folder(
+        catalog,
+        metadata,
+        db_name=db_name,
+        backend_name=backend_name,
+        connection=connection,
+        remote_path=remote_path,
+    )
 
     # DB introspection setup (active for depth >= "variable")
     do_introspect = resolved_depth != "dataset"
@@ -279,362 +721,34 @@ def _add_database_impl(
         from .scanner.autotag import ensure_auto_tags
 
         ensure_auto_tags(catalog)
-    raw_fk_refs: list[tuple[str, str | None, str, str]] = []
-    table_to_dataset_id: dict[tuple[str | None, str], str] = {}
-    # Variables mutated by `collect_cached_var_changes` are accumulated and
-    # flushed once per `add_database` call to avoid per-table rebuilds.
-    cached_changed_vars: list[Variable] = []
 
-    # Process each schema
-    scan_errors = 0
-    resource_count = 0
-    scanned = 0
-    unchanged = 0
+    run = _DbScan(
+        catalog=catalog,
+        con=con,
+        backend_name=backend_name,
+        db_name=db_name,
+        depth=resolved_depth,
+        quiet=q,
+        refresh=refresh if refresh is not None else catalog.refresh,
+        introspect=do_introspect,
+        now_iso=timestamp_to_iso(catalog._now),
+        freq_threshold=catalog.freq_threshold if resolved_depth == "value" else None,
+        sample_size=sample_size if resolved_depth == "value" else None,
+        auto_enumerations=auto_enumerations,
+        preview_rows=preview_rows,
+    )
+
     for schema_name in schemas_to_scan:
-        # Determine folder for this schema
-        if schema_name is not None:
-            log_folder(f"{schema_name} (schema)", q)
-            # Multiple schemas: create sub-folder for each
-            schema_folder_id = make_id(root_folder_id, sanitize_id(schema_name))
-
-            upsert_folder(
-                catalog,
-                Folder(
-                    id=schema_folder_id,
-                    name=schema_name,
-                    parent_id=root_folder_id,
-                    type="schema",
-                ),
-            )
-            current_folder_id = schema_folder_id
-        else:
-            current_folder_id = root_folder_id
-
-        # Get tables
-        tables = list_tables(con, schema_name, include, exclude, backend_name)
-        resource_count += len(tables)
-
-        # Group tables by time series if enabled
-        series_table_names: set[str] = set()
-        series_groups = []
-        if time_series:
-            series_groups, _singles = group_table_time_series(tables)
-            for group in series_groups:
-                for _, tname in group.tables:
-                    series_table_names.add(tname)
-
-        # Batch introspection: one pass per schema instead of per table
-        if do_introspect:
-            schema_meta = introspect_schema(con, backend_name, schema_name, tables)
-        else:
-            schema_meta = {t: TableMetadata() for t in tables}
-
-        # Batch data size and row counts in bulk queries
-        size_cache: dict[str, int] = {}
-        count_cache: dict[str, int] = {}
-        if resolved_depth in ("stat", "value"):
-            size_cache = batch_table_data_size(con, tables, schema_name)
-            count_cache = batch_table_row_count(con, tables, schema_name)
-
-        # Group tables by prefix if enabled
-        prefix_folder_ids: dict[str, str] = {}  # prefix → folder_id
-        valid_prefixes: set[str] = set()
-        prefix_sep = "_" if group_by_prefix is True else group_by_prefix or "_"
-
-        if group_by_prefix:
-            # Use effective table list: exclude series tables, add one
-            # representative per series so prefixes reflect grouped names
-            effective_tables = [t for t in tables if t not in series_table_names]
-            for group in series_groups:
-                effective_tables.append(
-                    group.normalized_name.replace(PERIOD_PLACEHOLDER, "PERIOD")
-                )
-            prefix_folders = get_prefix_folders(
-                effective_tables, sep=prefix_sep, min_count=prefix_min_tables
-            )
-            valid_prefixes = {pf.prefix for pf in prefix_folders}
-
-            # Create prefix folders
-            for pf in prefix_folders:
-                if pf.parent_prefix is not None:
-                    parent_id = prefix_folder_ids[pf.parent_prefix]
-                else:
-                    parent_id = current_folder_id
-
-                folder_id = make_id(parent_id, sanitize_id(pf.prefix))
-                prefix_folder_ids[pf.prefix] = folder_id
-
-                upsert_folder(
-                    catalog,
-                    Folder(
-                        id=folder_id,
-                        name=pf.prefix,
-                        parent_id=parent_id,
-                        type="table_prefix",
-                    ),
-                )
-
-        seen_ids: list[str] = []
-        existing_by_path: dict[str, Any] = {
-            ds._match_path: ds for ds in catalog.dataset.all() if ds._match_path
-        }
-        for table_name in tables:
-            if table_name in series_table_names:
-                continue
-            t0 = log_start(table_name, q)
-
-            # Build data_path for incremental lookup
-            table_data_path = build_table_data_path(
-                backend_name, db_name, schema_name, table_name
-            )
-
-            # Check if table exists in cache
-            existing_dataset = existing_by_path.get(table_data_path)
-
-            # Structure/Variable mode: no signature, no row count, no incremental check
-            if resolved_depth not in ("stat", "value"):
-                if existing_dataset is not None and not do_refresh:
-                    seen_ids.append(existing_dataset.id)
-                    if do_introspect:
-                        meta = schema_meta[table_name]
-                        cached_changed_vars.extend(
-                            collect_cached_var_changes(
-                                catalog, existing_dataset.id, meta
-                            )
-                        )
-                        table_to_dataset_id[(schema_name, table_name)] = (
-                            existing_dataset.id
-                        )
-                        collect_fk_refs(meta.fks, existing_dataset.id, raw_fk_refs)
-                    unchanged += 1
-                    log_skip(table_name, q)
-                    continue
-
-                # Determine folder for this table
-                table_prefix: str | None = None
-                if valid_prefixes:
-                    table_prefix = get_table_prefix(
-                        table_name, valid_prefixes, sep=prefix_sep
-                    )
-                if table_prefix:
-                    table_folder_id = prefix_folder_ids[table_prefix]
-                else:
-                    table_folder_id = current_folder_id
-
-                dataset_id = make_id(table_folder_id, sanitize_id(table_name))
-
-                # Variable mode: scan columns
-                table_vars = []
-                if resolved_depth == "variable":
-                    try:
-                        table_vars, _, _, _ = scan_table(
-                            con,
-                            table_name,
-                            schema=schema_name,
-                            dataset_id=dataset_id,
-                            infer_stats=False,
-                        )
-                    except Exception as exc:
-                        log_error(table_name, exc, q)
-                        scan_errors += 1
-                        continue
-
-                is_change = existing_dataset is not None
-                if is_change:
-                    remove_dataset_cascade(catalog, existing_dataset)
-                dataset = Dataset(
-                    id=dataset_id,
-                    name=table_name,
-                    folder_id=table_folder_id,
-                    delivery_format=backend_name,
-                    last_update_date=now_iso if is_change else None,
-                    data_path=table_data_path,
-                    data_size=get_table_data_size(con, table_name, schema_name),
-                    preview_rows=0,
-                    _seen=True,
-                    _match_path=table_data_path,
-                )
-                if do_introspect:
-                    meta = schema_meta[table_name]
-                    apply_metadata_to_new_vars(table_vars, dataset, meta)
-                    table_to_dataset_id[(schema_name, table_name)] = dataset_id
-                    collect_fk_refs(meta.fks, dataset_id, raw_fk_refs)
-                catalog.dataset.add(dataset)
-                scanned += 1
-                if table_vars:
-                    build_variable_ids(table_vars, dataset.id)
-                    catalog.variable.add_all(table_vars)
-                    log_done(f"{table_name} ({len(table_vars)} vars)", q, t0)
-                else:
-                    log_done(table_name, q, t0)
-                continue
-
-            # Compute signature and exact row count for incremental check
-            try:
-                current_signature = compute_schema_signature(
-                    con, table_name, schema_name
-                )
-                current_nb_row = (
-                    count_cache[table_name]
-                    if table_name in count_cache
-                    else get_table_row_count(con, table_name, schema_name)
-                )
-            except Exception as exc:
-                log_error(table_name, exc, q)
-                scan_errors += 1
-                continue
-
-            # Preserve timestamp if data unchanged (for stable evolution tracking)
-            preserved_date: str | None = None
-
-            if existing_dataset is not None:
-                data_unchanged = (
-                    existing_dataset.schema_signature == current_signature
-                    and existing_dataset.nb_row == current_nb_row
-                )
-
-                if not do_refresh and data_unchanged:
-                    seen_ids.append(existing_dataset.id)
-                    meta = schema_meta[table_name]
-                    cached_changed_vars.extend(
-                        collect_cached_var_changes(catalog, existing_dataset.id, meta)
-                    )
-                    table_to_dataset_id[(schema_name, table_name)] = existing_dataset.id
-                    collect_fk_refs(meta.fks, existing_dataset.id, raw_fk_refs)
-                    unchanged += 1
-                    log_skip(table_name, q)
-                    continue
-
-                if data_unchanged:
-                    preserved_date = existing_dataset.last_update_date
-
-            # Determine folder for this table
-            table_prefix: str | None = None
-            if valid_prefixes:
-                table_prefix = get_table_prefix(
-                    table_name, valid_prefixes, sep=prefix_sep
-                )
-
-            if table_prefix:
-                table_folder_id = prefix_folder_ids[table_prefix]
-            else:
-                table_folder_id = current_folder_id
-
-            dataset_id = make_id(table_folder_id, sanitize_id(table_name))
-
-            # Timestamps
-            if existing_dataset is None:
-                effective_date = None
-            elif preserved_date is not None:
-                effective_date = preserved_date
-            else:
-                effective_date = now_iso
-
-            # Stat/Value mode: scan table
-            try:
-                table_vars, nb_row, actual_sample_size, freq_table, preview = (
-                    scan_table(
-                        con,
-                        table_name,
-                        schema=schema_name,
-                        dataset_id=dataset_id,
-                        infer_stats=True,
-                        freq_threshold=freq_threshold,
-                        sample_size=sample_size if resolved_depth == "value" else None,
-                        preview_rows=preview_rows,
-                        return_preview=True,
-                        quiet=q,
-                        row_count=current_nb_row,
-                    )
-                )
-            except Exception as exc:
-                log_error(table_name, exc, q)
-                scan_errors += 1
-                continue
-
-            if existing_dataset is not None:
-                remove_dataset_cascade(catalog, existing_dataset)
-
-            dataset = Dataset(
-                id=dataset_id,
-                name=table_name,
-                folder_id=table_folder_id,
-                delivery_format=backend_name,
-                last_update_date=effective_date,
-                data_path=table_data_path,
-                nb_row=nb_row,
-                data_size=size_cache.get(table_name)
-                or get_table_data_size(con, table_name, schema_name),
-                sample_size=actual_sample_size,
-                preview_rows=preview_rows,
-                schema_signature=current_signature,
-                _seen=True,
-                _match_path=table_data_path,
-            )
-            meta = schema_meta[table_name]
-            apply_metadata_to_new_vars(table_vars, dataset, meta)
-            table_to_dataset_id[(schema_name, table_name)] = dataset_id
-            collect_fk_refs(meta.fks, dataset_id, raw_fk_refs)
-            catalog.dataset.add(dataset)
-            scanned += 1
-            remember_preview(
-                catalog, dataset.id, preview, label=table_name, variables=table_vars
-            )
-
-            var_id_mapping = build_variable_ids(table_vars, dataset.id)
-            if freq_table is not None:
-                catalog.enumeration_manager.assign_from_freq(
-                    table_vars,
-                    freq_table,
-                    var_id_mapping,
-                    auto_enumerations=auto_enumerations,
-                )
-            catalog.variable.add_all(table_vars)
-
-            log_done(f"{table_name} ({nb_row:,} rows, {len(table_vars)} vars)", q, t0)
-
-        if seen_ids:
-            catalog.dataset.update_many(seen_ids, _seen=True, preview_rows=preview_rows)
-            catalog.enumeration_manager.mark_datasets_seen(seen_ids)
-
-        # Process time series groups
-        for group in series_groups:
-            table_prefix: str | None = None
-            if valid_prefixes:
-                rep = group.normalized_name.replace(PERIOD_PLACEHOLDER, "PERIOD")
-                table_prefix = get_table_prefix(rep, valid_prefixes, sep=prefix_sep)
-            series_folder_id = (
-                prefix_folder_ids[table_prefix] if table_prefix else current_folder_id
-            )
-            series_error = _scan_table_series(
-                catalog,
-                con,
-                group,
-                folder_id=series_folder_id,
-                schema_name=schema_name,
-                backend_name=backend_name,
-                db_name=db_name,
-                depth=resolved_depth,
-                freq_threshold=freq_threshold,
-                sample_size=sample_size if resolved_depth == "value" else None,
-                auto_enumerations=auto_enumerations,
-                preview_rows=preview_rows,
-                quiet=q,
-            )
-            scan_errors += series_error
-            if series_error == 0:
-                # A series always rescans (no incremental skip), so success
-                # means exactly one dataset was (re)scanned.
-                scanned += 1
-
-        # Flush batched cached-metadata updates (single rebuild)
-        if cached_changed_vars:
-            catalog.variable.remove_all([v.id for v in cached_changed_vars])
-            catalog.variable.add_all(cached_changed_vars)
-            cached_changed_vars.clear()
-
-        # Resolve FK refs
-        resolve_foreign_keys(catalog, raw_fk_refs, table_to_dataset_id)
+        _scan_schema(
+            run,
+            schema_name,
+            root_folder_id=root_folder_id,
+            include=include,
+            exclude=exclude,
+            time_series=time_series,
+            group_by_prefix=group_by_prefix,
+            prefix_min_tables=prefix_min_tables,
+        )
 
     # GeoPackage: enrich datasets with CRS / geometry type from gpkg_* tables.
     # Reads plain SQL on the open SQLite connection; no-op for non-GeoPackage DBs.
@@ -648,16 +762,16 @@ def _add_database_impl(
         close_connection(con)
 
     vars_added = catalog.variable.count - vars_before
-    catalog._tally_scan(scanned, unchanged, scan_errors)
+    catalog._tally_scan(run.scanned, run.unchanged, run.scan_errors)
     log_summary(
-        scanned,
+        run.scanned,
         None if resolved_depth == "dataset" else vars_added,
         q,
         start_time,
-        scan_errors,
-        resource_count=resource_count,
+        run.scan_errors,
+        resource_count=run.resource_count,
         resource_label="tables",
-        unchanged=unchanged,
+        unchanged=run.unchanged,
     )
 
 

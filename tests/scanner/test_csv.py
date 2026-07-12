@@ -480,7 +480,7 @@ class TestScanCsvErrorPath:
             csv_file, dataset_id="test", infer_stats=True, quiet=True
         )
         assert variables == []
-        assert nb_row == 0
+        assert nb_row is None  # unknown, not zero: the error is already reported
 
 
 class TestReadCsvErrorPath:
@@ -519,3 +519,76 @@ class TestCsvSnifferFallback:
         monkeypatch.setattr(stdlib_csv.Sniffer, "sniff", _always_fail)
         cols = _read_csv_header(b"a,b,c\n")
         assert cols == ["a", "b", "c"]
+
+
+class TestScanCsvDegradedProfiles:
+    """Type-conversion failures degrade through the profile ladder instead of
+    losing the dataset (values are never altered: rows are dropped or kept as
+    text, with a warning either way)."""
+
+    def test_footnote_row_dropped_with_warning(self, tmp_path: Path, capsys):
+        # One stray footnote beyond the sniffer sample: ignore_errors keeps the
+        # typed column and drops the single unconvertible row.
+        from datannurpy.scanner.csv import scan_csv
+
+        csv_file = tmp_path / "footnote.csv"
+        rows = "\n".join(str(i) for i in range(30_000))
+        csv_file.write_text(f"v\n{rows}\nn.b. source: OFS\n")
+
+        variables, nb_row, actual_sample, _freq = scan_csv(
+            csv_file, dataset_id="d", quiet=False, sample_size=1_000
+        )
+
+        captured = capsys.readouterr()
+        assert "1 unconvertible row(s) ignored by statistics" in captured.err
+        assert "count in nb_row" in captured.err
+        assert nb_row == 30_001  # count(*) still sees every parseable line
+        assert actual_sample == 1_000
+        assert [(v.name, v.type) for v in variables] == [("v", "integer")]
+
+    def test_structurally_broken_falls_back_to_all_varchar(
+        self, tmp_path: Path, capsys
+    ):
+        # Thousands of unconvertible rows exceed the tolerance: dropping them
+        # would mutilate the file, so every row is kept as text instead.
+        from datannurpy.scanner.csv import scan_csv
+
+        csv_file = tmp_path / "broken.csv"
+        good = "\n".join(str(i) for i in range(30_000))
+        bad = "\n".join(f"bad{i}" for i in range(5_000))
+        csv_file.write_text(f"v\n{good}\n{bad}\n")
+
+        variables, nb_row, _actual_sample, _freq = scan_csv(
+            csv_file, dataset_id="d", quiet=False
+        )
+
+        captured = capsys.readouterr()
+        assert "all columns read as text (all_varchar fallback)" in captured.err
+        assert nb_row == 35_000  # no row lost
+        assert [(v.name, v.type) for v in variables] == [("v", "string")]
+
+    def test_internal_conversion_error_stays_an_error(
+        self, tmp_path: Path, capsys, monkeypatch
+    ):
+        """A ConversionException that survives even all_varchar is not a CSV
+        problem: it lands in the error bucket, not a silent unscannable skip."""
+        import duckdb
+
+        from datannurpy.scanner import csv as csv_mod
+
+        csv_file = tmp_path / "ok.csv"
+        csv_file.write_text("a,b\n1,2\n")
+
+        def boom(*_a, **_kw):
+            raise duckdb.ConversionException("Conversion Error: internal cast")
+
+        monkeypatch.setattr(csv_mod, "_scan_csv_table", boom)
+        variables, nb_row, _sample, _freq = csv_mod.scan_csv(
+            csv_file, dataset_id="d", quiet=False
+        )
+
+        captured = capsys.readouterr()
+        assert "unscannable" not in captured.err
+        assert "internal cast" in captured.err
+        assert nb_row is None  # unknown row count; the ✗ line carries the failure
+        assert variables == []

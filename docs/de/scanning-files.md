@@ -103,7 +103,7 @@ GeoPackage und GeoParquet werden auch ohne das Extra gelesen; ihre `bbox` wird n
 ```yaml
 add:
   # Vektor- und Rasterdateien werden von add_folder automatisch erkannt, wie jedes andere Format
-  - folder: ./geodata          # *.geojson, *.shp, *.gml, *.kml, *.tif, *.parquet
+  - folder: ./geodata          # *.geojson, *.shp, *.gml, *.kml, *.gpx, *.tif, *.parquet
 
   # Eine einzelne Geodatei
   - dataset: ./geodata/parcels.shp
@@ -122,6 +122,7 @@ add:
 | Gezipptes Shapefile | `.zip` (ein `.shp` + Begleitdateien) | `dataset` |
 | GML | `.gml` | `folder` / `dataset` |
 | KML | `.kml` | `folder` / `dataset` |
+| GPX | `.gpx` | `folder` / `dataset` |
 | GeoTIFF (Raster) | `.tif`, `.tiff` | `folder` / `dataset` |
 | GeoParquet | `.parquet` | `folder` / `dataset` |
 | GeoPackage | `.gpkg` | `database: sqlite:///…` |
@@ -134,7 +135,9 @@ add:
   - dataset: https://data.example.org/ADMIN-EXPRESS_FRA.zip
 ```
 
-Das Archiv muss genau ein Shapefile enthalten. Archive mit mehreren Shapefiles sowie die automatische Erkennung von Zips innerhalb eines `folder:`-Scans werden nicht unterstützt — diese zuerst entpacken.
+Dasselbe funktioniert für jedes [Zip-Archiv](#zip-archive), das genau eine scannbare Datei enthält.
+
+GPX-, KML- und GML-Dateien können mehrere Layer enthalten (GPX stellt immer Waypoints, Routen und Tracks bereit); beim Scannen als einzelnes `dataset:` wird der erste nicht-leere Layer gelesen — eine Track-Aufzeichnung ohne Waypoints liefert also weiterhin ihre Tracks.
 
 ### Räumliche Metadaten
 
@@ -171,6 +174,10 @@ Die temporäre UTF-8-Kopie vermeiden, wenn Dateien bereits lokal und UTF-8-kodie
 csv_skip_copy: true
 ```
 
+### Unsaubere CSVs
+
+Wenn eine Spalte nicht in ihren erkannten Typ konvertiert werden kann (eine verirrte Fussnotenzeile in einer numerischen Spalte, gemischte Datumsformate), degradiert der Scan, statt zu scheitern. Zuerst wird erneut gelesen und die nicht konvertierbaren Zeilen werden verworfen — akzeptiert nur, wenn es marginal bleibt (höchstens 10 Zeilen oder 0,1 %, und nie die ganze Datei), mit einer Warnung samt genauer Anzahl — danach werden alle Spalten als Text gelesen: jede parsbare Zeile bleibt erhalten, typisierte Statistiken entfallen schlicht. Werte werden nie verändert: ein degradiertes Dataset ist unvollständig oder untypisiert, nie falsch. Eine Datei, die selbst daran scheitert, wird wie bisher mit einer Warnung übersprungen.
+
 ## Komprimierte CSV-Dateien
 
 Eine gzip-komprimierte CSV-Datei (`.csv.gz`) wird wie jede andere Datei gescannt — auf jeder Quelle, in jeder [Tiefe](/de/scan-depth) — und katalogisiert sich exakt wie ihr unkomprimiertes Gegenstück (gleiche `id`/`name`, gleiche Variablen):
@@ -181,7 +188,18 @@ add:
   - folder: sftp://user@host/exports    # *.csv.gz neben *.csv
 ```
 
-Unterstützt wird nur Single-Stream-**gzip von CSV**; andere komprimierte Formen (`.parquet.gz`, `.zip`-Archive, gezippte Shapefiles) nicht — diese zuerst entpacken. HTTP-Transportkompression (`Content-Encoding: gzip`) wird automatisch behandelt und erfordert nichts Besonderes.
+Für `.gz` wird nur Single-Stream-**gzip von CSV** unterstützt; `.parquet.gz` nicht — diese Datei zuerst entpacken. HTTP-Transportkompression (`Content-Encoding: gzip`) wird automatisch behandelt und erfordert nichts Besonderes.
+
+## Zip-Archive
+
+Eine `.zip`-Datei, die genau eine Datendatei enthält — eine CSV-, Excel-, ODS- oder Parquet-Datei oder ein Shapefile mit seinen Begleitdateien —, wird auf jeder Quelle als `dataset:` gescannt. Das enthaltene Element wird sicher extrahiert (geschützt gegen Zip Slip und Dekompressionsbomben) und wie eine gewöhnliche Datei gescannt, in jeder [Tiefe](/de/scan-depth):
+
+```yaml
+add:
+  - dataset: https://data.example.org/exports/sales.csv.zip
+```
+
+Archive mit mehreren Datendateien sowie die automatische Erkennung von Zips innerhalb eines `folder:`-Scans werden nicht unterstützt — diese zuerst entpacken.
 
 ## Remote-Speicher {#remote-storage}
 
@@ -255,7 +273,7 @@ add:
 - Öffentlich, ohne Authentifizierung.
 - Weiterleitungen werden verfolgt; `https://` wird empfohlen.
 
-**Formaterkennung.** Eine URL mit erkannter Erweiterung (`.csv`, `.xlsx`, …) funktioniert direkt — ein Query-String wird ignoriert (`.../sales.csv?token=…`). API-Endpunkte haben oft keine Erweiterung; das Format wird dann automatisch erkannt, in dieser Reihenfolge: das letzte Pfadsegment als Token (`.../HCL_NOGA/multiplelevels/CSV`), ein `?format=`-Query-Parameter, der HTTP-`Content-Type` und schließlich Content-Sniffing der ersten Bytes (Best-Effort, mit Warnung protokolliert; bei `depth: dataset` übersprungen). Ist nichts eindeutig, schlägt der Lauf fehl mit der Aufforderung, `format:` zu setzen.
+**Formaterkennung.** Eine URL mit erkannter Erweiterung (`.csv`, `.xlsx`, …) funktioniert direkt — ein Query-String wird ignoriert (`.../sales.csv?token=…`). API-Endpunkte haben oft keine Erweiterung; das Format wird dann automatisch erkannt, in dieser Reihenfolge: das letzte Pfadsegment als Token (`.../HCL_NOGA/multiplelevels/CSV`), ein `?format=`-Query-Parameter (oder WFS-`?outputFormat=`), der HTTP-`Content-Type` und schließlich Content-Sniffing der ersten Bytes (Best-Effort, mit Warnung protokolliert; bei `depth: dataset` übersprungen). Ist nichts eindeutig, schlägt der Lauf fehl mit der Aufforderung, `format:` zu setzen.
 
 `format:` explizit setzen, um die Erkennung zu überschreiben (oder zu erzwingen, wenn die Signale widersprüchlich sind). Das spart zudem die Erkennungsanfrage — ein kleiner Geschwindigkeitsgewinn, wenn das Format bereits bekannt ist, der sich über viele Endpunkte derselben API lohnt:
 
@@ -269,9 +287,13 @@ add:
   - dataset: https://www.agvchapp.bfs.admin.ch/fr/state/results/xls?SnapshotDate=31.12.2025
     format: excel
     id: commune_district
+  # WFS-Layer: eine GetFeature-URL, die GeoJSON zurückliefert, ist ein gewöhnlicher Datensatz
+  # (outputFormat=application/json oder json wird automatisch als geojson erkannt)
+  - dataset: https://wfs.geo.example.ch/?service=WFS&version=2.0.0&request=GetFeature&typeName=ns:parcels&outputFormat=application/json
+    id: parcels
 ```
 
-Zulässige `format:`-Werte sind die Auslieferungsformate (`csv`, `excel`, `parquet`, `sas`, `spss`, `stata`, `geojson`, `shapefile`, `gml`, `kml`, `geotiff`) oder eine passende Erweiterungsschreibweise (`xlsx`, `xls`, `pq`, …).
+Zulässige `format:`-Werte sind die Auslieferungsformate (`csv`, `excel`, `ods`, `parquet`, `sas`, `spss`, `stata`, `geojson`, `shapefile`, `gml`, `kml`, `gpx`, `geotiff`) oder eine passende Erweiterungsschreibweise (`xlsx`, `xls`, `pq`, …).
 - Eine fehlende URL (404, DNS-Fehler, Timeout) lässt den Lauf mit einem Exit-Code ungleich null fehlschlagen, genau wie eine fehlende lokale Datei — ein CI-Build schlägt rot fehl, statt einen unvollständigen Katalog zu veröffentlichen.
 - Inkrementelle Scans nutzen den `Last-Modified`-Header des Servers: Eine unveränderte URL wird übersprungen, und ihr Datum füllt `last_update_date`. Ein Server ohne `Last-Modified` (z. B. ein dynamischer Endpunkt) wird bei jedem Lauf neu gescannt.
 

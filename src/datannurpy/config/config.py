@@ -205,11 +205,8 @@ def _run_post_export(
             return
 
 
-def run_config(path: str | Path) -> Catalog:
-    """Load and execute a YAML catalog configuration."""
-    config_path = Path(path).resolve()
-    base_dir = config_path.parent
-
+def _load_config_mapping(config_path: Path) -> dict[str, Any]:
+    """Load the YAML config file as a mapping."""
     try:
         with open(config_path, encoding="utf-8") as f:
             config = yaml.safe_load(f)
@@ -220,13 +217,19 @@ def run_config(path: str | Path) -> Catalog:
 
     if not isinstance(config, dict):
         raise ConfigError(f"{config_path.name} must be a YAML mapping")
+    return config
 
-    # Load environment variables in priority order (first set wins via setdefault/override=False):
-    # 1. System env vars (already in os.environ)
-    # 2. env: YAML (explicit, specific to this scan)
-    # 3. env_file: (secrets — supports str or list, last in list = highest priority)
-    # 4. .env local next to YAML (shared defaults)
-    # interpolate=False so that $ in passwords is kept literal
+
+def _load_env_vars(config: dict[str, Any], base_dir: Path) -> None:
+    """Load environment variables in priority order (first set wins via
+    setdefault/override=False):
+
+    1. System env vars (already in os.environ)
+    2. env: YAML (explicit, specific to this scan)
+    3. env_file: (secrets — supports str or list, last in list = highest priority)
+    4. .env local next to YAML (shared defaults)
+
+    interpolate=False so that $ in passwords is kept literal."""
     env_vars = config.pop("env", None)
     if env_vars:
         if not isinstance(env_vars, dict):
@@ -242,6 +245,67 @@ def run_config(path: str | Path) -> Catalog:
 
     load_dotenv(base_dir / ".env", override=False, interpolate=False)
 
+
+def _build_catalog_params(
+    config: dict[str, Any], base_dir: Path, output_dir: str | None
+) -> dict[str, Any]:
+    """Catalog constructor kwargs from the config, with paths resolved."""
+    catalog_params = {k: v for k, v in config.items() if k not in RESERVED_KEYS}
+    # output_dir is both the db-only export target and, when refresh is false,
+    # the previous-db source for incremental scans (mirrors app_path).
+    if output_dir:
+        catalog_params["output_dir"] = output_dir
+    if "app_path" in catalog_params:
+        catalog_params["app_path"] = _resolve_path(catalog_params["app_path"], base_dir)
+    if "log_file" in catalog_params:
+        catalog_params["log_file"] = _resolve_path(catalog_params["log_file"], base_dir)
+    if "metadata_path" in catalog_params:
+        catalog_params["metadata_path"] = _resolve_paths(
+            catalog_params["metadata_path"], base_dir
+        )
+    return catalog_params
+
+
+def _apply_add_entry(catalog: Catalog, raw_item: Any, base_dir: Path) -> None:
+    """Dispatch one `add:` entry to the matching catalog.add_* method."""
+    item_type, item, primary_value = _normalize_entry(raw_item)
+    item = _normalize_metadata(item_type, item)
+
+    if item_type == "folder":
+        if primary_value is not None:
+            folder_path = _resolve_paths(primary_value, base_dir)
+        else:
+            folder_path = _resolve_paths(item.pop("path"), base_dir)
+        catalog.add_folder(folder_path, **item)
+    elif item_type == "dataset":
+        if primary_value is not None:
+            dataset_path = _resolve_paths(primary_value, base_dir)
+        else:
+            dataset_path = _resolve_paths(item.pop("path"), base_dir)
+        catalog.add_dataset(dataset_path, **item)
+    elif item_type == "geodatabase":
+        gdb_path = primary_value if primary_value is not None else item.pop("path")
+        catalog.add_geodatabase(_resolve_path(gdb_path, base_dir), **item)
+    else:
+        uri = primary_value if primary_value is not None else item.pop("uri")
+        # Resolve sqlite:/// paths
+        if (
+            isinstance(uri, str)
+            and uri.startswith("sqlite:///")
+            and not uri.startswith("sqlite:////")
+        ):
+            db_path = uri[len("sqlite:///") :]
+            uri = f"sqlite:///{_resolve_path(db_path, base_dir)}"
+        catalog.add_database(uri, **item)
+
+
+def run_config(path: str | Path) -> Catalog:
+    """Load and execute a YAML catalog configuration."""
+    config_path = Path(path).resolve()
+    base_dir = config_path.parent
+    config = _load_config_mapping(config_path)
+
+    _load_env_vars(config, base_dir)
     # Expand environment variables in all string values
     config = _expand_vars(config)
 
@@ -256,60 +320,12 @@ def run_config(path: str | Path) -> Catalog:
     if output_dir:
         output_dir = _resolve_path(output_dir, base_dir)
 
-    # Extract catalog init params and resolve paths
-    catalog_params = {k: v for k, v in config.items() if k not in RESERVED_KEYS}
-    # output_dir is both the db-only export target and, when refresh is false,
-    # the previous-db source for incremental scans (mirrors app_path).
-    if output_dir:
-        catalog_params["output_dir"] = output_dir
-    if "app_path" in catalog_params:
-        catalog_params["app_path"] = _resolve_path(catalog_params["app_path"], base_dir)
-    if "log_file" in catalog_params:
-        catalog_params["log_file"] = _resolve_path(catalog_params["log_file"], base_dir)
-    if "metadata_path" in catalog_params:
-        mp = catalog_params["metadata_path"]
-        if isinstance(mp, list):
-            catalog_params["metadata_path"] = [_resolve_path(p, base_dir) for p in mp]
-        else:
-            catalog_params["metadata_path"] = _resolve_path(mp, base_dir)
-
+    catalog_params = _build_catalog_params(config, base_dir, output_dir)
     catalog = Catalog(**catalog_params)
 
     # Process add entries
-    entries = config.get("add", [])
-    for raw_item in entries:
-        item_type, item, primary_value = _normalize_entry(raw_item)
-        item = _normalize_metadata(item_type, item)
-
-        if item_type == "folder":
-            if primary_value is not None:
-                folder_path = _resolve_paths(primary_value, base_dir)
-            else:
-                folder_path = _resolve_paths(item.pop("path"), base_dir)
-            catalog.add_folder(folder_path, **item)
-        elif item_type == "dataset":
-            if primary_value is not None:
-                dataset_path = _resolve_paths(primary_value, base_dir)
-            else:
-                dataset_path = _resolve_paths(item.pop("path"), base_dir)
-            catalog.add_dataset(dataset_path, **item)
-        elif item_type == "geodatabase":
-            gdb_path = primary_value if primary_value is not None else item.pop("path")
-            catalog.add_geodatabase(_resolve_path(gdb_path, base_dir), **item)
-        else:
-            if primary_value is not None:
-                uri = primary_value
-            else:
-                uri = item.pop("uri")
-            # Resolve sqlite:/// paths
-            if (
-                isinstance(uri, str)
-                and uri.startswith("sqlite:///")
-                and not uri.startswith("sqlite:////")
-            ):
-                db_path = uri[len("sqlite:///") :]
-                uri = f"sqlite:///{_resolve_path(db_path, base_dir)}"
-            catalog.add_database(uri, **item)
+    for raw_item in config.get("add", []):
+        _apply_add_entry(catalog, raw_item, base_dir)
 
     # Export: app_path implies app export, output_dir implies db-only export
     if output_dir:

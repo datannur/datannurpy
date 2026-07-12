@@ -30,6 +30,7 @@ from datannurpy.scanner.utils import (
     safe_walk_fs,
     safe_walk_local,
 )
+import contextlib
 
 
 def _make_unreadable_dir(parent: Path, name: str = "no_read") -> Path:
@@ -48,10 +49,8 @@ def restore_perms() -> Any:
     yield created
     for p in created:
         if p.exists():
-            try:
+            with contextlib.suppress(OSError):
                 os.chmod(p, 0o700)
-            except OSError:
-                pass
 
 
 class TestIsPermissionError:

@@ -268,10 +268,11 @@ def _clear_scalar_ids(table: object, field: str, removed: set[str]) -> None:
     df = table.df  # type: ignore[attr-defined]
     if df.is_empty() or field not in df.columns:
         return
-    changed = []
-    for row in table.all():  # type: ignore[attr-defined]
-        if getattr(row, field, None) in removed:
-            changed.append(replace(row, **{field: None}))
+    changed = [
+        replace(row, **{field: None})
+        for row in table.all()  # type: ignore[attr-defined]
+        if getattr(row, field, None) in removed
+    ]
     if changed:
         table.remove_all([row.id for row in changed])  # type: ignore[attr-defined]
         table.add_all(changed)  # type: ignore[attr-defined]

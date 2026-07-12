@@ -1,4 +1,4 @@
-"""Excel reader using pandas + openpyxl/xlrd."""
+"""Excel/OpenDocument spreadsheet reader using pandas + openpyxl/xlrd/odf."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from contextlib import contextmanager, redirect_stdout
 from dataclasses import dataclass
 from datetime import time as dt_time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 from xml.etree import ElementTree as ET
 from zipfile import ZipFile
 
@@ -30,6 +30,11 @@ if TYPE_CHECKING:
     import polars as pl
 
 _MIDNIGHT = dt_time(0, 0)
+
+# Suffix-specific pandas engines; anything else (.xlsx/.xlsm) reads via openpyxl.
+# Neither engine can stream a preview, so these suffixes validate after the full
+# pandas read instead of through the pre-read streaming check.
+_PANDAS_ENGINES: dict[str, Literal["xlrd", "odf"]] = {".xls": "xlrd", ".ods": "odf"}
 
 _MAX_PREVIEW_ROWS = 10
 _XLS_SNIFF_BYTES = 256
@@ -324,6 +329,21 @@ def is_valid_tabular_dataset(rows: Sequence[tuple[object, ...]]) -> tuple[bool, 
     return True, ""
 
 
+def _read_excel_frame(
+    file_path: Path, sheet_name: str | int, label: str, quiet: bool
+) -> pd.DataFrame:
+    """Read a spreadsheet into a DataFrame with the suffix's engine, raising on
+    failure — callers choose what a read error means (``read_excel`` returns
+    None for metadata loading; ``scan_excel`` reports a scan error)."""
+    import pandas as pd
+
+    engine: Literal["xlrd", "openpyxl", "odf"] = _PANDAS_ENGINES.get(
+        file_path.suffix.lower(), "openpyxl"
+    )
+    with _capture_excel_diagnostics(label, quiet):
+        return pd.read_excel(file_path, sheet_name=sheet_name, engine=engine)
+
+
 def read_excel(
     path: str | Path,
     *,
@@ -339,17 +359,12 @@ def read_excel(
     if file_path.stat().st_size == 0:
         return None
 
-    engine = "xlrd" if suffix == ".xls" else "openpyxl"
-
     if suffix == ".xls" and _looks_like_html_xls_content(_read_file_header(file_path)):
         _warn_html_xls(label, quiet)
         return None
 
     try:
-        import pandas as pd
-
-        with _capture_excel_diagnostics(label, quiet):
-            df = pd.read_excel(file_path, sheet_name=sheet_name, engine=engine)
+        df = _read_excel_frame(file_path, sheet_name, label, quiet)
         if df.empty:
             return None
         return df
@@ -378,8 +393,7 @@ def _read_preview_rows(
     ws = wb.active
     rows: list[tuple[object, ...]] = []
     if ws is not None:  # pragma: no branch
-        for row in ws.iter_rows(max_row=_MAX_PREVIEW_ROWS, values_only=True):
-            rows.append(row)
+        rows.extend(ws.iter_rows(max_row=_MAX_PREVIEW_ROWS, values_only=True))
     wb.close()
     return rows
 
@@ -411,12 +425,17 @@ def scan_excel(
             return variables, nb_row, freq_table, preview_df
         return variables, nb_row, freq_table
 
+    # Before any parsing: a 0-byte file is "empty", not a read error (the xlsx
+    # pre-read validation below would otherwise raise BadZipFile on it).
+    if file_path.stat().st_size == 0:
+        return result([], 0, None, None)
+
     if suffix == ".xls" and _looks_like_html_xls_content(_read_file_header(file_path)):
         _warn_html_xls(label, quiet)
         return result([], None, None, None)
 
     # Pre-read validation for .xlsx (streaming, avoids full read if invalid)
-    if suffix != ".xls":
+    if suffix not in _PANDAS_ENGINES:
         try:
             rows = _read_preview_rows(file_path, quiet=quiet, path_label=label)
         except Exception as e:
@@ -431,12 +450,18 @@ def scan_excel(
             )
             return result([], None, None, None)
 
-    df = read_excel(path, sheet_name=sheet_name, quiet=quiet, path_label=label)
-    if df is None:
+    # Read via the raising helper (not ``read_excel``) so a read failure — a
+    # real scan error — stays distinguishable from a genuinely empty sheet.
+    try:
+        df = _read_excel_frame(file_path, sheet_name, label, quiet)
+    except Exception as e:
+        log_error(label, e, quiet)
+        return result([], None, None, None)
+    if df.empty:
         return result([], 0, None, None)
 
-    # Post-read validation for .xls (no streaming available)
-    if suffix == ".xls":
+    # Post-read validation for .xls/.ods (no streaming available)
+    if suffix in _PANDAS_ENGINES:
         header_row = tuple(df.columns)
         data_rows = [
             tuple(row) for row in df.head(_MAX_PREVIEW_ROWS).itertuples(index=False)

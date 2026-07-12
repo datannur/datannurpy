@@ -33,11 +33,13 @@ def test_main_help(flag: str, capsys) -> None:
 @pytest.mark.parametrize("flag", ["-V", "--version"])
 def test_main_version(flag: str, capsys) -> None:
     """main() with --version shows version and exits 0."""
-    with patch("datannurpy.__main__.version", return_value="1.2.3"):
-        with patch.object(sys, "argv", ["datannurpy", flag]):
-            with pytest.raises(SystemExit) as exc_info:
-                main()
-            assert exc_info.value.code == 0
+    with (
+        patch("datannurpy.__main__.version", return_value="1.2.3"),
+        patch.object(sys, "argv", ["datannurpy", flag]),
+        pytest.raises(SystemExit) as exc_info,
+    ):
+        main()
+    assert exc_info.value.code == 0
     assert capsys.readouterr().out == "datannurpy 1.2.3\n"
 
 
@@ -110,9 +112,11 @@ def test_main_partial_scan_default_tolerant(tmp_path: Path) -> None:
 def test_main_partial_scan_fail_exits_2(tmp_path: Path, capsys) -> None:
     """on_scan_error='fail': a partial scan exits 2 but still exports the valid catalogue."""
     config, output = _write_partial_scan_config(tmp_path, on_scan_error="fail")
-    with patch.object(sys, "argv", ["datannurpy", str(config)]):
-        with pytest.raises(SystemExit) as exc_info:
-            main()
+    with (
+        patch.object(sys, "argv", ["datannurpy", str(config)]),
+        pytest.raises(SystemExit) as exc_info,
+    ):
+        main()
     assert exc_info.value.code == 2
     assert "failed to scan" in capsys.readouterr().err
     # Continue-on-error is preserved: the valid dataset is still exported.
@@ -172,9 +176,11 @@ def test_main_invalid_metadata_fail_exits_3(tmp_path: Path, capsys) -> None:
     """on_metadata_error='fail': a broken metadata table exits 3, but valid
     tables are still applied (continue-on-error preserved)."""
     config, output = _write_metadata_config(tmp_path, on_metadata_error="fail")
-    with patch.object(sys, "argv", ["datannurpy", str(config)]):
-        with pytest.raises(SystemExit) as exc_info:
-            main()
+    with (
+        patch.object(sys, "argv", ["datannurpy", str(config)]),
+        pytest.raises(SystemExit) as exc_info,
+    ):
+        main()
     assert exc_info.value.code == 3
     assert "failed validation" in capsys.readouterr().err
     tags = json.loads((output / "data" / "db" / "tag.json").read_text())

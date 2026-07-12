@@ -7,11 +7,13 @@ import re
 import sys
 import time
 import traceback
+from contextlib import suppress
 from pathlib import Path
 
 # Module-level logging configuration
 _verbose: bool = False
 _log_file_path: Path | None = None
+_error_count: int = 0
 
 _ICON_SPACING = "  "
 _LOADING_SPACING = " "
@@ -30,10 +32,8 @@ def _reconfigure_utf8(stream: object) -> None:
     encoding = (getattr(stream, "encoding", "") or "").lower().replace("-", "")
     if encoding == "utf8":
         return
-    try:
+    with suppress(ValueError, OSError):  # detached/closed stream — leave it as-is
         reconfigure(encoding="utf-8", errors="replace")
-    except (ValueError, OSError):  # detached/closed stream — leave it as-is
-        pass
 
 
 def _ensure_utf8_output() -> None:
@@ -135,8 +135,17 @@ def _format_traceback(error: BaseException) -> str:
     return buf.getvalue()
 
 
+def error_count() -> int:
+    """Total ``log_error`` calls so far — callers take a delta around a scan
+    call to count the errors a scanner handled internally (logged the ``✗``
+    and returned an empty result) toward the run's error tally."""
+    return _error_count
+
+
 def log_error(name: str, error: BaseException, quiet: bool) -> None:
     """Log a scan error (replaces the 'start' line)."""
+    global _error_count  # noqa: PLW0603
+    _error_count += 1
     msg = _redact(str(error).split("\n")[0])
     header = f"\r  ✗{_ICON_SPACING}{name} — {type(error).__name__}: {msg}"
     if not quiet or _verbose:

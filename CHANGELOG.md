@@ -1,5 +1,14 @@
 # datannurpy
 
+## 0.30.0 (2026-07-12)
+
+- add: new scannable formats — ODS spreadsheets (`.ods`, new core dependency `odfpy`), GPX (`.gpx`, `geo` extra; the first non-empty layer is scanned, bbox included, without pyogrio's multi-layer warning), and `.zip` archives holding exactly one data file (CSV, Excel, ODS, Parquet …), generalizing the zipped-Shapefile support with the same Zip Slip / zip-bomb guards
+- add: WFS `GetFeature` URLs are detected as GeoJSON (`outputFormat=json`/`application/json` on an OGC request); `format`/`fmt`/`outputFormat` query keys are now case-insensitive and accept media types
+- add: scans degrade instead of failing — a messy CSV retries by dropping its unconvertible rows (only when marginal, warning with the count) then with all-text columns (every parseable row kept, values never altered), and a numeric column with extreme magnitudes empties the overflowing stats (`STDDEV_SAMP` raising, `AVG` reaching inf) instead of aborting the file
+- fix: truthful scan logs — `empty file (0 bytes)` only for genuinely empty files, `no data rows` otherwise, no duplicate warning after a scanner-reported failure (`✗`, whose dataset keeps `nb_row` null instead of a false `0`), and internally-handled scan errors now count in the run `[summary]` and the `on_scan_error: fail` exit code
+- fix: GeoParquet with a PROJJSON CRS (e.g. Swiss LV95) scans on the DuckDB fast path instead of the slower PyArrow fallback, whose debug message no longer embeds the full PROJJSON blob
+- internal: stricter lint ruleset (bugbear, simplifications, perf) with a cyclomatic-complexity ceiling of 20, and the seven most complex functions split into per-phase helpers — no behavior change
+
 ## 0.29.5 (2026-07-10)
 
 - fix: the run `[summary]` now counts `add_dataset` and `add_geodatabase` sources — a dataset added individually (single file, HTTP URL, zipped Shapefile, partitioned directory, `.gdb` layer) was missing from the `scanned`/`unchanged` tallies, understating them on incremental runs

@@ -137,16 +137,19 @@ class TestAddGeodatabase:
 
 class TestRemoteGeodatabase:
     def test_remote_gdb_downloaded_and_scanned(self, tmp_path: Path) -> None:
+        import uuid
+
         import fsspec
 
         _write_gdb(tmp_path / "store.gdb", ("roads", "rivers"), crs="EPSG:2056")
+        root = f"rmt_gdb_{uuid.uuid4().hex}"  # unique: the memory fs is a singleton
         mem_fs = fsspec.filesystem("memory")
-        mem_fs.mkdir("/rmt_gdb")
-        mem_fs.mkdir("/rmt_gdb/store.gdb")
+        mem_fs.mkdir(f"/{root}")
+        mem_fs.mkdir(f"/{root}/store.gdb")
         for f in (tmp_path / "store.gdb").iterdir():
-            mem_fs.upload(str(f), f"/rmt_gdb/store.gdb/{f.name}")
+            mem_fs.upload(str(f), f"/{root}/store.gdb/{f.name}")
         catalog = Catalog(app_path=tmp_path / "app", quiet=True)
-        catalog.add_geodatabase("memory:///rmt_gdb/store.gdb")
+        catalog.add_geodatabase(f"memory:///{root}/store.gdb")
         assert sorted(str(d.name) for d in catalog.dataset.all()) == ["rivers", "roads"]
         roads = catalog.dataset.get_by("name", "roads")
         assert roads is not None

@@ -30,7 +30,7 @@ from .archive import (
     is_zip,
     unsupported_zip_error,
     zip_member_list,
-    zip_shapefile_member,
+    zip_scannable_member,
 )
 from .utils import SUPPORTED_FORMATS, supported_format_for
 
@@ -67,6 +67,11 @@ _EXTENSION_SPELLINGS: dict[str, str] = {
     ext.lstrip("."): ext for ext in SUPPORTED_FORMATS
 }
 
+# OpenDocument spreadsheet media type — both the HTTP Content-Type and, prefixed by
+# ``mimetype``, the first bytes of an ``.ods`` file (its zip stores that member first,
+# uncompressed, per the ODF spec), which content sniffing relies on.
+_ODS_MIMETYPE = "application/vnd.oasis.opendocument.spreadsheet"
+
 # HTTP ``Content-Type`` → delivery_format. Deliberately limited to unambiguous media
 # types: ambiguous ones (``application/vnd.ms-excel`` is sent for CSV too, generic
 # ``application/octet-stream``/``application/json``/``text/html``) are left to sniffing.
@@ -74,11 +79,20 @@ _CONTENT_TYPE_FORMATS: dict[str, str] = {
     "text/csv": "csv",
     "application/csv": "csv",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "excel",
+    _ODS_MIMETYPE: "ods",
     "application/parquet": "parquet",
     "application/x-parquet": "parquet",
     "application/geo+json": "geojson",
     "application/vnd.google-earth.kml+xml": "kml",
+    "application/gpx+xml": "gpx",
     "image/tiff": "geotiff",
+}
+
+# On an OGC endpoint (``service=WFS`` / ``request=GetFeature``), plain JSON reliably
+# means GeoJSON — unlike a generic ``?format=json`` API toggle, which stays unmapped.
+_WFS_OUTPUT_FORMATS: dict[str, str] = {
+    "json": "geojson",
+    "application/json": "geojson",
 }
 
 _SNIFF_BYTES = 512
@@ -127,15 +141,29 @@ def format_from_token(path_name: str) -> str | None:
     return _FORMAT_ALIASES.get(_clean_segment(path_name).lower())
 
 
+def _has_param(params: dict[str, list[str]], key: str, value: str) -> bool:
+    """Whether the query carries ``key=value`` (both compared case-insensitively)."""
+    return any(v.strip().lower() == value for v in params.get(key, []))
+
+
 def format_from_query(url: str) -> str | None:
-    """delivery_format from a ``?format=`` (or ``?fmt=``) query parameter."""
+    """delivery_format from a ``?format=``/``?fmt=`` or WFS ``?outputFormat=`` query
+    parameter (keys matched case-insensitively). Values may be format tokens (``csv``,
+    ``xlsx``) or media types (``text/csv``); on an OGC request, ``outputFormat=json``
+    additionally maps to GeoJSON."""
     query = urlsplit(url).query
     if not query:
         return None
-    params = parse_qs(query)
-    for key in ("format", "fmt"):
+    params = {key.lower(): values for key, values in parse_qs(query).items()}
+    is_ogc = _has_param(params, "service", "wfs") or _has_param(
+        params, "request", "getfeature"
+    )
+    for key in ("format", "fmt", "outputformat"):
         for value in params.get(key, []):
-            fmt = _FORMAT_ALIASES.get(value.strip().lower().lstrip("."))
+            token = value.strip().lower().lstrip(".")
+            fmt = _FORMAT_ALIASES.get(token) or _CONTENT_TYPE_FORMATS.get(token)
+            if fmt is None and key == "outputformat" and is_ogc:
+                fmt = _WFS_OUTPUT_FORMATS.get(token)
             if fmt is not None:
                 return fmt
     return None
@@ -174,11 +202,15 @@ def _looks_like_csv(header: bytes) -> bool:
 def sniff_format(header: bytes) -> str | None:
     """Best-effort delivery_format from the first bytes of content.
 
-    Reliable binary signatures (Zip→xlsx, OLE2→xls, ``PAR1``→parquet) resolve
+    Reliable binary signatures (Zip→xlsx/ods, OLE2→xls, ``PAR1``→parquet) resolve
     unambiguously. Text is classified as CSV only after HTML/XML and JSON are ruled out
     and a coherent delimiter is found — a genuine guess, so callers should surface it.
     """
     if header.startswith(b"PK\x03\x04"):
+        # An OpenDocument zip starts with an uncompressed ``mimetype`` member, so the
+        # media type sits in the first bytes; any other zip is treated as xlsx.
+        if b"mimetype" + _ODS_MIMETYPE.encode() in header:
+            return "ods"
         return "excel"
     if header.startswith(b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"):
         return "excel"
@@ -237,13 +269,17 @@ def resolve_delivery_format(
         return fmt
 
     # 2b. A .zip carries no format in its name — classify it by inspecting the archive's
-    # members (currently: a single Shapefile). Runs for local and remote, and at every
-    # depth, since the delivery_format cannot be known any other way.
+    # members (exactly one scannable file: a Shapefile, a CSV, an Excel file …). Runs
+    # for local and remote, and at every depth, since the delivery_format cannot be
+    # known any other way. A .zip-named resource that is not actually an archive (a
+    # misnamed endpoint serving plain data) falls through to the regular cascade.
     if is_zip(path_name):
         names = zip_member_list(remote_path, fs)
-        if zip_shapefile_member(names) is not None:
-            return "shapefile"
-        raise unsupported_zip_error(path_name, names)
+        if names is not None:
+            selected = zip_scannable_member(names)
+            if selected is None:
+                raise unsupported_zip_error(path_name, names)
+            return selected[1]
 
     # Auto-detection is remote-only: local extensions are reliable, so fail fast.
     if fs is None or fs.is_local:

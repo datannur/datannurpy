@@ -54,6 +54,29 @@ _CSV_HEADER_SAMPLE_BYTES = 64 * 1024
 _CSV_NULL_STRINGS = ["", "NA", "N/A", "n/a", "#N/A", "NULL", "null", "NaN", "nan"]
 _CSV_NULL_STRINGS_KEEP_EMPTY = [s for s in _CSV_NULL_STRINGS if s != ""]
 
+# Read profiles tried in order when DuckDB cannot parse or type a file — each
+# rung degrades one dimension, cheapest fidelity loss first:
+#   1. plain read;
+#   2. lenient sniffing (strict mode occasionally rejects RFC 4180-compliant files);
+#   3. ignore unconvertible rows in value passes — types and stats survive;
+#   4. read everything as text — typed stats don't survive, every parseable
+#      row does (ignore_errors only sheds lines that cannot be split at all).
+# Rungs 3-4 are accepted only when the damage stays marginal (see
+# _dropped_rows_tolerance). Values in a column are never altered: rows are
+# ignored or kept verbatim, so a degraded dataset is incomplete or untyped,
+# never wrong.
+_CSV_READ_PROFILES: tuple[dict[str, Any], ...] = (
+    {},
+    {"strict_mode": False},
+    {"strict_mode": False, "ignore_errors": True, "store_rejects": True},
+    {
+        "strict_mode": False,
+        "all_varchar": True,
+        "ignore_errors": True,
+        "store_rejects": True,
+    },
+)
+
 
 def _deduplicate_columns(names: list[str]) -> list[str]:
     """Suffix duplicate column names as DuckDB does (`name`, `name_1`, `name_2`, …)."""
@@ -173,6 +196,23 @@ def _short_csv_error(exc: BaseException) -> str:
     return msg.removeprefix("Invalid Input Error: ").strip()
 
 
+def _dropped_rows_tolerance(row_count: int) -> int:
+    """How many rows an ``ignore_errors`` rung may drop before it is refused:
+    enough for stray footnotes (10), scaling to 0.1% on large files — a
+    structurally broken file (bad quoting can invalidate half the lines) must
+    never be silently mutilated — and always fewer than the rows kept, so a
+    file whose every line drops stays unscannable rather than becoming a
+    plausible-looking empty dataset."""
+    return min(max(10, row_count // 1000), max(row_count - 1, 0))
+
+
+def _count_rejected_lines(con: Any) -> int:
+    """Distinct CSV lines dropped by an ``ignore_errors`` read, from the rejects
+    table that ``store_rejects`` populates on this connection."""
+    cursor: Any = con.raw_sql("SELECT count(DISTINCT line) FROM reject_errors")
+    return int(cursor.fetchone()[0])
+
+
 def read_csv(
     path: str | Path,
     *,
@@ -263,86 +303,140 @@ def scan_csv(
                     )
                     return result([], None, None, None, None)
 
-            con = ibis.duckdb.connect()
-            try:
-                # DuckDB's CSV sniffer in strict mode occasionally rejects
-                # files that are nonetheless RFC 4180-compliant. Retry once
-                # with strict_mode=False before giving up.
-                strict_mode = True
+            # Profile ladder: evaluation is lazy, so a parse or type-conversion
+            # error can surface at any pass (count, sampling, stats, preview) —
+            # each rung therefore wraps the whole scan body and a fresh
+            # connection keeps the rejects count of one attempt isolated.
+            last_error: Exception | None = None
+            known_row_count: int | None = None
+            needs_conversion_tolerance = False
+            for profile in _CSV_READ_PROFILES:
+                if needs_conversion_tolerance and not profile.get("ignore_errors"):
+                    # A conversion error is about values, not sniffing — the
+                    # dialect already fit every line (the count succeeded) —
+                    # so lenient sniffing alone would fail identically.
+                    continue
+                con = ibis.duckdb.connect()
                 try:
-                    table = con.read_csv(str(csv_path), nullstr=_CSV_NULL_STRINGS)
-                    row_count = int(table.count().to_pyarrow().as_py())
-                except _duckdb.InvalidInputException:
-                    try:
-                        table = con.read_csv(
-                            str(csv_path),
-                            nullstr=_CSV_NULL_STRINGS,
-                            strict_mode=False,
-                        )
-                        row_count = int(table.count().to_pyarrow().as_py())
-                        strict_mode = False
-                    except _duckdb.InvalidInputException as exc:
-                        log_warn(
-                            f"{label}: unscannable CSV "
-                            f"({_short_csv_error(exc)}); skipped as untreatable",
-                            quiet,
-                        )
-                        return result([], None, None, None, None)
-
-                if row_count == 0:
-                    variables, freq_table = build_variables(
+                    table = con.read_csv(
+                        str(csv_path), nullstr=_CSV_NULL_STRINGS, **profile
+                    )
+                    # count(*) converts no column, so one successful count is
+                    # valid for every rung — no full re-parse per attempt.
+                    if known_row_count is None:
+                        known_row_count = int(table.count().to_pyarrow().as_py())
+                    scanned = _scan_csv_table(
+                        con,
                         table,
-                        nb_rows=0,
-                        dataset_id=dataset_id,
-                        infer_stats=False,
-                    )
-                    preview_df = preview_from_ibis(
-                        table, preview_rows, label=label, quiet=quiet
-                    )
-                    return result(variables, 0, None, freq_table, preview_df)
-
-                actual_sample_size: int | None = None
-                preview_df = None
-                if sample_size is not None and row_count > sample_size and infer_stats:
-                    safe_path = str(csv_path).replace("'", "''")
-                    strict_arg = "" if strict_mode else ", strict_mode=false"
-                    nullstr_arg = ", ".join(f"'{s}'" for s in _CSV_NULL_STRINGS)
-                    cursor: Any = con.raw_sql(
-                        f"SELECT * FROM read_csv('{safe_path}', "
-                        f"nullstr=[{nullstr_arg}]{strict_arg}) "
-                        f"USING SAMPLE reservoir({sample_size} ROWS)"
-                    )
-                    sample_arrow = cursor.fetch_arrow_table()
-                    actual_sample_size = len(sample_arrow)
-                    sample_table = ibis.memtable(sample_arrow)
-                    preview_df = preview_from_arrow(
-                        sample_arrow, preview_rows, label=label, quiet=quiet
-                    )
-
-                    variables, freq_table = build_variables(
-                        sample_table,
-                        nb_rows=actual_sample_size,
-                        dataset_id=dataset_id,
-                        infer_stats=True,
-                        freq_threshold=freq_threshold,
-                        full_table=table,
-                        full_nb_rows=row_count,
-                    )
-                else:
-                    variables, freq_table = build_variables(
-                        table,
-                        nb_rows=row_count,
+                        known_row_count,
                         dataset_id=dataset_id,
                         infer_stats=infer_stats,
                         freq_threshold=freq_threshold,
+                        sample_size=sample_size,
+                        preview_rows=preview_rows,
+                        label=label,
+                        quiet=quiet,
                     )
-                    preview_df = preview_from_ibis(
-                        table, preview_rows, label=label, quiet=quiet
+                except (
+                    _duckdb.InvalidInputException,
+                    _duckdb.ConversionException,
+                ) as exc:
+                    last_error = exc
+                    if isinstance(exc, _duckdb.ConversionException):
+                        needs_conversion_tolerance = True
+                    continue
+                else:
+                    nb_row = scanned[1]
+                    dropped = (
+                        _count_rejected_lines(con)
+                        if profile.get("ignore_errors")
+                        else 0
                     )
-            finally:
-                con.disconnect()
+                    if dropped > _dropped_rows_tolerance(nb_row):
+                        continue  # too mutilated — try text-only, else give up
+                    if profile.get("all_varchar"):
+                        unparseable = (
+                            f"; {dropped} unparseable row(s) dropped" if dropped else ""
+                        )
+                        log_warn(
+                            f"{label}: type conversion failed; all columns "
+                            f"read as text (all_varchar fallback){unparseable}",
+                            quiet,
+                        )
+                    elif dropped:
+                        log_warn(
+                            f"{label}: {dropped} unconvertible row(s) ignored "
+                            f"by statistics (ignore_errors fallback); they "
+                            f"still count in nb_row and appear as missing "
+                            f"values",
+                            quiet,
+                        )
+                    return result(*scanned)
+                finally:
+                    con.disconnect()
+
+            assert last_error is not None  # the ladder only ends via exceptions
+            if isinstance(last_error, _duckdb.InvalidInputException):
+                log_warn(
+                    f"{label}: unscannable CSV "
+                    f"({_short_csv_error(last_error)}); skipped as untreatable",
+                    quiet,
+                )
+                return result([], None, None, None, None)
+            # A ConversionException that survives even all_varchar (which casts
+            # nothing) is not a CSV problem — surface it as a real scan error.
+            log_error(label, last_error, quiet)
+            return result([], None, None, None, None)
     except Exception as e:
         log_error(label, e, quiet)
-        return result([], 0, None, None, None)
+        return result([], None, None, None, None)
 
-    return result(variables, row_count, actual_sample_size, freq_table, preview_df)
+
+def _scan_csv_table(
+    con: Any,
+    table: ibis.Table,
+    row_count: int,
+    *,
+    dataset_id: str,
+    infer_stats: bool,
+    freq_threshold: int | None,
+    sample_size: int | None,
+    preview_rows: int,
+    label: str,
+    quiet: bool,
+) -> tuple[list[Variable], int, int | None, pa.Table | None, pl.DataFrame | None]:
+    """One full scan attempt over an already-registered CSV view, returning
+    ``(variables, nb_row, sample_size, freq_table, preview)``. DuckDB's parse and
+    conversion errors propagate for the caller's profile ladder to catch."""
+    if sample_size is not None and row_count > sample_size and infer_stats:
+        # Sampling through the registered view applies the rung's read profile
+        # by construction (same pattern as the parquet/statistical scanners).
+        cursor: Any = con.raw_sql(
+            f"SELECT * FROM {table.get_name()} "
+            f"USING SAMPLE reservoir({sample_size} ROWS)"
+        )
+        sample_arrow = cursor.fetch_arrow_table()
+        actual_sample_size = len(sample_arrow)
+        preview_df = preview_from_arrow(
+            sample_arrow, preview_rows, label=label, quiet=quiet
+        )
+        variables, freq_table = build_variables(
+            ibis.memtable(sample_arrow),
+            nb_rows=actual_sample_size,
+            dataset_id=dataset_id,
+            infer_stats=True,
+            freq_threshold=freq_threshold,
+            full_table=table,
+            full_nb_rows=row_count,
+        )
+        return variables, row_count, actual_sample_size, freq_table, preview_df
+
+    variables, freq_table = build_variables(
+        table,
+        nb_rows=row_count,
+        dataset_id=dataset_id,
+        infer_stats=infer_stats and row_count > 0,
+        freq_threshold=freq_threshold,
+    )
+    preview_df = preview_from_ibis(table, preview_rows, label=label, quiet=quiet)
+    return variables, row_count, None, freq_table, preview_df

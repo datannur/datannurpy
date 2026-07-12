@@ -9,10 +9,10 @@ Un catalogo leggero compatibile con la maggior parte delle sorgenti dati:
 
 | Categoria          | Formati                                               |
 | ------------------ | ----------------------------------------------------- |
-| **Fogli di calcolo** | CSV, Excel (.xlsx, .xls)                            |
+| **Fogli di calcolo** | CSV, Excel (.xlsx, .xls), OpenDocument (.ods)       |
 | **Colonnari**      | Parquet, Delta Lake, Apache Iceberg, partizionamento Hive |
 | **Statistici**     | SAS (.sas7bdat), SPSS (.sav), Stata (.dta)            |
-| **Geospaziali**    | GeoJSON, Shapefile, GeoPackage, GeoParquet, GeoTIFF, GML, KML, ESRI File Geodatabase |
+| **Geospaziali**    | GeoJSON, Shapefile, GeoPackage, GeoParquet, GeoTIFF, GML, KML, GPX, ESRI File Geodatabase |
 | **Database**       | PostgreSQL, MySQL, Oracle, SQL Server, SQLite, DuckDB |
 | **Storage remoto** | URL HTTP(S) pubblici, SFTP, Amazon S3, Azure Blob Storage, Google Cloud Storage |
 

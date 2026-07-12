@@ -426,6 +426,129 @@ def _refine_normalized_path(
     return "".join(result)
 
 
+def _classify_variable_positions(
+    all_positions: list[list[PeriodInfo]], n_positions: int
+) -> list[bool]:
+    """Mark each placeholder position whose value differs across files.
+
+    Fallback: if all positions are constant, treat all as variable."""
+    is_variable: list[bool] = []
+    for pos_idx in range(n_positions):
+        values = {
+            fp[pos_idx].to_sort_key() for fp in all_positions if pos_idx < len(fp)
+        }
+        is_variable.append(len(values) > 1)
+    if not any(is_variable):
+        return [True] * n_positions
+    return is_variable
+
+
+def _split_period_subgroup(
+    variable_indices: list[int], reference_positions: list[PeriodInfo]
+) -> tuple[list[int], list[int]]:
+    """Split variable positions into (period candidates, sub-group suffixes)
+    by temporal order.
+
+    Valid: YYYY → MM/Q → DD (increasing granularity).
+    A lower-granularity token with its own year starts a new period candidate;
+    a lower-granularity token without a year is treated as a sub-group suffix."""
+    if len(variable_indices) == 1:
+        return variable_indices[:], []
+
+    period_indices: list[int] = []
+    subgroup_indices: list[int] = []
+    prev_gran = 0
+    for idx in variable_indices:
+        info = reference_positions[idx]
+        gran = _period_granularity(info)
+        if subgroup_indices and info.year == 0:
+            subgroup_indices.append(idx)
+        elif prev_gran > 0 and gran <= prev_gran:
+            if info.year == 0:
+                subgroup_indices.append(idx)
+            else:
+                subgroup_indices.extend(period_indices)
+                period_indices = [idx]
+        else:
+            period_indices.append(idx)
+        prev_gran = gran
+    return period_indices, subgroup_indices
+
+
+def _neutralize_singleton_year_subgroups(
+    indexed: list[IndexedRefineInput],
+    all_positions: list[list[PeriodInfo]],
+    subgroup_indices: list[int],
+    period_indices: list[int],
+) -> tuple[set[int], list[int]]:
+    """If a left-side year varies one-to-one with the chosen right-side period,
+    keeping it as a sub-group would turn an otherwise valid series into only
+    singletons. Preserve its placeholder instead of restoring an arbitrary year.
+
+    Returns (neutralized indices, remaining sub-group indices)."""
+    if not subgroup_indices:
+        return set(), subgroup_indices
+
+    subgroup_counts: dict[PeriodGroupKey, int] = defaultdict(int)
+    for fi, _, _ in indexed:
+        key = tuple(all_positions[fi][j].to_sort_key() for j in subgroup_indices)
+        subgroup_counts[key] += 1
+
+    subgroup_has_only_years = all(
+        all_positions[fi][idx].year > 0
+        for fi, _, _ in indexed
+        for idx in subgroup_indices
+    )
+    selected_periods = {
+        tuple(all_positions[fi][j].to_sort_key() for j in period_indices)
+        for fi, _, _ in indexed
+    }
+    if (
+        subgroup_counts
+        and all(count == 1 for count in subgroup_counts.values())
+        and subgroup_has_only_years
+        and len(selected_periods) > 1
+    ):
+        return set(subgroup_indices), []
+    return set(), subgroup_indices
+
+
+def _constant_context_indices(
+    reference_positions: list[PeriodInfo],
+    is_variable: list[bool],
+    period_indices: list[int],
+    subgroup_set: set[int],
+) -> list[int]:
+    """Constant positions needed as period context.
+
+    Year context when the period has none: 2024/data_01.csv → month varies,
+    year is constant but needed for "2024/01". Month context when a day varies
+    without one: 2024/01/day15.csv → "2024/01/15" instead of "2024/00/15"."""
+    n_positions = len(reference_positions)
+    context_indices: list[int] = []
+    has_year = any(reference_positions[i].year > 0 for i in period_indices)
+    if not has_year:
+        for i in range(n_positions):
+            if not is_variable[i] and i not in subgroup_set:
+                info = reference_positions[i]
+                if info.year > 0 and _period_granularity(info) == 1:
+                    context_indices.append(i)
+                    break
+
+    has_day = any(reference_positions[i].day > 0 for i in period_indices)
+    has_sub_period = any(
+        reference_positions[i].sub_period > 0 for i in context_indices + period_indices
+    )
+    if has_day and not has_sub_period:
+        for i in range(n_positions):
+            if not is_variable[i] and i not in subgroup_set and i not in period_indices:
+                info = reference_positions[i]
+                if 0 < info.sub_period <= 12 and info.day == 0:
+                    context_indices.append(i)
+                    break
+    return context_indices
+
+
 def _refine_group(
     normalized_path: str,
     file_list: Sequence[RefineInput],
@@ -448,103 +571,22 @@ def _refine_group(
     if n_positions == 0:
         return [(normalized_path, [("", p, m) for p, m, _ in file_list])]
 
-    # --- Classify each position as variable or constant ---
-    is_variable: list[bool] = []
-    for pos_idx in range(n_positions):
-        values = {
-            fp[pos_idx].to_sort_key() for fp in all_positions if pos_idx < len(fp)
-        }
-        is_variable.append(len(values) > 1)
-
+    is_variable = _classify_variable_positions(all_positions, n_positions)
     variable_indices = [i for i, v in enumerate(is_variable) if v]
 
-    # Fallback: if all positions are constant, use all positions
-    if not variable_indices:
-        variable_indices = list(range(n_positions))
-        is_variable = [True] * n_positions
-
-    # --- Check temporal order among variable positions ---
-    # Valid: YYYY → MM/Q → DD (increasing granularity).
-    # A lower-granularity token with its own year starts a new period candidate;
-    # a lower-granularity token without a year is treated as a sub-group suffix.
-    period_indices: list[int] = []
-    subgroup_indices: list[int] = []
-
-    if len(variable_indices) == 1:
-        period_indices = variable_indices[:]
-    else:
-        prev_gran = 0
-        for idx in variable_indices:
-            info = reference_positions[idx]
-            gran = _period_granularity(info)
-            if subgroup_indices and info.year == 0:
-                subgroup_indices.append(idx)
-            elif prev_gran > 0 and gran <= prev_gran:
-                if info.year == 0:
-                    subgroup_indices.append(idx)
-                else:
-                    subgroup_indices.extend(period_indices)
-                    period_indices = [idx]
-            else:
-                period_indices.append(idx)
-            prev_gran = gran
+    period_indices, subgroup_indices = _split_period_subgroup(
+        variable_indices, reference_positions
+    )
 
     indexed = [(fi, p, m) for fi, (p, m, _) in enumerate(file_list)]
 
-    # If a left-side year varies one-to-one with the chosen right-side period,
-    # keeping it as a sub-group would turn an otherwise valid series into only
-    # singletons. Preserve its placeholder instead of restoring an arbitrary year.
-    neutralized_indices: set[int] = set()
-    if subgroup_indices:
-        subgroup_counts: dict[PeriodGroupKey, int] = defaultdict(int)
-        for fi, _, _ in indexed:
-            key = tuple(all_positions[fi][j].to_sort_key() for j in subgroup_indices)
-            subgroup_counts[key] += 1
-
-        subgroup_has_only_years = all(
-            all_positions[fi][idx].year > 0
-            for fi, _, _ in indexed
-            for idx in subgroup_indices
-        )
-        selected_periods = {
-            tuple(all_positions[fi][j].to_sort_key() for j in period_indices)
-            for fi, _, _ in indexed
-        }
-        if (
-            subgroup_counts
-            and all(count == 1 for count in subgroup_counts.values())
-            and subgroup_has_only_years
-            and len(selected_periods) > 1
-        ):
-            neutralized_indices.update(subgroup_indices)
-            subgroup_indices = []
-
-    # --- Include constant year context if period has no year ---
-    # Example: 2024/data_01.csv → month varies, year is constant but needed for "2024/01"
-    context_indices: list[int] = []
-    subgroup_set = set(subgroup_indices)
-    has_year = any(reference_positions[i].year > 0 for i in period_indices)
-    if not has_year:
-        for i in range(n_positions):
-            if not is_variable[i] and i not in subgroup_set:
-                info = reference_positions[i]
-                if info.year > 0 and _period_granularity(info) == 1:
-                    context_indices.append(i)
-                    break
-
-    # Example: 2024/01/day15.csv → day varies, constant year/month are needed
-    # for "2024/01/15" instead of "2024/00/15".
-    has_day = any(reference_positions[i].day > 0 for i in period_indices)
-    has_sub_period = any(
-        reference_positions[i].sub_period > 0 for i in context_indices + period_indices
+    neutralized_indices, subgroup_indices = _neutralize_singleton_year_subgroups(
+        indexed, all_positions, subgroup_indices, period_indices
     )
-    if has_day and not has_sub_period:
-        for i in range(n_positions):
-            if not is_variable[i] and i not in subgroup_set and i not in period_indices:
-                info = reference_positions[i]
-                if 0 < info.sub_period <= 12 and info.day == 0:
-                    context_indices.append(i)
-                    break
+
+    context_indices = _constant_context_indices(
+        reference_positions, is_variable, period_indices, set(subgroup_indices)
+    )
 
     all_period_indices = sorted(context_indices + period_indices)
     period_set = set(period_indices)
@@ -577,7 +619,7 @@ def _refine_group(
         subgroups[key].append((fi, path, mtime))
 
     results: list[RefinedGroup] = []
-    for _key, sub_indexed in subgroups.items():
+    for sub_indexed in subgroups.values():
         rep_idx = sub_indexed[0][0]
         refined = _refine_normalized_path(
             normalized_path,

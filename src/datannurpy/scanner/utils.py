@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import errno
 import fnmatch
+import math
 import os
 from collections.abc import Sequence
+from contextlib import suppress
 from datetime import datetime
 from email.utils import parsedate_to_datetime
 from functools import lru_cache
@@ -14,6 +16,8 @@ from typing import TYPE_CHECKING, Any, Union
 
 import ibis
 import ibis.expr.datatypes as dt
+
+import duckdb as _duckdb
 
 from ..compression import strip_compression_suffix
 from ..schema import Variable
@@ -37,17 +41,21 @@ FsPath = Union[str, PurePath]
 
 
 def _to_float(val: Any) -> float | None:
-    """Convert a raw aggregation result to float, or None if null."""
+    """Convert a raw aggregation result to float, or None if null or non-finite
+    (an AVG over extreme magnitudes silently overflows to inf, which strict JSON
+    cannot carry)."""
     if val is None:
         return None
-    return float(val)
+    result = float(val)
+    return result if math.isfinite(result) else None
 
 
 def _round6(val: Any) -> float | None:
-    """Convert to float rounded to 6 decimals, or None if null."""
+    """Convert to float rounded to 6 decimals, or None if null or non-finite."""
     if val is None:
         return None
-    return round(float(val), 6)
+    result = float(val)
+    return round(result, 6) if math.isfinite(result) else None
 
 
 def _table_to_arrow(table: ibis.Table) -> pa.Table:
@@ -75,6 +83,7 @@ SUPPORTED_FORMATS: dict[str, str] = {
     ".csv": "csv",
     ".xlsx": "excel",
     ".xls": "excel",
+    ".ods": "ods",
     ".parquet": "parquet",
     ".pq": "parquet",
     ".sas7bdat": "sas",
@@ -84,6 +93,7 @@ SUPPORTED_FORMATS: dict[str, str] = {
     ".shp": "shapefile",
     ".gml": "gml",
     ".kml": "kml",
+    ".gpx": "gpx",
     ".tif": "geotiff",
     ".tiff": "geotiff",
 }
@@ -152,9 +162,7 @@ def _is_permission_error(exc: BaseException) -> bool:
     """Return True for errors that mean 'cannot list this directory'."""
     if isinstance(exc, PermissionError):
         return True
-    if isinstance(exc, OSError) and exc.errno in (errno.EACCES, errno.EPERM):
-        return True
-    return False
+    return bool(isinstance(exc, OSError) and exc.errno in (errno.EACCES, errno.EPERM))
 
 
 def _warn_permission(path: Any, exc: BaseException) -> None:
@@ -330,8 +338,7 @@ def _normalize_scan_pattern(pattern: str) -> str:
     normalized = pattern.replace("\\", "/")
     while normalized.startswith("./"):
         normalized = normalized[2:]
-    normalized = normalized.lstrip("/")
-    return normalized
+    return normalized.lstrip("/")
 
 
 def _has_glob_magic(pattern: str) -> bool:
@@ -656,6 +663,414 @@ def _cast_float(expr: Any, *, use_multiply: bool) -> Any:
     return expr * 1.0 if use_multiply else expr.cast("float64")
 
 
+# Column types supporting min/max/mean/std
+_NUMERIC_TYPES = (
+    dt.Int8,
+    dt.Int16,
+    dt.Int32,
+    dt.Int64,
+    dt.UInt8,
+    dt.UInt16,
+    dt.UInt32,
+    dt.UInt64,
+    dt.Float32,
+    dt.Float64,
+    dt.Decimal,
+)
+_DATE_TYPES = (dt.Date, dt.Timestamp)
+
+
+def _skip_stat_columns(
+    schema: ibis.Schema, skip_stats_columns: set[str] | None
+) -> set[str]:
+    """Columns that can't be aggregated or cast to string (Binary for BLOB,
+    GeoSpatial for GEOMETRY, Unknown raw types like POINT/POLYGON with no known
+    mapping)."""
+    skip_cols = set(skip_stats_columns) if skip_stats_columns else set()
+    for col_name, col_type in schema.items():
+        if isinstance(col_type, (dt.Binary, dt.GeoSpatial)):
+            skip_cols.add(col_name)
+        elif isinstance(col_type, dt.Unknown):
+            raw = str(col_type.raw_type).split("(")[0].lower()
+            if raw not in _UNKNOWN_RAW_TYPE_MAP:
+                skip_cols.add(col_name)
+    return skip_cols
+
+
+def _extra_stat_kinds(schema: ibis.Schema, cols_for_stats: list[str]) -> dict[str, str]:
+    """Columns supporting min/max/mean/std: col -> "numeric" | "string" | "date"."""
+    kinds: dict[str, str] = {}
+    for col in cols_for_stats:
+        col_type = schema[col]
+        if isinstance(col_type, _NUMERIC_TYPES):
+            kinds[col] = "numeric"
+        elif isinstance(col_type, dt.String):
+            kinds[col] = "string"
+        elif isinstance(col_type, _DATE_TYPES):
+            kinds[col] = "date"
+    return kinds
+
+
+def _extra_stat_expr(
+    source: ibis.Table, col: str, kind: str | None, *, use_multiply: bool
+) -> Any:
+    """The float expression aggregated for min/max/mean/std, or None when the
+    column kind has no such stats."""
+    if kind == "numeric":
+        return _cast_float(source[col], use_multiply=use_multiply)
+    if kind == "string":
+        str_col: Any = source[col]
+        return _cast_float(str_col.length(), use_multiply=use_multiply)
+    if kind == "date":
+        date_col: Any = source[col]
+        return _cast_float(date_col.epoch_seconds(), use_multiply=use_multiply)
+    return None
+
+
+def _stat_agg_exprs(
+    streaming_source: ibis.Table,
+    table: ibis.Table,
+    cols_for_stats: list[str],
+    kinds: dict[str, str],
+    *,
+    streaming_nb_rows: int,
+    sampling: bool,
+) -> tuple[list[Any], list[Any]]:
+    """Build (streaming_aggs, cardinality_aggs) for the stats query.
+
+    Streaming aggregates (count, min, max, mean, std) run on the streaming
+    source. Cardinality (nunique): when sampling, approx on the full data
+    (HyperLogLog, streaming, appended to streaming_aggs); otherwise exact on
+    the in-memory table."""
+    # MySQL < 8.0.17 doesn't support CAST(... AS DOUBLE)
+    try:
+        backend_name = streaming_source._find_backend().name
+    except Exception:  # pragma: no cover
+        backend_name = ""
+    mul = backend_name == "mysql"
+
+    streaming_aggs: list[Any] = []
+    for col in cols_for_stats:
+        streaming_aggs.append(streaming_source[col].count().name(f"{col}__non_null"))
+        expr = _extra_stat_expr(streaming_source, col, kinds.get(col), use_multiply=mul)
+        if expr is not None:
+            streaming_aggs.append(expr.min().name(f"{col}__min"))
+            streaming_aggs.append(expr.max().name(f"{col}__max"))
+            streaming_aggs.append(expr.mean().name(f"{col}__mean"))
+            if streaming_nb_rows > 1:
+                streaming_aggs.append(expr.std().name(f"{col}__std"))
+
+    cardinality_aggs: list[Any] = []
+    if sampling:
+        streaming_aggs.extend(
+            streaming_source[col].approx_nunique().name(f"{col}__distinct")
+            for col in cols_for_stats
+        )
+    else:
+        cardinality_aggs.extend(
+            table[col].nunique().name(f"{col}__distinct") for col in cols_for_stats
+        )
+    return streaming_aggs, cardinality_aggs
+
+
+def _execute_stat_aggs(
+    streaming_aggs: list[Any],
+    cardinality_aggs: list[Any],
+    table: ibis.Table,
+    streaming_source: ibis.Table,
+    *,
+    sampling: bool,
+    dataset_id: str,
+) -> dict[str, Any]:
+    """Run the stats aggregation, degrading on numeric overflow."""
+
+    def _execute(aggs: list[Any]) -> dict[str, Any]:
+        if sampling:
+            # Sampling: streaming aggs + approx_nunique on full_table
+            agg_table = streaming_source.aggregate(aggs)
+        else:
+            # No sampling: single combined query on table
+            agg_table = table.aggregate(aggs + cardinality_aggs)
+        try:
+            return agg_table.to_pyarrow().to_pylist()[0]
+        except _duckdb.OutOfRangeException:
+            raise
+        except Exception:
+            # Oracle: Decimal values can't convert via PyArrow
+            return dict(agg_table.execute().iloc[0])
+
+    try:
+        return _execute(streaming_aggs)
+    except _duckdb.OutOfRangeException:
+        # One extreme column must not cost the dataset. STDDEV is the only
+        # aggregate that raises on overflow (AVG yields inf, nulled by
+        # _to_float) — retry without it; the file's std stays empty,
+        # everything else survives.
+        log_warn(
+            f"{dataset_id}: numeric overflow computing the standard "
+            f"deviation; std left empty",
+            quiet=False,
+        )
+        return _execute(
+            [agg for agg in streaming_aggs if not agg.get_name().endswith("__std")]
+        )
+
+
+def _parse_stat_row(
+    streaming_row: dict[str, Any],
+    cols_for_stats: list[str],
+    cols_with_extra: list[str],
+    *,
+    nb_rows: int,
+    streaming_nb_rows: int,
+) -> tuple[
+    dict[str, tuple[int, int, int]],
+    dict[str, tuple[float | None, float | None, float | None, float | None]],
+]:
+    """Decode the aggregation row into per-column counts and extra stats."""
+    stats: dict[str, tuple[int, int, int]] = {}
+    extra_stats: dict[
+        str, tuple[float | None, float | None, float | None, float | None]
+    ] = {}
+    for col in cols_for_stats:
+        nb_distinct = int(streaming_row[f"{col}__distinct"])
+        nb_non_null = int(streaming_row[f"{col}__non_null"])
+        nb_missing = streaming_nb_rows - nb_non_null
+        nb_duplicate = nb_rows - nb_distinct
+        stats[col] = (nb_distinct, nb_duplicate, nb_missing)
+    for col in cols_with_extra:
+        nb_distinct = stats[col][0] if col in stats else 0
+        nb_non_null = streaming_nb_rows - (
+            stats[col][2] if col in stats else streaming_nb_rows
+        )
+        if nb_non_null == 0:
+            extra_stats[col] = (None, None, None, None)
+            continue
+        raw_std = streaming_row.get(f"{col}__std")
+        extra_stats[col] = (
+            _to_float(streaming_row[f"{col}__min"]),
+            _to_float(streaming_row[f"{col}__max"]),
+            _round6(streaming_row[f"{col}__mean"]),
+            _round6(raw_std) if nb_distinct > 1 else None,
+        )
+    return stats, extra_stats
+
+
+def _compute_stats(
+    table: ibis.Table,
+    *,
+    schema: ibis.Schema,
+    columns: list[str],
+    skip_cols: set[str],
+    nb_rows: int,
+    dataset_id: str,
+    full_table: ibis.Table | None,
+    full_nb_rows: int | None,
+) -> tuple[
+    dict[str, tuple[int, int, int]],
+    dict[str, tuple[float | None, float | None, float | None, float | None]],
+    ibis.Table,
+]:
+    """Compute per-column stats in one aggregation query.
+
+    Returns (stats, extra_stats, table); the returned table has empty strings
+    nulled out so the downstream value-level passes share the same
+    missing-value semantics.
+
+    When full_table is provided (sampling mode), streaming aggregates (count,
+    min, max, mean, std) run on full_table while cardinality runs on the
+    sample table."""
+    stats: dict[str, tuple[int, int, int]] = {}
+    extra_stats: dict[
+        str, tuple[float | None, float | None, float | None, float | None]
+    ] = {}
+    # Exclude columns that don't support aggregation (e.g., CLOB)
+    cols_for_stats = [c for c in columns if c not in skip_cols]
+    kinds = _extra_stat_kinds(schema, cols_for_stats)
+
+    streaming_source = full_table if full_table is not None else table
+    streaming_nb_rows = full_nb_rows if full_nb_rows is not None else nb_rows
+
+    # Treat empty strings as NULL for consistent missing-value semantics
+    string_cols = [c for c, k in kinds.items() if k == "string"]
+    if string_cols:
+        _empty = ibis.literal("")
+        table = table.mutate(**{c: table[c].nullif(_empty) for c in string_cols})
+        if full_table is not None:
+            streaming_source = streaming_source.mutate(
+                **{c: streaming_source[c].nullif(_empty) for c in string_cols}
+            )
+        else:
+            streaming_source = table
+
+    streaming_aggs, cardinality_aggs = _stat_agg_exprs(
+        streaming_source,
+        table,
+        cols_for_stats,
+        kinds,
+        streaming_nb_rows=streaming_nb_rows,
+        sampling=full_table is not None,
+    )
+    if not (streaming_aggs or cardinality_aggs):
+        return stats, extra_stats, table
+
+    try:
+        streaming_row = _execute_stat_aggs(
+            streaming_aggs,
+            cardinality_aggs,
+            table,
+            streaming_source,
+            sampling=full_table is not None,
+            dataset_id=dataset_id,
+        )
+        stats, extra_stats = _parse_stat_row(
+            streaming_row,
+            cols_for_stats,
+            list(kinds),
+            nb_rows=nb_rows,
+            streaming_nb_rows=streaming_nb_rows,
+        )
+    except Exception as e:
+        # Oracle ORA-22849: CLOB columns don't support COUNT DISTINCT;
+        # stats stays empty, all stats will be None
+        if "ORA-22849" not in str(e):
+            raise
+    return stats, extra_stats, table
+
+
+def _materialize_for_freq(
+    table: ibis.Table, *, nb_rows: int, dataset_id: str
+) -> ibis.Table:
+    """Materialize a file/DB-backed table to an in-memory Arrow buffer before
+    the per-column value-level passes (autotag, frequency, pattern). Each of
+    these phases issues one aggregation per eligible column; on a remote view
+    (e.g. ``con.read_csv`` / ``con.read_parquet`` / a database table) this
+    would otherwise re-scan the source N times — catastrophic for wide
+    datasets. Bounded by ``_MATERIALIZE_MAX_ROWS`` to keep RAM usage
+    predictable."""
+    from ibis.expr.operations import InMemoryTable, PhysicalTable
+
+    physical = list(table.op().find(PhysicalTable))
+    is_remote = bool(physical) and not all(
+        isinstance(p, InMemoryTable) for p in physical
+    )
+    if is_remote and nb_rows <= _MATERIALIZE_MAX_ROWS:
+        with suppress(Exception):  # on failure, fall back to the remote table
+            table = ibis.memtable(_table_to_arrow(table))
+    elif is_remote:
+        # Above the materialization cap on a remote source: per-column
+        # passes will re-scan the source once per eligible column. Surface
+        # a warning so users can configure ``sample_size`` if desired.
+        log_warn(
+            f"{dataset_id}: {nb_rows} rows exceeds the in-memory frequency "
+            f"materialization cap ({_MATERIALIZE_MAX_ROWS}); per-column "
+            f"frequency passes will re-scan the source. Configure "
+            f"sample_size to bound this cost.",
+            quiet=False,
+        )
+    return table
+
+
+def _auto_tag_string_columns(
+    table: ibis.Table, schema: ibis.Schema, columns: list[str]
+) -> tuple[dict[str, str], set[str]]:
+    """Auto-tag string columns; returns (col -> tag_id, security-tagged cols)."""
+    string_cols = [col for col in columns if ibis_type_to_str(schema[col]) == "string"]
+    if not string_cols:
+        return {}, set()
+    from .autotag import _SECURITY_TAGS, compute_auto_tags
+
+    auto_tag_map = compute_auto_tags(table, string_cols)
+    security_cols = {col for col, tag in auto_tag_map.items() if tag in _SECURITY_TAGS}
+    return auto_tag_map, security_cols
+
+
+def _value_freq_table(
+    table: ibis.Table,
+    stats: dict[str, tuple[int, int, int]],
+    *,
+    freq_threshold: int,
+    security_cols: set[str],
+) -> pa.Table | None:
+    """Value-frequency table for low-cardinality, non-security columns."""
+    eligible_cols = [
+        col
+        for col, (nb_distinct, _, _) in stats.items()
+        if 0 <= nb_distinct <= freq_threshold and col not in security_cols
+    ]
+    if not eligible_cols:
+        return None
+    # Compute value counts via PyArrow directly on the in-memory Arrow
+    # buffer. The previous Ibis-union path issued one DuckDB query per
+    # column even when the table was already an in-memory memtable —
+    # gratuitous SQL round-trips. PyArrow's vectorised value_counts on
+    # the same buffer is ~25× faster on wide datasets.
+    import pyarrow as pa
+    import pyarrow.compute as pc
+    import pyarrow.types as pat
+
+    arrow_buf = _table_to_arrow(table.select(eligible_cols))
+    parts: list[pa.Table] = []
+    for col in eligible_cols:
+        arr = arrow_buf.column(col).combine_chunks().drop_null()
+        if len(arr) == 0:
+            continue
+        try:
+            vc = arr.value_counts()
+        except (pa.ArrowNotImplementedError, pa.ArrowInvalid):
+            # Skip types value_counts can't hash (nested, etc.).
+            continue
+        raw_values = vc.field("values")
+        values = raw_values.cast(pa.string())
+        if pat.is_timestamp(raw_values.type) or pat.is_time(raw_values.type):
+            # PyArrow always renders timestamps/times with their full
+            # sub-second precision (``...000000`` or ``...000000000``);
+            # trim trailing zero fractional parts for a cleaner UI.
+            values = pc.replace_substring_regex(values, r"\.0+$", "")  # pyright: ignore[reportAttributeAccessIssue]
+        counts = vc.field("counts")
+        n = len(values)
+        parts.append(
+            pa.table(
+                {
+                    "variable_id": pa.array([col] * n, type=pa.string()),
+                    "value": values,
+                    "frequency": counts,
+                }
+            )
+        )
+    return pa.concat_tables(parts, promote_options="default") if parts else None
+
+
+def _pattern_freq_table(
+    table: ibis.Table,
+    schema: ibis.Schema,
+    stats: dict[str, tuple[int, int, int]],
+    *,
+    freq_threshold: int,
+    security_cols: set[str],
+) -> tuple[pa.Table | None, dict[str, str]]:
+    """Pattern frequency for high-cardinality string columns and
+    security-tagged columns; returns (freq table, col -> pattern tag_id)."""
+    pattern_cols = [
+        col
+        for col, (nb_distinct, _, _) in stats.items()
+        if ibis_type_to_str(schema[col]) == "string"
+        and nb_distinct > 0
+        and (
+            (freq_threshold > 0 and nb_distinct > freq_threshold)
+            or col in security_cols
+        )
+    ]
+    if not pattern_cols:
+        return None, {}
+    from .pattern import compute_pattern_freqs
+
+    pattern_freq_table, pattern_info = compute_pattern_freqs(table, pattern_cols)
+    # pattern_cols only contains cols with nb_distinct > 0, so always non-None
+    assert pattern_freq_table is not None
+    return pattern_freq_table, pattern_info
+
+
 def build_variables(
     table: ibis.Table,
     *,
@@ -670,34 +1085,7 @@ def build_variables(
     """Build Variable entities from Ibis Table, return (variables, freq_table as PyArrow)."""
     schema = full_table.schema() if full_table is not None else table.schema()
     columns = [c for c in schema if c.strip() != ""]
-    skip_cols = set(skip_stats_columns) if skip_stats_columns else set()
-
-    # Auto-detect columns that can't be aggregated or cast to string
-    # (Binary for BLOB, Unknown for geometry types like POINT/POLYGON, GeoSpatial for GEOMETRY)
-    # Skip Unknown columns only if their raw_type is not a known mappable type.
-    for col_name, col_type in schema.items():
-        if isinstance(col_type, (dt.Binary, dt.GeoSpatial)):
-            skip_cols.add(col_name)
-        elif isinstance(col_type, dt.Unknown):
-            raw = str(col_type.raw_type).split("(")[0].lower()
-            if raw not in _UNKNOWN_RAW_TYPE_MAP:
-                skip_cols.add(col_name)
-
-    # Determine which columns support min/max/mean/std
-    _NUMERIC_TYPES = (
-        dt.Int8,
-        dt.Int16,
-        dt.Int32,
-        dt.Int64,
-        dt.UInt8,
-        dt.UInt16,
-        dt.UInt32,
-        dt.UInt64,
-        dt.Float32,
-        dt.Float64,
-        dt.Decimal,
-    )
-    _DATE_TYPES = (dt.Date, dt.Timestamp)
+    skip_cols = _skip_stat_columns(schema, skip_stats_columns)
 
     # Compute stats only if needed
     stats: dict[str, tuple[int, int, int]] = {}
@@ -705,272 +1093,54 @@ def build_variables(
         str, tuple[float | None, float | None, float | None, float | None]
     ] = {}
     if infer_stats and nb_rows > 0:
-        # Exclude columns that don't support aggregation (e.g., CLOB)
-        cols_for_stats = [c for c in columns if c not in skip_cols]
-        cols_with_extra: list[str] = []
-
-        # Detect which columns support min/max/mean/std
-        col_extra_exprs: dict[str, str] = {}  # col -> "numeric"|"string"|"date"
-        for col in cols_for_stats:
-            col_type = schema[col]
-            if isinstance(col_type, _NUMERIC_TYPES):
-                col_extra_exprs[col] = "numeric"
-                cols_with_extra.append(col)
-            elif isinstance(col_type, dt.String):
-                col_extra_exprs[col] = "string"
-                cols_with_extra.append(col)
-            elif isinstance(col_type, _DATE_TYPES) and col not in skip_cols:
-                col_extra_exprs[col] = "date"
-                cols_with_extra.append(col)
-
-        # When full_table is provided (sampling mode):
-        #   - Streaming aggregates (count, min, max, mean, std) on full_table
-        #   - Cardinality aggregates (nunique) on table (=sample memtable)
-        # Otherwise: everything on table (current behavior)
-        streaming_source = full_table if full_table is not None else table
-        streaming_nb_rows = full_nb_rows if full_nb_rows is not None else nb_rows
-
-        # Treat empty strings as NULL for consistent missing-value semantics
-        empty_as_null_cols = [c for c, k in col_extra_exprs.items() if k == "string"]
-        if empty_as_null_cols:
-            _empty = ibis.literal("")
-            table = table.mutate(
-                **{c: table[c].nullif(_empty) for c in empty_as_null_cols}
-            )
-            if full_table is not None:
-                streaming_source = streaming_source.mutate(
-                    **{
-                        c: streaming_source[c].nullif(_empty)
-                        for c in empty_as_null_cols
-                    }
-                )
-            else:
-                streaming_source = table
-
-        # MySQL < 8.0.17 doesn't support CAST(... AS DOUBLE)
-        try:
-            backend_name = streaming_source._find_backend().name
-        except Exception:  # pragma: no cover
-            backend_name = ""
-        mul = backend_name == "mysql"
-
-        # Build streaming aggregation expressions (count, min, max, mean, std)
-        streaming_aggs: list[Any] = []
-        for col in cols_for_stats:
-            streaming_aggs.append(
-                streaming_source[col].count().name(f"{col}__non_null")
-            )
-            kind = col_extra_exprs.get(col)
-            expr: Any = None
-            if kind == "numeric":
-                expr = _cast_float(streaming_source[col], use_multiply=mul)
-            elif kind == "string":
-                str_col: Any = streaming_source[col]
-                expr = _cast_float(str_col.length(), use_multiply=mul)
-            elif kind == "date":
-                date_col: Any = streaming_source[col]
-                expr = _cast_float(date_col.epoch_seconds(), use_multiply=mul)
-            if expr is not None:
-                streaming_aggs.append(expr.min().name(f"{col}__min"))
-                streaming_aggs.append(expr.max().name(f"{col}__max"))
-                streaming_aggs.append(expr.mean().name(f"{col}__mean"))
-                if streaming_nb_rows > 1:
-                    streaming_aggs.append(expr.std().name(f"{col}__std"))
-
-        # Build cardinality aggregation (nunique)
-        # With full_table (sampling): approx on full data (HyperLogLog, streaming)
-        # Without full_table: exact on table (all in memory)
-        cardinality_aggs: list[Any] = []
-        if full_table is not None:
-            for col in cols_for_stats:
-                streaming_aggs.append(
-                    streaming_source[col].approx_nunique().name(f"{col}__distinct")
-                )
-        else:
-            for col in cols_for_stats:
-                cardinality_aggs.append(table[col].nunique().name(f"{col}__distinct"))
-
-        if streaming_aggs or cardinality_aggs:
-            try:
-                streaming_row: dict[str, Any] = {}
-
-                if full_table is None:
-                    # No sampling: single combined query on table
-                    all_aggs = streaming_aggs + cardinality_aggs
-                    agg_table = table.aggregate(all_aggs)
-                    try:
-                        streaming_row = agg_table.to_pyarrow().to_pylist()[0]
-                    except Exception:
-                        # Oracle: Decimal values can't convert via PyArrow
-                        streaming_row = dict(agg_table.execute().iloc[0])
-                else:
-                    # Sampling: streaming aggs + approx_nunique on full_table
-                    agg_table = streaming_source.aggregate(streaming_aggs)
-                    try:
-                        streaming_row = agg_table.to_pyarrow().to_pylist()[0]
-                    except Exception:  # pragma: no cover
-                        streaming_row = dict(agg_table.execute().iloc[0])
-
-                for col in cols_for_stats:
-                    nb_distinct = int(streaming_row[f"{col}__distinct"])
-                    nb_non_null = int(streaming_row[f"{col}__non_null"])
-                    nb_missing = streaming_nb_rows - nb_non_null
-                    nb_duplicate = nb_rows - nb_distinct
-                    stats[col] = (nb_distinct, nb_duplicate, nb_missing)
-                for col in cols_with_extra:
-                    nb_distinct = stats[col][0] if col in stats else 0
-                    nb_non_null = streaming_nb_rows - (
-                        stats[col][2] if col in stats else streaming_nb_rows
-                    )
-                    if nb_non_null == 0:
-                        extra_stats[col] = (None, None, None, None)
-                        continue
-                    raw_min = streaming_row[f"{col}__min"]
-                    raw_max = streaming_row[f"{col}__max"]
-                    raw_mean = streaming_row[f"{col}__mean"]
-                    raw_std = streaming_row.get(f"{col}__std")
-                    extra_stats[col] = (
-                        _to_float(raw_min),
-                        _to_float(raw_max),
-                        _round6(raw_mean),
-                        _round6(raw_std) if nb_distinct > 1 else None,
-                    )
-            except Exception as e:
-                # Oracle ORA-22849: CLOB columns don't support COUNT DISTINCT
-                if "ORA-22849" in str(e):
-                    pass  # stats remains empty, all stats will be None
-                else:
-                    raise
-
-    # Materialize a file/DB-backed table to an in-memory Arrow buffer before the
-    # per-column value-level passes (autotag, frequency, pattern). Each of these
-    # phases issues one aggregation per eligible column; on a remote view (e.g.
-    # ``con.read_csv`` / ``con.read_parquet`` / a database table) this would
-    # otherwise re-scan the source N times — catastrophic for wide datasets.
-    # Bounded by ``_MATERIALIZE_MAX_ROWS`` to keep RAM usage predictable.
-    if freq_threshold is not None and nb_rows > 0:
-        from ibis.expr.operations import InMemoryTable, PhysicalTable
-
-        physical = list(table.op().find(PhysicalTable))
-        is_remote = bool(physical) and not all(
-            isinstance(p, InMemoryTable) for p in physical
+        stats, extra_stats, table = _compute_stats(
+            table,
+            schema=schema,
+            columns=columns,
+            skip_cols=skip_cols,
+            nb_rows=nb_rows,
+            dataset_id=dataset_id,
+            full_table=full_table,
+            full_nb_rows=full_nb_rows,
         )
-        if is_remote and nb_rows <= _MATERIALIZE_MAX_ROWS:
-            try:
-                table = ibis.memtable(_table_to_arrow(table))
-            except Exception:  # pragma: no cover - fall back to remote table
-                pass
-        elif is_remote:
-            # Above the materialization cap on a remote source: per-column
-            # passes will re-scan the source once per eligible column. Surface
-            # a warning so users can configure ``sample_size`` if desired.
-            log_warn(
-                f"{dataset_id}: {nb_rows} rows exceeds the in-memory frequency "
-                f"materialization cap ({_MATERIALIZE_MAX_ROWS}); per-column "
-                f"frequency passes will re-scan the source. Configure "
-                f"sample_size to bound this cost.",
-                quiet=False,
-            )
+
+    # Materialize before the per-column value-level passes when that pays off
+    if freq_threshold is not None and nb_rows > 0:
+        table = _materialize_for_freq(table, nb_rows=nb_rows, dataset_id=dataset_id)
 
     # Auto-tag string columns BEFORE frequency (security tags suppress raw frequency values)
     auto_tag_map: dict[str, str] = {}
     security_cols: set[str] = set()
     if freq_threshold is not None:
-        string_cols = [
-            col for col in columns if ibis_type_to_str(schema[col]) == "string"
-        ]
-        if string_cols:
-            from .autotag import _SECURITY_TAGS, compute_auto_tags
-
-            auto_tag_map = compute_auto_tags(table, string_cols)
-            security_cols = {
-                col for col, tag in auto_tag_map.items() if tag in _SECURITY_TAGS
-            }
+        auto_tag_map, security_cols = _auto_tag_string_columns(table, schema, columns)
 
     # Compute frequency if threshold is set
     freq_table: pa.Table | None = None
     pattern_info: dict[str, str] = {}
     if freq_threshold is not None and stats:
-        eligible_cols = [
-            col
-            for col, (nb_distinct, _, _) in stats.items()
-            if 0 <= nb_distinct <= freq_threshold and col not in security_cols
-        ]
-        if eligible_cols:
-            # Compute value counts via PyArrow directly on the in-memory Arrow
-            # buffer. The previous Ibis-union path issued one DuckDB query per
-            # column even when the table was already an in-memory memtable —
-            # gratuitous SQL round-trips. PyArrow's vectorised value_counts on
-            # the same buffer is ~25× faster on wide datasets.
-            import pyarrow as pa
-            import pyarrow.compute as pc
-            import pyarrow.types as pat
-
-            arrow_buf = _table_to_arrow(table.select(eligible_cols))
-            parts: list[pa.Table] = []
-            for col in eligible_cols:
-                arr = arrow_buf.column(col).combine_chunks().drop_null()
-                if len(arr) == 0:
-                    continue
-                try:
-                    vc = arr.value_counts()
-                except (pa.ArrowNotImplementedError, pa.ArrowInvalid):
-                    # Skip types value_counts can't hash (nested, etc.).
-                    continue
-                raw_values = vc.field("values")
-                values = raw_values.cast(pa.string())
-                if pat.is_timestamp(raw_values.type) or pat.is_time(raw_values.type):
-                    # PyArrow always renders timestamps/times with their full
-                    # sub-second precision (``...000000`` or ``...000000000``);
-                    # trim trailing zero fractional parts for a cleaner UI.
-                    values = pc.replace_substring_regex(values, r"\.0+$", "")  # pyright: ignore[reportAttributeAccessIssue]
-                counts = vc.field("counts")
-                n = len(values)
-                parts.append(
-                    pa.table(
-                        {
-                            "variable_id": pa.array([col] * n, type=pa.string()),
-                            "value": values,
-                            "frequency": counts,
-                        }
-                    )
-                )
-            freq_table = (
-                pa.concat_tables(parts, promote_options="default") if parts else None
-            )
-
+        freq_table = _value_freq_table(
+            table, stats, freq_threshold=freq_threshold, security_cols=security_cols
+        )
         # Pattern frequency for high-cardinality string columns + security-tagged columns
-        pattern_cols = [
-            col
-            for col, (nb_distinct, _, _) in stats.items()
-            if ibis_type_to_str(schema[col]) == "string"
-            and nb_distinct > 0
-            and (
-                (freq_threshold > 0 and nb_distinct > freq_threshold)
-                or col in security_cols
-            )
-        ]
-        if pattern_cols:
-            from .pattern import compute_pattern_freqs
-
-            pattern_freq_table, pattern_info = compute_pattern_freqs(
-                table, pattern_cols
-            )
-            # pattern_cols only contains cols with nb_distinct > 0, so always non-None
-            assert pattern_freq_table is not None
+        pattern_freq, pattern_info = _pattern_freq_table(
+            table,
+            schema,
+            stats,
+            freq_threshold=freq_threshold,
+            security_cols=security_cols,
+        )
+        if pattern_freq is not None:
             import pyarrow as pa
 
             freq_table = (
-                pa.concat_tables([freq_table, pattern_freq_table])
+                pa.concat_tables([freq_table, pattern_freq])
                 if freq_table is not None
-                else pattern_freq_table
+                else pattern_freq
             )
 
     # Merge pattern classification into auto_tag_map (for cols without a specific tag)
-    if pattern_info:
-        for col, tag_id in pattern_info.items():
-            if col not in auto_tag_map:
-                auto_tag_map[col] = tag_id
+    for col, tag_id in pattern_info.items():
+        auto_tag_map.setdefault(col, tag_id)
 
     def get_stat(col: str, idx: int) -> int | None:
         """Get stat value, returning None if not computed or -1 (unknown)."""

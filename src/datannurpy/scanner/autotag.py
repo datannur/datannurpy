@@ -169,9 +169,7 @@ def _is_phone(v: str) -> bool:
         return False
     if v.startswith("+"):
         return 7 <= len(digits) <= 15
-    if digits.startswith("0") and len(digits) == 10:
-        return True
-    return False
+    return bool(digits.startswith("0") and len(digits) == 10)
 
 
 _Detector = Callable[[str], bool]

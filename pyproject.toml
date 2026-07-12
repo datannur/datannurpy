@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "datannurpy"
-version = "0.29.5"
+version = "0.30.0"
 description = "Scan files and databases into ready-to-use datannur catalogs"
 authors = [{ name = "datannur" }]
 readme = "README.md"
@@ -27,6 +27,7 @@ dependencies = [
   "jsonjsdb>=0.9.3",
   "openpyxl>=3.0",
   "xlrd>=2.0",
+  "odfpy>=1.4",
   "fsspec>=2024.0",
   # HTTP(S) URL scanning only. Gated to 3.10+: aiohttp's security fixes land in
   # 3.14+, which dropped Python 3.9 — so 3.9 gets no CVE-free aiohttp at all.
@@ -98,6 +99,7 @@ dev = [
   "pyreadstat>=1.2.0; python_version >= '3.10'",
   "urllib3>=2.7.0; python_version >= '3.10'",
   "idna>=3.15",
+  "hypothesis>=6.100",
 ]
 
 [tool.pytest.ini_options]
@@ -111,6 +113,17 @@ filterwarnings = [
 [tool.ruff]
 target-version = "py39"
 exclude = ["examples/output"]
+
+[tool.ruff.lint]
+extend-select = ["B", "C4", "C90", "PERF", "RET", "SIM"]
+# PERF203: try/except inside scan loops is the error-degradation strategy, not an accident
+# B009: getattr with a literal is used deliberately for dynamic backend attributes
+# (ibis BaseBackend.raw_sql/sql/con, pyarrow re-exports) that the type stubs don't carry
+ignore = ["PERF203", "B009"]
+
+[tool.ruff.lint.mccabe]
+# Every function passes without noqa; lower the ceiling as the worst ones get simplified
+max-complexity = 20
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/datannurpy"]

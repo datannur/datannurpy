@@ -147,7 +147,9 @@ class TestScanIcebergExceptions:
         meta = {"location": str(tmp_path), "format-version": 2}
         (metadata_dir / "00000-test.metadata.json").write_text(json.dumps(meta))
 
-        with pytest.raises(Exception):
+        # B017 exempted: the exact failure type varies across pyiceberg versions;
+        # the behavior under test is only that no path rewrite happens before it.
+        with pytest.raises(Exception):  # noqa: B017
             scan_iceberg(tmp_path, "test", infer_stats=True, freq_threshold=None)
 
     def test_iceberg_mismatched_relative_location_no_rewrite(self, tmp_path: Path):
@@ -161,7 +163,9 @@ class TestScanIcebergExceptions:
         meta = {"location": "wrong/path/structure", "format-version": 2}
         (metadata_dir / "00000-test.metadata.json").write_text(json.dumps(meta))
 
-        with pytest.raises(Exception):
+        # B017 exempted: the exact failure type varies across pyiceberg versions;
+        # the behavior under test is only that no path rewrite happens before it.
+        with pytest.raises(Exception):  # noqa: B017
             scan_iceberg(tmp_path, "test", infer_stats=True, freq_threshold=None)
 
     @_skip_iceberg_on_windows
@@ -531,3 +535,64 @@ class TestParquetSampling:
         )
         assert row_count == 5
         assert len(variables) > 0
+
+
+class TestGeoParquetFastPath:
+    """PROJJSON-CRS GeoParquet (the Swiss LV95 nominal case) scans on the
+    DuckDB fast path: geoparquet conversion is disabled on the connection, so
+    the fragile GEOMETRY('<projjson>') Ibis mapping is never involved."""
+
+    @staticmethod
+    def _write_lv95_geoparquet(path: Path) -> None:
+        import json
+
+        wkb_point = bytes.fromhex("01010000000000000000244741000000000024E240")
+        projjson = {
+            "$schema": "https://proj.org/schemas/v0.7/projjson.schema.json",
+            "type": "ProjectedCRS",
+            "name": "CH1903+ / LV95",
+            "id": {"authority": "EPSG", "code": 2056},
+        }
+        geo_meta = {
+            "version": "1.1.0",
+            "primary_column": "geometry",
+            "columns": {
+                "geometry": {
+                    "encoding": "WKB",
+                    "geometry_types": ["Point"],
+                    "crs": projjson,
+                    "bbox": [2600000, 1100000, 2620000, 1120000],
+                }
+            },
+        }
+        table = pa.table({"name": ["a", "b"], "geometry": [wkb_point, wkb_point]})
+        table = table.replace_schema_metadata({b"geo": json.dumps(geo_meta).encode()})
+        pq.write_table(table, path)
+
+    def test_scans_without_fallback(self, tmp_path: Path, capsys):
+        path = tmp_path / "lv95.parquet"
+        self._write_lv95_geoparquet(path)
+
+        catalog = Catalog(verbose=True)
+        catalog.add_dataset(path, quiet=False)
+
+        captured = capsys.readouterr()
+        assert "falling back to PyArrow" not in captured.err
+        ds = catalog.dataset.all()[0]
+        assert ds.nb_row == 2
+        assert ds.crs == "EPSG:2056"
+        assert ds.geometry_type == "point"
+        types = {v.name: v.type for v in catalog.variable.all()}
+        assert types["geometry"] == "binary"
+
+    def test_bbox_reprojected_to_wgs84(self, tmp_path: Path):
+        pytest.importorskip("pyproj", reason="pyproj (geo extra) not installed")
+        path = tmp_path / "lv95.parquet"
+        self._write_lv95_geoparquet(path)
+
+        catalog = Catalog(quiet=True)
+        catalog.add_dataset(path)
+        bbox = catalog.dataset.all()[0].bbox
+        assert bbox is not None
+        # LV95 square around Bern reprojected to lon/lat WGS84.
+        assert bbox == pytest.approx((7.44, 46.05, 7.70, 46.23), abs=1e-2)

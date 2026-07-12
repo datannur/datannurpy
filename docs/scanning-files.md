@@ -103,7 +103,7 @@ GeoPackage and GeoParquet are read without the extra; their `bbox` is reprojecte
 ```yaml
 add:
   # Vector and raster files are auto-detected by add_folder, like any other format
-  - folder: ./geodata          # *.geojson, *.shp, *.gml, *.kml, *.tif, *.parquet
+  - folder: ./geodata          # *.geojson, *.shp, *.gml, *.kml, *.gpx, *.tif, *.parquet
 
   # A single geospatial file
   - dataset: ./geodata/parcels.shp
@@ -122,6 +122,7 @@ add:
 | Zipped Shapefile | `.zip` (one `.shp` + sidecars) | `dataset` |
 | GML | `.gml` | `folder` / `dataset` |
 | KML | `.kml` | `folder` / `dataset` |
+| GPX | `.gpx` | `folder` / `dataset` |
 | GeoTIFF (raster) | `.tif`, `.tiff` | `folder` / `dataset` |
 | GeoParquet | `.parquet` | `folder` / `dataset` |
 | GeoPackage | `.gpkg` | `database: sqlite:///…` |
@@ -134,7 +135,9 @@ add:
   - dataset: https://data.example.org/ADMIN-EXPRESS_FRA.zip
 ```
 
-The archive must hold exactly one Shapefile. Multi-Shapefile archives, and auto-discovery of zips inside a `folder:` scan, are not supported — extract those first.
+The same works for any [zip archive](#zip-archives) holding exactly one scannable file.
+
+GPX, KML and GML files can hold several layers (GPX always exposes waypoints, routes and tracks); scanned as a single `dataset:`, the first non-empty layer is read — so a track recording without waypoints still yields its tracks.
 
 ### Spatial metadata
 
@@ -171,6 +174,10 @@ Avoid the UTF-8 temp copy when files are already local and UTF-8 (auto-fallback 
 csv_skip_copy: true
 ```
 
+### Messy CSVs
+
+When a column cannot be converted to its detected type (a stray footnote row in a numeric column, mixed date formats), the scan degrades instead of failing. It first retries dropping the unconvertible rows — accepted only when marginal (at most 10 rows or 0.1%, and never the whole file), with a warning giving the exact count — then falls back to reading every column as text: every parseable row survives, typed statistics are simply absent. Values are never altered, so a degraded dataset is incomplete or untyped, never wrong. A file failing even that is skipped with a warning, as before.
+
 ## Compressed CSV
 
 A gzip-compressed CSV (`.csv.gz`) is scanned like any other file — on any source, at any [depth](./scan-depth.md) — and catalogs exactly like its uncompressed twin (same `id`/`name`, same variables):
@@ -181,7 +188,18 @@ add:
   - folder: sftp://user@host/exports    # *.csv.gz alongside *.csv
 ```
 
-Only single-stream **gzip of CSV** is supported; other compressed forms (`.parquet.gz`, `.zip` archives, zipped Shapefiles) are not — extract them first. HTTP transport compression (`Content-Encoding: gzip`) is handled automatically and needs nothing special.
+Only single-stream **gzip of CSV** is supported for `.gz`; `.parquet.gz` is not — extract it first. HTTP transport compression (`Content-Encoding: gzip`) is handled automatically and needs nothing special.
+
+## Zip archives
+
+A `.zip` holding exactly one data file — a CSV, Excel, ODS or Parquet file, or a Shapefile with its sidecars — is scanned as a `dataset:` on any source. The member is extracted safely (Zip Slip- and decompression-bomb-guarded) and scanned like a plain file, at any [depth](./scan-depth.md):
+
+```yaml
+add:
+  - dataset: https://data.example.org/exports/sales.csv.zip
+```
+
+Archives holding several data files, and auto-discovery of zips inside a `folder:` scan, are not supported — extract those first.
 
 ## Remote storage
 
@@ -255,7 +273,7 @@ add:
 - Public, no authentication.
 - Redirects are followed; `https://` is recommended.
 
-**Format detection.** A URL with a recognized extension (`.csv`, `.xlsx`, …) just works — any query string is ignored (`.../sales.csv?token=…`). API endpoints often have no extension, so the format is then detected automatically, in order: the last path segment used as a token (`.../HCL_NOGA/multiplelevels/CSV`), a `?format=` query parameter, the HTTP `Content-Type`, and finally content sniffing of the first bytes (best-effort, logged with a warning; skipped at `depth: dataset`). When nothing is conclusive the run fails asking you to set `format:`.
+**Format detection.** A URL with a recognized extension (`.csv`, `.xlsx`, …) just works — any query string is ignored (`.../sales.csv?token=…`). API endpoints often have no extension, so the format is then detected automatically, in order: the last path segment used as a token (`.../HCL_NOGA/multiplelevels/CSV`), a `?format=` (or WFS `?outputFormat=`) query parameter, the HTTP `Content-Type`, and finally content sniffing of the first bytes (best-effort, logged with a warning; skipped at `depth: dataset`). When nothing is conclusive the run fails asking you to set `format:`.
 
 Set `format:` explicitly to override detection (or force it when signals disagree). It also skips the detection request — a small speed-up when you already know the format, worth it across many endpoints of the same API:
 
@@ -269,9 +287,13 @@ add:
   - dataset: https://www.agvchapp.bfs.admin.ch/fr/state/results/xls?SnapshotDate=31.12.2025
     format: excel
     id: commune_district
+  # WFS layer: a GetFeature URL returning GeoJSON is a regular dataset
+  # (outputFormat=application/json or json is detected as geojson automatically)
+  - dataset: https://wfs.geo.example.ch/?service=WFS&version=2.0.0&request=GetFeature&typeName=ns:parcels&outputFormat=application/json
+    id: parcels
 ```
 
-Accepted `format:` values are the delivery formats (`csv`, `excel`, `parquet`, `sas`, `spss`, `stata`, `geojson`, `shapefile`, `gml`, `kml`, `geotiff`) or a matching extension spelling (`xlsx`, `xls`, `pq`, …).
+Accepted `format:` values are the delivery formats (`csv`, `excel`, `ods`, `parquet`, `sas`, `spss`, `stata`, `geojson`, `shapefile`, `gml`, `kml`, `gpx`, `geotiff`) or a matching extension spelling (`xlsx`, `xls`, `pq`, …).
 - A missing URL (404, DNS error, timeout) fails the run with a non-zero exit code, just like a missing local file — a CI build fails red rather than publishing a truncated catalog.
 - Incremental scans use the server's `Last-Modified` header: a URL is skipped when it is unchanged, and its date populates `last_update_date`. A server that sends no `Last-Modified` (e.g. a dynamic endpoint) is re-scanned on every run.
 

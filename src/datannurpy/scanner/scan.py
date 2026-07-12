@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Any
@@ -19,6 +20,7 @@ from .geo_raster import scan_geo_raster
 from .geo_vector import scan_geo_vector
 from .excel import (
     _MAX_PREVIEW_ROWS as _EXCEL_PREVIEW_ROWS,
+    _PANDAS_ENGINES,
     _XLS_SNIFF_BYTES,
     _read_file_header,
     _read_preview_rows,
@@ -34,7 +36,7 @@ from ..compression import (
     is_gzipped,
     strip_compression_suffix,
 )
-from .archive import is_zip, local_shapefile_from_zip
+from .archive import is_zip, local_member_from_zip, zip_csv_member_header
 from .format_detect import canonical_extension
 from .parquet import scan_parquet
 from .parquet.core import scan_delta, scan_hive, scan_iceberg
@@ -46,8 +48,9 @@ _PA_FSSPEC_HANDLER = getattr(pa_fs_module, "FSSpecHandler")
 
 # Vector geo formats scanned through pyogrio (optional ``geo`` extra). pyogrio picks
 # the driver from the extension. Shapefile sidecars (.shx/.dbf/.prj/.cpg) are
-# unmapped, so only the .shp becomes a dataset.
-_VECTOR_FORMATS = ("geojson", "shapefile", "gml", "kml")
+# unmapped, so only the .shp becomes a dataset. Multi-layer sources (KML folders,
+# GML, GPX waypoints/routes/tracks) scan their first layer.
+_VECTOR_FORMATS = ("geojson", "shapefile", "gml", "kml", "gpx")
 # Geo formats are read by dedicated scanners (not the tabular schema path), so they
 # bypass schema-only mode — their metadata is cheap and wanted at every depth.
 _GEO_FORMATS = (*_VECTOR_FORMATS, "geotiff")
@@ -97,14 +100,45 @@ def scan_file(
         fs: Optional FileSystem for remote file access. Non-streamable formats
             (CSV, Excel, SAS/SPSS/Stata) will be downloaded to a temp file.
     """
-    # Zipped Shapefile: extract the inner .shp (+ sidecars) to a temp dir and scan it
-    # as a local Shapefile — the whole geo path (CRS, sidecars) is reused unchanged.
-    if delivery_format == "shapefile" and is_zip(
-        path_label or PurePosixPath(str(path)).name
-    ):
-        with local_shapefile_from_zip(path, fs) as shp_path:
-            return _scan_local(
-                shp_path,
+    with ExitStack() as stack:
+        # Zip archive: extract the single scannable member (+ same-stem sidecars for
+        # a Shapefile) to a temp dir and continue as a local file — every downstream
+        # path (geo sidecars, schema-only, suffix-driven readers) is reused unchanged.
+        # A .zip-named resource that is not actually an archive yields None and is
+        # scanned as its declared format (a misnamed endpoint serving plain data).
+        if is_zip(path_label or PurePosixPath(str(path)).name):
+            # Schema-only zipped CSV: stream just the header out of the archive —
+            # extracting a potentially huge member to list column names would turn
+            # a metadata sweep into a full download per dataset.
+            if schema_only and delivery_format == "csv":
+                from .csv import _CSV_HEADER_SAMPLE_BYTES
+
+                header = zip_csv_member_header(path, fs, _CSV_HEADER_SAMPLE_BYTES)
+                if header is not None:
+                    return _csv_header_result(header, csv_encoding, dataset_id)
+            member_path = stack.enter_context(
+                local_member_from_zip(path, fs, delivery_format)
+            )
+            if member_path is not None:
+                path, fs = member_path, None
+
+        # Schema-only mode: read metadata without scanning data. Geo formats have no
+        # tabular schema path, so they always go through their own scanners.
+        if schema_only and delivery_format not in _GEO_FORMATS:
+            return _scan_schema_only(
+                path,
+                delivery_format,
+                dataset_id,
+                csv_encoding,
+                fs=fs,
+                quiet=quiet,
+                path_label=path_label,
+            )
+
+        # Remote filesystem: use ensure_local for all formats
+        if fs is not None and not fs.is_local:
+            return _scan_with_ensure_local(
+                path,
                 delivery_format,
                 dataset_id=dataset_id,
                 freq_threshold=freq_threshold,
@@ -112,26 +146,14 @@ def scan_file(
                 sample_size=sample_size,
                 preview_rows=preview_rows,
                 csv_skip_copy=csv_skip_copy,
+                fs=fs,
                 quiet=quiet,
                 path_label=path_label,
             )
 
-    # Schema-only mode: read metadata without scanning data. Geo formats have no
-    # tabular schema path, so they always go through their own scanners.
-    if schema_only and delivery_format not in _GEO_FORMATS:
-        return _scan_schema_only(
-            path,
-            delivery_format,
-            dataset_id,
-            csv_encoding,
-            fs=fs,
-            quiet=quiet,
-            path_label=path_label,
-        )
-
-    # Remote filesystem: use ensure_local for all formats
-    if fs is not None and not fs.is_local:
-        return _scan_with_ensure_local(
+        # Local path: concrete Path required for direct scanning
+        assert isinstance(path, Path)
+        return _scan_local(
             path,
             delivery_format,
             dataset_id=dataset_id,
@@ -140,24 +162,23 @@ def scan_file(
             sample_size=sample_size,
             preview_rows=preview_rows,
             csv_skip_copy=csv_skip_copy,
-            fs=fs,
             quiet=quiet,
             path_label=path_label,
         )
 
-    # Local path: concrete Path required for direct scanning
-    assert isinstance(path, Path)
-    return _scan_local(
-        path,
-        delivery_format,
-        dataset_id=dataset_id,
-        freq_threshold=freq_threshold,
-        csv_encoding=csv_encoding,
-        sample_size=sample_size,
-        preview_rows=preview_rows,
-        csv_skip_copy=csv_skip_copy,
-        quiet=quiet,
-        path_label=path_label,
+
+def _csv_header_result(
+    header: bytes, csv_encoding: str | None, dataset_id: str
+) -> ScanResult:
+    """Build a schema-only ScanResult from a CSV's raw header bytes."""
+    from .csv import _read_csv_header
+
+    return ScanResult(
+        variables=[
+            Variable(id=f"{dataset_id}---{col}", name=col, dataset_id=dataset_id)
+            for col in _read_csv_header(header, csv_encoding)
+        ],
+        nb_row=None,
     )
 
 
@@ -280,7 +301,7 @@ def _scan_local(
             preview=preview,
         )
 
-    # Excel (xls, xlsx)
+    # Spreadsheets (xls, xlsx, ods)
     variables, nb_row, freq_table, preview = scan_excel(
         path,
         dataset_id=dataset_id,
@@ -525,7 +546,7 @@ def _scan_schema_only_remote(
 
     # CSV: stream only the header line (readline guarantees a complete line)
     if delivery_format == "csv":
-        from .csv import _CSV_HEADER_SAMPLE_BYTES, _read_csv_header
+        from .csv import _CSV_HEADER_SAMPLE_BYTES
 
         full_path = fs._full_path(str(path))
         source_name = path_label or PurePosixPath(str(path)).name
@@ -538,16 +559,7 @@ def _scan_schema_only_remote(
                 else f
             )
             header_bytes = src.read(_CSV_HEADER_SAMPLE_BYTES)
-        columns = _read_csv_header(header_bytes, csv_encoding)
-        variables = [
-            Variable(
-                id=f"{dataset_id}---{col}",
-                name=col,
-                dataset_id=dataset_id,
-            )
-            for col in columns
-        ]
-        return ScanResult(variables=variables, nb_row=None)
+        return _csv_header_result(header_bytes, csv_encoding, dataset_id)
 
     # Excel xlsx: download first so ZIP/XML access stays local.
     # xls: must download full file (xlrd doesn't support streaming)
@@ -605,7 +617,7 @@ def _scan_schema_only_local(
 ) -> ScanResult:
     """Schema-only scan for local files."""
     if delivery_format == "csv":
-        from .csv import _CSV_HEADER_SAMPLE_BYTES, _read_csv_header
+        from .csv import _CSV_HEADER_SAMPLE_BYTES
 
         with open(path, "rb") as f:
             src = (
@@ -613,22 +625,14 @@ def _scan_schema_only_local(
                 if is_gzipped(path.name)
                 else f
             )
-            columns = _read_csv_header(src.read(_CSV_HEADER_SAMPLE_BYTES), csv_encoding)
-        variables = [
-            Variable(
-                id=f"{dataset_id}---{col}",
-                name=col,
-                dataset_id=dataset_id,
-            )
-            for col in columns
-        ]
-        return ScanResult(variables=variables, nb_row=None)
+            header_bytes = src.read(_CSV_HEADER_SAMPLE_BYTES)
+        return _csv_header_result(header_bytes, csv_encoding, dataset_id)
 
-    if delivery_format == "excel":
+    if delivery_format in ("excel", "ods"):
         file_path = Path(path)
         suffix = file_path.suffix.lower()
 
-        if suffix != ".xls":
+        if suffix not in _PANDAS_ENGINES:
             rows = _read_preview_rows(
                 file_path, quiet=quiet, path_label=path_label or file_path.name
             )
@@ -637,12 +641,14 @@ def _scan_schema_only_local(
                 return ScanResult(variables=[], nb_row=None)
             headers = [str(c) for c in rows[0] if c is not None]
         else:
-            if _looks_like_html_xls_content(_read_file_header(file_path)):
+            if suffix == ".xls" and _looks_like_html_xls_content(
+                _read_file_header(file_path)
+            ):
                 _warn_html_xls(path_label or file_path.name, quiet)
                 return ScanResult(variables=[], nb_row=None)
             import pandas as pd
 
-            engine = "xlrd"
+            engine = _PANDAS_ENGINES[suffix]
             from .excel import _capture_excel_diagnostics
 
             with _capture_excel_diagnostics(path_label or file_path.name, quiet):

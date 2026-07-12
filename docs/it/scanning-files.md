@@ -103,7 +103,7 @@ GeoPackage e GeoParquet vengono letti senza l'extra; il loro `bbox` viene riproi
 ```yaml
 add:
   # I file vettoriali e raster vengono rilevati automaticamente da add_folder, come ogni altro formato
-  - folder: ./geodata          # *.geojson, *.shp, *.gml, *.kml, *.tif, *.parquet
+  - folder: ./geodata          # *.geojson, *.shp, *.gml, *.kml, *.gpx, *.tif, *.parquet
 
   # Un singolo file geospaziale
   - dataset: ./geodata/parcels.shp
@@ -122,6 +122,7 @@ add:
 | Shapefile zippato | `.zip` (un `.shp` + file collaterali) | `dataset` |
 | GML | `.gml` | `folder` / `dataset` |
 | KML | `.kml` | `folder` / `dataset` |
+| GPX | `.gpx` | `folder` / `dataset` |
 | GeoTIFF (raster) | `.tif`, `.tiff` | `folder` / `dataset` |
 | GeoParquet | `.parquet` | `folder` / `dataset` |
 | GeoPackage | `.gpkg` | `database: sqlite:///…` |
@@ -134,7 +135,9 @@ add:
   - dataset: https://data.example.org/ADMIN-EXPRESS_FRA.zip
 ```
 
-L'archivio deve contenere esattamente uno Shapefile. Gli archivi con più Shapefile e il rilevamento automatico degli zip all'interno di una scansione `folder:` non sono supportati — in quei casi estrarre prima gli archivi.
+Lo stesso funziona per qualsiasi [archivio zip](#archivi-zip) contenente esattamente un file scansionabile.
+
+I file GPX, KML e GML possono contenere più layer (un GPX espone sempre waypoint, route e track); scansionati come singolo `dataset:`, viene letto il primo layer non vuoto — una registrazione di traccia senza waypoint restituisce quindi comunque i suoi track.
 
 ### Metadati spaziali
 
@@ -171,6 +174,10 @@ Evitare la copia temporanea UTF-8 quando i file sono già locali e in UTF-8 (fal
 csv_skip_copy: true
 ```
 
+### CSV sporchi
+
+Quando una colonna non può essere convertita nel tipo rilevato (una riga di nota a piè di pagina in una colonna numerica, formati di data misti), la scansione degrada invece di fallire. Prima riprova scartando le righe non convertibili — accettato solo se marginale (al massimo 10 righe o lo 0,1%, e mai l'intero file), con un avviso che indica il conteggio esatto — poi ripiega sulla lettura di tutte le colonne come testo: tutte le righe analizzabili sopravvivono, le statistiche tipizzate sono semplicemente assenti. I valori non vengono mai alterati: un dataset degradato è incompleto o non tipizzato, mai sbagliato. Un file che fallisce anche questo viene saltato con un avviso, come prima.
+
 ## CSV compressi
 
 Un CSV compresso con gzip (`.csv.gz`) viene scansionato come qualsiasi altro file — su qualsiasi sorgente, a qualsiasi [profondità](/it/scan-depth) — e viene catalogato esattamente come il suo gemello non compresso (stessi `id`/`name`, stesse variabili):
@@ -181,7 +188,18 @@ add:
   - folder: sftp://user@host/exports    # *.csv.gz accanto a *.csv
 ```
 
-È supportato soltanto il **gzip di CSV** a flusso singolo; altre forme compresse (`.parquet.gz`, archivi `.zip`, Shapefile zippati) non lo sono — estrarle prima. La compressione a livello di trasporto HTTP (`Content-Encoding: gzip`) è gestita automaticamente e non richiede nulla di particolare.
+Per `.gz` è supportato soltanto il **gzip di CSV** a flusso singolo; `.parquet.gz` non lo è — estrarlo prima. La compressione a livello di trasporto HTTP (`Content-Encoding: gzip`) è gestita automaticamente e non richiede nulla di particolare.
+
+## Archivi zip
+
+Un `.zip` contenente esattamente un file di dati — un file CSV, Excel, ODS o Parquet, oppure uno Shapefile con i suoi file collaterali — viene scansionato come `dataset:` su qualsiasi sorgente. Il membro viene estratto in modo sicuro (con protezione contro Zip Slip e bombe di decompressione) e scansionato come un file normale, a qualsiasi [profondità](/it/scan-depth):
+
+```yaml
+add:
+  - dataset: https://data.example.org/exports/sales.csv.zip
+```
+
+Gli archivi con più file di dati e il rilevamento automatico degli zip all'interno di una scansione `folder:` non sono supportati — in quei casi estrarre prima gli archivi.
 
 ## Storage remoto {#remote-storage}
 
@@ -255,7 +273,7 @@ add:
 - Pubblico, senza autenticazione.
 - I redirect vengono seguiti; `https://` è consigliato.
 
-**Rilevamento del formato.** Un URL con un'estensione riconosciuta (`.csv`, `.xlsx`, …) funziona senza altro — l'eventuale query string viene ignorata (`.../sales.csv?token=…`). Gli endpoint API spesso non hanno estensione, quindi il formato viene rilevato automaticamente, nell'ordine: l'ultimo segmento del percorso usato come token (`.../HCL_NOGA/multiplelevels/CSV`), un parametro di query `?format=`, il `Content-Type` HTTP e infine lo sniffing dei primi byte del contenuto (best-effort, registrato con un avviso; saltato a `depth: dataset`). Quando nulla è conclusivo, l'esecuzione fallisce chiedendo di impostare `format:`.
+**Rilevamento del formato.** Un URL con un'estensione riconosciuta (`.csv`, `.xlsx`, …) funziona senza altro — l'eventuale query string viene ignorata (`.../sales.csv?token=…`). Gli endpoint API spesso non hanno estensione, quindi il formato viene rilevato automaticamente, nell'ordine: l'ultimo segmento del percorso usato come token (`.../HCL_NOGA/multiplelevels/CSV`), un parametro di query `?format=` (o WFS `?outputFormat=`), il `Content-Type` HTTP e infine lo sniffing dei primi byte del contenuto (best-effort, registrato con un avviso; saltato a `depth: dataset`). Quando nulla è conclusivo, l'esecuzione fallisce chiedendo di impostare `format:`.
 
 Impostare `format:` esplicitamente per sovrascrivere il rilevamento (o per forzarlo quando i segnali sono discordanti). Salta inoltre la richiesta di rilevamento — un piccolo guadagno di velocità quando il formato è già noto, che si somma su molti endpoint della stessa API:
 
@@ -269,9 +287,13 @@ add:
   - dataset: https://www.agvchapp.bfs.admin.ch/fr/state/results/xls?SnapshotDate=31.12.2025
     format: excel
     id: commune_district
+  # Layer WFS: un URL GetFeature che restituisce GeoJSON è un dataset normale
+  # (outputFormat=application/json o json viene rilevato automaticamente come geojson)
+  - dataset: https://wfs.geo.example.ch/?service=WFS&version=2.0.0&request=GetFeature&typeName=ns:parcels&outputFormat=application/json
+    id: parcels
 ```
 
-I valori accettati per `format:` sono i formati di consegna (`csv`, `excel`, `parquet`, `sas`, `spss`, `stata`, `geojson`, `shapefile`, `gml`, `kml`, `geotiff`) oppure una grafia di estensione corrispondente (`xlsx`, `xls`, `pq`, …).
+I valori accettati per `format:` sono i formati di consegna (`csv`, `excel`, `ods`, `parquet`, `sas`, `spss`, `stata`, `geojson`, `shapefile`, `gml`, `kml`, `gpx`, `geotiff`) oppure una grafia di estensione corrispondente (`xlsx`, `xls`, `pq`, …).
 - Un URL mancante (404, errore DNS, timeout) fa fallire l'esecuzione con un codice di uscita diverso da zero, esattamente come un file locale mancante — una build CI fallisce in rosso invece di pubblicare un catalogo troncato.
 - Le scansioni incrementali usano l'header `Last-Modified` del server: un URL viene saltato quando è invariato, e la sua data popola `last_update_date`. Un server che non invia `Last-Modified` (ad es. un endpoint dinamico) viene riscansionato a ogni esecuzione.
 
