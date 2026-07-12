@@ -10,6 +10,7 @@
 - add: messy CSVs degrade instead of failing — on type-conversion errors the scan drops the unconvertible rows (accepted only when marginal, warning with the count), then falls back to all-text columns (every parseable row kept); values are never altered
 - fix: zero-row warnings tell the truth — `empty file (0 bytes)` only for genuinely empty files, `no data rows` otherwise; a scanner-reported failure (`✗`) is no longer re-reported as "empty file" and its dataset keeps `nb_row` null instead of a false `0`
 - fix: scan errors handled inside a scanner (logged `✗` but invisible to the tally) now count in the run `[summary]` and the `on_scan_error: fail` exit code
+- fix: GeoParquet with a PROJJSON CRS (e.g. Swiss LV95) scans on the DuckDB fast path instead of the slower PyArrow fallback, whose debug message no longer embeds the full PROJJSON blob
 
 ## 0.29.5 (2026-07-10)
 

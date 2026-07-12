@@ -30,6 +30,20 @@ class DatasetMetadata:
     sample_size: int | None = None
 
 
+def _duckdb_connect() -> Any:
+    """A DuckDB connection for Parquet scans, reading GeoParquet geometry as raw
+    WKB. The ``GEOMETRY('<projjson>')`` logical type the default conversion
+    produces (when the spatial extension is loaded) has no stable Ibis mapping —
+    and the pipeline keeps geometry as an un-profiled binary column anyway: the
+    CRS and bbox come from the file's ``geo`` metadata, not the column type."""
+    con = ibis.duckdb.connect()
+    try:
+        con.raw_sql("SET enable_geoparquet_conversion = false")
+    except Exception:  # pragma: no cover — pre-1.1 DuckDB without the setting
+        pass
+    return con
+
+
 def _parquet_result(
     variables: list[Variable],
     nb_row: int,
@@ -145,7 +159,7 @@ def scan_simple(
     metadata = extract_parquet_metadata(path)
 
     # Scan with Ibis
-    con = ibis.duckdb.connect()
+    con = _duckdb_connect()
     try:
         try:
             table = con.read_parquet(path)
@@ -181,9 +195,12 @@ def scan_simple(
                 pq_meta = {}
             if b"geo" not in pq_meta and "projjson.schema.json" not in str(exc):
                 raise
+            # First line only, capped: the exception may embed a ~2 KB PROJJSON
+            # blob, which would flood the log once per file on a geo corpus.
+            short_exc = str(exc).split("\n", 1)[0][:200]
             log_debug(
                 f"{path}: DuckDB/Ibis could not parse GeoParquet CRS metadata "
-                f"({exc}); falling back to PyArrow scan",
+                f"({short_exc}); falling back to PyArrow scan",
                 quiet,
             )
             arrow_table = pq.read_table(path)
@@ -253,7 +270,7 @@ def scan_delta(
         log_error("delta_metadata", e, quiet)
 
     # Scan with Ibis
-    con = ibis.duckdb.connect()
+    con = _duckdb_connect()
     try:
         table = con.read_delta(path)
         row_count = int(table.count().to_pyarrow().as_py())
@@ -306,7 +323,7 @@ def scan_hive(
     metadata = DatasetMetadata(data_size=data_size)
 
     # Scan with Ibis using glob pattern
-    con = ibis.duckdb.connect()
+    con = _duckdb_connect()
     try:
         glob_pattern = str(path / "**" / "*.parquet")
         table = con.read_parquet(glob_pattern, hive_partitioning=True)
@@ -421,7 +438,7 @@ def scan_iceberg(
     row_count = len(arrow_table)
 
     # Use DuckDB for stats computation (streaming, supports reservoir sampling)
-    con = ibis.duckdb.connect()
+    con = _duckdb_connect()
     try:
         table = con.create_table("_iceberg", arrow_table, temp=True)
         table_name = table.get_name()
