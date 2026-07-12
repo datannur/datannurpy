@@ -31,6 +31,7 @@ jobs:
       - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
         with:
           enable-cache: true
+          cache-suffix: postgres
 
       - name: Install dependencies
         run: uv sync --frozen --extra postgres
@@ -41,7 +42,7 @@ jobs:
           TEST_POSTGRES_URL: postgresql://test:test@localhost:5432/testdb
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
         with:
           files: coverage.xml
           flags: postgres
@@ -70,6 +71,7 @@ jobs:
       - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
         with:
           enable-cache: true
+          cache-suffix: mysql
 
       - name: Install dependencies
         run: uv sync --frozen --extra mysql
@@ -80,7 +82,7 @@ jobs:
           TEST_MYSQL_URL: mysql://root:test@localhost:3306/testdb
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
         with:
           files: coverage.xml
           flags: mysql
@@ -107,9 +109,10 @@ jobs:
       - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
         with:
           enable-cache: true
+          cache-suffix: oracle-${{ matrix.version }}
 
       - name: Cache Oracle Docker image
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         id: cache-oracle
         with:
           path: ~/oracle-image.tar
@@ -156,7 +159,7 @@ jobs:
           TEST_ORACLE_URL: oracle://system:test@localhost:1521/${{ matrix.database }}
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
         with:
           files: coverage.xml
           flags: oracle-${{ matrix.version }}
@@ -185,6 +188,7 @@ jobs:
       - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
         with:
           enable-cache: true
+          cache-suffix: mssql
 
       - name: Install ODBC Driver 18
         run: |
@@ -220,7 +224,7 @@ jobs:
           TEST_MSSQL_URL: "mssql://sa:Test@123!@localhost:1433/testdb?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
         with:
           files: coverage.xml
           flags: mssql
