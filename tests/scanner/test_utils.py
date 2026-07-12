@@ -464,11 +464,13 @@ class TestBuildVariables:
                     )
                 return orig_execute(self_expr, **kw)
 
-            with patch.object(type(table), "to_pyarrow", patched_to_pyarrow):
-                with patch.object(type(table), "execute", patched_execute):
-                    variables, freq = build_variables(
-                        table, nb_rows=3, dataset_id="test", freq_threshold=10
-                    )
+            with (
+                patch.object(type(table), "to_pyarrow", patched_to_pyarrow),
+                patch.object(type(table), "execute", patched_execute),
+            ):
+                variables, freq = build_variables(
+                    table, nb_rows=3, dataset_id="test", freq_threshold=10
+                )
 
             assert execute_calls >= 1
             assert freq is not None
@@ -494,9 +496,11 @@ class TestBuildVariables:
         def patched_execute(self_expr, **kw):  # type: ignore[no-untyped-def]
             return arrow
 
-        with patch.object(type(table), "to_pyarrow", patched_to_pyarrow):
-            with patch.object(type(table), "execute", patched_execute):
-                result = _table_to_arrow(table)
+        with (
+            patch.object(type(table), "to_pyarrow", patched_to_pyarrow),
+            patch.object(type(table), "execute", patched_execute),
+        ):
+            result = _table_to_arrow(table)
 
         assert result is arrow
 
@@ -644,7 +648,7 @@ class TestPatternFrequencyIntegration:
         assert var_by_name["high"].is_pattern is True
         # Both should have entries in freq_table
         assert freq_table is not None
-        var_ids = set(r["variable_id"] for r in freq_table.to_pylist())
+        var_ids = {r["variable_id"] for r in freq_table.to_pylist()}
         assert "low" in var_ids
         assert "high" in var_ids
 

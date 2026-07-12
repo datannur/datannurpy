@@ -126,7 +126,7 @@ class TestEvolutionStability:
         conn_str = f"sqlite:///{database_path}"
         evolution_counts: list[int] = []
 
-        for i in range(5):
+        for _i in range(5):
             catalog = Catalog(app_path=app_dir)
             catalog.add_database(
                 conn_str, metadata=EntityMetadata(id="db", name="Database")

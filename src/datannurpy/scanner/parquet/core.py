@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -37,10 +38,8 @@ def _duckdb_connect() -> Any:
     and the pipeline keeps geometry as an un-profiled binary column anyway: the
     CRS and bbox come from the file's ``geo`` metadata, not the column type."""
     con = ibis.duckdb.connect()
-    try:
+    with suppress(Exception):  # pre-1.1 DuckDB without the setting
         con.raw_sql("SET enable_geoparquet_conversion = false")
-    except Exception:  # pragma: no cover — pre-1.1 DuckDB without the setting
-        pass
     return con
 
 

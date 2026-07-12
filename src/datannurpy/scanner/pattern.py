@@ -18,8 +18,7 @@ def _build_pattern_array(arr: pa.Array) -> pa.Array:
     out = repl(out, r"\x00", "")
     out = repl(out, r"[\p{L}]", "a")
     out = repl(out, r"[0-9]", "9")
-    out = repl(out, r"[^a9@._/ -]", "?")
-    return out
+    return repl(out, r"[^a9@._/ -]", "?")
 
 
 def _classify_string(top_freqs: list[int], total: int) -> str:

@@ -960,11 +960,13 @@ class TestRemoteStorage:
         mock_fs.exists.return_value = True
         mock_fs.isdir.return_value = True
 
-        with patch("datannurpy.add_folder.FileSystem", return_value=mock_fs):
-            with patch("datannurpy.add_folder.is_delta_table", return_value=True):
-                catalog = Catalog()
-                with pytest.raises(ConfigError, match="dataset, not a folder"):
-                    catalog.add_folder("memory://test/data")
+        with (
+            patch("datannurpy.add_folder.FileSystem", return_value=mock_fs),
+            patch("datannurpy.add_folder.is_delta_table", return_value=True),
+        ):
+            catalog = Catalog()
+            with pytest.raises(ConfigError, match="dataset, not a folder"):
+                catalog.add_folder("memory://test/data")
 
 
 class TestListPath:

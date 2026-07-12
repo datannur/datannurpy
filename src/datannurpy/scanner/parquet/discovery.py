@@ -97,11 +97,15 @@ def is_hive_partitioned(path: PurePath | str, fs: FileSystem | None = None) -> b
             # Match the cheap `key=value` name pattern before the network isdir, so a
             # flat folder of data files costs no per-entry stat round-trip on remote
             # backends (a data file never matches the Hive partition pattern).
-            if _HIVE_PARTITION_PATTERN.match(child_name) and fs.isdir(child_path):
-                if safe_glob_fs(fs, f"{child_path}/**/*.parquet") or safe_glob_fs(
-                    fs, f"{child_path}/**/*.pq"
-                ):
-                    return True
+            if (
+                _HIVE_PARTITION_PATTERN.match(child_name)
+                and fs.isdir(child_path)
+                and (
+                    safe_glob_fs(fs, f"{child_path}/**/*.parquet")
+                    or safe_glob_fs(fs, f"{child_path}/**/*.pq")
+                )
+            ):
+                return True
         return False
     # Local path fallback
     path_obj = Path(path) if isinstance(path, str) else path
@@ -109,11 +113,15 @@ def is_hive_partitioned(path: PurePath | str, fs: FileSystem | None = None) -> b
     if not path_obj.is_dir():
         return False
     for child in safe_iterdir_local(path_obj):
-        if _HIVE_PARTITION_PATTERN.match(child.name) and child.is_dir():
-            if safe_glob_local(child, "**/*.parquet") or safe_glob_local(
-                child, "**/*.pq"
-            ):
-                return True
+        if (
+            _HIVE_PARTITION_PATTERN.match(child.name)
+            and child.is_dir()
+            and (
+                safe_glob_local(child, "**/*.parquet")
+                or safe_glob_local(child, "**/*.pq")
+            )
+        ):
+            return True
     return False
 
 
@@ -186,10 +194,10 @@ def discover_parquet_datasets(
             pq_files += safe_glob_fs(fs, f"{dir_str}/**/*.pq")
             return [PurePosixPath(f) for f in pq_files]
         assert isinstance(directory, Path)
-        result = safe_glob_local(directory, "**/*.parquet") + safe_glob_local(
-            directory, "**/*.pq"
-        )
-        return result  # type: ignore[return-value]  # Path is PurePath
+        return [
+            *safe_glob_local(directory, "**/*.parquet"),
+            *safe_glob_local(directory, "**/*.pq"),
+        ]
 
     # First pass: detect Delta Lake tables
     delta_roots: set[PurePath] = set()

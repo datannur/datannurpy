@@ -186,11 +186,13 @@ class TestConnect:
     def test_unsupported_ibis_backend(self) -> None:
         """Passing an unsupported Ibis backend raises ValueError."""
         mock_con = MagicMock(spec=ibis.BaseBackend)
-        with patch(
-            "datannurpy.scanner.database.get_backend_name", return_value="pyspark"
+        with (
+            patch(
+                "datannurpy.scanner.database.get_backend_name", return_value="pyspark"
+            ),
+            pytest.raises(ConfigError, match="pyspark.*is not supported"),
         ):
-            with pytest.raises(ConfigError, match="pyspark.*is not supported"):
-                connect(mock_con)
+            connect(mock_con)
 
     def test_external_backend_calls_helper(self) -> None:
         """Non-sqlite backends call _connect_external_backend."""
@@ -229,14 +231,16 @@ class TestConnect:
 
     def test_connection_error_gives_config_error(self) -> None:
         """Connection failures are wrapped in ConfigError with context."""
-        with patch(
-            "datannurpy.scanner.database._connect_external_backend",
-            side_effect=ConfigError(
-                "Failed to connect to mysql (myhost:3306): SSL connection error"
+        with (
+            patch(
+                "datannurpy.scanner.database._connect_external_backend",
+                side_effect=ConfigError(
+                    "Failed to connect to mysql (myhost:3306): SSL connection error"
+                ),
             ),
+            pytest.raises(ConfigError, match="Failed to connect to mysql.*SSL"),
         ):
-            with pytest.raises(ConfigError, match="Failed to connect to mysql.*SSL"):
-                connect("mysql://user:pass@myhost:3306/mydb")
+            connect("mysql://user:pass@myhost:3306/mydb")
 
 
 class TestConnectExternalBackendErrors:
@@ -245,73 +249,79 @@ class TestConnectExternalBackendErrors:
     def test_mysql_connection_error(self) -> None:
         """MySQL connection error is wrapped in ConfigError."""
         pytest.importorskip("MySQLdb", reason="mysqlclient not installed")
-        with patch(
-            "ibis.mysql.connect",
-            side_effect=Exception("SSL connection error: unsupported protocol"),
-        ):
-            with pytest.raises(
+        with (
+            patch(
+                "ibis.mysql.connect",
+                side_effect=Exception("SSL connection error: unsupported protocol"),
+            ),
+            pytest.raises(
                 ConfigError, match=r"Failed to connect to mysql \(myhost:3306\).*SSL"
-            ):
-                _connect_external_backend("mysql", {"host": "myhost", "port": "3306"})
+            ),
+        ):
+            _connect_external_backend("mysql", {"host": "myhost", "port": "3306"})
 
     def test_postgres_connection_error(self) -> None:
         """Postgres connection error is wrapped in ConfigError."""
         pytest.importorskip("psycopg2", reason="psycopg2 not installed")
-        with patch(
-            "ibis.postgres.connect",
-            side_effect=Exception("could not connect to server: Connection refused"),
-        ):
-            with pytest.raises(
+        with (
+            patch(
+                "ibis.postgres.connect",
+                side_effect=Exception(
+                    "could not connect to server: Connection refused"
+                ),
+            ),
+            pytest.raises(
                 ConfigError, match=r"Failed to connect to postgres \(dbhost\)"
-            ):
-                _connect_external_backend("postgres", {"host": "dbhost"})
+            ),
+        ):
+            _connect_external_backend("postgres", {"host": "dbhost"})
 
     def test_driver_not_found_not_wrapped(self) -> None:
         """ModuleNotFoundError still raises ConfigError via raise_driver_error."""
         pytest.importorskip("MySQLdb", reason="mysqlclient not installed")
-        with patch(
-            "ibis.mysql.connect",
-            side_effect=ModuleNotFoundError("No module named 'MySQLdb'"),
-        ):
-            with pytest.raises(
+        with (
+            patch(
+                "ibis.mysql.connect",
+                side_effect=ModuleNotFoundError("No module named 'MySQLdb'"),
+            ),
+            pytest.raises(
                 ConfigError,
                 match=r"MySQL support requires optional dependencies.*datannurpy\[mysql\]",
-            ):
-                _connect_external_backend(
-                    "mysql", {"host": "localhost", "port": "3306"}
-                )
+            ),
+        ):
+            _connect_external_backend("mysql", {"host": "localhost", "port": "3306"})
 
     def test_import_error_not_module_not_found(self) -> None:
         """ImportError (not ModuleNotFoundError) is caught via except Exception."""
         pytest.importorskip("MySQLdb", reason="mysqlclient not installed")
-        with patch(
-            "ibis.mysql.connect",
-            side_effect=ImportError("cannot import name 'foo'"),
-        ):
-            with pytest.raises(
+        with (
+            patch(
+                "ibis.mysql.connect",
+                side_effect=ImportError("cannot import name 'foo'"),
+            ),
+            pytest.raises(
                 ConfigError,
                 match=r"MySQL support requires optional dependencies.*datannurpy\[mysql\]",
-            ):
-                _connect_external_backend(
-                    "mysql", {"host": "localhost", "port": "3306"}
-                )
+            ),
+        ):
+            _connect_external_backend("mysql", {"host": "localhost", "port": "3306"})
 
     def test_ibis_missing_backend_error_is_rewritten(self) -> None:
         """Generic Ibis missing-backend errors get a datannurpy-specific message."""
         pytest.importorskip("MySQLdb", reason="mysqlclient not installed")
-        with patch(
-            "ibis.mysql.connect",
-            side_effect=Exception(
-                "Failed to import the mysql backend due to missing dependencies."
+        with (
+            patch(
+                "ibis.mysql.connect",
+                side_effect=Exception(
+                    "Failed to import the mysql backend due to missing dependencies."
+                ),
             ),
-        ):
-            with pytest.raises(
+            pytest.raises(
                 ConfigError,
                 match=r"MySQL support requires optional dependencies.*datannurpy\[mysql\]",
-            ):
-                _connect_external_backend(
-                    "mysql", {"host": "localhost", "port": "3306"}
-                )
+            ),
+        ):
+            _connect_external_backend("mysql", {"host": "localhost", "port": "3306"})
 
 
 class TestIsMissingBackendDependencyError:
@@ -504,9 +514,9 @@ class TestOpenSshTunnel:
         with (
             patch("builtins.__import__", side_effect=fake_import),
             pytest.raises(ConfigError, match=r"datannurpy\[ssh\]"),
+            open_ssh_tunnel({"host": "ssh.host"}, "mysql://a:b@db/mydb"),
         ):
-            with open_ssh_tunnel({"host": "ssh.host"}, "mysql://a:b@db/mydb"):
-                pass  # pragma: no cover
+            pass  # pragma: no cover
 
 
 class TestAddDatabaseSshTunnel:
@@ -1232,12 +1242,14 @@ class TestInitOracleClient:
         import datannurpy.scanner._oracle as oracle_mod
 
         oracle_mod._oracle_client_initialized = False
-        with patch.dict("sys.modules", {"oracledb": None}):
-            with pytest.raises(
+        with (
+            patch.dict("sys.modules", {"oracledb": None}),
+            pytest.raises(
                 ConfigError,
                 match=r"Oracle support requires optional dependencies.*datannurpy\[oracle\]",
-            ):
-                _init_oracle_client("/opt/oracle/client", raise_driver_error)
+            ),
+        ):
+            _init_oracle_client("/opt/oracle/client", raise_driver_error)
         oracle_mod._oracle_client_initialized = False
 
 

@@ -248,11 +248,11 @@ def _read_file(
 
     if suffix == ".csv":
         return read_csv(file_path, preserve_empty_strings=True)
-    elif suffix in {".xlsx", ".xls"}:
+    if suffix in {".xlsx", ".xls"}:
         return read_excel(file_path, quiet=quiet, path_label=label)
-    elif suffix == ".json":
+    if suffix == ".json":
         return _read_json(file_path, quiet=quiet, path_label=label)
-    elif suffix in {".sas7bdat", ".sav", ".dta"}:
+    if suffix in {".sas7bdat", ".sav", ".dta"}:
         return read_statistical(file_path, quiet=quiet, path_label=label)
     return None
 
@@ -1042,7 +1042,7 @@ def _load_tables(
     try:
         folder_stat = folder_path.stat()
     except FileNotFoundError:
-        raise ConfigError(f"Metadata folder not found: {folder_path}")
+        raise ConfigError(f"Metadata folder not found: {folder_path}") from None
     if not stat.S_ISDIR(folder_stat.st_mode):
         raise ConfigError(f"Metadata source is not a directory: {folder_path}")
     return _load_tables_from_folder(folder_path, allowed_entities, quiet=quiet)

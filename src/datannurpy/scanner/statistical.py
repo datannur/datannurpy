@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import tempfile
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -267,9 +267,8 @@ def _stat_to_parquet(
     """Stream a statistical file to a temporary Parquet file."""
     import pyreadstat
 
-    tmp = tempfile.NamedTemporaryFile(suffix=".parquet", delete=False)
-    tmp_path = Path(tmp.name)
-    tmp.close()
+    with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as tmp:
+        tmp_path = Path(tmp.name)
 
     try:
         chunks = pyreadstat.read_file_in_chunks(reader, file_path, chunksize=chunksize)
@@ -282,12 +281,10 @@ def _stat_to_parquet(
         writer.close()
         yield tmp_path
     finally:
-        try:
+        # Windows keeps a lock until the reader (DuckDB) fully releases the
+        # file; it lives in the OS temp dir and gets reaped later.
+        with suppress(PermissionError):
             tmp_path.unlink(missing_ok=True)
-        except PermissionError:  # pragma: no cover - Windows-only file lock
-            # Windows keeps a lock until the reader (DuckDB) fully releases the
-            # file; it lives in the OS temp dir and gets reaped later.
-            pass
 
 
 def _fix_parquet_types(con: Any, table: ibis.Table, parquet_path: Path) -> ibis.Table:

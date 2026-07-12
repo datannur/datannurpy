@@ -8,7 +8,7 @@ import select
 import socket
 import threading
 import warnings
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NoReturn, Optional
 from urllib.parse import parse_qs, quote, unquote, urlparse, urlunparse
@@ -143,10 +143,8 @@ def close_connection(con: ibis.BaseBackend) -> None:
     if hasattr(con, "con"):
         internal_con = getattr(con, "con")
         if hasattr(internal_con, "close"):
-            try:
+            with suppress(Exception):  # already closed (Oracle, etc.)
                 internal_con.close()
-            except Exception:
-                pass  # Already closed (Oracle, etc.)
 
 
 def _encode_uri_credentials(uri: str) -> str:
@@ -404,9 +402,9 @@ def _connect_external_backend(
                 mysql_kwargs["password"] = kwargs["password"]
             if kwargs.get("database"):
                 mysql_kwargs["database"] = kwargs["database"]
-            for key, value in kwargs.items():
-                if key not in known_mysql:
-                    mysql_kwargs[key] = value
+            mysql_kwargs.update(
+                {k: v for k, v in kwargs.items() if k not in known_mysql}
+            )
             with warnings.catch_warnings():
                 warnings.filterwarnings(
                     "ignore", message="Unable to set session timezone"
@@ -445,9 +443,7 @@ def _connect_external_backend(
             mssql_kwargs["database"] = kwargs["database"]
         if kwargs.get("driver"):
             mssql_kwargs["driver"] = kwargs["driver"]
-        for key, value in kwargs.items():
-            if key not in known_params:
-                mssql_kwargs[key] = value
+        mssql_kwargs.update({k: v for k, v in kwargs.items() if k not in known_params})
         return ibis.mssql.connect(**mssql_kwargs)
     except ModuleNotFoundError as e:
         raise_driver_error(backend, e)
@@ -498,8 +494,7 @@ def get_database_name(
         if backend_name == "sqlite":
             path = parsed.netloc + parsed.path if parsed.netloc else parsed.path
             return Path(path).stem or "sqlite"
-        else:
-            return parsed.path.lstrip("/") or backend_name
+        return parsed.path.lstrip("/") or backend_name
     # For connection objects, use current_database or fallback to backend name
     db_name = getattr(con, "current_database", None)
     # SQLite returns "main" which isn't useful, use backend_name instead
@@ -804,8 +799,7 @@ def list_schemas(con: ibis.BaseBackend) -> list[str]:
         list_schemas_fn = getattr(con, "list_schemas", None)
         if list_schemas_fn:
             schemas = list(list_schemas_fn())
-            schemas = [s for s in schemas if s not in system_schemas]
-            return schemas
+            return [s for s in schemas if s not in system_schemas]
         list_databases_fn = getattr(con, "list_databases", None)
         if list_databases_fn:
             return list(list_databases_fn())

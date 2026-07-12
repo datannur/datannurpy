@@ -7,6 +7,7 @@ import re
 import sys
 import time
 import traceback
+from contextlib import suppress
 from pathlib import Path
 
 # Module-level logging configuration
@@ -31,10 +32,8 @@ def _reconfigure_utf8(stream: object) -> None:
     encoding = (getattr(stream, "encoding", "") or "").lower().replace("-", "")
     if encoding == "utf8":
         return
-    try:
+    with suppress(ValueError, OSError):  # detached/closed stream — leave it as-is
         reconfigure(encoding="utf-8", errors="replace")
-    except (ValueError, OSError):  # detached/closed stream — leave it as-is
-        pass
 
 
 def _ensure_utf8_output() -> None:

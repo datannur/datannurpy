@@ -426,7 +426,7 @@ def _refine_normalized_path(
     return "".join(result)
 
 
-def _refine_group(
+def _refine_group(  # noqa: C901 — ratchet: refactor pending
     normalized_path: str,
     file_list: Sequence[RefineInput],
 ) -> list[RefinedGroup]:
@@ -577,7 +577,7 @@ def _refine_group(
         subgroups[key].append((fi, path, mtime))
 
     results: list[RefinedGroup] = []
-    for _key, sub_indexed in subgroups.items():
+    for sub_indexed in subgroups.values():
         rep_idx = sub_indexed[0][0]
         refined = _refine_normalized_path(
             normalized_path,

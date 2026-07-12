@@ -174,14 +174,14 @@ class EnumerationManager:
                             _seen=True,
                         )
                     )
-                    for val in sorted(values):
-                        new_values.append(
-                            Value(
-                                id=build_value_id(enumeration_id, val),
-                                enumeration_id=enumeration_id,
-                                value=val,
-                            )
+                    new_values.extend(
+                        Value(
+                            id=build_value_id(enumeration_id, val),
+                            enumeration_id=enumeration_id,
+                            value=val,
                         )
+                        for val in sorted(values)
+                    )
                     self._enumeration_index[signature] = enumeration_id
 
                 var.enumeration_ids = [enumeration_id]

@@ -147,7 +147,9 @@ class TestScanIcebergExceptions:
         meta = {"location": str(tmp_path), "format-version": 2}
         (metadata_dir / "00000-test.metadata.json").write_text(json.dumps(meta))
 
-        with pytest.raises(Exception):
+        # B017 exempted: the exact failure type varies across pyiceberg versions;
+        # the behavior under test is only that no path rewrite happens before it.
+        with pytest.raises(Exception):  # noqa: B017
             scan_iceberg(tmp_path, "test", infer_stats=True, freq_threshold=None)
 
     def test_iceberg_mismatched_relative_location_no_rewrite(self, tmp_path: Path):
@@ -161,7 +163,9 @@ class TestScanIcebergExceptions:
         meta = {"location": "wrong/path/structure", "format-version": 2}
         (metadata_dir / "00000-test.metadata.json").write_text(json.dumps(meta))
 
-        with pytest.raises(Exception):
+        # B017 exempted: the exact failure type varies across pyiceberg versions;
+        # the behavior under test is only that no path rewrite happens before it.
+        with pytest.raises(Exception):  # noqa: B017
             scan_iceberg(tmp_path, "test", infer_stats=True, freq_threshold=None)
 
     @_skip_iceberg_on_windows

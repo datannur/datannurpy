@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
+import contextlib
 
 
 @dataclass
@@ -111,7 +112,7 @@ def _introspect_sqlite(raw: Any, table: str) -> TableMetadata:
 # ---------------------------------------------------------------------------
 
 
-def _introspect_oracle_batch(
+def _introspect_oracle_batch(  # noqa: C901 — ratchet: refactor pending
     raw: Any, schema: str | None, tables: list[str]
 ) -> dict[str, TableMetadata]:
     result = {t: TableMetadata() for t in tables}
@@ -341,10 +342,8 @@ def _introspect_info_schema_batch(
         pass
 
     # 3) Comments (backend-specific)
-    try:
+    with contextlib.suppress(Exception):
         _comments_batch(raw, backend, schema, result)
-    except Exception:
-        pass
 
     # 4) NOT NULL
     try:
@@ -390,16 +389,12 @@ def _introspect_info_schema_batch(
         pass
 
     # 6) Indexed
-    try:
+    with contextlib.suppress(Exception):
         _indexed_batch(raw, backend, schema, result)
-    except Exception:
-        pass
 
     # 7) Auto-increment
-    try:
+    with contextlib.suppress(Exception):
         _auto_inc_batch(raw, backend, schema, result)
-    except Exception:
-        pass
 
     return result
 
@@ -409,7 +404,7 @@ def _introspect_info_schema_batch(
 # ---------------------------------------------------------------------------
 
 
-def _comments_batch(
+def _comments_batch(  # noqa: C901 — ratchet: refactor pending
     raw: Any,
     backend: str,
     schema: str | None,

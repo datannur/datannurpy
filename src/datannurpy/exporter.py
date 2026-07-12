@@ -29,6 +29,7 @@ from .finalize import prune_unseen, remove_orphan_children
 from .errors import ConfigError
 from .preview import apply_preview_flags, sync_preview_exports
 from .scan_cache import write_scan_cache
+import contextlib
 
 _GZIP_CHUNK_SIZE = 1024 * 1024
 _MARKDOWN_LINK_RE = re.compile(
@@ -356,7 +357,7 @@ def _resolve_copy_source(source: str, base_dir: Path) -> Path:
     try:
         source_path.stat()
     except FileNotFoundError:
-        raise ConfigError(f"copy_assets source not found: {source_path}")
+        raise ConfigError(f"copy_assets source not found: {source_path}") from None
     return source_path
 
 
@@ -447,10 +448,8 @@ def _clean_copy_target(target_root: Path, expected_files: set[Path]) -> int:
                 removed += 1
         for dirname in dirnames:
             path = current_dir / dirname
-            try:
+            with contextlib.suppress(OSError):
                 path.rmdir()
-            except OSError:
-                pass
     return removed
 
 
@@ -644,7 +643,7 @@ def _copy_app(output_dir: Path) -> None:
         raise ConfigError(
             "datannur app not found. Run `make download-app` to download it, "
             "or install datannurpy with the app bundled."
-        )
+        ) from None
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -656,10 +655,8 @@ def _copy_app(output_dir: Path) -> None:
             if item.name == "data":
                 dest.mkdir(parents=True, exist_ok=True)
                 continue
-            try:
+            with contextlib.suppress(FileNotFoundError):
                 shutil.rmtree(dest)
-            except FileNotFoundError:
-                pass
             shutil.copytree(item, dest)
         else:
             shutil.copy2(item, dest)

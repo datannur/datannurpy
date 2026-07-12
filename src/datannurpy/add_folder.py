@@ -215,7 +215,7 @@ def _resolve_ids_from_peek(
 
 
 @validate_params
-def add_folder(
+def add_folder(  # noqa: C901 — ratchet: refactor pending
     catalog: Catalog,
     path: str | Path | Sequence[str | Path],
     metadata: EntityMetadata | None = None,

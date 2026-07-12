@@ -393,8 +393,7 @@ def _read_preview_rows(
     ws = wb.active
     rows: list[tuple[object, ...]] = []
     if ws is not None:  # pragma: no branch
-        for row in ws.iter_rows(max_row=_MAX_PREVIEW_ROWS, values_only=True):
-            rows.append(row)
+        rows.extend(ws.iter_rows(max_row=_MAX_PREVIEW_ROWS, values_only=True))
     wb.close()
     return rows
 

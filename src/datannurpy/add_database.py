@@ -190,7 +190,7 @@ def add_database(
     )
 
 
-def _add_database_impl(
+def _add_database_impl(  # noqa: C901 — ratchet: refactor pending
     catalog: Catalog,
     connection: str | ibis.BaseBackend,
     metadata: EntityMetadata | None,
@@ -345,10 +345,10 @@ def _add_database_impl(
             # Use effective table list: exclude series tables, add one
             # representative per series so prefixes reflect grouped names
             effective_tables = [t for t in tables if t not in series_table_names]
-            for group in series_groups:
-                effective_tables.append(
-                    group.normalized_name.replace(PERIOD_PLACEHOLDER, "PERIOD")
-                )
+            effective_tables.extend(
+                group.normalized_name.replace(PERIOD_PLACEHOLDER, "PERIOD")
+                for group in series_groups
+            )
             prefix_folders = get_prefix_folders(
                 effective_tables, sep=prefix_sep, min_count=prefix_min_tables
             )

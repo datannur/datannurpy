@@ -180,8 +180,8 @@ def add_dataset(
         except FileNotFoundError as exc:
             reason = remote_access_error_reason(exc)
             if reason is not None:
-                raise ConfigError(f"Cannot access {path}: {reason}")
-            raise ConfigError(f"Path not found: {path}")
+                raise ConfigError(f"Cannot access {path}: {reason}") from None
+            raise ConfigError(f"Path not found: {path}") from None
         # URL-rooted backends (http/https) keep the raw root: PurePosixPath would
         # collapse the '//' after the scheme and corrupt the URL. Everything downstream
         # only str()s a remote path, so a plain string is the faithful carrier.
@@ -193,7 +193,7 @@ def add_dataset(
         try:
             dataset_stat = dataset_path.stat()
         except FileNotFoundError:
-            raise ConfigError(f"Path not found: {dataset_path}")
+            raise ConfigError(f"Path not found: {dataset_path}") from None
         is_dir = stat.S_ISDIR(dataset_stat.st_mode)
 
     start_time = log_section("add_dataset", path_name, q)

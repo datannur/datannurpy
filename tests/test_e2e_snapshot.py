@@ -59,10 +59,9 @@ def normalize_data(data: Any) -> Any:
             else:
                 result[key] = normalize_data(value)
         return result
-    elif isinstance(data, list):
+    if isinstance(data, list):
         return [normalize_data(item) for item in data]
-    else:
-        return data
+    return data
 
 
 def sort_by_id(data: list[dict[str, Any]]) -> list[dict[str, Any]]:

@@ -205,7 +205,7 @@ def _run_post_export(
             return
 
 
-def run_config(path: str | Path) -> Catalog:
+def run_config(path: str | Path) -> Catalog:  # noqa: C901 — ratchet: refactor pending
     """Load and execute a YAML catalog configuration."""
     config_path = Path(path).resolve()
     base_dir = config_path.parent
@@ -297,10 +297,7 @@ def run_config(path: str | Path) -> Catalog:
             gdb_path = primary_value if primary_value is not None else item.pop("path")
             catalog.add_geodatabase(_resolve_path(gdb_path, base_dir), **item)
         else:
-            if primary_value is not None:
-                uri = primary_value
-            else:
-                uri = item.pop("uri")
+            uri = primary_value if primary_value is not None else item.pop("uri")
             # Resolve sqlite:/// paths
             if (
                 isinstance(uri, str)

@@ -76,7 +76,7 @@ class Catalog(DatannurDB):
     finalize = finalize
 
     @validate_params
-    def __init__(
+    def __init__(  # noqa: C901 — ratchet: refactor pending
         self,
         *,
         app_path: str | Path | None = None,
