@@ -1,5 +1,17 @@
 # datannurpy
 
+## 0.31.0 (2026-07-13)
+
+- add: `folder:` scans discover `.zip` archives — same semantics and guards as `dataset:` (one data file or one Shapefile + sidecars, Zip Slip / zip-bomb protected); a multi-member or misnamed archive is skipped with a per-file warning, and an unchanged zip is skipped by mtime without being opened
+- add: `folder:` scans discover `.gpkg` GeoPackages, scanned like an explicit `database: sqlite:///…` entry — one dataset per layer/table, CRS / geometry type / bbox included, the container folder nested in the scan tree; an explicit `database:` entry (e.g. carrying curated metadata) wins over discovery whatever the entry order, and a magic-byte check skips misnamed files. `exclude: ["*.zip"]` / `["*.gpkg"]` opt a scan out of either discovery
+- add: malformed GPX/KML/GML XML is repaired and retried once — unescaped text from real-world exporters (`&` in URLs, `<` in values) is fixed on a temp copy (original untouched, logged with substitution count); a file that stays unreadable keeps a single-line `✗`
+- fix: sturdier geo scans — folder-discovered geo datasets keep their spatial enrichment (`crs`/`geometry_type`/`bbox` were dropped by `add_folder`), a featureless KML/GML scans as an empty dataset instead of a bare `✗ IndexError`, and JSON-typed property columns (`arrow.json`, e.g. nested GeoJSON properties) no longer crash the scan — their values are catalogued as text
+- change: a multi-layer GML/KML scan warns visibly, naming the skipped layers, instead of hiding the loss in a debug line; GPX keeps the debug line (its fixed layers are facets of one recording)
+
+## 0.30.1 (2026-07-13)
+
+- fix: localized `value:<lang>` columns in a metadata `config` file (e.g. `value:fr`, `value:de`) are no longer dropped from the exported `data/db/config.json` — they now flow through like `name:fr`/`description:de` on other entities, so the app's per-locale resolution works for config entries
+
 ## 0.30.0 (2026-07-12)
 
 - add: new scannable formats — ODS spreadsheets (`.ods`, new core dependency `odfpy`), GPX (`.gpx`, `geo` extra; the first non-empty layer is scanned, bbox included, without pyogrio's multi-layer warning), and `.zip` archives holding exactly one data file (CSV, Excel, ODS, Parquet …), generalizing the zipped-Shapefile support with the same Zip Slip / zip-bomb guards

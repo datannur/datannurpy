@@ -118,6 +118,20 @@ class TestShapefileViaCatalog:
         # Only the .shp is a dataset; .shx/.dbf/.prj/.cpg are not scanned.
         assert [d.name for d in catalog.dataset.all()] == ["parcels"]
 
+    def test_folder_scan_carries_geo_fields(self, tmp_path: Path) -> None:
+        # A folder-discovered geo file keeps its spatial enrichment, like the
+        # same file added via add_dataset.
+        _write_ogr(
+            tmp_path / "parcels.shp", _SQUARE, driver="ESRI Shapefile", crs="EPSG:4326"
+        )
+        catalog = Catalog(app_path=tmp_path / "app", quiet=True)
+        catalog.add_folder(str(tmp_path))
+        dataset = catalog.dataset.get_by("name", "parcels")
+        assert dataset is not None
+        assert dataset.crs == "EPSG:4326"
+        assert dataset.geometry_type == "polygon"
+        assert dataset.bbox == [7.4, 46.0, 7.7, 46.2]
+
 
 class TestRemoteVector:
     def test_remote_shapefile_fetches_sidecars(self, tmp_path: Path) -> None:
@@ -352,3 +366,202 @@ class TestGeoArrowExtensionType:
         assert stripped.schema.field("geom").type == pa.binary()
         assert stripped["geom"].to_pylist() == [b"\x01\x02", None]
         assert stripped["name"].to_pylist() == ["a", "b"]
+
+
+class TestEmptyVectorContainer:
+    _EMPTY_KML = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<kml xmlns="http://www.opengis.net/kml/2.2">'
+        "<Document><name>empty</name></Document></kml>"
+    )
+
+    def test_kml_without_layers_scans_empty(self, tmp_path: Path) -> None:
+        # A KML without a single Folder/Placemark exposes no layer at all; the
+        # scan reports an empty dataset instead of crashing on the layer list.
+        (tmp_path / "empty.kml").write_text(self._EMPTY_KML)
+        catalog = Catalog(app_path=tmp_path / "app", quiet=True)
+        catalog.add_dataset(str(tmp_path / "empty.kml"))
+        dataset = catalog.dataset.get_by("name", "empty")
+        assert dataset is not None
+        assert dataset.nb_row == 0
+        assert dataset.bbox is None
+        assert catalog.run_errors == 0
+
+    def test_no_layers_logs_no_error(self, tmp_path: Path, capsys) -> None:
+        (tmp_path / "empty.kml").write_text(self._EMPTY_KML)
+        variables, nb_row, freq, geo, preview = scan_geo_vector(
+            tmp_path / "empty.kml", dataset_id="ds"
+        )
+        assert (variables, nb_row, freq, geo, preview) == ([], 0, None, None, None)
+        err = capsys.readouterr().err
+        assert "IndexError" not in err
+        assert "✗" not in err
+
+
+class TestJsonExtensionProperties:
+    """pyogrio maps a nested GeoJSON property to the canonical ``arrow.json``
+    extension type, which ibis' memtable schema mapping rejects — the values
+    must reach the catalog as text instead of crashing the scan."""
+
+    def test_json_extension_type_is_cast_to_storage(self) -> None:
+        import ibis
+
+        table = pa.table({"meta": pa.array(['{"x": 1}'], type=pa.json_()), "n": [1]})
+        stripped = _extension_types_to_storage(table)
+        assert stripped.schema.field("meta").type == pa.string()
+        assert stripped["meta"].to_pylist() == ['{"x": 1}']
+        ibis.memtable(stripped)  # the previously crashing mapping
+
+    def test_nested_properties_scan_as_text(self, tmp_path: Path) -> None:
+        src = tmp_path / "nested.geojson"
+        src.write_text(
+            json.dumps(
+                {
+                    "type": "FeatureCollection",
+                    "features": [
+                        {
+                            "type": "Feature",
+                            "properties": {"label": "a", "meta": {"x": 1, "y": [2]}},
+                            "geometry": {"type": "Point", "coordinates": [7.4, 46.0]},
+                        }
+                    ],
+                }
+            )
+        )
+        catalog = Catalog(app_path=tmp_path / "app", quiet=True)
+        catalog.add_dataset(str(src))
+        dataset = catalog.dataset.get_by("name", "nested")
+        assert dataset is not None
+        assert dataset.nb_row == 1
+        assert "meta" in [v.name for v in catalog.variable.all()]
+        assert catalog.run_errors == 0
+
+
+class TestMalformedXmlRepair:
+    """Systematic exporter bugs (bare '&' in URLs, bare '<' in values) get one
+    conservative repair-and-retry on a temp copy; the original stays untouched."""
+
+    _BAD_GPX = (
+        '<?xml version="1.0"?>'
+        '<gpx version="1.1" creator="test" '
+        'xmlns="http://www.topografix.com/GPX/1/1">'
+        '<wpt lat="46.0" lon="7.4"><name>A</name>'
+        "<desc>https://x.ch?a=1&b=2 deckung: <25%</desc></wpt></gpx>"
+    )
+
+    def test_bare_amp_and_lt_repaired(self, tmp_path: Path, capsys) -> None:
+        bad = tmp_path / "bad.gpx"
+        bad.write_text(self._BAD_GPX)
+        original = bad.read_bytes()
+        variables, nb_row, *_ = scan_geo_vector(bad, dataset_id="ds")
+        err = capsys.readouterr().err
+        assert nb_row == 1
+        assert "desc" in [v.name for v in variables]
+        assert "repaired malformed XML (2 substitutions)" in err
+        assert "✗" not in err
+        assert bad.read_bytes() == original  # the source file stays untouched
+
+    def test_repaired_values_keep_their_text(self, tmp_path: Path) -> None:
+        bad = tmp_path / "bad.kml"
+        bad.write_text(
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<kml xmlns="http://www.opengis.net/kml/2.2"><Document><Folder>'
+            "<Placemark><name>a & b</name>"
+            "<Point><coordinates>7.4,46.0</coordinates></Point></Placemark>"
+            "</Folder></Document></kml>"
+        )
+        catalog = Catalog(app_path=tmp_path / "app", quiet=True)
+        catalog.add_dataset(str(bad))
+        dataset = catalog.dataset.get_by("name", "bad")
+        assert dataset is not None
+        assert dataset.nb_row == 1
+        assert catalog.run_errors == 0
+
+    def test_unrepairable_file_fails_with_one_line(
+        self, tmp_path: Path, capsys
+    ) -> None:
+        # No bare '&'/'<' to substitute: the retry declines and the original
+        # error is logged once.
+        trunc = tmp_path / "trunc.gpx"
+        trunc.write_text('<?xml version="1.0"?><gpx version="1.1"')
+        variables, nb_row, *_ = scan_geo_vector(trunc, dataset_id="ds")
+        err = capsys.readouterr().err
+        assert (variables, nb_row) == ([], None)
+        assert err.count("✗") == 1
+        assert "repaired" not in err
+
+    def test_non_xml_format_is_not_repaired(self, tmp_path: Path, capsys) -> None:
+        broken = tmp_path / "broken.geojson"
+        broken.write_text('{"type": "FeatureCollection", "features": [')
+        variables, nb_row, *_ = scan_geo_vector(broken, dataset_id="ds")
+        err = capsys.readouterr().err
+        assert (variables, nb_row) == ([], None)
+        assert "✗" in err
+        assert "repaired" not in err
+
+    def test_retry_declines_missing_and_binary_files(self, tmp_path: Path) -> None:
+        from datannurpy.scanner.geo_vector import _retry_with_repaired_xml
+
+        # Unreadable source: nothing to repair.
+        assert _retry_with_repaired_xml(tmp_path / "gone.gpx", None, "x", True) is None
+        # NUL bytes near the start (UTF-16 …): a byte-level ASCII repair would
+        # corrupt the file, so the retry declines.
+        utf16 = tmp_path / "wide.gpx"
+        utf16.write_bytes('<?xml version="1.0"?><gpx>&'.encode("utf-16"))
+        assert _retry_with_repaired_xml(utf16, None, "x", True) is None
+
+    def test_retry_declines_when_repair_is_not_enough(self, tmp_path: Path) -> None:
+        from datannurpy.scanner.geo_vector import _retry_with_repaired_xml
+
+        # A bare '&' triggers the retry, but the XML stays broken after repair.
+        still_bad = tmp_path / "still.gpx"
+        still_bad.write_text('<?xml version="1.0"?><gpx>&<wpt')
+        assert _retry_with_repaired_xml(still_bad, None, "x", True) is None
+
+    def test_retry_declines_featureless_repaired_file(self, tmp_path: Path) -> None:
+        from datannurpy.scanner.geo_vector import _retry_with_repaired_xml
+
+        # Repaired copy parses but exposes no layer: nothing scannable, decline.
+        empty = tmp_path / "empty.kml"
+        empty.write_text(
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<kml xmlns="http://www.opengis.net/kml/2.2">'
+            "<Document><name>a & b</name></Document></kml>"
+        )
+        assert _retry_with_repaired_xml(empty, None, "x", True) is None
+
+
+class TestMultiLayerVisibility:
+    def test_multilayer_kml_warns_with_skipped_layers(
+        self, tmp_path: Path, capsys
+    ) -> None:
+        (tmp_path / "multi.kml").write_text(
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<kml xmlns="http://www.opengis.net/kml/2.2"><Document>'
+            "<Folder><name>zones</name><Placemark><name>a</name>"
+            "<Point><coordinates>7.4,46.0</coordinates></Point></Placemark></Folder>"
+            "<Folder><name>points</name><Placemark><name>b</name>"
+            "<Point><coordinates>7.5,46.1</coordinates></Point></Placemark></Folder>"
+            "</Document></kml>"
+        )
+        variables, nb_row, *_ = scan_geo_vector(tmp_path / "multi.kml", dataset_id="ds")
+        err = capsys.readouterr().err
+        assert nb_row == 1  # only the first populated layer is scanned
+        assert "⚠" in err
+        assert "skipped: 'points'" in err
+
+    def test_multilayer_gpx_stays_quiet(self, tmp_path: Path, capsys) -> None:
+        # A GPX's layers are fixed facets of one recording — no warning noise.
+        (tmp_path / "ride.gpx").write_text(
+            '<?xml version="1.0"?>'
+            '<gpx version="1.1" creator="test" '
+            'xmlns="http://www.topografix.com/GPX/1/1">'
+            "<trk><trkseg>"
+            '<trkpt lat="46.0" lon="7.4"><ele>500</ele></trkpt>'
+            "</trkseg></trk></gpx>"
+        )
+        variables, nb_row, *_ = scan_geo_vector(tmp_path / "ride.gpx", dataset_id="ds")
+        err = capsys.readouterr().err
+        assert nb_row == 1
+        assert "skipped:" not in err
+        assert "⚠" not in err

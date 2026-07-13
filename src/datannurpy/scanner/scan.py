@@ -36,12 +36,12 @@ from ..compression import (
     is_gzipped,
     strip_compression_suffix,
 )
-from .archive import is_zip, local_member_from_zip, zip_csv_member_header
+from .archive import local_member_from_zip, zip_csv_member_header
 from .format_detect import canonical_extension
 from .parquet import scan_parquet
 from .parquet.core import scan_delta, scan_hive, scan_iceberg
 from .statistical import scan_statistical
-from .utils import FsPath, build_variables_from_schema
+from .utils import FsPath, build_variables_from_schema, is_zip
 
 _PA_PY_FILE_SYSTEM = getattr(pa_fs_module, "PyFileSystem")
 _PA_FSSPEC_HANDLER = getattr(pa_fs_module, "FSSpecHandler")

@@ -2240,6 +2240,32 @@ class TestConfigAutoLoad:
         assert k3 is not None
         assert k3.value == ""
 
+    def test_config_preserves_localized_value_columns(self, tmp_path: Path):
+        """Localized value:<lang> columns should survive into catalog.config."""
+        (tmp_path / "config.json").write_text(
+            json.dumps(
+                [
+                    {
+                        "id": "more_info",
+                        "value": "This demo uses open data",
+                        "value:fr": "Cette démo utilise des données ouvertes",
+                        "value:de": "Diese Demo verwendet offene Daten",
+                    },
+                    {"id": "title", "value": "Demo"},
+                ]
+            ),
+            encoding="utf-8",
+        )
+        catalog = Catalog(metadata_path=tmp_path, quiet=True)
+        ensure_metadata_applied(catalog)
+        assert catalog.config.count == 2
+        rows = {row["id"]: row for row in catalog.config.df.to_dicts()}
+        assert rows["more_info"]["value:fr"] == (
+            "Cette démo utilise des données ouvertes"
+        )
+        assert rows["more_info"]["value:de"] == "Diese Demo verwendet offene Daten"
+        assert rows["title"]["value:fr"] is None
+
     def test_config_coerces_none_value_to_empty_string(self) -> None:
         """config metadata keeps None values as empty strings."""
         catalog = Catalog(quiet=True)

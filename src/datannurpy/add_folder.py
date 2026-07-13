@@ -13,6 +13,7 @@ from .utils import (
     build_variable_ids,
     error_count,
     get_folder_id,
+    log_debug,
     log_done,
     log_error,
     log_section,
@@ -60,6 +61,11 @@ from .scanner.utils import (
     get_data_size,
     get_dir_data_size,
 )
+from .scanner.archive import (
+    unsupported_zip_error,
+    zip_member_list,
+    zip_scannable_member,
+)
 from .scanner.parquet.discovery import (
     is_delta_table,
     is_hive_partitioned,
@@ -81,6 +87,117 @@ def _no_rows_message(display_path: str, data_size: int | None) -> str:
     if data_size == 0:
         return f"{display_path}: empty file (0 bytes)"
     return f"{display_path}: no data rows"
+
+
+def _resolve_zip_format(
+    path: PurePath, fs: FileSystem | None, display_path: str, quiet: bool
+) -> str | None:
+    """Classify a discovered ``.zip`` by its single scannable member.
+
+    Returns the member's delivery format, or None — with a per-file warning —
+    when the archive holds no single scannable data file or is not actually a
+    zip. The folder-scan counterpart of the ``dataset:`` classification, which
+    raises ``ConfigError`` instead: in a folder sweep one unsupported archive
+    must not abort the run, mirroring how unsupported extensions are skipped."""
+    names = zip_member_list(path, fs)
+    if names is None:
+        log_warn(f"{display_path}: not a zip archive, skipped", quiet)
+        return None
+    selected = zip_scannable_member(names)
+    if selected is None:
+        log_warn(f"{unsupported_zip_error(display_path, names)} Skipped.", quiet)
+        return None
+    return selected[1]
+
+
+_SQLITE_MAGIC = b"SQLite format 3\x00"
+
+
+def _is_sqlite_file(path: PurePath, fs: FileSystem | None) -> bool:
+    """Cheap magic-byte check so a misnamed ``.gpkg`` is skipped, not errored."""
+    try:
+        if fs is not None and not fs.is_local:
+            with fs.open(str(path), "rb") as f:
+                header = f.read(len(_SQLITE_MAGIC))
+        else:
+            with open(path, "rb") as f:
+                header = f.read(len(_SQLITE_MAGIC))
+    except OSError:
+        return False
+    return header == _SQLITE_MAGIC
+
+
+def _delegate_geopackage(
+    catalog: Catalog,
+    info: DatasetInfo,
+    *,
+    root: PurePath,
+    fs: FileSystem | None,
+    prefix: str,
+    subdir_ids: dict[PurePath, str],
+    create_folders: bool,
+    depth: Depth,
+    quiet: bool,
+    refresh: bool,
+    storage_options: dict[str, Any] | None,
+) -> None:
+    """Scan a folder-discovered GeoPackage through the database machinery.
+
+    Exactly what an explicit ``database: sqlite:///….gpkg`` entry does — one
+    dataset per layer/table, ``gpkg_*``/``rtree_*`` system tables filtered,
+    CRS / geometry type / bbox enrichment — with the container folder nested
+    under the scan tree instead of at the catalog root."""
+    display = _display_path(info.path, root)
+    if not create_folders:
+        # Metadata-first mode matches scanned files to pre-loaded dataset rows;
+        # a container expanding into per-table datasets has no such row.
+        log_warn(f"{display}: GeoPackage skipped (create_folders=False)", quiet)
+        return
+    # An explicit `database: sqlite:///….gpkg` entry may already catalog this
+    # file (the pre-discovery pattern, often carrying curated metadata) — its
+    # container folder wins, discovery steps aside instead of duplicating it.
+    # The reverse order works too: an explicit entry running later takes over
+    # a _discovered container (see _upsert_database_root_folder).
+    db_data_path = f"sqlite://{Path(str(info.path)).stem}"
+    existing = catalog.folder.get_by("data_path", db_data_path)
+    if existing is not None and not existing._discovered:
+        log_debug(f"{display}: already catalogued via a database entry, skipped", quiet)
+        return
+    if not _is_sqlite_file(info.path, fs):
+        log_warn(f"{display}: not a SQLite/GeoPackage file, skipped", quiet)
+        return
+    folder_id, folder_name = build_dataset_id_name(info.path, root, prefix)
+    parent_id = get_folder_id(info.path, root, prefix, subdir_ids)
+    if fs is not None and not fs.is_local:
+        # canonical_url_for_path yields a user-free URL for netloc-style schemes
+        # (s3://bucket/…); hostless ones (memory:// …) rebuild via fsspec.
+        connection = fs.canonical_url_for_path(info.path) or fs.fs.unstrip_protocol(
+            str(info.path)
+        )
+    else:
+        connection = f"sqlite:///{info.path}"
+
+    from .add_database import add_database
+
+    try:
+        add_database(
+            catalog,
+            connection,
+            metadata=EntityMetadata(
+                id=folder_id, name=folder_name, parent_id=parent_id
+            ),
+            depth=depth,
+            quiet=quiet,
+            refresh=refresh,
+            storage_options=storage_options,
+        )
+    except Exception as exc:
+        log_error(display, exc, quiet)
+        catalog._tally_scan(0, 0, 1)
+        return
+    # Mark the container so a later explicit database entry can take it over.
+    if catalog.folder.get(folder_id) is not None:
+        catalog.folder.update(folder_id, _discovered=True)
 
 
 def _raise_folder_config_error(message: str, quiet: bool) -> NoReturn:
@@ -413,6 +530,15 @@ def _structure_only_scan(
             _handle_unmatched(display_label, on_unmatched, quiet)
             continue
 
+        # A discovered .zip is classified by content even at dataset depth — like
+        # the dataset: path, since the delivery_format cannot be known any other way.
+        delivery_format = info.format
+        if delivery_format == "zip":
+            resolved_zip = _resolve_zip_format(info.path, fs, display_label, quiet)
+            if resolved_zip is None:
+                continue  # warning already logged
+            delivery_format = resolved_zip
+
         # Compute name and time-series fields (always needed)
         if info.series_files is not None:
             periods = [period for period, _ in info.series_files]
@@ -445,12 +571,12 @@ def _structure_only_scan(
             folder_id=folder_id,
             data_path=_public_data_path(info.path, root, fs),
             last_update_date=timestamp_to_iso(info.mtime),
-            delivery_format=info.format,
+            delivery_format=delivery_format,
             nb_resources=nb_resources,
             preview_rows=0,
             data_size=(
                 get_dir_data_size(info.path, fs=fs)
-                if info.format in _DIR_FORMATS
+                if delivery_format in _DIR_FORMATS
                 else get_data_size(info.path, fs=fs)
             ),
             start_date=start_date,
@@ -513,10 +639,16 @@ def _scan_single_file(run: _FolderScan, info: DatasetInfo, display_path: str) ->
 
     # Scan dataset
     errors_before = error_count()
+    delivery_format = info.format
     try:
+        if delivery_format == "zip":
+            resolved = _resolve_zip_format(info.path, run.fs, display_path, run.quiet)
+            if resolved is None:
+                return  # warning already logged; unsupported, not a scan error
+            delivery_format = resolved
         result = scan_file(
             info.path,
-            info.format,
+            delivery_format,
             dataset_id=dataset_id,
             schema_only=run.schema_only,
             freq_threshold=run.freq_threshold,
@@ -549,16 +681,20 @@ def _scan_single_file(run: _FolderScan, info: DatasetInfo, display_path: str) ->
         folder_id=folder_id,
         data_path=_public_data_path(info.path, run.root, run.fs),
         last_update_date=timestamp_to_iso(info.mtime),
-        delivery_format=info.format,
+        delivery_format=delivery_format,
         description=result.description,
         nb_row=result.nb_row,
         sample_size=result.sample_size,
         preview_rows=run.preview_rows,
         data_size=(
             result.data_size
-            if info.format in _DIR_FORMATS
+            if delivery_format in _DIR_FORMATS
             else get_data_size(info.path, fs=run.fs)
         ),
+        crs=result.crs,
+        geometry_type=result.geometry_type,
+        bbox=result.bbox,
+        spatial_resolution=result.spatial_resolution,
         _seen=True,
         _match_path=data_path_str,
     )
@@ -674,9 +810,31 @@ def add_folder(
         prefix = ""
         subdir_ids = {}
 
+    # GeoPackages are containers scanned through the database machinery — one
+    # dataset per layer/table — so they leave the one-file-one-dataset plan and
+    # are delegated after this scan's own summary (their tallies are their own).
+    geopackages = [i for i in discovery.datasets if i.format == "geopackage"]
+    regular = [i for i in discovery.datasets if i.format != "geopackage"]
+
+    def _delegate_geopackages() -> None:
+        for info in geopackages:
+            _delegate_geopackage(
+                catalog,
+                info,
+                root=root,
+                fs=fs,
+                prefix=prefix,
+                subdir_ids=subdir_ids,
+                create_folders=create_folders,
+                depth=resolved_depth,
+                quiet=q,
+                refresh=do_refresh,
+                storage_options=storage_options,
+            )
+
     # Compute scan plan (what to scan vs skip)
-    plan = compute_scan_plan(discovery.datasets, catalog, do_refresh, root=root)
-    resource_count = sum(info.resource_count for info in discovery.datasets)
+    plan = compute_scan_plan(regular, catalog, do_refresh, root=root)
+    resource_count = sum(info.resource_count for info in regular)
 
     # Structure-only mode: create/update datasets without scanning
     if resolved_depth == "dataset":
@@ -702,6 +860,7 @@ def add_folder(
             resource_label="files",
             unchanged=unchanged,
         )
+        _delegate_geopackages()
         return
 
     # Handle skipped datasets (single batch upsert instead of per-dataset update)
@@ -797,6 +956,7 @@ def add_folder(
         resource_label="files",
         unchanged=unchanged,
     )
+    _delegate_geopackages()
 
 
 def _scan_time_series(

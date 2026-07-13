@@ -56,8 +56,11 @@ class Folder:
     updating_each: str | None = None
     no_more_update: str | None = None
     last_update_date: str | None = None
-    # Runtime field (not persisted)
+    # Runtime fields (not persisted)
     _seen: bool = False
+    # Database container created by folder discovery (an explicit database
+    # entry takes it over, whatever the entry order).
+    _discovered: bool = False
 
 
 def folder_from_metadata(
@@ -302,7 +305,7 @@ class DatannurDB(Jsonjsdb):
         self.config._entity_type = Config
         self.configFilter._entity_type = ConfigFilter
         # Set runtime fields (not persisted)
-        self.folder.runtime_fields = {"_seen"}
+        self.folder.runtime_fields = {"_seen", "_discovered"}
         self.dataset.runtime_fields = {"_seen", "_match_path", "preview_rows"}
         self.enumeration.runtime_fields = {"_seen"}
         self.organization.runtime_fields = {"_seen"}

@@ -1185,7 +1185,8 @@ def _apply_config_table(
         log_warn("config: missing required columns 'id' and 'value'", quiet)
         return
     count = 0
-    for row in df.to_dict(orient="records"):
+    rows = df.to_dict(orient="records")
+    for row in rows:
         rid = _optional_str(row.get("id"))
         val = row.get("value")
         if rid is not None:
@@ -1193,6 +1194,7 @@ def _apply_config_table(
                 val = ""
             catalog.config.add(Config(id=rid, value=str(val)))
             count += 1
+    _merge_localized_fields(catalog.config, Config, rows, ["id"], [])
     log_done(f"config: {count} entries loaded", quiet)
 
 

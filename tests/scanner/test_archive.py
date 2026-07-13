@@ -11,10 +11,10 @@ import pytest
 
 from datannurpy.errors import ConfigError
 from datannurpy.scanner.archive import (
-    is_zip,
     unsupported_zip_error,
     zip_scannable_member,
 )
+from datannurpy.scanner.utils import is_zip
 
 pytest.importorskip("pyogrio", reason="pyogrio (geo extra) not installed")
 
@@ -400,3 +400,21 @@ class TestZippedTabular:
         ds = catalog.dataset.all()[0]
         assert ds.delivery_format == "csv"
         assert ds.nb_row == 2
+
+
+# --------------------------------------------------------------------------- #
+# Integration — folder: discovery picks up archives like the dataset: path
+# --------------------------------------------------------------------------- #
+class TestArchiveInFolderScan:
+    def test_zipped_shapefile_discovered_and_scanned(self, tmp_path: Path) -> None:
+        data = tmp_path / "data"
+        data.mkdir()
+        _zip_shapefile(data)
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(str(data), depth="value")
+        ds = catalog.dataset.get_by("name", "parcels")
+        assert ds is not None
+        assert ds.delivery_format == "shapefile"
+        assert ds.geometry_type == "polygon"
+        assert ds.crs == "EPSG:4326"
+        assert "label" in [v.name for v in catalog.variable.all()]
