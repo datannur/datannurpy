@@ -4,6 +4,7 @@ archive's identity."""
 
 from __future__ import annotations
 
+import json
 import os
 import sqlite3
 import zipfile
@@ -62,6 +63,14 @@ def _zip_gpkg(
             z.writestr(name, content)
     gpkg.unlink()
     return zpath
+
+
+def _write_layer_metadata(meta_dir: Path, dataset_id: str, match_path: str) -> None:
+    """Write a one-row dataset.json; json.dumps keeps Windows backslashes valid."""
+    meta_dir.mkdir(exist_ok=True)
+    (meta_dir / "dataset.json").write_text(
+        json.dumps([{"id": dataset_id, "_match_path": match_path}])
+    )
 
 
 def _scan_dir(tmp_path: Path) -> Path:
@@ -373,10 +382,7 @@ class TestZippedGeoPackage:
         data = _scan_dir(tmp_path)
         zpath = _zip_gpkg(data)
         meta_dir = tmp_path / "meta"
-        meta_dir.mkdir()
-        (meta_dir / "dataset.json").write_text(
-            f'[{{"id": "custom_parcels", "_match_path": "{zpath}::parcels"}}]'
-        )
+        _write_layer_metadata(meta_dir, "custom_parcels", f"{zpath}::parcels")
         catalog = Catalog(metadata_path=meta_dir, quiet=True)
         catalog.add_folder(data)
         ds = catalog.dataset.get("custom_parcels")
@@ -413,10 +419,7 @@ class TestZippedGeoPackageMetadataFirst:
         data = _scan_dir(tmp_path)
         zpath = _zip_gpkg(data, second_table=True)
         meta_dir = tmp_path / "meta"
-        meta_dir.mkdir()
-        (meta_dir / "dataset.json").write_text(
-            f'[{{"id": "custom_parcels", "_match_path": "{zpath}::parcels"}}]'
-        )
+        _write_layer_metadata(meta_dir, "custom_parcels", f"{zpath}::parcels")
         catalog = Catalog(metadata_path=meta_dir, quiet=False)
         catalog.add_folder(data, create_folders=False)
         assert [d.id for d in catalog.dataset.all() if d.nb_row is not None] == [
@@ -428,10 +431,7 @@ class TestZippedGeoPackageMetadataFirst:
         data = _scan_dir(tmp_path)
         zpath = _zip_gpkg(data)
         meta_dir = tmp_path / "meta"
-        meta_dir.mkdir()
-        (meta_dir / "dataset.json").write_text(
-            f'[{{"id": "zip_ds", "_match_path": "{zpath}"}}]'
-        )
+        _write_layer_metadata(meta_dir, "zip_ds", str(zpath))
         catalog = Catalog(metadata_path=meta_dir, quiet=True)
         catalog.add_folder(data, create_folders=False)
         ds = catalog.dataset.get("zip_ds---parcels")
@@ -442,10 +442,7 @@ class TestZippedGeoPackageMetadataFirst:
         data = _scan_dir(tmp_path)
         zpath = _zip_gpkg(data)
         meta_dir = tmp_path / "meta"
-        meta_dir.mkdir()
-        (meta_dir / "dataset.json").write_text(
-            f'[{{"id": "custom_parcels", "_match_path": "{zpath}::parcels"}}]'
-        )
+        _write_layer_metadata(meta_dir, "custom_parcels", f"{zpath}::parcels")
         catalog = Catalog(metadata_path=meta_dir, quiet=True)
         catalog.add_folder(data, create_folders=False)
         catalog.add_folder(data, create_folders=False)  # no folder to re-mark
@@ -461,10 +458,7 @@ class TestZippedGeoPackageMetadataFirst:
         data = _scan_dir(tmp_path)
         zpath = _zip_gpkg(data)
         meta_dir = tmp_path / "meta"
-        meta_dir.mkdir()
-        (meta_dir / "dataset.json").write_text(
-            f'[{{"id": "custom_parcels", "_match_path": "{zpath}::parcels"}}]'
-        )
+        _write_layer_metadata(meta_dir, "custom_parcels", f"{zpath}::parcels")
         catalog = Catalog(metadata_path=meta_dir, quiet=True)
         catalog.add_folder(data, create_folders=False)
         catalog.add_folder(data)
@@ -560,10 +554,7 @@ class TestZippedGeodatabase:
     ) -> None:
         zpath = gdb_zip_dir / "store.zip"
         meta_dir = gdb_zip_dir.parent / "meta"
-        meta_dir.mkdir()
-        (meta_dir / "dataset.json").write_text(
-            f'[{{"id": "custom_roads", "_match_path": "{zpath}::roads"}}]'
-        )
+        _write_layer_metadata(meta_dir, "custom_roads", f"{zpath}::roads")
         catalog = Catalog(metadata_path=meta_dir, quiet=False)
         catalog.add_folder(gdb_zip_dir, create_folders=False)
         assert catalog.dataset.get("custom_roads") is not None
