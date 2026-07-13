@@ -18,6 +18,7 @@ from .utils import (
     supported_format_for,
 )
 from ..utils import iso_to_timestamp
+from ..utils.version import is_stale_failure
 
 if TYPE_CHECKING:
     from ..catalog import Catalog
@@ -231,6 +232,7 @@ def compute_scan_plan(
             existing is None
             or refresh
             or iso_to_timestamp(existing.last_update_date) != info.mtime
+            or is_stale_failure(existing.scan_failed_version)
         ):
             to_scan.append(info)
         else:

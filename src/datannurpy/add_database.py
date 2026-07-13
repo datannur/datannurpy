@@ -28,6 +28,7 @@ from .utils import (
     upsert_folder,
 )
 from .utils.params import _UNSET, validate_params
+from .utils.version import is_stale_failure, scanner_version
 from .scanner.filesystem import FileSystem
 from .scanner.utils import get_mtime_iso
 from .finalize import remove_dataset_cascade
@@ -55,6 +56,7 @@ from .scanner.database import (
     open_ssh_tunnel,
     sanitize_connection_url,
     scan_table,
+    scan_table_with_fallback,
 )
 
 from .scanner.db_introspect import TableMetadata, introspect_schema
@@ -458,8 +460,11 @@ def _scan_table_stats(
             existing_dataset.schema_signature == current_signature
             and existing_dataset.nb_row == current_nb_row
         )
-
-        if not run.refresh and data_unchanged:
+        if (
+            not run.refresh
+            and data_unchanged
+            and not is_stale_failure(existing_dataset.scan_failed_version)
+        ):
             _record_unchanged(run, sc, existing_dataset.id, table_name)
             return
 
@@ -477,24 +482,26 @@ def _scan_table_stats(
     else:
         effective_date = run.now_iso
 
-    try:
-        table_vars, nb_row, actual_sample_size, freq_table, preview = scan_table(
-            run.con,
-            table_name,
-            schema=sc.name,
-            dataset_id=dataset_id,
-            infer_stats=True,
-            freq_threshold=run.freq_threshold,
-            sample_size=run.sample_size,
-            preview_rows=run.preview_rows,
-            return_preview=True,
-            quiet=run.quiet,
-            row_count=current_nb_row,
-        )
-    except Exception as exc:
-        log_error(table_name, exc, run.quiet)
+    scanned = scan_table_with_fallback(
+        run.con,
+        table_name,
+        schema=sc.name,
+        dataset_id=dataset_id,
+        label=table_name,
+        freq_threshold=run.freq_threshold,
+        sample_size=run.sample_size,
+        preview_rows=run.preview_rows,
+        row_count=current_nb_row,
+        quiet=run.quiet,
+    )
+    if scanned is None:
         run.scan_errors += 1
         return
+    table_vars, nb_row, actual_sample_size, freq_table, preview, scan_failed = scanned
+    if scan_failed:
+        run.scan_errors += 1
+        # The row count already computed for the incremental check stays valid.
+        nb_row = current_nb_row
 
     if existing_dataset is not None:
         remove_dataset_cascade(run.catalog, existing_dataset)
@@ -512,6 +519,7 @@ def _scan_table_stats(
         sample_size=actual_sample_size,
         preview_rows=run.preview_rows,
         schema_signature=current_signature,
+        scan_failed_version=scanner_version() if scan_failed else None,
         _seen=True,
         _match_path=table_data_path,
     )

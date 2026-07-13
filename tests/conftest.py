@@ -3,11 +3,22 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import duckdb
 import pytest
 
 from datannurpy import Catalog, EntityMetadata
+
+
+def empty_geo_scan(*args: Any, **kwargs: Any) -> Any:
+    """A ``scan_geo_vector`` stub that logs a ✗ and returns an empty layer scan —
+    the shared way tests simulate an internally-failed geo layer."""
+    from datannurpy.utils.log import log_error
+
+    log_error(kwargs.get("path_label", "layer"), RuntimeError("bad"), True)
+    return [], None, None, None, None
+
 
 # Pre-install DuckDB extensions to avoid lock conflicts with parallel workers
 duckdb.execute("INSTALL delta")

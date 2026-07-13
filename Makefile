@@ -24,8 +24,6 @@ typecheck:
 	uv run pyright src/datannurpy tests
 
 # Coverage is enforced on the modern interpreter (where coverage.py is accurate).
-# check-py39 overrides COV_ARGS to empty: 3.9 verifies compatibility (tests pass on
-# 3.9), not coverage — avoids coverage.py's false-misses on Py<=3.9 `continue` bytecode.
 COV_ARGS ?= --cov=src/datannurpy --cov-report=term-missing --cov-report=xml --cov-report=html --cov-fail-under=100
 
 check:
@@ -35,8 +33,14 @@ check:
 	wait $$TYPE_PID || exit 1
 	uv run pytest $(COV_ARGS)
 
+# 3.9 verifies runtime compatibility (the suite passes), mirroring CI's 3.9 job —
+# without coverage (coverage.py false-misses `continue` bytecode on Py<=3.9), and
+# without lint/pyright: pyright already enforces 3.9 semantics from the default env
+# (pythonVersion = "3.9" in pyproject), while the 3.9 venv intentionally lacks
+# aiohttp (CVE gate) and resolves an older pyarrow, which pyright run *inside* that
+# env would flag as missing imports/attributes.
 check-py39:
-	UV_PYTHON=python3.9 $(MAKE) check COV_ARGS=
+	UV_PYTHON=python3.9 uv run pytest
 
 download-app:
 	uv run python scripts/download_app.py

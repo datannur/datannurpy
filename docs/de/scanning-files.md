@@ -127,8 +127,8 @@ add:
 | GPX | `.gpx` | `folder` / `dataset` |
 | GeoTIFF (Raster) | `.tif`, `.tiff` | `folder` / `dataset` |
 | GeoParquet | `.parquet` | `folder` / `dataset` |
-| GeoPackage | `.gpkg` | `folder` / `database: sqlite:///…` |
-| ESRI File Geodatabase | `.gdb` | `geodatabase` |
+| GeoPackage | `.gpkg` (auch gezippt) | `folder` / `database: sqlite:///…` |
+| ESRI File Geodatabase | `.gdb` (auch gezippt) | `geodatabase` / `folder` (gezippt) |
 
 Ein Shapefile wird oft als einzelne `.zip`-Datei verteilt (IGN, Census TIGER, Eurostat …). Ein `dataset:` darauf zeigen lassen — das enthaltene Shapefile wird extrahiert und wie ein gewöhnliches gescannt, inklusive CRS-Reprojektion, auf jeder Quelle:
 
@@ -200,6 +200,10 @@ Eine `.zip`-Datei, die genau eine Datendatei enthält — eine CSV-, Excel-, ODS
 add:
   - dataset: https://data.example.org/exports/sales.csv.zip
 ```
+
+Begleitdateien ohne Daten (eine `license.txt`, ein PDF, Stil- oder Metadatendateien) werden toleriert, ohne das Archiv mehrdeutig zu machen. Ein einzelnes Mitglied namens `*.json`, dessen Inhalt GeoJSON ist — die übliche Portal-Schreibweise —, wird als GeoJSON gescannt; anderes JSON wird still übersprungen.
+
+`folder:`-Scans entdecken auch **gezippte Multi-Layer-Container**: Ein Archiv mit einem einzelnen File-Geodatabase-Baum (`*.gdb/`) oder einem einzelnen `.gpkg`-Mitglied wird zu einem Datensatz pro Layer unter einem Container-Ordner, genau wie [GeoPackage und File Geodatabase](#multi-layer-container) selbst. Ein unverändertes Archiv wird per mtime übersprungen, ohne entpackt zu werden.
 
 Archive mit mehreren Datendateien werden nicht unterstützt — ein `folder:`-Scan überspringt sie mit einer Warnung pro Datei; diese zuerst entpacken. Mit `exclude: ["*.zip"]` bleiben Archive von einem Scan ausgeschlossen.
 
