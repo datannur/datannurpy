@@ -467,7 +467,8 @@ def _metadata_first_setup(
     """Create a data dir holding one GeoPackage and a metadata dir beside it.
 
     ``dataset_rows`` may reference the GeoPackage path as the literal
-    ``"{gpkg}"`` placeholder, substituted once the path is known.
+    ``"{gpkg}"`` placeholder, substituted once the path is known — before
+    serialization, so Windows path backslashes end up JSON-escaped.
     """
     data_dir = tmp_path / "data"
     data_dir.mkdir()
@@ -475,8 +476,14 @@ def _metadata_first_setup(
     _make_geopackage(gpkg)
     meta_dir = tmp_path / "meta"
     meta_dir.mkdir()
-    rows = json.dumps(dataset_rows).replace("{gpkg}", str(gpkg))
-    (meta_dir / "dataset.json").write_text(rows)
+    rows = [
+        {
+            key: value.replace("{gpkg}", str(gpkg)) if isinstance(value, str) else value
+            for key, value in row.items()
+        }
+        for row in dataset_rows
+    ]
+    (meta_dir / "dataset.json").write_text(json.dumps(rows))
     return data_dir, meta_dir
 
 
