@@ -565,3 +565,77 @@ class TestMultiLayerVisibility:
         assert nb_row == 1
         assert "skipped:" not in err
         assert "⚠" not in err
+
+
+class TestDuplicateColumnNames:
+    """DBF truncates field names to 10 chars; legitimate collisions are suffixed."""
+
+    def test_dbf_truncation_collision_is_suffixed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys
+    ) -> None:
+        # GDAL launders duplicate DBF names at *write* time, so a colliding file
+        # cannot be produced here — inject the read result it yields in the wild.
+        arrow = pa.Table.from_arrays(
+            [pa.array([1, 2]), pa.array(["x", "y"]), pa.array([3.0, 4.0])],
+            names=["id", "probenahmed", "probenahmed"],
+        )
+        info = {"crs": "EPSG:4326", "geometry_type": "Point", "total_bounds": None}
+        monkeypatch.setattr(
+            "datannurpy.scanner.geo_vector._select_populated_layer",
+            lambda path, layer: (["l"], "l", info, arrow),
+        )
+        variables, nb_row, _freq, _geo, _preview = scan_geo_vector(
+            tmp_path / "x.shp", dataset_id="ds", quiet=False
+        )
+        assert nb_row == 2
+        assert [v.name for v in variables] == ["id", "probenahmed", "probenahmed_1"]
+        assert (
+            "duplicate column name(s) suffixed: probenahmed" in capsys.readouterr().err
+        )
+
+    def test_unique_columns_are_untouched(self, tmp_path: Path, capsys) -> None:
+        src = tmp_path / "x.geojson"
+        _write_geojson(src, [_polygon("a", _SQUARE)])
+        variables, *_ = scan_geo_vector(src, dataset_id="ds", quiet=False)
+        assert {v.name for v in variables} == {"name", "wkb_geometry"}
+        assert "duplicate column" not in capsys.readouterr().err
+
+
+class TestZFlaggedGeometryTypes:
+    """Layer-level "Unknown" Z/M types (e.g. 2147483648, the bare 2.5D bit from
+    real-world Z shapefiles) must not abort the scan with a GeometryError."""
+
+    def test_missing_unknown_codes_are_mapped(self) -> None:
+        from pyogrio._geometry import GEOMETRY_TYPES
+
+        from datannurpy.scanner.geo_vector import (
+            _MISSING_OGR_GEOMETRY_TYPES,
+            _extend_pyogrio_geometry_types,
+        )
+
+        _extend_pyogrio_geometry_types()
+        for code in _MISSING_OGR_GEOMETRY_TYPES:
+            assert GEOMETRY_TYPES[code] == "Unknown"
+        assert 2147483648 in GEOMETRY_TYPES  # the reported failing code
+
+    def test_existing_mappings_are_never_overridden(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from pyogrio._geometry import GEOMETRY_TYPES
+
+        from datannurpy.scanner.geo_vector import _extend_pyogrio_geometry_types
+
+        monkeypatch.setitem(GEOMETRY_TYPES, 1000, "Point Z")
+        _extend_pyogrio_geometry_types()
+        assert GEOMETRY_TYPES[1000] == "Point Z"
+
+    def test_every_vector_read_applies_the_mapping(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from pyogrio._geometry import GEOMETRY_TYPES
+
+        from datannurpy.scanner.geo_vector import _require_pyogrio
+
+        monkeypatch.delitem(GEOMETRY_TYPES, 2147483648, raising=False)
+        _require_pyogrio()
+        assert GEOMETRY_TYPES[2147483648] == "Unknown"

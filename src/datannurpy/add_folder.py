@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import stat
 from collections.abc import Sequence
+from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Any, Literal, NoReturn
@@ -31,6 +32,7 @@ from .add_metadata import (
     LoadedDatasetRef,
     find_loaded_dataset_by_match_paths,
 )
+from .dataset_scan import finalize_scanned_dataset, skip_unchanged
 from .errors import ConfigError
 from .finalize import remove_dataset_cascade
 from .preview import (
@@ -127,6 +129,156 @@ def _is_sqlite_file(path: PurePath, fs: FileSystem | None) -> bool:
     return header == _SQLITE_MAGIC
 
 
+def _scan_geopackage_metadata_first(
+    catalog: Catalog,
+    info: DatasetInfo,
+    *,
+    root: PurePath,
+    fs: FileSystem | None,
+    depth: Depth,
+    on_unmatched: OnUnmatched,
+    quiet: bool,
+    refresh: bool,
+    preview_rows: int,
+    freq_threshold: int | None,
+    sample_size: int | None,
+    auto_enumerations: bool,
+) -> None:
+    """Scan a folder-discovered GeoPackage without creating any folder.
+
+    Metadata-first counterpart of the container delegation: each layer/table
+    attaches like a sibling scanned file. A layer reuses a pre-loaded dataset
+    row matched on ``<file path>::<layer>``; otherwise the file's own row —
+    matched like any scanned file — anchors it (id ``<file id>---<layer>``,
+    same folder). A file with no match at all follows the on_unmatched policy.
+    """
+    from .scanner.database import (
+        close_connection,
+        connect,
+        get_table_data_size,
+        list_tables,
+        scan_table,
+    )
+    from .scanner.geopackage import extract_geopackage_geo
+
+    display = _display_path(info.path, root)
+    if not _is_sqlite_file(info.path, fs):
+        log_warn(f"{display}: not a SQLite/GeoPackage file, skipped", quiet)
+        return
+    candidates = _match_path_candidates(info.path, fs)
+    file_peek = find_loaded_dataset_by_match_paths(catalog, candidates)
+
+    local_ctx = (
+        fs.ensure_local(str(info.path))
+        if fs is not None and not fs.is_local
+        else nullcontext(info.path)
+    )
+    scanned = unchanged = errors = 0
+    with local_ctx as local_path:
+        con, _ = connect(f"sqlite:///{local_path}")
+        try:
+            tables = list_tables(con, None, None, None, "sqlite")
+            layer_peeks = {
+                table: find_loaded_dataset_by_match_paths(
+                    catalog, [f"{c}::{table}" for c in candidates]
+                )
+                for table in tables
+            }
+            if file_peek is None and not any(layer_peeks.values()):
+                _handle_unmatched(display, on_unmatched, quiet)
+                return
+            geo_by_table = extract_geopackage_geo(con)
+            public_path = _public_data_path(info.path, root, fs)
+            last_update = timestamp_to_iso(info.mtime)
+            for table in tables:
+                peek = layer_peeks[table]
+                if peek is not None:
+                    dataset_id, folder_id = peek.id, peek.folder_id
+                elif file_peek is not None:
+                    dataset_id = make_id(file_peek.id, sanitize_id(table))
+                    folder_id = file_peek.folder_id
+                else:
+                    _handle_unmatched(f"{display}::{table}", on_unmatched, quiet)
+                    continue
+                label = f"{display}::{table}"
+                match_path = f"{info.path}::{table}"
+                data_path = f"{public_path}/{table}"
+                if skip_unchanged(
+                    catalog,
+                    match_path,
+                    data_path,
+                    info.mtime,
+                    refresh=refresh,
+                    preview_rows=preview_rows,
+                    quiet=quiet,
+                    label=label,
+                ):
+                    unchanged += 1
+                    continue
+                t0 = log_start(label, quiet)
+                variables: list[Any] = []
+                nb_row = actual_sample_size = freq_table = preview = None
+                if depth != "dataset":
+                    try:
+                        variables, nb_row, actual_sample_size, freq_table, preview = (
+                            scan_table(
+                                con,
+                                table,
+                                schema=None,
+                                dataset_id=dataset_id,
+                                infer_stats=depth in ("stat", "value"),
+                                freq_threshold=freq_threshold,
+                                sample_size=sample_size,
+                                preview_rows=preview_rows,
+                                return_preview=True,
+                                quiet=quiet,
+                            )
+                        )
+                    except Exception as exc:
+                        log_error(label, exc, quiet)
+                        errors += 1
+                        continue
+                geo = geo_by_table.get(table) or {}
+                dataset = Dataset(
+                    id=dataset_id,
+                    name=table,
+                    folder_id=folder_id,
+                    data_path=data_path,
+                    last_update_date=last_update,
+                    delivery_format="geopackage",
+                    nb_row=nb_row,
+                    sample_size=actual_sample_size,
+                    preview_rows=preview_rows,
+                    data_size=get_table_data_size(con, table, None),
+                    crs=geo.get("crs"),
+                    geometry_type=geo.get("geometry_type"),
+                    bbox=geo.get("bbox"),
+                    _seen=True,
+                    _match_path=match_path,
+                )
+                finalize_scanned_dataset(
+                    catalog,
+                    dataset,
+                    variables=variables,
+                    freq_table=freq_table,
+                    preview=preview,
+                    label=label,
+                    auto_enumerations=auto_enumerations,
+                )
+                scanned += 1
+                if nb_row is not None:
+                    log_done(
+                        f"{label} ({nb_row:,} rows, {len(variables)} vars)", quiet, t0
+                    )
+                elif variables:
+                    log_done(f"{label} ({len(variables)} vars)", quiet, t0)
+                else:
+                    log_done(label, quiet, t0)
+        finally:
+            close_connection(con)
+    catalog._tally_scan(scanned, unchanged, errors)
+
+
 def _delegate_geopackage(
     catalog: Catalog,
     info: DatasetInfo,
@@ -137,21 +289,45 @@ def _delegate_geopackage(
     subdir_ids: dict[PurePath, str],
     create_folders: bool,
     depth: Depth,
+    on_unmatched: OnUnmatched,
     quiet: bool,
     refresh: bool,
     storage_options: dict[str, Any] | None,
+    preview_rows: int,
+    freq_threshold: int | None,
+    sample_size: int | None,
+    auto_enumerations: bool,
 ) -> None:
     """Scan a folder-discovered GeoPackage through the database machinery.
 
     Exactly what an explicit ``database: sqlite:///….gpkg`` entry does — one
     dataset per layer/table, ``gpkg_*``/``rtree_*`` system tables filtered,
     CRS / geometry type / bbox enrichment — with the container folder nested
-    under the scan tree instead of at the catalog root."""
+    under the scan tree instead of at the catalog root. In metadata-first mode
+    (``create_folders=False``) no container is created: layers attach to
+    pre-loaded dataset rows like sibling files."""
     display = _display_path(info.path, root)
     if not create_folders:
-        # Metadata-first mode matches scanned files to pre-loaded dataset rows;
-        # a container expanding into per-table datasets has no such row.
-        log_warn(f"{display}: GeoPackage skipped (create_folders=False)", quiet)
+        try:
+            _scan_geopackage_metadata_first(
+                catalog,
+                info,
+                root=root,
+                fs=fs,
+                depth=depth,
+                on_unmatched=on_unmatched,
+                quiet=quiet,
+                refresh=refresh,
+                preview_rows=preview_rows,
+                freq_threshold=freq_threshold,
+                sample_size=sample_size,
+                auto_enumerations=auto_enumerations,
+            )
+        except ConfigError:
+            raise  # on_unmatched="error" propagates like any unmatched file
+        except Exception as exc:
+            log_error(display, exc, quiet)
+            catalog._tally_scan(0, 0, 1)
         return
     # An explicit `database: sqlite:///….gpkg` entry may already catalog this
     # file (the pre-discovery pattern, often carrying curated metadata) — its
@@ -816,6 +992,12 @@ def add_folder(
     geopackages = [i for i in discovery.datasets if i.format == "geopackage"]
     regular = [i for i in discovery.datasets if i.format != "geopackage"]
 
+    resolved_sample_size: int | None = None
+    if resolved_depth == "value":
+        resolved_sample_size = (
+            sample_size if sample_size is not _UNSET else catalog.sample_size
+        )
+
     def _delegate_geopackages() -> None:
         for info in geopackages:
             _delegate_geopackage(
@@ -827,9 +1009,16 @@ def add_folder(
                 subdir_ids=subdir_ids,
                 create_folders=create_folders,
                 depth=resolved_depth,
+                on_unmatched=on_unmatched,
                 quiet=q,
                 refresh=do_refresh,
                 storage_options=storage_options,
+                preview_rows=preview_limit,
+                freq_threshold=(
+                    catalog.freq_threshold if resolved_depth == "value" else None
+                ),
+                sample_size=resolved_sample_size,
+                auto_enumerations=resolved_auto_enumerations,
             )
 
     # Compute scan plan (what to scan vs skip)
@@ -880,11 +1069,6 @@ def add_folder(
         catalog.enumeration_manager.mark_datasets_seen(skip_seen_ids)
 
     # Process datasets to scan
-    resolved_sample_size: int | None = None
-    if resolved_depth == "value":
-        resolved_sample_size = (
-            sample_size if sample_size is not _UNSET else catalog.sample_size
-        )
     run = _FolderScan(
         catalog=catalog,
         root=root,

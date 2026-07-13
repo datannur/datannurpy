@@ -25,7 +25,7 @@ from ..utils import log_error, log_warn
 from ..preview import preview_from_arrow, preview_from_ibis
 from .excel import is_valid_tabular_dataset
 from .filesystem import ensure_local_utf8
-from .utils import build_variables
+from .utils import build_variables, deduplicate_columns
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -78,20 +78,6 @@ _CSV_READ_PROFILES: tuple[dict[str, Any], ...] = (
 )
 
 
-def _deduplicate_columns(names: list[str]) -> list[str]:
-    """Suffix duplicate column names as DuckDB does (`name`, `name_1`, `name_2`, …)."""
-    seen: dict[str, int] = {}
-    out: list[str] = []
-    for n in names:
-        if n in seen:
-            seen[n] += 1
-            out.append(f"{n}_{seen[n]}")
-        else:
-            seen[n] = 0
-            out.append(n)
-    return out
-
-
 def _decode_csv_sample(sample: bytes, csv_encoding: str | None) -> str:
     """Decode a CSV byte sample to text: UTF-8 with cp1252 fallback, BOM stripped, LF-normalized."""
     try:
@@ -130,7 +116,7 @@ def _read_csv_header(sample: bytes, csv_encoding: str | None = None) -> list[str
     if reader is None:
         return []
     row = next(reader, [])
-    return _deduplicate_columns([c for c in row if c.strip()])
+    return deduplicate_columns([c for c in row if c.strip()])
 
 
 @contextmanager

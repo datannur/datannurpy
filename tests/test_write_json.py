@@ -859,3 +859,71 @@ class TestMaskSecurityColumns:
 
     def test_none_preview_returns_none(self):
         assert mask_security_columns(None, [self._var("x", ["auto---secret"])]) is None
+
+
+def _invalid_utf8_table() -> pa.Table:
+    """An Arrow table whose string buffers hold invalid UTF-8 — what pyogrio
+    hands over for a DBF character field truncated mid multi-byte character
+    (``view`` reinterprets binary buffers without the validation ``cast`` runs)."""
+    broken = "café".encode()[:4]  # é cut in half
+    column = pa.array([broken, b"ok", None], type=pa.binary()).view(pa.string())
+    return pa.table({"label": column, "amount": pa.array([1, 2, 3])})
+
+
+class TestPreviewInvalidUtf8:
+    """Invalid UTF-8 from real-world sources must not kill the preview export."""
+
+    def test_preview_from_arrow_repairs_invalid_utf8(self):
+        from datannurpy.preview import preview_from_arrow
+
+        preview = preview_from_arrow(
+            _invalid_utf8_table(), 3, label="bad.shp", quiet=True
+        )
+        assert preview is not None
+        # Materializing every row is exactly what panicked before the repair.
+        rows = list(preview.iter_rows(named=True))
+        assert rows[0]["label"] == "caf�"
+        assert rows[1]["label"] == "ok"
+        assert rows[2]["label"] is None
+        assert [r["amount"] for r in rows] == [1, 2, 3]
+
+    def test_valid_utf8_passes_through_unchanged(self):
+        from datannurpy.preview import _repair_invalid_utf8
+
+        table = pa.table({"label": ["café", None], "amount": [1.5, 2.5]})
+        assert _repair_invalid_utf8(table) is table  # no rebuild on the fast path
+
+    def test_preview_from_ibis_repairs_invalid_utf8(self):
+        class FakeLimited:
+            def limit(self, rows: int) -> "FakeLimited":
+                return self
+
+            def to_pyarrow(self) -> pa.Table:
+                return _invalid_utf8_table()
+
+        preview = preview_from_ibis(cast(Any, FakeLimited()), 3, label="t", quiet=True)
+        assert preview is not None
+        assert list(preview.iter_rows(named=True))[0]["label"] == "caf�"
+
+    def test_one_poisoned_preview_does_not_kill_the_export(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        """A polars panic on one preview skips it and keeps every other write."""
+        from datannurpy.preview import _write_previews
+
+        poisoned = cast(pl.DataFrame, pl.from_arrow(_invalid_utf8_table()))
+        good = pl.DataFrame({"id": [1]})
+        catalog = Catalog()
+        datasets_by_id = {
+            "bad": Dataset(id="bad", name="Bad"),
+            "good": Dataset(id="good", name="Good"),
+        }
+        preview_dir = tmp_path / "preview"
+        preview_dir.mkdir()
+        written = _write_previews(
+            catalog, preview_dir, datasets_by_id, [("bad", poisoned), ("good", good)]
+        )
+        assert written == {"good"}
+        assert (preview_dir / "good.json").exists()
+        assert not (preview_dir / "bad.json").exists()
+        assert "preview export skipped" in capsys.readouterr().err
