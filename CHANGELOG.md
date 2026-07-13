@@ -1,5 +1,11 @@
 # datannurpy
 
+## 0.31.0 (2026-07-13)
+
+- add: `folder:` scans now discover `.zip` archives, with the same semantics and guards as the `dataset:` path — an archive holding exactly one data file (CSV, Excel, Parquet …) or one Shapefile + sidecars is scanned as a dataset (Zip Slip / zip-bomb guards, schema-only CSV header streaming included); a multi-member or misnamed archive is skipped with a clear per-file warning instead of aborting the run. Archives are classified at scan time, so an unchanged zip is skipped by mtime on incremental runs without ever being opened; use `exclude: ["*.zip"]` to keep archives out of a scan
+- fix: folder-discovered geo datasets keep their spatial enrichment — `crs`, `geometry_type`, `bbox` and `spatial_resolution` were dropped by `add_folder` (a Shapefile scanned via `folder:` had no geometry type, while the same file via `dataset:` did)
+- fix: a featureless KML/GML (no single Folder/Placemark, hence no layer at all) scans as an empty dataset with a truthful `no data rows` warning, instead of failing with a bare `✗ IndexError: list index out of range`
+
 ## 0.30.1 (2026-07-13)
 
 - fix: localized `value:<lang>` columns in a metadata `config` file (e.g. `value:fr`, `value:de`) are no longer dropped from the exported `data/db/config.json` — they now flow through like `name:fr`/`description:de` on other entities, so the app's per-locale resolution works for config entries
