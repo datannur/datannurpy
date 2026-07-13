@@ -356,12 +356,15 @@ class TestGeopackageFolderDiscovery:
         assert catalog.dataset.count == 0
         assert catalog.run_errors == 0
 
-    def test_metadata_first_mode_skips_gpkg(self, tmp_path: Path, capsys) -> None:
+    def test_metadata_first_unmatched_gpkg_follows_policy(
+        self, tmp_path: Path, capsys
+    ) -> None:
         _make_geopackage(tmp_path / "data.gpkg")
         catalog = Catalog()
         catalog.add_folder(tmp_path, create_folders=False, quiet=False)
-        assert "GeoPackage skipped (create_folders=False)" in capsys.readouterr().err
+        assert "data.gpkg: no metadata match, skipped" in capsys.readouterr().err
         assert catalog.dataset.count == 0
+        assert catalog.run_errors == 0
 
     def test_delegation_failure_is_a_scan_error(
         self, tmp_path: Path, capsys, monkeypatch: pytest.MonkeyPatch
@@ -456,3 +459,177 @@ class TestGeopackageFolderDiscovery:
         catalog = Catalog(quiet=True)
         catalog.add_folder(tmp_path)
         assert catalog.folder.get_by("data_path", "sqlite://data") is None
+
+
+def _metadata_first_setup(
+    tmp_path: Path, dataset_rows: list[dict]
+) -> tuple[Path, Path]:
+    """Create a data dir holding one GeoPackage and a metadata dir beside it.
+
+    ``dataset_rows`` may reference the GeoPackage path as the literal
+    ``"{gpkg}"`` placeholder, substituted once the path is known — before
+    serialization, so Windows path backslashes end up JSON-escaped.
+    """
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    gpkg = data_dir / "cadastre.gpkg"
+    _make_geopackage(gpkg)
+    meta_dir = tmp_path / "meta"
+    meta_dir.mkdir()
+    rows = [
+        {
+            key: value.replace("{gpkg}", str(gpkg)) if isinstance(value, str) else value
+            for key, value in row.items()
+        }
+        for row in dataset_rows
+    ]
+    (meta_dir / "dataset.json").write_text(json.dumps(rows))
+    return data_dir, meta_dir
+
+
+class TestGeopackageMetadataFirst:
+    """create_folders=False: GPKG layers attach to pre-loaded dataset rows like
+    sibling files — no container folder, ids from metadata."""
+
+    def test_file_match_attaches_layers_as_siblings(self, tmp_path: Path) -> None:
+        data_dir, meta_dir = _metadata_first_setup(
+            tmp_path,
+            [{"id": "pv", "folder_id": "editorial", "_match_path": "{gpkg}"}],
+        )
+        catalog = Catalog(metadata_path=meta_dir, quiet=True)
+        catalog.add_folder(data_dir, create_folders=False)
+
+        parcels = catalog.dataset.get("pv---parcels")
+        assert parcels is not None
+        assert parcels.folder_id == "editorial"
+        assert parcels.delivery_format == "geopackage"
+        assert parcels.nb_row == 2
+        assert parcels.crs == "EPSG:2056"
+        assert parcels.geometry_type == "polygon"
+        assert _parse_bbox(parcels.bbox) == pytest.approx(_WGS84_BOUNDS, abs=1e-3)
+        assert parcels.data_path == "cadastre.gpkg/parcels"
+        # Variables attached under the metadata-derived dataset id.
+        assert {v.dataset_id for v in catalog.variable.all()} == {"pv---parcels"}
+        # No folder created from the scan (metadata folders apply at export) —
+        # neither a filesystem tree nor a database container; only the
+        # auto-enumerations folder may exist.
+        folder_ids = {f.id for f in catalog.folder.all()}
+        assert folder_ids <= {"_enumerations"}
+        assert catalog.run_errors == 0
+
+    def test_layer_match_reuses_metadata_id(self, tmp_path: Path) -> None:
+        data_dir, meta_dir = _metadata_first_setup(
+            tmp_path,
+            [{"id": "parcelles", "folder_id": "geo", "_match_path": "{gpkg}::parcels"}],
+        )
+        catalog = Catalog(metadata_path=meta_dir, quiet=True)
+        catalog.add_folder(data_dir, create_folders=False)
+
+        parcels = catalog.dataset.get("parcelles")
+        assert parcels is not None
+        assert parcels.folder_id == "geo"
+        assert parcels.nb_row == 2
+        assert catalog.run_errors == 0
+
+    def test_unchanged_layer_skipped_on_rescan(self, tmp_path: Path) -> None:
+        data_dir, meta_dir = _metadata_first_setup(
+            tmp_path, [{"id": "pv", "_match_path": "{gpkg}"}]
+        )
+        catalog = Catalog(metadata_path=meta_dir, quiet=True)
+        catalog.add_folder(data_dir, create_folders=False)
+        catalog.add_folder(data_dir, create_folders=False)
+        assert catalog.dataset.count == 1
+        assert catalog.run_errors == 0
+
+    def test_dataset_depth_lists_layers_without_scan(self, tmp_path: Path) -> None:
+        data_dir, meta_dir = _metadata_first_setup(
+            tmp_path, [{"id": "pv", "_match_path": "{gpkg}"}]
+        )
+        catalog = Catalog(metadata_path=meta_dir, quiet=True)
+        catalog.add_folder(data_dir, create_folders=False, depth="dataset")
+        parcels = catalog.dataset.get("pv---parcels")
+        assert parcels is not None
+        assert parcels.nb_row is None
+        assert parcels.crs == "EPSG:2056"  # geo enrichment is metadata, not a scan
+        assert catalog.variable.count == 0
+
+    def test_unmatched_gpkg_on_unmatched_error_raises(self, tmp_path: Path) -> None:
+        from datannurpy.errors import ConfigError
+
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        _make_geopackage(data_dir / "cadastre.gpkg")
+        catalog = Catalog(quiet=True)
+        with pytest.raises(ConfigError, match="No metadata match"):
+            catalog.add_folder(data_dir, create_folders=False, on_unmatched="error")
+
+    def test_misnamed_gpkg_warns_not_errors(self, tmp_path: Path, capsys) -> None:
+        (tmp_path / "fake.gpkg").write_text("not a sqlite database")
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, create_folders=False, quiet=False)
+        assert "not a SQLite/GeoPackage file" in capsys.readouterr().err
+        assert catalog.dataset.count == 0
+        assert catalog.run_errors == 0
+
+    def test_connection_failure_is_a_scan_error(
+        self, tmp_path: Path, capsys, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        data_dir, meta_dir = _metadata_first_setup(
+            tmp_path, [{"id": "pv", "_match_path": "{gpkg}"}]
+        )
+
+        def _boom(*args: object, **kwargs: object) -> None:
+            raise RuntimeError("connection exploded")
+
+        monkeypatch.setattr("datannurpy.scanner.database.connect", _boom)
+        catalog = Catalog(metadata_path=meta_dir)
+        catalog.add_folder(data_dir, create_folders=False, quiet=False)
+        assert "connection exploded" in capsys.readouterr().err
+        assert catalog.run_errors == 1
+
+    def test_variable_depth_scans_schema_only(self, tmp_path: Path) -> None:
+        data_dir, meta_dir = _metadata_first_setup(
+            tmp_path, [{"id": "pv", "_match_path": "{gpkg}"}]
+        )
+        catalog = Catalog(metadata_path=meta_dir, quiet=True)
+        catalog.add_folder(data_dir, create_folders=False, depth="variable")
+        parcels = catalog.dataset.get("pv---parcels")
+        assert parcels is not None
+        assert parcels.nb_row is None
+        assert {v.name for v in catalog.variable.all()} == {"id", "name", "geom"}
+
+    def test_partial_layer_match_skips_unmatched_tables(
+        self, tmp_path: Path, capsys
+    ) -> None:
+        # Curated metadata for one layer only, no file-level row: the matched
+        # layer scans, the other follows the on_unmatched policy per table.
+        data_dir, meta_dir = _metadata_first_setup(
+            tmp_path,
+            [{"id": "parcelles", "_match_path": "{gpkg}::parcels"}],
+        )
+        conn = sqlite3.connect(data_dir / "cadastre.gpkg")
+        conn.execute("CREATE TABLE roads (id INTEGER)")
+        conn.commit()
+        conn.close()
+        catalog = Catalog(metadata_path=meta_dir)
+        catalog.add_folder(data_dir, create_folders=False, quiet=False)
+        assert "cadastre.gpkg::roads: no metadata match" in capsys.readouterr().err
+        assert [d.id for d in catalog.dataset.all()] == ["parcelles"]
+        assert catalog.run_errors == 0
+
+    def test_table_scan_failure_is_a_scan_error(
+        self, tmp_path: Path, capsys, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        data_dir, meta_dir = _metadata_first_setup(
+            tmp_path, [{"id": "pv", "_match_path": "{gpkg}"}]
+        )
+
+        def _boom(*args: object, **kwargs: object) -> None:
+            raise RuntimeError("table exploded")
+
+        monkeypatch.setattr("datannurpy.scanner.database.scan_table", _boom)
+        catalog = Catalog(metadata_path=meta_dir)
+        catalog.add_folder(data_dir, create_folders=False, quiet=False)
+        assert "table exploded" in capsys.readouterr().err
+        assert catalog.dataset.count == 0
+        assert catalog.run_errors == 1

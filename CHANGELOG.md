@@ -1,5 +1,12 @@
 # datannurpy
 
+## 0.31.1 (2026-07-13)
+
+- fix: preview export survives invalid UTF-8 — string values that real-world sources hand over with broken multi-byte sequences (e.g. a DBF character field truncated at its 254-byte limit) are lossily re-decoded (U+FFFD) when the preview is built, and a polars panic on one preview now skips that single file instead of killing the whole export (pyo3 panics bypass `except Exception`; the run previously died with the database half-written)
+- add: `folder:` GPKG discovery now works with `create_folders: false` — each layer/table attaches like a sibling scanned file: a pre-loaded dataset row matching `<file path>::<layer>` is reused as-is, otherwise the file's own row anchors the layer (id `<file id>---<layer>`, same folder), and a file with no match follows `on_unmatched`
+- fix: Shapefiles whose DBF-truncated column names collide (10-char limit: `probenahmedatum`/`probenahmedauer` → `probenahmed`) scan with suffixed names (`probenahmed`, `probenahmed_1`) and a warning, instead of failing the dataset on duplicate columns
+- fix: Z/M-flagged "Unknown" layer geometry types (`2147483648`, the bare 2.5D bit some Z shapefiles report) no longer abort the scan with `GeometryError: Geometry type is not supported` — pyogrio's type mapping is extended at read time, features read normally and the layer simply gets no `geometry_type`
+
 ## 0.31.0 (2026-07-13)
 
 - add: `folder:` scans discover `.zip` archives — same semantics and guards as `dataset:` (one data file or one Shapefile + sidecars, Zip Slip / zip-bomb protected); a multi-member or misnamed archive is skipped with a per-file warning, and an unchanged zip is skipped by mtime without being opened

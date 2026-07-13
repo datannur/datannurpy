@@ -40,6 +40,20 @@ if TYPE_CHECKING:
 FsPath = Union[str, PurePath]
 
 
+def deduplicate_columns(names: list[str]) -> list[str]:
+    """Suffix duplicate column names as DuckDB does (`name`, `name_1`, `name_2`, …)."""
+    seen: dict[str, int] = {}
+    out: list[str] = []
+    for n in names:
+        if n in seen:
+            seen[n] += 1
+            out.append(f"{n}_{seen[n]}")
+        else:
+            seen[n] = 0
+            out.append(n)
+    return out
+
+
 def _to_float(val: Any) -> float | None:
     """Convert a raw aggregation result to float, or None if null or non-finite
     (an AVG over extreme magnitudes silently overflows to inf, which strict JSON

@@ -153,6 +153,8 @@ For remote paths, credentials are not part of the match identity: `sftp://user@e
 
 For time-series datasets, `_match_path` can use the same normalized period syntax produced by datannurpy: `[YYYY]`, `[YYYY/MM]`, `[YYYY]Q[N]`, or `[YYYY/MM/DD]`. This matches the logical series, not only the latest physical file.
 
+**GeoPackages:** a discovered `.gpkg` expands into one dataset per layer/table, attached like sibling files. A layer reuses the metadata row whose `_match_path` is `<file path>::<layer>`; otherwise the file's own row anchors every layer (id `<file id>---<layer>`, same `folder_id`). A file with no match at all follows `on_unmatched`.
+
 **Example** — `./metadata/dataset.csv`:
 
 ```csv

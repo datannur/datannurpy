@@ -12,6 +12,7 @@ import ibis
 import polars as pl
 import pyarrow as pa
 from jsonjsdb.writer import write_table_json, write_table_jsonjs
+from polars.exceptions import PanicException
 
 from .errors import ConfigError
 from .utils.log import log_warn
@@ -68,6 +69,38 @@ def effective_preview_rows(rows: int, depth: str) -> int:
     return rows if rows > 0 and depth in {"stat", "value"} else 0
 
 
+def _repair_invalid_utf8(table: pa.Table) -> pa.Table:
+    """Lossily re-decode string columns whose buffers hold invalid UTF-8.
+
+    Real-world sources hand Arrow invalid UTF-8 without any read error (e.g. a
+    DBF character field truncated mid multi-byte character at its 254-byte
+    limit); polars accepts the buffers as-is and only panics when the value is
+    materialized at export time — killing the whole export. Validation is cheap
+    and the per-value re-decode (U+FFFD for broken sequences) only runs on the
+    rare column that fails it, on an already preview-sized table.
+    """
+    for i, field in enumerate(table.schema):
+        if not (pa.types.is_string(field.type) or pa.types.is_large_string(field.type)):
+            continue
+        column = table.column(i)
+        try:
+            for chunk in column.chunks:
+                chunk.validate(full=True)
+            continue
+        except pa.lib.ArrowInvalid:
+            pass
+        binary_type = (
+            pa.large_binary() if pa.types.is_large_string(field.type) else pa.binary()
+        )
+        values = [
+            value if value is None else value.decode("utf-8", errors="replace")
+            for chunk in column.chunks
+            for value in chunk.view(binary_type).to_pylist()
+        ]
+        table = table.set_column(i, field, pa.array(values, type=field.type))
+    return table
+
+
 def preview_from_arrow(
     table: pa.Table,
     preview_rows: int,
@@ -79,7 +112,8 @@ def preview_from_arrow(
     if preview_rows <= 0:
         return None
     try:
-        df = cast(pl.DataFrame, pl.from_arrow(table.slice(0, preview_rows)))
+        sliced = _repair_invalid_utf8(table.slice(0, preview_rows))
+        df = cast(pl.DataFrame, pl.from_arrow(sliced))
         return normalize_preview_df(df)
     except Exception as exc:  # pragma: no cover - defensive per-source skip
         log_warn(f"{label}: preview skipped ({exc})", quiet)
@@ -106,7 +140,7 @@ def preview_from_ibis(
                 arrow_table = result
             else:
                 arrow_table = pa.Table.from_pandas(result, preserve_index=False)
-        df = cast(pl.DataFrame, pl.from_arrow(arrow_table))
+        df = cast(pl.DataFrame, pl.from_arrow(_repair_invalid_utf8(arrow_table)))
         return normalize_preview_df(df)
     except Exception as exc:  # pragma: no cover - backend-dependent
         log_warn(f"{label}: preview skipped ({exc})", quiet)
@@ -284,7 +318,10 @@ def _write_previews(
                 preview, dataset_id, preview_dir / f"{dataset_id}.json.js"
             )
             return dataset_id
-        except Exception as exc:  # pragma: no cover - filesystem/json edge cases
+        # PanicException derives from BaseException, not Exception: a polars
+        # panic on one bad preview (e.g. invalid UTF-8 slipped through a scan)
+        # must skip that preview, not kill the export of every other dataset.
+        except (Exception, PanicException) as exc:
             label = _preview_label(catalog, datasets_by_id[dataset_id])
             log_warn(f"{label}: preview export skipped ({exc})", catalog.quiet)
             (preview_dir / f"{dataset_id}.json").unlink(missing_ok=True)

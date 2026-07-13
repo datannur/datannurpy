@@ -20,7 +20,7 @@ import pyarrow as pa
 from ..preview import preview_from_ibis
 from ..utils import log_debug, log_error, log_warn
 from .geo import build_geo_fields
-from .utils import build_variables
+from .utils import build_variables, deduplicate_columns
 
 if TYPE_CHECKING:
     import polars as pl
@@ -86,12 +86,39 @@ def _extension_types_to_storage(table: pa.Table) -> pa.Table:
     return pa.Table.from_arrays(columns, schema=schema)
 
 
+# OGR layer-level geometry-type codes missing from pyogrio's mapping (0.12.x):
+# "Unknown" carrying a dimension flag — the old-style 2.5D bit (0x80000000, and
+# its signed-int reading) that real-world Z shapefiles report at the layer
+# level, and the ISO Z/M/ZM variants. Every pyogrio entry point (list_layers,
+# read_info, read_arrow) raises GeometryError on an unmapped code, so the only
+# non-forking fix is to extend the mapping: features still read fine as WKB,
+# and "Unknown" simply yields no catalogued geometry_type.
+_MISSING_OGR_GEOMETRY_TYPES = {
+    0x80000000: "Unknown",  # 2.5D Unknown, unsigned reading of the Z-flag bit
+    -0x80000000: "Unknown",  # same code as a signed 32-bit int
+    1000: "Unknown",  # ISO Unknown Z
+    2000: "Unknown",  # ISO Unknown M
+    3000: "Unknown",  # ISO Unknown ZM
+}
+
+
+def _extend_pyogrio_geometry_types() -> None:
+    """Teach pyogrio the Z/M-flagged "Unknown" layer types it does not map."""
+    try:
+        from pyogrio._geometry import GEOMETRY_TYPES
+    except Exception:  # pragma: no cover - private module layout changed
+        return
+    for code, name in _MISSING_OGR_GEOMETRY_TYPES.items():
+        GEOMETRY_TYPES.setdefault(code, name)
+
+
 def _require_pyogrio() -> None:
     """Fail fast with an actionable hint when the ``geo`` extra is missing."""
     try:
         import pyogrio  # noqa: F401
     except ImportError as e:
         raise ImportError(_INSTALL_HINT) from e
+    _extend_pyogrio_geometry_types()
 
 
 def list_geo_layers(path: str | Path) -> list[str]:
@@ -235,6 +262,17 @@ def scan_geo_vector(
         _log_multilayer(file_path, label, layers, selected, quiet)
 
     arrow = _extension_types_to_storage(arrow)
+
+    # DBF truncates field names to 10 chars, so distinct source columns can
+    # legitimately collide (probenahmedatum/probenahmedauer → "probenahmed");
+    # suffix them like the CSV reader does instead of failing the dataset.
+    deduped = deduplicate_columns(arrow.column_names)
+    if deduped != arrow.column_names:
+        collided = sorted({n for n, d in zip(arrow.column_names, deduped) if n != d})
+        log_warn(
+            f"{label}: duplicate column name(s) suffixed: {', '.join(collided)}", quiet
+        )
+        arrow = arrow.rename_columns(deduped)
 
     table = ibis.memtable(arrow)
     nb_row = arrow.num_rows
