@@ -271,6 +271,21 @@ def _upsert_database_root_folder(
             folder.last_update_date = None
     folder.type = folder.type or backend_name
 
+    # Folder discovery may already have catalogued this database (a .gpkg found
+    # by add_folder nests a container marked _discovered). The explicit entry —
+    # often carrying curated metadata — wins whatever the entry order: the
+    # discovered container and its datasets are removed, and this run rebuilds
+    # the tables under its own container.
+    existing = catalog.folder.get_by("data_path", folder.data_path)
+    if (
+        existing is not None
+        and existing.id != folder.id
+        and getattr(existing, "_discovered", False)
+    ):
+        from .finalize import remove_folders_cascade
+
+        remove_folders_cascade(catalog, existing.id)
+
     upsert_folder(catalog, folder)
     return folder.id
 

@@ -103,12 +103,14 @@ GeoPackage et GeoParquet sont lus sans l'extra ; leur `bbox` n'est reprojetée e
 ```yaml
 add:
   # Les fichiers vectoriels et raster sont auto-détectés par add_folder, comme tout autre format
-  - folder: ./geodata          # *.geojson, *.shp, *.gml, *.kml, *.gpx, *.tif, *.parquet
+  - folder: ./geodata          # *.geojson, *.shp, *.gml, *.kml, *.gpx, *.tif, *.parquet, *.gpkg, *.zip
 
   # Un fichier géospatial unique
   - dataset: ./geodata/parcels.shp
 
-  # Un GeoPackage est un conteneur SQLite — scanné comme une base de données
+  # Un GeoPackage est un conteneur SQLite — un dataset par couche/table. Découvert
+  # aussi par les scans folder ; une entrée explicite (portant par exemple des
+  # métadonnées) prime sur la découverte, quel que soit l'ordre des entrées.
   - database: sqlite:///./geodata/cadastre.gpkg
 
   # Une ESRI File Geodatabase est un conteneur multi-couches — un dataset par couche
@@ -119,13 +121,13 @@ add:
 | ------ | --------- | ---------- |
 | GeoJSON | `.geojson` | `folder` / `dataset` |
 | Shapefile | `.shp` (+ `.shx`/`.dbf`/`.prj`) | `folder` / `dataset` |
-| Shapefile zippé | `.zip` (un `.shp` + fichiers annexes) | `dataset` |
+| Shapefile zippé | `.zip` (un `.shp` + fichiers annexes) | `folder` / `dataset` |
 | GML | `.gml` | `folder` / `dataset` |
 | KML | `.kml` | `folder` / `dataset` |
 | GPX | `.gpx` | `folder` / `dataset` |
 | GeoTIFF (raster) | `.tif`, `.tiff` | `folder` / `dataset` |
 | GeoParquet | `.parquet` | `folder` / `dataset` |
-| GeoPackage | `.gpkg` | `database: sqlite:///…` |
+| GeoPackage | `.gpkg` | `folder` / `database: sqlite:///…` |
 | ESRI File Geodatabase | `.gdb` | `geodatabase` |
 
 Un Shapefile est souvent distribué sous forme d'un unique `.zip` (IGN, Census TIGER, Eurostat …). Pointez un `dataset:` dessus et le Shapefile interne est extrait et scanné comme un Shapefile ordinaire — reprojection de CRS incluse — depuis n'importe quelle source :
@@ -192,14 +194,14 @@ Seul le **gzip de CSV** à flux unique est pris en charge pour `.gz` ; `.parquet
 
 ## Archives zip
 
-Un `.zip` contenant exactement un fichier de données — un fichier CSV, Excel, ODS ou Parquet, ou un Shapefile avec ses fichiers annexes — est scanné comme un `dataset:` depuis n'importe quelle source. Le membre est extrait de manière sûre (protection contre le Zip Slip et les bombes de décompression) et scanné comme un fichier ordinaire, à n'importe quelle [profondeur](./scan-depth.md) :
+Un `.zip` contenant exactement un fichier de données — un fichier CSV, Excel, ODS ou Parquet, ou un Shapefile avec ses fichiers annexes — est scanné comme un `dataset:` depuis n'importe quelle source, et les scans `folder:` découvrent ces archives automatiquement. Le membre est extrait de manière sûre (protection contre le Zip Slip et les bombes de décompression) et scanné comme un fichier ordinaire, à n'importe quelle [profondeur](./scan-depth.md) :
 
 ```yaml
 add:
   - dataset: https://data.example.org/exports/sales.csv.zip
 ```
 
-Les archives contenant plusieurs fichiers de données et la découverte automatique de zips lors d'un scan `folder:` ne sont pas prises en charge — extrayez-les d'abord.
+Les archives contenant plusieurs fichiers de données ne sont pas prises en charge — un scan `folder:` les ignore avec un avertissement par fichier ; extrayez-les d'abord. Utilisez `exclude: ["*.zip"]` pour tenir les archives à l'écart d'un scan.
 
 ## Stockage distant {#remote-storage}
 

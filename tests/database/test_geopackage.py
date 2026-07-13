@@ -304,3 +304,155 @@ class TestApplyEdgeCases:
             assert apply_geopackage_geo(catalog, con, "sqlite", "data") == 0
         finally:
             con.disconnect()
+
+
+class TestGeopackageFolderDiscovery:
+    """folder: scans delegate discovered .gpkg files to the database machinery —
+    one dataset per layer/table, nested as a container folder in the scan tree."""
+
+    def test_gpkg_discovered_with_layers_and_geo(self, tmp_path: Path) -> None:
+        (tmp_path / "sub").mkdir()
+        _make_geopackage(tmp_path / "sub" / "cadastre.gpkg")
+        (tmp_path / "plain.csv").write_text("a,b\n1,2\n")
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(tmp_path)
+        root_name = tmp_path.name
+        container = catalog.folder.get(f"{root_name}---sub---cadastre_gpkg")
+        assert container is not None
+        assert container.name == "cadastre"
+        assert container.parent_id == f"{root_name}---sub"
+        parcels = catalog.dataset.get_by("name", "parcels")
+        assert parcels is not None
+        assert parcels.folder_id == container.id
+        assert parcels.nb_row == 2
+        assert parcels.crs == "EPSG:2056"
+        assert parcels.geometry_type == "polygon"
+        assert _parse_bbox(parcels.bbox) == pytest.approx(_WGS84_BOUNDS, abs=1e-3)
+        assert catalog.dataset.get_by("name", "plain") is not None
+        assert catalog.run_errors == 0
+
+    def test_unchanged_gpkg_table_skipped_on_rescan(self, tmp_path: Path) -> None:
+        _make_geopackage(tmp_path / "data.gpkg")
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(tmp_path)
+        catalog.add_folder(tmp_path)
+        assert catalog.dataset.count == 1  # still one parcels dataset
+        assert catalog.run_errors == 0
+
+    def test_gpkg_dataset_depth_lists_tables_without_scan(self, tmp_path: Path) -> None:
+        _make_geopackage(tmp_path / "data.gpkg")
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(tmp_path, depth="dataset")
+        parcels = catalog.dataset.get_by("name", "parcels")
+        assert parcels is not None
+        assert parcels.nb_row is None
+        assert catalog.variable.count == 0
+
+    def test_misnamed_gpkg_skipped_with_warning(self, tmp_path: Path, capsys) -> None:
+        (tmp_path / "fake.gpkg").write_text("not a sqlite database")
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, quiet=False)
+        assert "not a SQLite/GeoPackage file" in capsys.readouterr().err
+        assert catalog.dataset.count == 0
+        assert catalog.run_errors == 0
+
+    def test_metadata_first_mode_skips_gpkg(self, tmp_path: Path, capsys) -> None:
+        _make_geopackage(tmp_path / "data.gpkg")
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, create_folders=False, quiet=False)
+        assert "GeoPackage skipped (create_folders=False)" in capsys.readouterr().err
+        assert catalog.dataset.count == 0
+
+    def test_delegation_failure_is_a_scan_error(
+        self, tmp_path: Path, capsys, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _make_geopackage(tmp_path / "data.gpkg")
+
+        def _boom(*args: object, **kwargs: object) -> None:
+            raise RuntimeError("connection exploded")
+
+        monkeypatch.setattr("datannurpy.add_database.add_database", _boom)
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, quiet=False)
+        assert "connection exploded" in capsys.readouterr().err
+        assert catalog.run_errors == 1
+
+    def test_is_sqlite_file_declines_unreadable_path(self, tmp_path: Path) -> None:
+        from datannurpy.add_folder import _is_sqlite_file
+
+        assert not _is_sqlite_file(tmp_path, None)  # a directory, not a file
+
+    def test_remote_folder_gpkg(self, tmp_path: Path) -> None:
+        import uuid
+
+        import fsspec
+
+        _make_geopackage(tmp_path / "cadastre.gpkg")
+        root = f"/gpkg_{uuid.uuid4().hex}"
+        mem = fsspec.filesystem("memory")
+        mem.pipe(f"{root}/cadastre.gpkg", (tmp_path / "cadastre.gpkg").read_bytes())
+        mem.pipe(f"{root}/plain.csv", b"a,b\n1,2\n")
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(f"memory://{root}")
+        parcels = catalog.dataset.get_by("name", "parcels")
+        assert parcels is not None
+        assert parcels.nb_row == 2
+        assert parcels.crs == "EPSG:2056"
+        assert catalog.dataset.get_by("name", "plain") is not None
+
+    def test_explicit_database_entry_wins_over_discovery(self, tmp_path: Path) -> None:
+        # The pre-discovery pattern: an explicit database entry (often with
+        # curated metadata) already catalogs the file — discovery steps aside.
+        _make_geopackage(tmp_path / "photovoltaik.gpkg")
+        catalog = Catalog(quiet=True)
+        catalog.add_database(
+            f"sqlite:///{tmp_path / 'photovoltaik.gpkg'}",
+            metadata=EntityMetadata(id="photovoltaik", name="Photovoltaïque"),
+        )
+        catalog.add_folder(tmp_path)
+        containers = [
+            f for f in catalog.folder.all() if f.data_path == "sqlite://photovoltaik"
+        ]
+        assert [f.id for f in containers] == ["photovoltaik"]  # no duplicate
+        parcels = catalog.dataset.get_by("name", "parcels")
+        assert parcels is not None
+        assert parcels.folder_id == "photovoltaik"
+
+    def test_explicit_database_entry_takes_over_discovered_container(
+        self, tmp_path: Path
+    ) -> None:
+        # Reverse order: discovery ran first — the explicit entry still wins,
+        # replacing the discovered container (order independence).
+        _make_geopackage(tmp_path / "photovoltaik.gpkg")
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(tmp_path)
+        discovered = catalog.folder.get_by("data_path", "sqlite://photovoltaik")
+        assert discovered is not None
+        assert discovered._discovered
+        catalog.add_database(
+            f"sqlite:///{tmp_path / 'photovoltaik.gpkg'}",
+            metadata=EntityMetadata(id="photovoltaik", name="Photovoltaïque"),
+        )
+        containers = [
+            f for f in catalog.folder.all() if f.data_path == "sqlite://photovoltaik"
+        ]
+        assert [(f.id, f.name) for f in containers] == [
+            ("photovoltaik", "Photovoltaïque")
+        ]
+        parcels = catalog.dataset.get_by("name", "parcels")
+        assert parcels is not None
+        assert parcels.folder_id == "photovoltaik"
+        assert catalog.dataset.count == 1  # no duplicated table dataset
+
+    def test_delegation_tolerates_containerless_database_run(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # An add_database run that errors out internally (logged, not raised)
+        # creates no container — the discovery marking must not blow up.
+        _make_geopackage(tmp_path / "data.gpkg")
+        monkeypatch.setattr(
+            "datannurpy.add_database.add_database", lambda *a, **k: None
+        )
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(tmp_path)
+        assert catalog.folder.get_by("data_path", "sqlite://data") is None

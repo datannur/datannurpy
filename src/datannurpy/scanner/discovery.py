@@ -13,6 +13,7 @@ from .timeseries import group_time_series, series_match_normalized_path
 from .utils import (
     find_files_with_mtime,
     get_mtime_timestamp,
+    is_geopackage,
     is_zip,
     supported_format_for,
 )
@@ -28,8 +29,9 @@ class DatasetInfo:
     """Information about a discovered dataset."""
 
     path: PurePath
-    # csv, parquet, delta, hive, iceberg, sas, spss, stata, excel …, or the "zip"
-    # placeholder for a discovered archive, resolved by content at scan time.
+    # csv, parquet, delta, hive, iceberg, sas, spss, stata, excel …, or a container
+    # placeholder: "zip" (archive, resolved by content at scan time) or
+    # "geopackage" (delegated to the database machinery by add_folder).
     format: str
     mtime: int
     resource_count: int = 1
@@ -112,11 +114,12 @@ def discover_datasets(
         # logical format so a .csv.gz is catalogued as csv, not skipped on a KeyError.
         # A .zip carries no format in its name: it gets the "zip" placeholder and is
         # classified by content at scan time (central directory read), so an
-        # unchanged archive is skipped by mtime without ever being opened.
+        # unchanged archive is skipped by mtime without ever being opened. A .gpkg
+        # gets "geopackage" and is delegated to the database machinery by add_folder.
         fmt = supported_format_for(file_path.name)
         if fmt is None:
-            assert is_zip(file_path.name)  # guaranteed by find_files
-            fmt = "zip"
+            assert is_zip(file_path.name) or is_geopackage(file_path.name)
+            fmt = "geopackage" if is_geopackage(file_path.name) else "zip"
 
         result.append(
             DatasetInfo(

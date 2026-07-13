@@ -349,10 +349,12 @@ class TestAddFolderOther:
         assert catalog.folder.all()[0].name == "data"
 
     def test_add_folder_sets_type_filesystem(self, full_catalog):
-        """add_folder should set type='filesystem' on all folders."""
+        """add_folder should set type='filesystem' on all tree folders; a
+        discovered GeoPackage nests a database-typed container folder."""
         for folder in full_catalog.folder.all():
             if folder.id != "_enumerations":
-                assert folder.type == "filesystem"
+                expected = "sqlite" if folder.id.endswith("_gpkg") else "filesystem"
+                assert folder.type == expected
 
 
 class TestSubfolders:

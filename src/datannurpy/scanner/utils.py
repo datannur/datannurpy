@@ -143,6 +143,12 @@ def is_zip(name: str) -> bool:
     return PurePosixPath(clean).suffix.lower() == ".zip"
 
 
+def is_geopackage(name: str) -> bool:
+    """Whether ``name`` denotes a GeoPackage (``*.gpkg``) — a SQLite container
+    scanned through the database machinery, not a ``scan_file`` format."""
+    return PurePosixPath(name).suffix.lower() == ".gpkg"
+
+
 def fs_info_is_dir(fs: FileSystem, path: str) -> bool:
     """Return whether fsspec info identifies a directory."""
     info = fs.info(path)
@@ -540,9 +546,13 @@ def find_files_with_mtime(
     result: list[tuple[PurePath, int]] = []
     for entry in _scandir_walk_local(root, recursive):
         name = entry.name
-        # .zip archives are admitted alongside natively supported formats; their
-        # inner format is resolved at scan time (see discover_datasets).
-        if supported_format_for(name) is None and not is_zip(name):
+        # .zip archives and .gpkg containers are admitted alongside natively
+        # supported formats; both are classified by content at scan time.
+        if (
+            supported_format_for(name) is None
+            and not is_zip(name)
+            and not is_geopackage(name)
+        ):
             continue
         if name.startswith(DEFAULT_EXCLUDE_PREFIXES):
             continue
@@ -570,10 +580,11 @@ def _find_files_with_fs(
     candidates = [
         p
         for p in safe_walk_fs(fs, root_str, recursive)
-        # .zip archives are admitted alongside natively supported formats; their
-        # inner format is resolved at scan time (see discover_datasets).
+        # .zip archives and .gpkg containers are admitted alongside natively
+        # supported formats; both are classified by content at scan time.
         if supported_format_for(PurePosixPath(p).name) is not None
         or is_zip(PurePosixPath(p).name)
+        or is_geopackage(PurePosixPath(p).name)
     ]
 
     # Apply default exclusions (excluded directories are pruned by the walk).
