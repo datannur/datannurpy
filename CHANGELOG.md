@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.30.1 (2026-07-13)
+
+- fix: localized `value:<lang>` columns in a metadata `config` file (e.g. `value:fr`, `value:de`) are no longer dropped from the exported `data/db/config.json` — they now flow through like `name:fr`/`description:de` on other entities, so the app's per-locale resolution works for config entries
+
 ## 0.30.0 (2026-07-12)
 
 - add: new scannable formats — ODS spreadsheets (`.ods`, new core dependency `odfpy`), GPX (`.gpx`, `geo` extra; the first non-empty layer is scanned, bbox included, without pyogrio's multi-layer warning), and `.zip` archives holding exactly one data file (CSV, Excel, ODS, Parquet …), generalizing the zipped-Shapefile support with the same Zip Slip / zip-bomb guards
