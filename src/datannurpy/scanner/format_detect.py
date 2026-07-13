@@ -27,12 +27,11 @@ from urllib.parse import urlsplit, parse_qs
 from ..errors import ConfigError
 from ..utils.log import log_warn
 from .archive import (
-    is_zip,
     unsupported_zip_error,
     zip_member_list,
     zip_scannable_member,
 )
-from .utils import SUPPORTED_FORMATS, supported_format_for
+from .utils import SUPPORTED_FORMATS, is_zip, supported_format_for
 
 if TYPE_CHECKING:
     from .filesystem import FileSystem

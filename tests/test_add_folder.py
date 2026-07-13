@@ -1144,3 +1144,131 @@ class TestScanLogTruthfulness:
         assert "empty file" not in captured.err
         assert "no data rows" not in captured.err
         assert catalog.run_errors == 0
+
+
+class TestArchiveDiscovery:
+    """folder: scans pick up .zip archives with the dataset: semantics and guards."""
+
+    @staticmethod
+    def _zip_csv(dirpath: Path, name: str = "sales.zip") -> Path:
+        import zipfile
+
+        zpath = dirpath / name
+        with zipfile.ZipFile(zpath, "w") as z:
+            z.writestr("sales.csv", "city,amount\nBern,10\nSion,20\n")
+        return zpath
+
+    def test_zip_csv_scanned(self, tmp_path: Path):
+        zpath = self._zip_csv(tmp_path)
+        (tmp_path / "plain.csv").write_text("a,b\n1,2\n")
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(tmp_path)
+        ds = catalog.dataset.get_by("name", "sales")
+        assert ds is not None
+        assert ds.delivery_format == "csv"
+        assert ds.nb_row == 2
+        assert ds.data_size == zpath.stat().st_size  # the compressed archive size
+        names = {v.name for v in catalog.variable.all() if v.dataset_id == ds.id}
+        assert names == {"city", "amount"}
+
+    def test_zip_variable_depth_streams_header(self, tmp_path: Path):
+        self._zip_csv(tmp_path)
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(tmp_path, depth="variable")
+        ds = catalog.dataset.all()[0]
+        assert ds.delivery_format == "csv"
+        assert ds.nb_row is None  # not scanned at variable depth
+        assert [v.name for v in catalog.variable.all()] == ["city", "amount"]
+
+    def test_zip_dataset_depth_classified_without_scan(self, tmp_path: Path):
+        # Like the dataset: path, the archive is classified even at dataset
+        # depth — the delivery_format cannot be known any other way.
+        zpath = self._zip_csv(tmp_path)
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(tmp_path, depth="dataset")
+        ds = catalog.dataset.all()[0]
+        assert ds.delivery_format == "csv"
+        assert ds.nb_row is None
+        assert ds.data_size == zpath.stat().st_size
+        assert catalog.variable.count == 0
+
+    def test_multi_member_zip_skipped_with_warning(self, tmp_path: Path, capsys):
+        import zipfile
+
+        with zipfile.ZipFile(tmp_path / "two.zip", "w") as z:
+            z.writestr("a.csv", "x\n1\n")
+            z.writestr("b.csv", "y\n2\n")
+        (tmp_path / "plain.csv").write_text("a,b\n1,2\n")
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, quiet=False)
+        err = capsys.readouterr().err
+        assert "exactly one scannable" in err
+        assert catalog.dataset.get_by("name", "two") is None
+        assert catalog.dataset.get_by("name", "plain") is not None  # rest scanned
+        assert catalog.run_errors == 0  # unsupported, not a scan failure
+
+    def test_multi_member_zip_skipped_at_dataset_depth(self, tmp_path: Path, capsys):
+        import zipfile
+
+        with zipfile.ZipFile(tmp_path / "two.zip", "w") as z:
+            z.writestr("a.csv", "x\n1\n")
+            z.writestr("b.csv", "y\n2\n")
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, depth="dataset", quiet=False)
+        assert "exactly one scannable" in capsys.readouterr().err
+        assert catalog.dataset.count == 0
+
+    def test_misnamed_zip_skipped(self, tmp_path: Path, capsys):
+        (tmp_path / "fake.zip").write_text("plain text, not an archive")
+        catalog = Catalog()
+        catalog.add_folder(tmp_path, quiet=False)
+        assert "not a zip archive" in capsys.readouterr().err
+        assert catalog.dataset.count == 0
+        assert catalog.run_errors == 0
+
+    def test_unchanged_zip_skipped_without_reopening(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        self._zip_csv(tmp_path)
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(tmp_path)
+        # Second scan: unchanged by mtime — the archive must not be opened again.
+        monkeypatch.setattr(
+            "datannurpy.add_folder.zip_member_list",
+            lambda *a, **k: pytest.fail("archive reopened on an unchanged scan"),
+        )
+        catalog.add_folder(tmp_path)
+        ds = catalog.dataset.get_by("name", "sales")
+        assert ds is not None
+        assert ds.nb_row == 2
+
+    def test_period_zips_not_grouped_as_series(self, tmp_path: Path):
+        # Archives carry no format in their name, so they stay out of
+        # time-series grouping: one dataset per archive.
+        import zipfile
+
+        for year in ("2020", "2021"):
+            with zipfile.ZipFile(tmp_path / f"sales_{year}.zip", "w") as z:
+                z.writestr(f"sales_{year}.csv", "a,b\n1,2\n")
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(tmp_path)
+        assert catalog.dataset.count == 2
+        assert all(ds.nb_resources is None for ds in catalog.dataset.all())
+
+    def test_remote_folder_zip(self, tmp_path: Path):
+        import uuid
+
+        import fsspec
+
+        zpath = self._zip_csv(tmp_path)
+        root = f"/{uuid.uuid4().hex}"
+        mem = fsspec.filesystem("memory")
+        mem.pipe(f"{root}/sales.zip", zpath.read_bytes())
+        mem.pipe(f"{root}/plain.csv", b"a,b\n1,2\n")
+        catalog = Catalog(quiet=True)
+        catalog.add_folder(f"memory://{root}")
+        ds = catalog.dataset.get_by("name", "sales")
+        assert ds is not None
+        assert ds.delivery_format == "csv"
+        assert ds.nb_row == 2
+        assert catalog.dataset.get_by("name", "plain") is not None

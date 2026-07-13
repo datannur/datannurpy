@@ -117,6 +117,12 @@ def scan_geo_vector(
     label = path_label or file_path.name
     try:
         layers = [layer] if layer is not None else list_geo_layers(file_path)
+        # A featureless container (a KML without a single Folder/Placemark …) has
+        # no layers at all: an empty dataset, not a scanner failure — report zero
+        # rows instead of crashing on the empty layer list below.
+        if not layers:
+            log_debug(f"{label}: no layers found", quiet)
+            return [], 0, None, None, None
         # The first *populated* layer wins: multi-layer containers scanned as a
         # single dataset (GPX, KML folders …) keep their data in later layers when
         # the leading one is empty — a track-recording GPX has no waypoints.

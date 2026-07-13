@@ -10,7 +10,12 @@ from urllib.parse import urlsplit
 
 from .parquet import discover_parquet_datasets
 from .timeseries import group_time_series, series_match_normalized_path
-from .utils import find_files_with_mtime, get_mtime_timestamp, supported_format_for
+from .utils import (
+    find_files_with_mtime,
+    get_mtime_timestamp,
+    is_zip,
+    supported_format_for,
+)
 from ..utils import iso_to_timestamp
 
 if TYPE_CHECKING:
@@ -23,7 +28,9 @@ class DatasetInfo:
     """Information about a discovered dataset."""
 
     path: PurePath
-    format: str  # csv, parquet, delta, hive, iceberg, sas, spss, stata, excel
+    # csv, parquet, delta, hive, iceberg, sas, spss, stata, excel …, or the "zip"
+    # placeholder for a discovered archive, resolved by content at scan time.
+    format: str
     mtime: int
     resource_count: int = 1
     series_files: list[tuple[str, PurePath]] | None = None  # [(period, path), ...]
@@ -103,8 +110,13 @@ def discover_datasets(
 
         # find_files already guaranteed support (through any .gz suffix); resolve the
         # logical format so a .csv.gz is catalogued as csv, not skipped on a KeyError.
+        # A .zip carries no format in its name: it gets the "zip" placeholder and is
+        # classified by content at scan time (central directory read), so an
+        # unchanged archive is skipped by mtime without ever being opened.
         fmt = supported_format_for(file_path.name)
-        assert fmt is not None  # guaranteed by find_files
+        if fmt is None:
+            assert is_zip(file_path.name)  # guaranteed by find_files
+            fmt = "zip"
 
         result.append(
             DatasetInfo(

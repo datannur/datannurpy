@@ -39,13 +39,6 @@ _COPY_CHUNK = 1 << 20  # 1 MiB
 _JUNK_MEMBER_PREFIXES = (*DEFAULT_EXCLUDE_PREFIXES, "._")
 
 
-def is_zip(name: str) -> bool:
-    """Whether ``name`` denotes a zip archive (``*.zip``), ignoring any URL query
-    string or fragment (``data.zip?token=…``)."""
-    clean = name.split("?", 1)[0].split("#", 1)[0]
-    return PurePosixPath(clean).suffix.lower() == ".zip"
-
-
 def _member_basename(name: str) -> str:
     """A member's basename with both separator conventions honoured — some Windows
     tools write non-conformant ``\\``-separated member names."""

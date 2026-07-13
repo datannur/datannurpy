@@ -118,6 +118,20 @@ class TestShapefileViaCatalog:
         # Only the .shp is a dataset; .shx/.dbf/.prj/.cpg are not scanned.
         assert [d.name for d in catalog.dataset.all()] == ["parcels"]
 
+    def test_folder_scan_carries_geo_fields(self, tmp_path: Path) -> None:
+        # A folder-discovered geo file keeps its spatial enrichment, like the
+        # same file added via add_dataset.
+        _write_ogr(
+            tmp_path / "parcels.shp", _SQUARE, driver="ESRI Shapefile", crs="EPSG:4326"
+        )
+        catalog = Catalog(app_path=tmp_path / "app", quiet=True)
+        catalog.add_folder(str(tmp_path))
+        dataset = catalog.dataset.get_by("name", "parcels")
+        assert dataset is not None
+        assert dataset.crs == "EPSG:4326"
+        assert dataset.geometry_type == "polygon"
+        assert dataset.bbox == [7.4, 46.0, 7.7, 46.2]
+
 
 class TestRemoteVector:
     def test_remote_shapefile_fetches_sidecars(self, tmp_path: Path) -> None:
@@ -352,3 +366,33 @@ class TestGeoArrowExtensionType:
         assert stripped.schema.field("geom").type == pa.binary()
         assert stripped["geom"].to_pylist() == [b"\x01\x02", None]
         assert stripped["name"].to_pylist() == ["a", "b"]
+
+
+class TestEmptyVectorContainer:
+    _EMPTY_KML = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<kml xmlns="http://www.opengis.net/kml/2.2">'
+        "<Document><name>empty</name></Document></kml>"
+    )
+
+    def test_kml_without_layers_scans_empty(self, tmp_path: Path) -> None:
+        # A KML without a single Folder/Placemark exposes no layer at all; the
+        # scan reports an empty dataset instead of crashing on the layer list.
+        (tmp_path / "empty.kml").write_text(self._EMPTY_KML)
+        catalog = Catalog(app_path=tmp_path / "app", quiet=True)
+        catalog.add_dataset(str(tmp_path / "empty.kml"))
+        dataset = catalog.dataset.get_by("name", "empty")
+        assert dataset is not None
+        assert dataset.nb_row == 0
+        assert dataset.bbox is None
+        assert catalog.run_errors == 0
+
+    def test_no_layers_logs_no_error(self, tmp_path: Path, capsys) -> None:
+        (tmp_path / "empty.kml").write_text(self._EMPTY_KML)
+        variables, nb_row, freq, geo, preview = scan_geo_vector(
+            tmp_path / "empty.kml", dataset_id="ds"
+        )
+        assert (variables, nb_row, freq, geo, preview) == ([], 0, None, None, None)
+        err = capsys.readouterr().err
+        assert "IndexError" not in err
+        assert "✗" not in err

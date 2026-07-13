@@ -60,6 +60,11 @@ from .scanner.utils import (
     get_data_size,
     get_dir_data_size,
 )
+from .scanner.archive import (
+    unsupported_zip_error,
+    zip_member_list,
+    zip_scannable_member,
+)
 from .scanner.parquet.discovery import (
     is_delta_table,
     is_hive_partitioned,
@@ -81,6 +86,27 @@ def _no_rows_message(display_path: str, data_size: int | None) -> str:
     if data_size == 0:
         return f"{display_path}: empty file (0 bytes)"
     return f"{display_path}: no data rows"
+
+
+def _resolve_zip_format(
+    path: PurePath, fs: FileSystem | None, display_path: str, quiet: bool
+) -> str | None:
+    """Classify a discovered ``.zip`` by its single scannable member.
+
+    Returns the member's delivery format, or None — with a per-file warning —
+    when the archive holds no single scannable data file or is not actually a
+    zip. The folder-scan counterpart of the ``dataset:`` classification, which
+    raises ``ConfigError`` instead: in a folder sweep one unsupported archive
+    must not abort the run, mirroring how unsupported extensions are skipped."""
+    names = zip_member_list(path, fs)
+    if names is None:
+        log_warn(f"{display_path}: not a zip archive, skipped", quiet)
+        return None
+    selected = zip_scannable_member(names)
+    if selected is None:
+        log_warn(f"{unsupported_zip_error(display_path, names)} Skipped.", quiet)
+        return None
+    return selected[1]
 
 
 def _raise_folder_config_error(message: str, quiet: bool) -> NoReturn:
@@ -413,6 +439,15 @@ def _structure_only_scan(
             _handle_unmatched(display_label, on_unmatched, quiet)
             continue
 
+        # A discovered .zip is classified by content even at dataset depth — like
+        # the dataset: path, since the delivery_format cannot be known any other way.
+        delivery_format = info.format
+        if delivery_format == "zip":
+            resolved_zip = _resolve_zip_format(info.path, fs, display_label, quiet)
+            if resolved_zip is None:
+                continue  # warning already logged
+            delivery_format = resolved_zip
+
         # Compute name and time-series fields (always needed)
         if info.series_files is not None:
             periods = [period for period, _ in info.series_files]
@@ -445,12 +480,12 @@ def _structure_only_scan(
             folder_id=folder_id,
             data_path=_public_data_path(info.path, root, fs),
             last_update_date=timestamp_to_iso(info.mtime),
-            delivery_format=info.format,
+            delivery_format=delivery_format,
             nb_resources=nb_resources,
             preview_rows=0,
             data_size=(
                 get_dir_data_size(info.path, fs=fs)
-                if info.format in _DIR_FORMATS
+                if delivery_format in _DIR_FORMATS
                 else get_data_size(info.path, fs=fs)
             ),
             start_date=start_date,
@@ -513,10 +548,16 @@ def _scan_single_file(run: _FolderScan, info: DatasetInfo, display_path: str) ->
 
     # Scan dataset
     errors_before = error_count()
+    delivery_format = info.format
     try:
+        if delivery_format == "zip":
+            resolved = _resolve_zip_format(info.path, run.fs, display_path, run.quiet)
+            if resolved is None:
+                return  # warning already logged; unsupported, not a scan error
+            delivery_format = resolved
         result = scan_file(
             info.path,
-            info.format,
+            delivery_format,
             dataset_id=dataset_id,
             schema_only=run.schema_only,
             freq_threshold=run.freq_threshold,
@@ -549,16 +590,20 @@ def _scan_single_file(run: _FolderScan, info: DatasetInfo, display_path: str) ->
         folder_id=folder_id,
         data_path=_public_data_path(info.path, run.root, run.fs),
         last_update_date=timestamp_to_iso(info.mtime),
-        delivery_format=info.format,
+        delivery_format=delivery_format,
         description=result.description,
         nb_row=result.nb_row,
         sample_size=result.sample_size,
         preview_rows=run.preview_rows,
         data_size=(
             result.data_size
-            if info.format in _DIR_FORMATS
+            if delivery_format in _DIR_FORMATS
             else get_data_size(info.path, fs=run.fs)
         ),
+        crs=result.crs,
+        geometry_type=result.geometry_type,
+        bbox=result.bbox,
+        spatial_resolution=result.spatial_resolution,
         _seen=True,
         _match_path=data_path_str,
     )

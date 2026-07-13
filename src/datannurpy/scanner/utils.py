@@ -136,6 +136,13 @@ def supported_format_for(name: str) -> str | None:
     return fmt
 
 
+def is_zip(name: str) -> bool:
+    """Whether ``name`` denotes a zip archive (``*.zip``), ignoring any URL query
+    string or fragment (``data.zip?token=…``)."""
+    clean = name.split("?", 1)[0].split("#", 1)[0]
+    return PurePosixPath(clean).suffix.lower() == ".zip"
+
+
 def fs_info_is_dir(fs: FileSystem, path: str) -> bool:
     """Return whether fsspec info identifies a directory."""
     info = fs.info(path)
@@ -533,7 +540,9 @@ def find_files_with_mtime(
     result: list[tuple[PurePath, int]] = []
     for entry in _scandir_walk_local(root, recursive):
         name = entry.name
-        if supported_format_for(name) is None:
+        # .zip archives are admitted alongside natively supported formats; their
+        # inner format is resolved at scan time (see discover_datasets).
+        if supported_format_for(name) is None and not is_zip(name):
             continue
         if name.startswith(DEFAULT_EXCLUDE_PREFIXES):
             continue
@@ -561,7 +570,10 @@ def _find_files_with_fs(
     candidates = [
         p
         for p in safe_walk_fs(fs, root_str, recursive)
+        # .zip archives are admitted alongside natively supported formats; their
+        # inner format is resolved at scan time (see discover_datasets).
         if supported_format_for(PurePosixPath(p).name) is not None
+        or is_zip(PurePosixPath(p).name)
     ]
 
     # Apply default exclusions (excluded directories are pruned by the walk).
