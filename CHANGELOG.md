@@ -1,5 +1,13 @@
 # datannurpy
 
+## 0.32.0 (2026-07-13)
+
+- add: `folder:` scans discover zipped multi-layer containers — a single `.gdb` tree or `.gpkg` member becomes one dataset per layer under a container folder (CRS / geometry type / bbox included), same Zip Slip / zip-bomb guards; an unchanged archive is skipped by mtime without being extracted, and `create_folders: false` matches layers on `<zip path>::<layer>`
+- add: a lone `*.json` archive member whose content is GeoJSON scans as GeoJSON; other JSON stays a quiet skip
+- add: failed scans are retried once per release — stamped with the failing datannurpy version and re-scanned after an upgrade even when unchanged, so scanner fixes land without `touch` or `refresh: true`
+- fix: a failing statistics pass degrades GeoPackage layers and database tables to schema-only with a warning, instead of losing the dataset for the run
+- fix: `make check-py39` runs the test suite only, like CI's 3.9 job — pyright inside the 3.9 venv flagged intentionally-absent packages (`aiohttp` CVE gate, older pyarrow), failing the target since the gate existed
+
 ## 0.31.1 (2026-07-13)
 
 - fix: preview export survives invalid UTF-8 — string values that real-world sources hand over with broken multi-byte sequences (e.g. a DBF character field truncated at its 254-byte limit) are lossily re-decoded (U+FFFD) when the preview is built, and a polars panic on one preview now skips that single file instead of killing the whole export (pyo3 panics bypass `except Exception`; the run previously died with the database half-written)

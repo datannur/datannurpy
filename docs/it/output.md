@@ -65,6 +65,8 @@ add:
 
 Usare `refresh: true` per forzare una riscansione completa.
 
+I dataset la cui scansione è fallita vengono riscansionati una volta dopo un aggiornamento di datannurpy, così le correzioni dello scanner li raggiungono senza `refresh`.
+
 **Ogni esecuzione rispecchia le sorgenti correnti.** L'esportazione riflette esattamente ciò che producono la scansione e i metadati correnti: un'entità presente in un'esecuzione precedente ma non più scansionata né presente nei metadati viene rimossa, non conservata. Le righe derivate dalla scansione sono memorizzate in cache sotto `data/db/_scan/`, così i file invariati possono essere saltati; il `data/db` esportato viene poi ricostruito a ogni pubblicazione a partire da quella base di scansione più i metadati correnti — è una materializzazione usa e getta, non un archivio ad accumulo, quindi gli overlay di metadati di un'esportazione precedente non filtrano mai nella base dell'esecuzione successiva. `_scan` è una cache interna (mai una tabella dell'app); eliminarla costa soltanto una riscansione completa. Se si smette di scansionare una sorgente, i suoi dataset scompaiono alla prossima esecuzione. Vedere le [semantiche di eliminazione](/it/metadata#deletion) per come questo differisce tra entità padre (dataset, cartelle, …) ed entità figlie (variabili, valori, frequenze).
 
 Le esportazioni app esistenti aggiornano `data/db` per impostazione predefinita e preservano lo stato locale dell'app sotto `data/`. Per aggiornare i file front-end inclusi dopo un upgrade di datannurpy, impostare `update_app: true` o chiamare `catalog.export_app(update_app=True)`.

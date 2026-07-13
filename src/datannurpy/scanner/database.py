@@ -1080,3 +1080,60 @@ def scan_table(
         )
 
     return result(variables, row_count, actual_sample_size, freq_table, preview_df)
+
+
+def scan_table_with_fallback(
+    con: ibis.BaseBackend,
+    table_name: str,
+    *,
+    schema: str | None = None,
+    dataset_id: str,
+    label: str,
+    infer_stats: bool = True,
+    freq_threshold: int | None = None,
+    sample_size: int | None = None,
+    preview_rows: int = 0,
+    row_count: int | None = None,
+    quiet: bool = False,
+) -> tuple[Any, ...] | None:
+    """``scan_table`` degrading to schema-only when the statistics pass fails —
+    a failing aggregate must not cost the table/layer its dataset.
+
+    Returns ``(variables, nb_row, sample_size, freq_table, preview, scan_failed)``;
+    a degraded scan keeps the schema with everything else None and ``scan_failed``
+    True (callers stamp ``Dataset.scan_failed_version`` from it, so a later release
+    retries). Returns None when even the schema is unreadable — the table is lost
+    for this run (and retried while its source keeps failing)."""
+    from ..utils import log_error, log_warn
+
+    try:
+        variables, nb_row, actual_sample_size, freq_table, preview = scan_table(
+            con,
+            table_name,
+            schema=schema,
+            dataset_id=dataset_id,
+            infer_stats=infer_stats,
+            freq_threshold=freq_threshold,
+            sample_size=sample_size,
+            preview_rows=preview_rows,
+            return_preview=True,
+            quiet=quiet,
+            row_count=row_count,
+        )
+    except Exception as exc:
+        log_error(label, exc, quiet)
+        try:
+            variables, _, _, _, _ = scan_table(
+                con,
+                table_name,
+                schema=schema,
+                dataset_id=dataset_id,
+                infer_stats=False,
+                return_preview=True,
+                quiet=quiet,
+            )
+        except Exception:
+            return None  # even the schema is unreadable
+        log_warn(f"{label}: statistics failed; keeping schema only", quiet)
+        return variables, None, None, None, None, True
+    return variables, nb_row, actual_sample_size, freq_table, preview, False

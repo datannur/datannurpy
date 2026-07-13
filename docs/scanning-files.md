@@ -127,8 +127,8 @@ add:
 | GPX | `.gpx` | `folder` / `dataset` |
 | GeoTIFF (raster) | `.tif`, `.tiff` | `folder` / `dataset` |
 | GeoParquet | `.parquet` | `folder` / `dataset` |
-| GeoPackage | `.gpkg` | `folder` / `database: sqlite:///…` |
-| ESRI File Geodatabase | `.gdb` | `geodatabase` |
+| GeoPackage | `.gpkg` (also zipped) | `folder` / `database: sqlite:///…` |
+| ESRI File Geodatabase | `.gdb` (also zipped) | `geodatabase` / `folder` (zipped) |
 
 A Shapefile is often distributed as a single `.zip` (IGN, Census TIGER, Eurostat …). Point a `dataset:` at it and the inner Shapefile is extracted and scanned like a plain one — CRS reprojection included — on any source:
 
@@ -200,6 +200,10 @@ A `.zip` holding exactly one data file — a CSV, Excel, ODS or Parquet file, or
 add:
   - dataset: https://data.example.org/exports/sales.csv.zip
 ```
+
+Non-data companions (a `license.txt`, a PDF, style or metadata files) ride along without making the archive ambiguous. A single member named `*.json` whose content is GeoJSON — the common portal spelling — is scanned as GeoJSON; other JSON is skipped quietly.
+
+`folder:` scans also discover **zipped multi-layer containers**: an archive holding a single File Geodatabase tree (`*.gdb/`) or a single `.gpkg` member becomes one dataset per layer under a container folder, exactly like [GeoPackage and File Geodatabase](#multi-layer-containers) themselves. An unchanged archive is skipped by mtime without being extracted.
 
 Archives holding several data files are not supported — a `folder:` scan skips them with a per-file warning; extract those first. Use `exclude: ["*.zip"]` to keep archives out of a scan.
 

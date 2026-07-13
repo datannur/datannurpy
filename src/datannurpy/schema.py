@@ -127,6 +127,11 @@ class Dataset:
     # Content signature for the incremental skip: a SQL schema hash for database
     # datasets, the ETag for HTTP sources (skip when unchanged, even without mtime).
     schema_signature: str | None = None
+    # datannurpy version recorded when this dataset's scan logged errors (✗). The
+    # incremental skip re-scans such a dataset once per new release — so scanner
+    # fixes reach previously failed sources without a manual touch/refresh — then
+    # clears it (or re-stamps it) from the fresh scan. None for a clean scan.
+    scan_failed_version: str | None = None
     # Runtime fields (not persisted)
     _seen: bool = False
     # Absolute path used to match this dataset to a physical file/directory.

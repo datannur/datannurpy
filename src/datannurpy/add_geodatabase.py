@@ -13,7 +13,7 @@ from contextlib import nullcontext
 from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, cast
 
-from .dataset_scan import finalize_scanned_dataset, skip_unchanged
+from .dataset_scan import scan_gdb_layer_dataset, skip_unchanged
 from .errors import ConfigError
 from .scanner.database import filter_by_patterns
 from .preview import (
@@ -21,7 +21,7 @@ from .preview import (
     effective_preview_rows,
     resolve_preview_rows,
 )
-from .schema import Dataset, EntityMetadata, Folder, folder_from_metadata
+from .schema import EntityMetadata, Folder, folder_from_metadata
 from .scanner.filesystem import FileSystem, is_remote_url
 from .scanner.utils import get_mtime_timestamp
 from .utils import (
@@ -60,7 +60,7 @@ def add_geodatabase(
     Works on a local path or a remote URL (the ``.gdb`` directory is downloaded
     once and scanned locally, like ``add_database`` does for a remote SQLite file).
     """
-    from .scanner.geo_vector import list_geo_layers, scan_geo_vector
+    from .scanner.geo_vector import list_geo_layers
 
     catalog._has_scanned = True
     resolved_depth: Depth = depth if depth is not None else cast("Depth", catalog.depth)
@@ -142,40 +142,20 @@ def add_geodatabase(
                 catalog._tally_scan(0, 1)
                 continue
             errors_before = error_count()
-            variables, nb_row, freq_table, geo, preview = scan_geo_vector(
+            scan_gdb_layer_dataset(
+                catalog,
                 source,
+                layer,
                 dataset_id=dataset_id,
-                layer=layer,
+                folder_id=folder.id,
+                label=label,
+                match_path=match_path,
+                data_path=data_path,
+                last_update=last_update,
                 freq_threshold=freq_threshold,
                 preview_rows=preview_limit,
-                return_preview=True,
-                quiet=q,
-                path_label=label,
-            )
-            geo = geo or {}
-            dataset = Dataset(
-                id=dataset_id,
-                name=layer,
-                folder_id=folder.id,
-                data_path=data_path,
-                last_update_date=last_update,
-                delivery_format="geodatabase",
-                nb_row=nb_row,
-                preview_rows=preview_limit,
-                crs=geo.get("crs"),
-                geometry_type=geo.get("geometry_type"),
-                bbox=geo.get("bbox"),
-                _seen=True,
-                _match_path=match_path,
-            )
-            finalize_scanned_dataset(
-                catalog,
-                dataset,
-                variables=variables,
-                freq_table=freq_table,
-                preview=preview,
-                label=label,
                 auto_enumerations=resolved_auto_enumerations,
+                quiet=q,
             )
             # Internally-handled layer errors still count for the run tally —
             # at most one per layer dataset.

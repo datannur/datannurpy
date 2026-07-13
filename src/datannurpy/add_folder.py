@@ -14,6 +14,7 @@ from .utils import (
     build_variable_ids,
     error_count,
     get_folder_id,
+    iso_to_timestamp,
     log_debug,
     log_done,
     log_error,
@@ -28,11 +29,16 @@ from .utils import (
     upsert_folder,
 )
 from .utils.params import _UNSET, validate_params
+from .utils.version import is_stale_failure, scanner_version
 from .add_metadata import (
     LoadedDatasetRef,
     find_loaded_dataset_by_match_paths,
 )
-from .dataset_scan import finalize_scanned_dataset, skip_unchanged
+from .dataset_scan import (
+    finalize_scanned_dataset,
+    scan_gdb_layer_dataset,
+    skip_unchanged,
+)
 from .errors import ConfigError
 from .finalize import remove_dataset_cascade
 from .preview import (
@@ -64,7 +70,11 @@ from .scanner.utils import (
     get_dir_data_size,
 )
 from .scanner.archive import (
+    ZipContainer,
+    local_container_from_zip,
     unsupported_zip_error,
+    zip_container_member,
+    zip_member_is_geojson,
     zip_member_list,
     zip_scannable_member,
 )
@@ -93,23 +103,411 @@ def _no_rows_message(display_path: str, data_size: int | None) -> str:
 
 def _resolve_zip_format(
     path: PurePath, fs: FileSystem | None, display_path: str, quiet: bool
-) -> str | None:
+) -> str | ZipContainer | None:
     """Classify a discovered ``.zip`` by its single scannable member.
 
-    Returns the member's delivery format, or None — with a per-file warning —
-    when the archive holds no single scannable data file or is not actually a
-    zip. The folder-scan counterpart of the ``dataset:`` classification, which
-    raises ``ConfigError`` instead: in a folder sweep one unsupported archive
-    must not abort the run, mirroring how unsupported extensions are skipped."""
+    Returns the member's delivery format, a ``ZipContainer`` for a multi-layer
+    container (zipped ``.gdb`` tree or single ``.gpkg`` member), or None — with
+    a per-file warning — when the archive holds no single scannable data file or
+    is not actually a zip. The folder-scan counterpart of the ``dataset:``
+    classification, which raises ``ConfigError`` instead: in a folder sweep one
+    unsupported archive must not abort the run, mirroring how unsupported
+    extensions are skipped."""
     names = zip_member_list(path, fs)
     if names is None:
         log_warn(f"{display_path}: not a zip archive, skipped", quiet)
         return None
     selected = zip_scannable_member(names)
-    if selected is None:
-        log_warn(f"{unsupported_zip_error(display_path, names)} Skipped.", quiet)
+    if selected is not None:
+        member, fmt = selected
+        # A lone plain-`.json` member classifies as geojson by name only;
+        # confirm by content so metadata/configuration JSON stays a quiet skip.
+        if (
+            fmt == "geojson"
+            and member.lower().endswith(".json")
+            and not zip_member_is_geojson(path, fs, member)
+        ):
+            log_warn(
+                f"{display_path}: single .json member is not GeoJSON, skipped",
+                quiet,
+            )
+            return None
+        return fmt
+    container = zip_container_member(names)
+    if container is not None:
+        return container
+    log_warn(f"{unsupported_zip_error(display_path, names)} Skipped.", quiet)
+    return None
+
+
+def _scan_zip_container(
+    run: _FolderScan, info: DatasetInfo, display_path: str, container: ZipContainer
+) -> None:
+    """Scan a container archive — a zipped ``.gdb`` tree or a single ``.gpkg``
+    member — as one dataset per layer.
+
+    Layer datasets anchor on the archive's identity: match path
+    ``<zip path>::<layer>``, data path ``<zip public path>/<layer>``, the
+    archive's mtime. An unchanged archive is skipped wholesale before any
+    extraction; a changed one is extracted to a temp dir (bounded, cleaned up)
+    and its layers scanned like the GeoPackage delegation / add_geodatabase do.
+    Layer tallies are the container's own, like the GeoPackage delegation."""
+    zip_path_str = str(info.path)
+    public_base = _public_data_path(info.path, run.root, run.fs)
+    if _skip_unchanged_container(run, info, display_path, zip_path_str, public_base):
+        return
+    try:
+        with local_container_from_zip(info.path, run.fs, container) as local_path:
+            if container.kind == "geopackage":
+                tallies = _scan_zip_gpkg_layers(
+                    run, info, display_path, zip_path_str, public_base, local_path
+                )
+            else:
+                tallies = _scan_zip_gdb_layers(
+                    run, info, display_path, zip_path_str, public_base, local_path
+                )
+    except ConfigError:
+        raise  # on_unmatched="error" propagates like any unmatched file
+    except Exception as exc:
+        log_error(display_path, exc, run.quiet)
+        run.catalog._tally_scan(0, 0, 1)
+        return
+    if tallies is not None:
+        run.catalog._tally_scan(*tallies)
+
+
+def _skip_unchanged_container(
+    run: _FolderScan,
+    info: DatasetInfo,
+    display_path: str,
+    zip_path_str: str,
+    public_base: str,
+) -> bool:
+    """Skip-and-mark an unchanged container archive without extracting it.
+
+    Every layer dataset carries the archive's mtime, so any layer matching the
+    archive's prefixes with the current mtime — and no failure stamped by an
+    older release — proves the whole content is untouched (same-mtime zip ⇒
+    identical members ⇒ identical layer set).
+
+    Layers are looked up in the plan's pre-built match index rather than by
+    re-reading the dataset table: one prefix sweep over an existing dict per
+    archive, instead of rebuilding every dataset row per archive. Two prefix
+    spellings are needed because a fresh process reloads ``_match_path`` from
+    ``data_path`` (``<public base>/<layer>``) while the scanning process
+    recorded ``<zip path>::<layer>`` — both mean "a layer of this archive"."""
+    if run.refresh:
+        return False
+    prefixes = (f"{zip_path_str}::".replace("\\", "/"), f"{public_base}/")
+    layers = list(
+        {
+            d.id: d
+            for key, d in run.existing_by_path.items()
+            if key.startswith(prefixes)
+        }.values()
+    )
+    if not layers:
+        return False
+    if any(iso_to_timestamp(d.last_update_date) != info.mtime for d in layers):
+        return False
+    if any(is_stale_failure(d.scan_failed_version) for d in layers):
+        return False
+    for d in layers:
+        d._seen = True
+        d.preview_rows = run.preview_rows
+    run.catalog.dataset.upsert_all(layers)
+    run.catalog.enumeration_manager.mark_datasets_seen([d.id for d in layers])
+    if run.create_folders:
+        folder_id, _ = build_dataset_id_name(info.path, run.root, run.prefix)
+        if run.catalog.folder.get(folder_id) is not None:
+            run.catalog.folder.update(folder_id, _seen=True)
+    log_skip(f"{display_path} ({len(layers)} layers)", run.quiet)
+    run.catalog._tally_scan(0, len(layers))
+    return True
+
+
+def _resolve_container_layer_ids(
+    run: _FolderScan,
+    info: DatasetInfo,
+    layers: list[str],
+    display_path: str,
+    kind: str,
+    public_base: str,
+) -> dict[str, tuple[str, str | None]] | None:
+    """Resolve ``(dataset_id, folder_id)`` per layer of a container archive.
+
+    In create_folders mode the layers nest under a container folder named after
+    the archive (like the GeoPackage delegation nests under the scan tree); a
+    pre-loaded metadata row matched on ``<path>::<layer>`` still wins its ids.
+    Metadata-first mode anchors each layer to such a row, else under the
+    archive's own matched row; a layer with neither is left out of the mapping
+    (the caller applies the on_unmatched policy per layer). Returns None when
+    nothing matches at all in metadata-first mode."""
+    candidates = _match_path_candidates(info.path, run.fs)
+    layer_peeks = {
+        layer: find_loaded_dataset_by_match_paths(
+            run.catalog, [f"{c}::{layer}" for c in candidates]
+        )
+        for layer in layers
+    }
+    ids: dict[str, tuple[str, str | None]] = {}
+    if run.create_folders:
+        folder_id, folder_name = build_dataset_id_name(info.path, run.root, run.prefix)
+        parent_id = get_folder_id(info.path, run.root, run.prefix, run.subdir_ids)
+        folder = Folder(
+            id=folder_id,
+            name=folder_name,
+            parent_id=parent_id,
+            type=kind,
+            data_path=public_base,
+            last_update_date=timestamp_to_iso(info.mtime),
+        )
+        upsert_folder(run.catalog, folder)
+        for layer in layers:
+            peek = layer_peeks[layer]
+            if peek is not None:
+                ids[layer] = (
+                    peek.id,
+                    peek.folder_id if peek.folder_id is not None else folder_id,
+                )
+            else:
+                ids[layer] = (make_id(folder_id, sanitize_id(layer)), folder_id)
+        return ids
+    file_peek = find_loaded_dataset_by_match_paths(run.catalog, candidates)
+    if file_peek is None and not any(peek is not None for peek in layer_peeks.values()):
+        _handle_unmatched(display_path, run.on_unmatched, run.quiet)
         return None
-    return selected[1]
+    for layer in layers:
+        peek = layer_peeks[layer]
+        if peek is not None:
+            ids[layer] = (peek.id, peek.folder_id)
+        elif file_peek is not None:
+            ids[layer] = (
+                make_id(file_peek.id, sanitize_id(layer)),
+                file_peek.folder_id,
+            )
+    return ids
+
+
+def _scan_zip_gpkg_layers(
+    run: _FolderScan,
+    info: DatasetInfo,
+    display_path: str,
+    zip_path_str: str,
+    public_base: str,
+    local_path: Path,
+) -> tuple[int, int, int] | None:
+    """Scan the layers of a ``.gpkg`` member extracted from a zip archive."""
+    from .scanner.database import (
+        close_connection,
+        connect,
+        list_tables,
+        scan_table_with_fallback,
+    )
+    from .scanner.geopackage import extract_geopackage_geo
+
+    if not _is_sqlite_file(local_path, None):
+        log_warn(f"{display_path}: not a SQLite/GeoPackage member, skipped", run.quiet)
+        return None
+    scanned = unchanged = errors = 0
+    con, _ = connect(f"sqlite:///{local_path}")
+    try:
+        tables = list_tables(con, None, None, None, "sqlite")
+        ids = _resolve_container_layer_ids(
+            run, info, tables, display_path, "geopackage", public_base
+        )
+        if ids is None:
+            return None
+        geo_by_table = extract_geopackage_geo(con)
+        last_update = timestamp_to_iso(info.mtime)
+        for table in tables:
+            if table not in ids:
+                _handle_unmatched(
+                    f"{display_path}::{table}", run.on_unmatched, run.quiet
+                )
+                continue
+            dataset_id, folder_id = ids[table]
+            label = f"{display_path}::{table}"
+            match_path = f"{zip_path_str}::{table}"
+            data_path = f"{public_base}/{table}"
+            if skip_unchanged(
+                run.catalog,
+                match_path,
+                data_path,
+                info.mtime,
+                refresh=run.refresh,
+                preview_rows=run.preview_rows,
+                quiet=run.quiet,
+                label=label,
+            ):
+                unchanged += 1
+                continue
+            t0 = log_start(label, run.quiet)
+            scanned_layer = scan_table_with_fallback(
+                con,
+                table,
+                dataset_id=dataset_id,
+                label=label,
+                infer_stats=not run.schema_only,
+                freq_threshold=run.freq_threshold,
+                sample_size=run.sample_size,
+                preview_rows=run.preview_rows,
+                quiet=run.quiet,
+            )
+            if scanned_layer is None:
+                errors += 1
+                continue
+            errors += int(scanned_layer[5])
+            _add_gpkg_layer_dataset(
+                run.catalog,
+                con,
+                table,
+                dataset_id=dataset_id,
+                folder_id=folder_id,
+                label=label,
+                match_path=match_path,
+                data_path=data_path,
+                last_update=last_update,
+                geo=geo_by_table.get(table) or {},
+                scanned=scanned_layer,
+                preview_rows=run.preview_rows,
+                auto_enumerations=run.auto_enumerations,
+                quiet=run.quiet,
+                t0=t0,
+            )
+            scanned += 1
+    finally:
+        close_connection(con)
+    return scanned, unchanged, errors
+
+
+def _scan_zip_gdb_layers(
+    run: _FolderScan,
+    info: DatasetInfo,
+    display_path: str,
+    zip_path_str: str,
+    public_base: str,
+    local_path: Path,
+) -> tuple[int, int, int] | None:
+    """Scan the layers of a File Geodatabase tree extracted from a zip archive."""
+    from .scanner.geo_vector import list_geo_layers
+
+    layers = list_geo_layers(str(local_path))
+    ids = _resolve_container_layer_ids(
+        run, info, layers, display_path, "geodatabase", public_base
+    )
+    if ids is None:
+        return None
+    scanned = unchanged = errors = 0
+    last_update = timestamp_to_iso(info.mtime)
+    for layer in layers:
+        if layer not in ids:
+            _handle_unmatched(f"{display_path}::{layer}", run.on_unmatched, run.quiet)
+            continue
+        dataset_id, folder_id = ids[layer]
+        label = f"{display_path}::{layer}"
+        match_path = f"{zip_path_str}::{layer}"
+        data_path = f"{public_base}/{layer}"
+        if skip_unchanged(
+            run.catalog,
+            match_path,
+            data_path,
+            info.mtime,
+            refresh=run.refresh,
+            preview_rows=run.preview_rows,
+            quiet=run.quiet,
+            label=label,
+        ):
+            unchanged += 1
+            continue
+        t0 = log_start(label, run.quiet)
+        errors_before = error_count()
+        nb_row, nb_vars = scan_gdb_layer_dataset(
+            run.catalog,
+            str(local_path),
+            layer,
+            dataset_id=dataset_id,
+            folder_id=folder_id,
+            label=label,
+            match_path=match_path,
+            data_path=data_path,
+            last_update=last_update,
+            freq_threshold=run.freq_threshold,
+            preview_rows=run.preview_rows,
+            auto_enumerations=run.auto_enumerations,
+            quiet=run.quiet,
+        )
+        errors += min(1, error_count() - errors_before)
+        scanned += 1
+        _log_layer_done(label, nb_row, nb_vars, run.quiet, t0)
+    return scanned, unchanged, errors
+
+
+def _log_layer_done(
+    label: str, nb_row: int | None, nb_vars: int, quiet: bool, t0: float
+) -> None:
+    """The shared per-layer done line: rows+vars, vars only, or the bare label
+    (nothing read, e.g. dataset depth)."""
+    if nb_row is not None:
+        log_done(f"{label} ({nb_row:,} rows, {nb_vars} vars)", quiet, t0)
+    elif nb_vars:
+        log_done(f"{label} ({nb_vars} vars)", quiet, t0)
+    else:
+        log_done(label, quiet, t0)
+
+
+def _add_gpkg_layer_dataset(
+    catalog: Catalog,
+    con: Any,
+    table: str,
+    *,
+    dataset_id: str,
+    folder_id: str | None,
+    label: str,
+    match_path: str,
+    data_path: str,
+    last_update: str | None,
+    geo: dict[str, Any],
+    scanned: tuple[Any, ...],
+    preview_rows: int,
+    auto_enumerations: bool,
+    quiet: bool,
+    t0: float,
+) -> None:
+    """Persist one scanned GeoPackage layer/table as a dataset and log it —
+    the shared tail of the plain-``.gpkg`` and zipped-``.gpkg`` layer loops.
+    ``scanned`` is a ``scan_table_with_fallback`` result tuple."""
+    from .scanner.database import get_table_data_size
+
+    variables, nb_row, actual_sample_size, freq_table, preview, failed = scanned
+    dataset = Dataset(
+        id=dataset_id,
+        name=table,
+        folder_id=folder_id,
+        data_path=data_path,
+        last_update_date=last_update,
+        delivery_format="geopackage",
+        nb_row=nb_row,
+        sample_size=actual_sample_size,
+        preview_rows=preview_rows,
+        data_size=get_table_data_size(con, table, None),
+        crs=geo.get("crs"),
+        geometry_type=geo.get("geometry_type"),
+        bbox=geo.get("bbox"),
+        scan_failed_version=scanner_version() if failed else None,
+        _seen=True,
+        _match_path=match_path,
+    )
+    finalize_scanned_dataset(
+        catalog,
+        dataset,
+        variables=variables,
+        freq_table=freq_table,
+        preview=preview,
+        label=label,
+        auto_enumerations=auto_enumerations,
+    )
+    _log_layer_done(label, nb_row, len(variables), quiet, t0)
 
 
 _SQLITE_MAGIC = b"SQLite format 3\x00"
@@ -155,9 +553,8 @@ def _scan_geopackage_metadata_first(
     from .scanner.database import (
         close_connection,
         connect,
-        get_table_data_size,
         list_tables,
-        scan_table,
+        scan_table_with_fallback,
     )
     from .scanner.geopackage import extract_geopackage_geo
 
@@ -216,64 +613,49 @@ def _scan_geopackage_metadata_first(
                     unchanged += 1
                     continue
                 t0 = log_start(label, quiet)
-                variables: list[Any] = []
-                nb_row = actual_sample_size = freq_table = preview = None
+                # Dataset depth reads nothing: an empty scan result, no failure.
+                scanned_layer: tuple[Any, ...] | None = (
+                    [],
+                    None,
+                    None,
+                    None,
+                    None,
+                    False,
+                )
                 if depth != "dataset":
-                    try:
-                        variables, nb_row, actual_sample_size, freq_table, preview = (
-                            scan_table(
-                                con,
-                                table,
-                                schema=None,
-                                dataset_id=dataset_id,
-                                infer_stats=depth in ("stat", "value"),
-                                freq_threshold=freq_threshold,
-                                sample_size=sample_size,
-                                preview_rows=preview_rows,
-                                return_preview=True,
-                                quiet=quiet,
-                            )
-                        )
-                    except Exception as exc:
-                        log_error(label, exc, quiet)
+                    scanned_layer = scan_table_with_fallback(
+                        con,
+                        table,
+                        dataset_id=dataset_id,
+                        label=label,
+                        infer_stats=depth in ("stat", "value"),
+                        freq_threshold=freq_threshold,
+                        sample_size=sample_size,
+                        preview_rows=preview_rows,
+                        quiet=quiet,
+                    )
+                    if scanned_layer is None:
                         errors += 1
                         continue
-                geo = geo_by_table.get(table) or {}
-                dataset = Dataset(
-                    id=dataset_id,
-                    name=table,
-                    folder_id=folder_id,
-                    data_path=data_path,
-                    last_update_date=last_update,
-                    delivery_format="geopackage",
-                    nb_row=nb_row,
-                    sample_size=actual_sample_size,
-                    preview_rows=preview_rows,
-                    data_size=get_table_data_size(con, table, None),
-                    crs=geo.get("crs"),
-                    geometry_type=geo.get("geometry_type"),
-                    bbox=geo.get("bbox"),
-                    _seen=True,
-                    _match_path=match_path,
-                )
-                finalize_scanned_dataset(
+                    errors += int(scanned_layer[5])
+                _add_gpkg_layer_dataset(
                     catalog,
-                    dataset,
-                    variables=variables,
-                    freq_table=freq_table,
-                    preview=preview,
+                    con,
+                    table,
+                    dataset_id=dataset_id,
+                    folder_id=folder_id,
                     label=label,
+                    match_path=match_path,
+                    data_path=data_path,
+                    last_update=last_update,
+                    geo=geo_by_table.get(table) or {},
+                    scanned=scanned_layer,
+                    preview_rows=preview_rows,
                     auto_enumerations=auto_enumerations,
+                    quiet=quiet,
+                    t0=t0,
                 )
                 scanned += 1
-                if nb_row is not None:
-                    log_done(
-                        f"{label} ({nb_row:,} rows, {len(variables)} vars)", quiet, t0
-                    )
-                elif variables:
-                    log_done(f"{label} ({len(variables)} vars)", quiet, t0)
-                else:
-                    log_done(label, quiet, t0)
         finally:
             close_connection(con)
     catalog._tally_scan(scanned, unchanged, errors)
@@ -708,12 +1090,18 @@ def _structure_only_scan(
 
         # A discovered .zip is classified by content even at dataset depth — like
         # the dataset: path, since the delivery_format cannot be known any other way.
+        # A container archive stays one dataset at this depth (nothing is read, so
+        # its layers are unknown); its kind is the honest delivery_format.
         delivery_format = info.format
         if delivery_format == "zip":
             resolved_zip = _resolve_zip_format(info.path, fs, display_label, quiet)
             if resolved_zip is None:
                 continue  # warning already logged
-            delivery_format = resolved_zip
+            delivery_format = (
+                resolved_zip.kind
+                if isinstance(resolved_zip, ZipContainer)
+                else resolved_zip
+            )
 
         # Compute name and time-series fields (always needed)
         if info.series_files is not None:
@@ -779,6 +1167,7 @@ class _FolderScan:
     quiet: bool
     create_folders: bool
     on_unmatched: OnUnmatched
+    refresh: bool
     schema_only: bool
     freq_threshold: int | None
     csv_encoding: str | None
@@ -799,6 +1188,25 @@ def _scan_single_file(run: _FolderScan, info: DatasetInfo, display_path: str) ->
 
     t0 = log_start(display_path, run.quiet)
 
+    # A zip is classified before the metadata-first peek: a container archive
+    # matches metadata per *layer* (``<path>::<layer>``), so the file-level
+    # unmatched check below must not see it.
+    delivery_format = info.format
+    if delivery_format == "zip":
+        errors_before = error_count()
+        try:
+            resolved = _resolve_zip_format(info.path, run.fs, display_path, run.quiet)
+        except Exception as exc:
+            log_error(display_path, exc, run.quiet)
+            run.scan_errors += min(1, error_count() - errors_before)
+            return
+        if resolved is None:
+            return  # warning already logged; unsupported, not a scan error
+        if isinstance(resolved, ZipContainer):
+            _scan_zip_container(run, info, display_path, resolved)
+            return
+        delivery_format = resolved
+
     # Metadata-first peek: reuse pre-loaded id/folder_id if available.
     peek = find_loaded_dataset_by_match_paths(
         run.catalog, _match_path_candidates(info.path, run.fs)
@@ -815,13 +1223,7 @@ def _scan_single_file(run: _FolderScan, info: DatasetInfo, display_path: str) ->
 
     # Scan dataset
     errors_before = error_count()
-    delivery_format = info.format
     try:
-        if delivery_format == "zip":
-            resolved = _resolve_zip_format(info.path, run.fs, display_path, run.quiet)
-            if resolved is None:
-                return  # warning already logged; unsupported, not a scan error
-            delivery_format = resolved
         result = scan_file(
             info.path,
             delivery_format,
@@ -843,7 +1245,8 @@ def _scan_single_file(run: _FolderScan, info: DatasetInfo, display_path: str) ->
     # One mechanism for both paths — a ✗ logged during the scan, swallowed
     # by the scanner or caught just above, marks the dataset failed (at
     # most once, however many ✗ the scan logged).
-    run.scan_errors += min(1, error_count() - errors_before)
+    scan_failed = error_count() - errors_before > 0
+    run.scan_errors += min(1, int(scan_failed))
 
     # Remove old dataset only after successful scan
     existing = run.existing_by_path.get(data_path_str)
@@ -871,6 +1274,7 @@ def _scan_single_file(run: _FolderScan, info: DatasetInfo, display_path: str) ->
         geometry_type=result.geometry_type,
         bbox=result.bbox,
         spatial_resolution=result.spatial_resolution,
+        scan_failed_version=scanner_version() if scan_failed else None,
         _seen=True,
         _match_path=data_path_str,
     )
@@ -1079,6 +1483,7 @@ def add_folder(
         quiet=q,
         create_folders=create_folders,
         on_unmatched=on_unmatched,
+        refresh=do_refresh,
         schema_only=resolved_depth == "variable",
         freq_threshold=catalog.freq_threshold if resolved_depth == "value" else None,
         csv_encoding=csv_encoding if csv_encoding is not None else catalog.csv_encoding,
@@ -1168,6 +1573,7 @@ def _scan_time_series(
     """
     assert info.series_files is not None
     assert info.series_normalized_path is not None
+    errors_before = error_count()
     series_files = info.series_files
     display_path = _display_dataset_path(info, root)
     periods = [period for period, _ in series_files]
@@ -1277,6 +1683,9 @@ def _scan_time_series(
         data_size=get_data_size(last_path, fs=fs),
         start_date=first_period,
         end_date=last_period,
+        scan_failed_version=(
+            scanner_version() if error_count() - errors_before > 0 else None
+        ),
         _seen=True,
         _match_path=str(last_path),
     )

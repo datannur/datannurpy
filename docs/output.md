@@ -65,6 +65,8 @@ add:
 
 Use `refresh: true` to force a full rescan.
 
+Datasets whose scan failed are re-scanned once after a datannurpy upgrade, so scanner fixes reach them without `refresh`.
+
 **Each run mirrors the current sources.** The export reflects exactly what the current scan and metadata produce: an entity present in a previous run but no longer scanned and no longer in metadata is removed, not kept. Scan-derived rows are cached under `data/db/_scan/` so unchanged files can be skipped; the exported `data/db` is then rebuilt on every publish from that scan base plus the current metadata — it is a disposable materialization, not an accumulation store, so a previous export's metadata overlays never leak into the next run's base. `_scan` is an internal cache (never an app table); deleting it only costs one full rescan. Stop scanning a source and its datasets disappear on the next run. See [deletion semantics](/metadata#deletion) for how this differs between parent entities (datasets, folders, …) and child entities (variables, values, frequencies).
 
 Existing app exports update `data/db` by default and preserve local app state under `data/`. To refresh the bundled front-end app files after upgrading datannurpy, set `update_app: true` or call `catalog.export_app(update_app=True)`.

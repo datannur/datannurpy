@@ -90,14 +90,44 @@ class TestAddDatabaseScanError:
         yield con
         con.disconnect()
 
-    def test_continues_after_scan_table_error(self, duckdb_con) -> None:  # type: ignore[no-untyped-def]
+    def test_degrades_to_schema_only_after_scan_table_error(self, duckdb_con) -> None:  # type: ignore[no-untyped-def]
+        from datannurpy.utils.version import scanner_version
+
         catalog = Catalog(quiet=True)
         with patch(
-            "datannurpy.add_database.scan_table",
+            "datannurpy.scanner.database.scan_table",
             side_effect=_fail_nth("datannurpy.scanner.database.scan_table"),
         ):
             catalog.add_database(duckdb_con)
+        # The failing table survives schema-only, stamped for a versioned retry.
+        assert catalog.dataset.count == 2
+        failed = [d for d in catalog.dataset.all() if d.scan_failed_version]
+        assert len(failed) == 1
+        assert failed[0].scan_failed_version == scanner_version()
+        failed_vars = [
+            v for v in catalog.variable.all() if v.dataset_id == failed[0].id
+        ]
+        assert failed_vars
+        assert all(v.nb_distinct is None for v in failed_vars)
+
+    def test_table_lost_when_even_schema_fails(self, duckdb_con) -> None:  # type: ignore[no-untyped-def]
+        from datannurpy.scanner.database import scan_table as original
+
+        state = {"count": 0}
+
+        def fail_twice(*args: Any, **kwargs: Any) -> Any:
+            state["count"] += 1
+            if state["count"] <= 2:
+                raise RuntimeError("simulated error")
+            return original(*args, **kwargs)
+
+        catalog = Catalog(quiet=True)
+        with patch("datannurpy.scanner.database.scan_table", side_effect=fail_twice):
+            catalog.add_database(duckdb_con)
+        # First table fails both passes (stats then schema) and is lost; the
+        # second scans normally.
         assert catalog.dataset.count == 1
+        assert not [d for d in catalog.dataset.all() if d.scan_failed_version]
 
     def test_continues_after_scan_table_error_schema_mode(self, duckdb_con) -> None:  # type: ignore[no-untyped-def]
         catalog = Catalog(quiet=True)

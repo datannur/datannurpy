@@ -19,6 +19,7 @@ from .utils import (
     sanitize_id,
 )
 from .utils.params import _UNSET, validate_params
+from .utils.version import scanner_version
 from .compression import strip_compression_suffix
 from .dataset_scan import finalize_scanned_dataset, skip_unchanged
 from .errors import ConfigError
@@ -356,6 +357,8 @@ def add_dataset(
         match_path=match_path,
         schema_signature=current_signature,
     )
+    if error_count() - errors_before > 0:
+        dataset.scan_failed_version = scanner_version()
     finalize_scanned_dataset(
         catalog,
         dataset,

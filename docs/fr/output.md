@@ -65,6 +65,8 @@ add:
 
 Utilisez `refresh: true` pour forcer un rescan complet.
 
+Les datasets dont le scan a échoué sont rescannés une fois après une mise à jour de datannurpy, pour que les corrections du scanner les atteignent sans `refresh`.
+
 **Chaque exécution reflète les sources courantes.** L'export reflète exactement ce que produisent le scan et les métadonnées courants : une entité présente lors d'une exécution précédente mais qui n'est plus scannée ni présente dans les métadonnées est supprimée, pas conservée. Les lignes dérivées du scan sont mises en cache sous `data/db/_scan/` pour pouvoir ignorer les fichiers inchangés ; le `data/db` exporté est ensuite reconstruit à chaque publication à partir de cette base de scan plus les métadonnées courantes — c'est une matérialisation jetable, pas un magasin d'accumulation, de sorte que les overlays de métadonnées d'un export précédent ne fuient jamais dans la base de l'exécution suivante. `_scan` est un cache interne (jamais une table de l'app) ; le supprimer ne coûte qu'un rescan complet. Cessez de scanner une source et ses datasets disparaissent à l'exécution suivante. Voir la [sémantique de suppression](/fr/metadata#deletion) pour la différence entre entités parentes (datasets, dossiers, …) et entités enfants (variables, valeurs, fréquences).
 
 Les exports d'app existants mettent à jour `data/db` par défaut et préservent l'état local de l'app sous `data/`. Pour rafraîchir les fichiers embarqués du front-end après une mise à niveau de datannurpy, définissez `update_app: true` ou appelez `catalog.export_app(update_app=True)`.
