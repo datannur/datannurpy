@@ -832,6 +832,15 @@ def _process_standard_table(
     updated_by_id: dict[str, Any] = {}
     new_by_id: dict[str, Any] = {}
 
+    # An overlay that matches no scanned variable is almost always a naming
+    # mismatch (BOM, dedup suffix, encoding). Under on_unmatched_variable="skip"
+    # such a row is dropped rather than turned into a dataless phantom variable;
+    # the default keeps the create-from-metadata behaviour every other entity has.
+    skip_unmatched = (
+        entity_name == "variable" and catalog.on_unmatched_variable == "skip"
+    )
+    skipped = 0
+
     for entity_id, row_data in converted:
         existing = existing_map.get(entity_id)
         if existing is not None:
@@ -841,6 +850,8 @@ def _process_standard_table(
         elif entity_id in new_by_id:
             # Same id appears twice in the CSV for a brand-new entity: merge
             _merge_entity(new_by_id[entity_id], row_data)
+        elif skip_unmatched:
+            skipped += 1
         else:
             row_data = {
                 key: (
@@ -859,6 +870,14 @@ def _process_standard_table(
 
     created = len(new_by_id)
     updated = len(updated_by_id)
+    if skipped:
+        s = "s" if skipped > 1 else ""
+        log_warn(
+            f"variable: {skipped} overlay row{s} matched no scanned variable "
+            f"and {'were' if skipped > 1 else 'was'} skipped "
+            f"(on_unmatched_variable='skip')",
+            catalog.quiet,
+        )
     existing_localized_rows = _existing_localized_rows(
         catalog_table, entity_class, ["id"], set(updated_by_id)
     )

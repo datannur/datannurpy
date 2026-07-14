@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.33.0 (2026-07-14)
+
+- add: `on_unmatched_variable` option — `"create"` (default) keeps building a variable from a `variable` metadata overlay whose id matches no scanned variable, `"skip"` drops the row (and logs how many) so external enrichment (i14y, a data dictionary) never leaves dataless phantom variables when a column name doesn't line up
+
 ## 0.32.0 (2026-07-13)
 
 - add: `folder:` scans discover zipped multi-layer containers — a single `.gdb` tree or `.gpkg` member becomes one dataset per layer under a container folder (CRS / geometry type / bbox included), same Zip Slip / zip-bomb guards; an unchanged archive is skipped by mtime without being extracted, and `create_folders: false` matches layers on `<zip path>::<layer>`

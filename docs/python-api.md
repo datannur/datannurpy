@@ -11,6 +11,7 @@ Catalog(
     refresh=False,
     on_scan_error="warn",
     on_metadata_error="warn",
+    on_unmatched_variable="create",
     freq_threshold=100,
     auto_enumerations=True,
     csv_encoding=None,
@@ -32,6 +33,7 @@ Catalog(
 | refresh        | bool                              | Force full rescan ignoring cache (default: False)  |
 | on_scan_error  | "warn" \| "fail"                  | Scanning is always continue-on-error (a failed file/table is logged and skipped). `"warn"` (default) exits 0; `"fail"` makes the CLI exit 2 when any dataset failed, so CI won't publish a truncated catalogue green |
 | on_metadata_error | "warn" \| "fail"               | Metadata loading is continue-on-error too (an invalid table is logged and skipped, valid tables still apply). `"warn"` (default) exits 0; `"fail"` makes the CLI exit 3 when any metadata table failed validation, so CI won't publish a catalogue stripped of its curation green |
+| on_unmatched_variable | "create" \| "skip"         | What to do with a `variable` metadata overlay whose id matches no scanned variable. `"create"` (default) builds a new variable from the row; `"skip"` drops it (and logs how many), so external enrichment — i14y, a data dictionary — never leaves dataless phantom variables behind when a name doesn't line up |
 | freq_threshold | int                               | Max distinct values for frequency and automatic enumeration detection. Strings above this threshold get pattern frequencies instead |
 | auto_enumerations | bool                           | Create automatic enumerations from value frequencies and attach them to variables (default: True) |
 | csv_encoding   | str \| None                       | Default CSV encoding (utf-8, cp1252, etc.)         |

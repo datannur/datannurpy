@@ -871,6 +871,59 @@ class TestProcessEntityTable:
         assert updated == 0
         assert catalog.folder.all()[0].tag_ids == []
 
+    def test_unmatched_variable_created_by_default(self):
+        """Default on_unmatched_variable='create' keeps the phantom-variable behavior."""
+        catalog = Catalog()
+        df = pd.DataFrame({"id": ["ds---v1"], "name": ["Var1"], "dataset_id": ["ds"]})
+
+        created, updated = _process_entity_table(catalog, "variable", df)
+
+        assert (created, updated) == (1, 0)
+        assert [v.id for v in catalog.variable.all()] == ["ds---v1"]
+
+    def test_unmatched_variable_skipped_when_configured(self):
+        """on_unmatched_variable='skip' drops overlays that match no scanned variable."""
+        catalog = Catalog(on_unmatched_variable="skip")
+        df = pd.DataFrame({"id": ["ds---v1"], "name": ["Var1"], "dataset_id": ["ds"]})
+
+        created, updated = _process_entity_table(catalog, "variable", df)
+
+        assert (created, updated) == (0, 0)
+        assert catalog.variable.all() == []
+
+    def test_matched_variable_still_enriched_in_skip_mode(self):
+        """skip mode only drops unmatched rows; a matching overlay still updates."""
+        catalog = Catalog(on_unmatched_variable="skip")
+        catalog.variable.add(Variable(id="ds---v1", name="Scanned", dataset_id="ds"))
+        df = pd.DataFrame(
+            {
+                "id": ["ds---v1", "ds---orphan"],
+                "description": ["enriched", "phantom"],
+                "dataset_id": ["ds", "ds"],
+            }
+        )
+
+        created, updated = _process_entity_table(catalog, "variable", df)
+
+        assert (created, updated) == (0, 1)
+        assert [v.id for v in catalog.variable.all()] == ["ds---v1"]
+        assert catalog.variable.all()[0].description == "enriched"
+
+    def test_skip_mode_does_not_affect_other_entities(self):
+        """on_unmatched_variable='skip' is scoped to variables only."""
+        catalog = Catalog(on_unmatched_variable="skip")
+        df = pd.DataFrame({"id": ["f1"], "name": ["Folder1"]})
+
+        created, updated = _process_entity_table(catalog, "folder", df)
+
+        assert (created, updated) == (1, 0)
+        assert [f.id for f in catalog.folder.all()] == ["f1"]
+
+    def test_invalid_on_unmatched_variable_raises(self):
+        """An out-of-range on_unmatched_variable is a ConfigError."""
+        with pytest.raises(ConfigError, match="on_unmatched_variable"):
+            Catalog(on_unmatched_variable="drop")  # type: ignore[arg-type]
+
     def test_create_folder_with_schema_metadata_fields(self):
         """Folder metadata should preserve fields declared in the app schema."""
         catalog = Catalog()
