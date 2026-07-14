@@ -92,22 +92,44 @@ def _decode_csv_sample(sample: bytes, csv_encoding: str | None) -> str:
     return text.replace("\r\n", "\n").replace("\r", "\n").lstrip("\n")
 
 
+def _sniff_csv_dialect(text: str) -> Any | None:
+    """Sniff a CSV dialect from a text sample, restricted to common delimiters so
+    commas inside quoted fields don't fool the sniffer when the real separator is
+    ';' (FR/DE/IT locales). None when the sniff is inconclusive — blank text, a
+    single-column file, or otherwise ambiguous (csv.Sniffer raises on all three)."""
+    try:
+        return csv.Sniffer().sniff(text, delimiters=_CSV_HEADER_DELIMITERS)
+    except csv.Error:
+        return None
+
+
 def _csv_reader_from_text(text: str) -> Any:
     """Build a csv.reader with sniffed dialect, or None if text is blank."""
     if not text.strip():
         return None
-    # Sniff dialect on a reasonable sample, restricted to common delimiters so
-    # commas inside quoted header fields don't fool the sniffer when the real
-    # separator is ';' (FR/DE/IT locales).
-    try:
-        dialect = csv.Sniffer().sniff(text, delimiters=_CSV_HEADER_DELIMITERS)
-    except csv.Error:
-        dialect = None  # type: ignore[assignment]
+    dialect = _sniff_csv_dialect(text)
     return (
         csv.reader(io.StringIO(text), dialect)
         if dialect
         else csv.reader(io.StringIO(text))
     )
+
+
+def _sniff_csv_delimiter(path: Path, csv_encoding: str | None) -> str | None:
+    """Delimiter sniffed from a CSV's leading bytes (same csv.Sniffer the preview
+    and header paths use), or None when inconclusive.
+
+    DuckDB's own delimiter auto-detection can pick the wrong separator when quoted
+    free-text fields contain the competing one (a ';'-CSV whose text columns hold
+    commas): it may miss the quote char and split on those commas, silently
+    yielding a garbage schema with no parse error. Passing this sniffed delimiter
+    to ``con.read_csv(delim=…)`` aligns the scan with the delimiter the pre-flight
+    already validated the file against. None falls back to DuckDB's detection, so a
+    single-column or unsniffable file behaves exactly as before."""
+    with open(path, "rb") as fb:
+        sample = fb.read(_CSV_HEADER_SAMPLE_BYTES)
+    dialect = _sniff_csv_dialect(_decode_csv_sample(sample, csv_encoding))
+    return dialect.delimiter if dialect is not None else None
 
 
 def _read_csv_header(sample: bytes, csv_encoding: str | None = None) -> list[str]:
@@ -289,6 +311,12 @@ def scan_csv(
                     )
                     return result([], None, None, None, None)
 
+            # Feed DuckDB the delimiter our own sniffer found rather than trusting
+            # its auto-detection, which can split a ';'-CSV on commas inside quoted
+            # free-text and yield a garbage schema with no parse error. None (a
+            # single-column or unsniffable file) keeps DuckDB's detection.
+            sniffed_delim = _sniff_csv_delimiter(csv_path, csv_encoding)
+
             # Profile ladder: evaluation is lazy, so a parse or type-conversion
             # error can surface at any pass (count, sampling, stats, preview) —
             # each rung therefore wraps the whole scan body and a fresh
@@ -304,8 +332,11 @@ def scan_csv(
                     continue
                 con = ibis.duckdb.connect()
                 try:
+                    read_kwargs = dict(profile)
+                    if sniffed_delim is not None:
+                        read_kwargs["delim"] = sniffed_delim
                     table = con.read_csv(
-                        str(csv_path), nullstr=_CSV_NULL_STRINGS, **profile
+                        str(csv_path), nullstr=_CSV_NULL_STRINGS, **read_kwargs
                     )
                     # count(*) converts no column, so one successful count is
                     # valid for every rung — no full re-parse per attempt.
