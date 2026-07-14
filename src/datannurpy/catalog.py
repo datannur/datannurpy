@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 Depth = Literal["dataset", "variable", "stat", "value"]
 OnScanError = Literal["warn", "fail"]
 OnMetadataError = Literal["warn", "fail"]
+OnUnmatchedVariable = Literal["create", "skip"]
 
 
 def _normalize_metadata_paths(
@@ -86,6 +87,7 @@ class Catalog(DatannurDB):
         refresh: bool = False,
         on_scan_error: OnScanError = "warn",
         on_metadata_error: OnMetadataError = "warn",
+        on_unmatched_variable: OnUnmatchedVariable = "create",
         freq_threshold: int = 100,
         auto_enumerations: bool = True,
         csv_encoding: str | None = None,
@@ -113,6 +115,12 @@ class Catalog(DatannurDB):
                 f"on_metadata_error must be 'warn' or 'fail', got {on_metadata_error!r}"
             )
         self.on_metadata_error: OnMetadataError = on_metadata_error
+        if on_unmatched_variable not in get_args(OnUnmatchedVariable):
+            raise ConfigError(
+                f"on_unmatched_variable must be 'create' or 'skip', "
+                f"got {on_unmatched_variable!r}"
+            )
+        self.on_unmatched_variable: OnUnmatchedVariable = on_unmatched_variable
         self.freq_threshold = freq_threshold
         self.auto_enumerations = auto_enumerations
         self.csv_encoding = csv_encoding

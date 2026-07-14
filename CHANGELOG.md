@@ -1,5 +1,11 @@
 # datannurpy
 
+## 0.33.0 (2026-07-14)
+
+- add: `on_unmatched_variable` option — `"create"` (default) keeps building a variable from a `variable` metadata overlay whose id matches no scanned variable, `"skip"` drops the row (and logs how many) so external enrichment (i14y, a data dictionary) never leaves dataless phantom variables when a column name doesn't line up
+- fix: CSV scans use the delimiter our own sniffer finds instead of trusting DuckDB's auto-detection, which can split a valid `;`-CSV on commas inside quoted free-text fields and yield a garbage schema with no parse error — the scan now matches the delimiter the pre-flight already validated the file against; an inconclusive sniff (single-column or unsniffable file) still falls back to DuckDB
+- fix: a CSV carrying two leading UTF-8 BOMs (some portals re-export an already-BOM'd file) no longer leaves a stray BOM glued to the first column name (`﻿Name`) — DuckDB strips only the first, so every leading BOM is now removed before the scan, keeping the first column's identity stable for external-metadata overlays
+
 ## 0.32.0 (2026-07-13)
 
 - add: `folder:` scans discover zipped multi-layer containers — a single `.gdb` tree or `.gpkg` member becomes one dataset per layer under a container folder (CRS / geometry type / bbox included), same Zip Slip / zip-bomb guards; an unchanged archive is skipped by mtime without being extracted, and `create_folders: false` matches layers on `<zip path>::<layer>`

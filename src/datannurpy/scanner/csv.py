@@ -84,30 +84,53 @@ def _decode_csv_sample(sample: bytes, csv_encoding: str | None) -> str:
         text = sample.decode("utf-8")
     except UnicodeDecodeError:
         text = sample.decode(csv_encoding or "cp1252", errors="replace")
-    # Strip UTF-8 BOM if present (common on Windows-exported CSVs)
-    if text.startswith("\ufeff"):
-        text = text[1:]
+    # Strip UTF-8 BOM(s) if present (common on Windows-exported CSVs). Some export
+    # pipelines double-encode and emit two BOMs (e.g. opendata portals re-exporting
+    # an already-BOM'd file) \u2014 strip every leading one, not just the first.
+    text = text.lstrip("\ufeff")
     # Normalize line endings: stdlib csv only accepts \n or \r\n, but some files
     # (Mac Classic, legacy SDMX exports) use bare \r as line terminator.
     return text.replace("\r\n", "\n").replace("\r", "\n").lstrip("\n")
+
+
+def _sniff_csv_dialect(text: str) -> Any | None:
+    """Sniff a CSV dialect from a text sample, restricted to common delimiters so
+    commas inside quoted fields don't fool the sniffer when the real separator is
+    ';' (FR/DE/IT locales). None when the sniff is inconclusive — blank text, a
+    single-column file, or otherwise ambiguous (csv.Sniffer raises on all three)."""
+    try:
+        return csv.Sniffer().sniff(text, delimiters=_CSV_HEADER_DELIMITERS)
+    except csv.Error:
+        return None
 
 
 def _csv_reader_from_text(text: str) -> Any:
     """Build a csv.reader with sniffed dialect, or None if text is blank."""
     if not text.strip():
         return None
-    # Sniff dialect on a reasonable sample, restricted to common delimiters so
-    # commas inside quoted header fields don't fool the sniffer when the real
-    # separator is ';' (FR/DE/IT locales).
-    try:
-        dialect = csv.Sniffer().sniff(text, delimiters=_CSV_HEADER_DELIMITERS)
-    except csv.Error:
-        dialect = None  # type: ignore[assignment]
+    dialect = _sniff_csv_dialect(text)
     return (
         csv.reader(io.StringIO(text), dialect)
         if dialect
         else csv.reader(io.StringIO(text))
     )
+
+
+def _sniff_csv_delimiter(path: Path, csv_encoding: str | None) -> str | None:
+    """Delimiter sniffed from a CSV's leading bytes (same csv.Sniffer the preview
+    and header paths use), or None when inconclusive.
+
+    DuckDB's own delimiter auto-detection can pick the wrong separator when quoted
+    free-text fields contain the competing one (a ';'-CSV whose text columns hold
+    commas): it may miss the quote char and split on those commas, silently
+    yielding a garbage schema with no parse error. Passing this sniffed delimiter
+    to ``con.read_csv(delim=…)`` aligns the scan with the delimiter the pre-flight
+    already validated the file against. None falls back to DuckDB's detection, so a
+    single-column or unsniffable file behaves exactly as before."""
+    with open(path, "rb") as fb:
+        sample = fb.read(_CSV_HEADER_SAMPLE_BYTES)
+    dialect = _sniff_csv_dialect(_decode_csv_sample(sample, csv_encoding))
+    return dialect.delimiter if dialect is not None else None
 
 
 def _read_csv_header(sample: bytes, csv_encoding: str | None = None) -> list[str]:
@@ -119,6 +142,15 @@ def _read_csv_header(sample: bytes, csv_encoding: str | None = None) -> list[str
     return deduplicate_columns([c for c in row if c.strip()])
 
 
+_UTF8_BOM = b"\xef\xbb\xbf"
+
+
+def _starts_with_double_bom(file_path: Path) -> bool:
+    """Whether a file begins with two UTF-8 BOMs — DuckDB strips only the first."""
+    with open(file_path, "rb") as fb:
+        return fb.read(2 * len(_UTF8_BOM)) == _UTF8_BOM * 2
+
+
 @contextmanager
 def _csv_source(
     file_path: Path,
@@ -127,10 +159,15 @@ def _csv_source(
 ) -> Generator[Path, None, None]:
     """Provide a local UTF-8 CSV file for DuckDB to read."""
     gzipped = is_gzipped(file_path.name)
+    # DuckDB strips a single leading BOM itself, but a doubly-BOM'd file (some
+    # portals re-export an already-BOM'd file) would keep a stray BOM on the first
+    # column name; the transcode route strips every leading BOM, so a double BOM
+    # forgoes the copy-skip shortcut.
+    double_bom = _starts_with_double_bom(file_path)
     # DuckDB can read a .gz directly, but that shortcut bypasses both the encoding
     # transcode (a gzipped cp1252 CSV would break) and the decompression-bomb guard,
     # so a gzipped source always goes through the transcode route below.
-    if csv_skip_copy and not gzipped:
+    if csv_skip_copy and not gzipped and not double_bom:
         try:
             con = ibis.duckdb.connect()
             try:
@@ -289,6 +326,12 @@ def scan_csv(
                     )
                     return result([], None, None, None, None)
 
+            # Feed DuckDB the delimiter our own sniffer found rather than trusting
+            # its auto-detection, which can split a ';'-CSV on commas inside quoted
+            # free-text and yield a garbage schema with no parse error. None (a
+            # single-column or unsniffable file) keeps DuckDB's detection.
+            sniffed_delim = _sniff_csv_delimiter(csv_path, csv_encoding)
+
             # Profile ladder: evaluation is lazy, so a parse or type-conversion
             # error can surface at any pass (count, sampling, stats, preview) —
             # each rung therefore wraps the whole scan body and a fresh
@@ -304,8 +347,11 @@ def scan_csv(
                     continue
                 con = ibis.duckdb.connect()
                 try:
+                    read_kwargs = dict(profile)
+                    if sniffed_delim is not None:
+                        read_kwargs["delim"] = sniffed_delim
                     table = con.read_csv(
-                        str(csv_path), nullstr=_CSV_NULL_STRINGS, **profile
+                        str(csv_path), nullstr=_CSV_NULL_STRINGS, **read_kwargs
                     )
                     # count(*) converts no column, so one successful count is
                     # valid for every rung — no full re-parse per attempt.

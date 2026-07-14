@@ -91,6 +91,122 @@ class TestLegacyEncoding:
         assert list(df.columns) == ["a", "b"]
 
 
+class TestDelimiterSniffing:
+    """The scan is fed our own sniffed delimiter, not DuckDB's auto-detection,
+    which can split a ';'-CSV on commas inside quoted free-text fields."""
+
+    def test_sniff_csv_delimiter(self, tmp_path: Path):
+        """_sniff_csv_delimiter returns the separator, or None when inconclusive."""
+        from datannurpy.scanner.csv import _sniff_csv_delimiter
+
+        cases = {
+            "a;b;c\n1;2;3\n": ";",
+            "a,b,c\n1,2,3\n": ",",
+            "a\tb\tc\n1\t2\t3\n": "\t",
+            "name\nAlice\nBob\n": None,  # single column → DuckDB fallback
+        }
+        for text, expected in cases.items():
+            f = tmp_path / "probe.csv"
+            f.write_text(text, encoding="utf-8")
+            assert _sniff_csv_delimiter(f, None) == expected
+
+    def test_semicolon_csv_with_commas_in_quoted_fields(self, tmp_path: Path):
+        """A valid ';'-CSV whose quoted text columns contain commas keeps its real
+        columns instead of being split on the embedded commas."""
+        csv_file = tmp_path / "kt.csv"
+        csv_file.write_text(
+            "Name;Zweck;Gesetzliche Grundlagen\n"
+            'Personenregister;"Name, Vorname, Geburtsdatum";"Art. 1, Abs. 2"\n'
+            'Objektregister;"Adresse, Parzelle, Nutzung";"Gesetz A, Gesetz B"\n',
+            encoding="utf-8",
+        )
+
+        catalog = Catalog()
+        catalog.add_dataset(csv_file)
+
+        assert [v.name for v in catalog.variable.all()] == [
+            "Name",
+            "Zweck",
+            "Gesetzliche Grundlagen",
+        ]
+        assert catalog.dataset.all()[0].nb_row == 2
+
+    def test_sniffed_delimiter_is_honored_by_the_scan(
+        self, tmp_path: Path, monkeypatch
+    ):
+        """The sniffed delimiter reaches DuckDB: forcing ';' on a comma file makes
+        the whole row one column, proving the scan does not re-detect on its own."""
+        import datannurpy.scanner.csv as csv_mod
+
+        csv_file = tmp_path / "comma.csv"
+        csv_file.write_text("id,name\n1,Alice\n2,Bob\n", encoding="utf-8")
+
+        monkeypatch.setattr(csv_mod, "_sniff_csv_delimiter", lambda *_a, **_k: ";")
+
+        catalog = Catalog()
+        catalog.add_dataset(csv_file)
+
+        assert [v.name for v in catalog.variable.all()] == ["id,name"]
+
+    def test_inconclusive_sniff_falls_back_to_duckdb(self, tmp_path: Path, monkeypatch):
+        """When the sniff is inconclusive (None), DuckDB's own detection is used."""
+        import datannurpy.scanner.csv as csv_mod
+
+        csv_file = tmp_path / "semi.csv"
+        csv_file.write_text("a;b;c\n1;2;3\n", encoding="utf-8")
+
+        monkeypatch.setattr(csv_mod, "_sniff_csv_delimiter", lambda *_a, **_k: None)
+
+        catalog = Catalog()
+        catalog.add_dataset(csv_file)
+
+        assert [v.name for v in catalog.variable.all()] == ["a", "b", "c"]
+
+
+class TestDoubleBom:
+    """DuckDB strips one leading BOM; a doubly-BOM'd file (some portals re-export
+    an already-BOM'd file) would keep a stray BOM on the first column name."""
+
+    def test_chunk_stripper_removes_all_leading_boms(self):
+        """_read_chunks_bom_stripped drops every leading BOM, nothing else."""
+        import io
+
+        from datannurpy.scanner.filesystem import _read_chunks_bom_stripped
+
+        bom = b"\xef\xbb\xbf"
+        cases = {
+            b"Name\n1\n": b"Name\n1\n",  # none
+            bom + b"Name\n": b"Name\n",  # single
+            bom * 2 + b"Name\n": b"Name\n",  # double
+            bom * 3 + b"Name\n": b"Name\n",  # triple
+            bom * 2: b"",  # only BOMs
+            b"": b"",  # empty
+        }
+        for raw, expected in cases.items():
+            assert b"".join(_read_chunks_bom_stripped(io.BytesIO(raw))) == expected
+
+    def test_double_bom_first_column_name_is_clean(self, tmp_path: Path):
+        """A ';'-CSV prefixed with two BOMs yields 'Name', not '\\ufeffName', so an
+        external-metadata overlay keyed on the real column name still matches."""
+        csv_file = tmp_path / "double_bom.csv"
+        csv_file.write_bytes("﻿﻿Name;Zweck\nRegister;Verwaltung\n".encode("utf-8"))
+
+        for skip_copy in (False, True):
+            catalog = Catalog(csv_skip_copy=skip_copy)
+            catalog.add_dataset(csv_file)
+            assert [v.name for v in catalog.variable.all()] == ["Name", "Zweck"]
+
+    def test_single_bom_still_clean(self, tmp_path: Path):
+        """A single-BOM file keeps working (regression guard for the copy-skip path)."""
+        csv_file = tmp_path / "single_bom.csv"
+        csv_file.write_bytes("﻿Name;Zweck\nRegister;Verwaltung\n".encode("utf-8"))
+
+        catalog = Catalog(csv_skip_copy=True)
+        catalog.add_dataset(csv_file)
+
+        assert [v.name for v in catalog.variable.all()] == ["Name", "Zweck"]
+
+
 class TestSkipCopy:
     """Test csv_skip_copy parameter for CSV scanning."""
 
