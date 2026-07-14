@@ -84,9 +84,10 @@ def _decode_csv_sample(sample: bytes, csv_encoding: str | None) -> str:
         text = sample.decode("utf-8")
     except UnicodeDecodeError:
         text = sample.decode(csv_encoding or "cp1252", errors="replace")
-    # Strip UTF-8 BOM if present (common on Windows-exported CSVs)
-    if text.startswith("\ufeff"):
-        text = text[1:]
+    # Strip UTF-8 BOM(s) if present (common on Windows-exported CSVs). Some export
+    # pipelines double-encode and emit two BOMs (e.g. opendata portals re-exporting
+    # an already-BOM'd file) \u2014 strip every leading one, not just the first.
+    text = text.lstrip("\ufeff")
     # Normalize line endings: stdlib csv only accepts \n or \r\n, but some files
     # (Mac Classic, legacy SDMX exports) use bare \r as line terminator.
     return text.replace("\r\n", "\n").replace("\r", "\n").lstrip("\n")
@@ -141,6 +142,15 @@ def _read_csv_header(sample: bytes, csv_encoding: str | None = None) -> list[str
     return deduplicate_columns([c for c in row if c.strip()])
 
 
+_UTF8_BOM = b"\xef\xbb\xbf"
+
+
+def _starts_with_double_bom(file_path: Path) -> bool:
+    """Whether a file begins with two UTF-8 BOMs — DuckDB strips only the first."""
+    with open(file_path, "rb") as fb:
+        return fb.read(2 * len(_UTF8_BOM)) == _UTF8_BOM * 2
+
+
 @contextmanager
 def _csv_source(
     file_path: Path,
@@ -149,10 +159,15 @@ def _csv_source(
 ) -> Generator[Path, None, None]:
     """Provide a local UTF-8 CSV file for DuckDB to read."""
     gzipped = is_gzipped(file_path.name)
+    # DuckDB strips a single leading BOM itself, but a doubly-BOM'd file (some
+    # portals re-export an already-BOM'd file) would keep a stray BOM on the first
+    # column name; the transcode route strips every leading BOM, so a double BOM
+    # forgoes the copy-skip shortcut.
+    double_bom = _starts_with_double_bom(file_path)
     # DuckDB can read a .gz directly, but that shortcut bypasses both the encoding
     # transcode (a gzipped cp1252 CSV would break) and the decompression-bomb guard,
     # so a gzipped source always goes through the transcode route below.
-    if csv_skip_copy and not gzipped:
+    if csv_skip_copy and not gzipped and not double_bom:
         try:
             con = ibis.duckdb.connect()
             try:

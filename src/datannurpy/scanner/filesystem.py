@@ -379,19 +379,41 @@ def get_filesystem(
 _CHUNK_SIZE = 1_048_576  # 1 MB
 
 
+_UTF8_BOM = b"\xef\xbb\xbf"
+
+
+def _read_chunks_bom_stripped(fin: IO[bytes]) -> Iterator[bytes]:
+    """Yield the stream in chunks with every leading UTF-8 BOM removed.
+
+    DuckDB strips a single leading BOM itself, but some export pipelines
+    double-encode and emit two (an opendata portal re-exporting an already-BOM'd
+    file), leaving a stray BOM glued to the first column name (``\\ufeffName``).
+    Stripping them here — before the file reaches DuckDB — keeps the first column's
+    identity stable, so external-metadata overlays match it. A BOM only carries
+    meaning at the very start, so leading ones are always safe to drop."""
+    prefix = fin.read(len(_UTF8_BOM))
+    while prefix == _UTF8_BOM:
+        prefix = fin.read(len(_UTF8_BOM))
+    first = prefix + fin.read(_CHUNK_SIZE)
+    if first:
+        yield first
+    while chunk := fin.read(_CHUNK_SIZE):
+        yield chunk
+
+
 def ensure_local_utf8(
     fin: IO[bytes], fout: IO[bytes], csv_encoding: str | None = None
 ) -> None:
-    """Copy binary stream to output, ensuring UTF-8 encoding."""
+    """Copy binary stream to output, ensuring UTF-8 encoding and no leading BOM."""
     if csv_encoding:
-        while chunk := fin.read(_CHUNK_SIZE):
+        for chunk in _read_chunks_bom_stripped(fin):
             fout.write(chunk.decode(csv_encoding).encode("utf-8"))
         return
 
     decoder = codecs.getincrementaldecoder("utf-8")("strict")
     is_utf8 = True
     carry = b""
-    while chunk := fin.read(_CHUNK_SIZE):
+    for chunk in _read_chunks_bom_stripped(fin):
         if is_utf8:
             try:
                 decoder.decode(chunk, False)

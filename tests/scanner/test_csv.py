@@ -163,6 +163,50 @@ class TestDelimiterSniffing:
         assert [v.name for v in catalog.variable.all()] == ["a", "b", "c"]
 
 
+class TestDoubleBom:
+    """DuckDB strips one leading BOM; a doubly-BOM'd file (some portals re-export
+    an already-BOM'd file) would keep a stray BOM on the first column name."""
+
+    def test_chunk_stripper_removes_all_leading_boms(self):
+        """_read_chunks_bom_stripped drops every leading BOM, nothing else."""
+        import io
+
+        from datannurpy.scanner.filesystem import _read_chunks_bom_stripped
+
+        bom = b"\xef\xbb\xbf"
+        cases = {
+            b"Name\n1\n": b"Name\n1\n",  # none
+            bom + b"Name\n": b"Name\n",  # single
+            bom * 2 + b"Name\n": b"Name\n",  # double
+            bom * 3 + b"Name\n": b"Name\n",  # triple
+            bom * 2: b"",  # only BOMs
+            b"": b"",  # empty
+        }
+        for raw, expected in cases.items():
+            assert b"".join(_read_chunks_bom_stripped(io.BytesIO(raw))) == expected
+
+    def test_double_bom_first_column_name_is_clean(self, tmp_path: Path):
+        """A ';'-CSV prefixed with two BOMs yields 'Name', not '\\ufeffName', so an
+        external-metadata overlay keyed on the real column name still matches."""
+        csv_file = tmp_path / "double_bom.csv"
+        csv_file.write_bytes("﻿﻿Name;Zweck\nRegister;Verwaltung\n".encode("utf-8"))
+
+        for skip_copy in (False, True):
+            catalog = Catalog(csv_skip_copy=skip_copy)
+            catalog.add_dataset(csv_file)
+            assert [v.name for v in catalog.variable.all()] == ["Name", "Zweck"]
+
+    def test_single_bom_still_clean(self, tmp_path: Path):
+        """A single-BOM file keeps working (regression guard for the copy-skip path)."""
+        csv_file = tmp_path / "single_bom.csv"
+        csv_file.write_bytes("﻿Name;Zweck\nRegister;Verwaltung\n".encode("utf-8"))
+
+        catalog = Catalog(csv_skip_copy=True)
+        catalog.add_dataset(csv_file)
+
+        assert [v.name for v in catalog.variable.all()] == ["Name", "Zweck"]
+
+
 class TestSkipCopy:
     """Test csv_skip_copy parameter for CSV scanning."""
 
