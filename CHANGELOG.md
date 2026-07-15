@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.33.1 (2026-07-15)
+
+- fix: the `frequency` table is no longer tracked in evolution — its per-modality value counts flooded the history with one entry per changed count on every re-scan; frequencies are still exported, they just produce no evolution entries (via jsonjsdb 0.9.4's `evolution_exclude`)
+
 ## 0.33.0 (2026-07-14)
 
 - add: `on_unmatched_variable` option — `"create"` (default) keeps building a variable from a `variable` metadata overlay whose id matches no scanned variable, `"skip"` drops the row (and logs how many) so external enrichment (i14y, a data dictionary) never leaves dataless phantom variables when a column name doesn't line up

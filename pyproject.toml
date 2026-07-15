@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "datannurpy"
-version = "0.33.0"
+version = "0.33.1"
 description = "Scan files and databases into ready-to-use datannur catalogs"
 authors = [{ name = "datannur" }]
 readme = "README.md"
@@ -24,7 +24,7 @@ classifiers = [
 dependencies = [
   "ibis-framework[duckdb]>=11.0",
   "polars>=1.0",
-  "jsonjsdb>=0.9.3",
+  "jsonjsdb>=0.9.4",
   "openpyxl>=3.0",
   "xlrd>=2.0",
   "odfpy>=1.4",
@@ -158,7 +158,7 @@ constraint-dependencies = [
 ]
 
 [tool.uv.exclude-newer-package]
-jsonjsdb = "2026-07-09T23:59:59Z"
+jsonjsdb = "2026-07-15T23:59:59Z"
 
 [tool.pyright]
 pythonVersion = "3.9"
