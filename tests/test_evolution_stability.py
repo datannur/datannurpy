@@ -202,3 +202,45 @@ class TestEvolutionStability:
             folders2 = json.load(f)
         enumerations_folder = [f for f in folders2 if f["id"] == "_enumerations"]
         assert len(enumerations_folder) == 1, "_enumerations folder should still exist"
+
+    def test_frequency_distribution_shift_not_tracked(self, tmp_path: Path):
+        """A value-distribution shift must not emit any frequency evolution entries.
+
+        Frequency rows carry per-modality counts; tracking them would flood the
+        evolution with one entry per changed count on every re-scan. They are
+        excluded from evolution (via jsonjsdb evolution_exclude) while still being
+        exported normally.
+        """
+        app_dir = tmp_path / "app"
+        db_dir = app_dir / "data" / "db"
+        data_dir = tmp_path / "source"
+        data_dir.mkdir()
+
+        csv = data_dir / "sales.csv"
+        # Run 1: baseline distribution (north x2, south x2)
+        csv.write_text("id,region\n1,north\n2,south\n3,north\n4,south\n")
+        catalog1 = Catalog(app_path=app_dir, refresh=True)
+        catalog1.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
+        catalog1.export_db()
+
+        # frequency table is still exported
+        assert (db_dir / "frequency.json").exists(), (
+            "frequency table should still be exported"
+        )
+        assert not (db_dir / "evolution.json").exists()
+
+        # Run 2: same ids/columns, only the modality counts shift (north x3, south x1).
+        # refresh=True forces a re-scan regardless of unchanged mtime/size.
+        csv.write_text("id,region\n1,north\n2,north\n3,north\n4,south\n")
+        catalog2 = Catalog(app_path=app_dir, refresh=True)
+        catalog2.add_folder(data_dir, metadata=EntityMetadata(id="src", name="Source"))
+        catalog2.export_db()
+
+        # No frequency rows in evolution, whatever else may be tracked
+        if (db_dir / "evolution.json").exists():
+            with open(db_dir / "evolution.json") as f:
+                evolution = json.load(f)
+            frequency_entries = [e for e in evolution if e.get("entity") == "frequency"]
+            assert frequency_entries == [], (
+                f"frequency must not be tracked: {frequency_entries}"
+            )

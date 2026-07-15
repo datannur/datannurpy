@@ -597,6 +597,10 @@ def export_db(
         track_evolution=track_evolution,
         timestamp=catalog._now,
         parent_relations=parent_relations,
+        # Frequency rows hold per-modality counts; tracking them would emit an
+        # evolution entry for every count shift on every re-scan. Export them but
+        # keep them out of evolution entirely.
+        evolution_exclude={"frequency"},
     )
     _clean_stale_db_files(catalog, Path(path))
     if export_size_report:
