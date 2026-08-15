@@ -295,6 +295,92 @@ class TestSampling:
         assert actual_sample is None
         assert frequency is None
 
+    @staticmethod
+    def _ragged_rows() -> list[str]:
+        """A ';'-CSV with quoted free text (so the delimiter sniff succeeds)
+        and one over-wide row from an unescaped separator, like government
+        portal exports."""
+        people = [
+            "Alice",
+            "Bruno",
+            "Carla",
+            "Dario",
+            "Elsa",
+            "Fabio",
+            "Gina",
+            "Hans",
+            "Ines",
+            "Jon",
+        ]
+        rows = ["code;name;description"]
+        rows += [f'{100 + i};"{p}";"role {i}"' for i, p in enumerate(people)]
+        rows.insert(3, '199;"Zoe";works on data; open data lead')
+        return rows
+
+    def test_scan_csv_ragged_minority_scanned_tolerantly(self, tmp_path: Path, capsys):
+        """A few over-wide rows (unescaped separator in free text) no longer
+        lose the whole file: the tolerant rungs truncate them at header width."""
+        from datannurpy.scanner.csv import scan_csv
+
+        rows = self._ragged_rows()
+        rows.insert(5, "")  # blank line: ignored by the preview width stats
+        csv_file = tmp_path / "ragged.csv"
+        csv_file.write_text("\n".join(rows) + "\n")
+
+        variables, nb_row, _sample, _freq = scan_csv(
+            csv_file, dataset_id="test", quiet=False
+        )
+
+        captured = capsys.readouterr()
+        assert "scanned tolerantly" in captured.err
+        assert "skipped as untreatable" not in captured.err
+        assert [v.name for v in variables] == ["code", "name", "description"]
+        assert nb_row == 11  # the ragged row is kept, truncated at 3 columns
+
+    def test_scan_csv_ragged_with_unparseable_row_reports_exclusion(
+        self, tmp_path: Path, capsys
+    ):
+        """Lines the tolerant read drops entirely (here: under-wide) are
+        reported as excluded from nb_row — its count never saw them."""
+        from datannurpy.scanner.csv import scan_csv
+
+        rows = self._ragged_rows()
+        rows.insert(7, "lonely value")  # under-wide: unparseable, dropped
+        csv_file = tmp_path / "ragged_dropped.csv"
+        csv_file.write_text("\n".join(rows) + "\n")
+
+        variables, nb_row, _sample, _freq = scan_csv(
+            csv_file, dataset_id="test", quiet=False
+        )
+
+        captured = capsys.readouterr()
+        assert "1 unparseable row(s) dropped" in captured.err
+        assert "excluded from nb_row" in captured.err
+        assert [v.name for v in variables] == ["code", "name", "description"]
+        assert nb_row == 11  # truncated ragged row kept, dropped line not counted
+
+    def test_scan_csv_ragged_beyond_tolerance_skipped(
+        self, tmp_path: Path, monkeypatch, capsys
+    ):
+        """When every tolerant rung drops more rows than the tolerance allows,
+        the ragged fall-through still ends in a clean untreatable skip."""
+        from datannurpy.scanner import csv as csv_mod
+
+        csv_file = tmp_path / "mutilated.csv"
+        csv_file.write_text("\n".join(self._ragged_rows()) + "\n")
+
+        monkeypatch.setattr(csv_mod, "_count_rejected_lines", lambda _con: 10_000)
+        variables, nb_row, actual_sample, frequency = csv_mod.scan_csv(
+            csv_file, dataset_id="test", quiet=False
+        )
+
+        captured = capsys.readouterr()
+        assert "skipped as untreatable" in captured.err
+        assert variables == []
+        assert nb_row is None
+        assert actual_sample is None
+        assert frequency is None
+
     def test_nested_csv_warning_uses_relative_path(self, tmp_path: Path, capsys):
         """CSV validation warnings from add_folder should keep the relative path."""
         nested = tmp_path / "folder" / "subfolder"

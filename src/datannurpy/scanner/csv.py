@@ -23,7 +23,7 @@ from ..compression import (
 )
 from ..utils import log_error, log_warn
 from ..preview import preview_from_arrow, preview_from_ibis
-from .excel import is_valid_tabular_dataset
+from .excel import WIDER_THAN_HEADER, is_valid_tabular_dataset
 from .filesystem import ensure_local_utf8
 from .utils import build_variables, deduplicate_columns
 
@@ -63,8 +63,10 @@ _CSV_NULL_STRINGS_KEEP_EMPTY = [s for s in _CSV_NULL_STRINGS if s != ""]
 #      row does (ignore_errors only sheds lines that cannot be split at all).
 # Rungs 3-4 are accepted only when the damage stays marginal (see
 # _dropped_rows_tolerance). Values in a column are never altered: rows are
-# ignored or kept verbatim, so a degraded dataset is incomplete or untyped,
-# never wrong.
+# ignored or kept verbatim — with one exception: the non-strict rungs keep
+# over-wide ragged lines by truncating them at the header's width, discarding
+# the spilled fields. A degraded dataset is incomplete or untyped, never
+# rearranged.
 _CSV_READ_PROFILES: tuple[dict[str, Any], ...] = (
     {},
     {"strict_mode": False},
@@ -213,6 +215,18 @@ def _read_preview_rows_csv(path: Path, *, n: int = 10) -> list[tuple[object, ...
     return rows
 
 
+def _over_wide_rows_are_minority(rows: list[tuple[object, ...]]) -> bool:
+    """Whether preview rows wider than the header are a strict minority of the
+    data rows — ragged lines (unescaped separators in free-text fields, common
+    in portal exports) rather than a title row sitting above the real, wider
+    header, where every data row overflows."""
+    header = rows[0]
+    header_width = 1 + max(i for i, v in enumerate(header) if v is not None)
+    data = [row for row in rows[1:] if any(v is not None for v in row)]
+    wider = sum(1 for row in data if any(v is not None for v in row[header_width:]))
+    return wider * 2 < len(data)
+
+
 def _short_csv_error(exc: BaseException) -> str:
     """Return a one-line summary of a DuckDB CSV parse error."""
     msg = str(exc).split("\n", 1)[0]
@@ -274,6 +288,40 @@ def read_csv(
         return None
 
 
+def _warn_degraded_read(
+    label: str,
+    profile: dict[str, Any],
+    dropped: int,
+    count_includes_dropped: bool,
+    quiet: bool,
+) -> None:
+    """Warn about the fidelity a degraded read profile gave up: columns kept as
+    text (all_varchar) and/or dropped lines — saying whether nb_row still
+    counts them (conversion drops do, parse-level drops don't)."""
+    if profile.get("all_varchar"):
+        unparseable = f"; {dropped} unparseable row(s) dropped" if dropped else ""
+        log_warn(
+            f"{label}: type conversion failed; all columns "
+            f"read as text (all_varchar fallback){unparseable}",
+            quiet,
+        )
+    elif dropped and count_includes_dropped:
+        log_warn(
+            f"{label}: {dropped} unconvertible row(s) ignored "
+            f"by statistics (ignore_errors fallback); they "
+            f"still count in nb_row and appear as missing "
+            f"values",
+            quiet,
+        )
+    elif dropped:
+        log_warn(
+            f"{label}: {dropped} unparseable row(s) dropped "
+            f"(ignore_errors fallback); they are excluded "
+            f"from nb_row",
+            quiet,
+        )
+
+
 def scan_csv(
     path: str | Path,
     *,
@@ -316,15 +364,31 @@ def scan_csv(
                 preview = _read_preview_rows_csv(csv_path)
             except Exception:
                 preview = []
+            ragged_minority = False
             if preview:
                 valid, reason = is_valid_tabular_dataset(preview)
                 if not valid:
+                    # A minority of over-wide rows is ragged lines (unescaped
+                    # separators in free-text fields, common in portal
+                    # exports), not structure: scan tolerantly instead of
+                    # losing the whole file.
+                    ragged_minority = (
+                        reason == WIDER_THAN_HEADER
+                        and _over_wide_rows_are_minority(preview)
+                    )
+                    if not ragged_minority:
+                        log_warn(
+                            f"{label}: not a valid tabular dataset "
+                            f"({reason}); skipped as untreatable",
+                            quiet,
+                        )
+                        return result([], None, None, None, None)
                     log_warn(
-                        f"{label}: not a valid tabular dataset "
-                        f"({reason}); skipped as untreatable",
+                        f"{label}: ragged rows (data wider than header row); "
+                        f"scanned tolerantly — over-wide rows truncated at "
+                        f"header width",
                         quiet,
                     )
-                    return result([], None, None, None, None)
 
             # Feed DuckDB the delimiter our own sniffer found rather than trusting
             # its auto-detection, which can split a ';'-CSV on commas inside quoted
@@ -338,12 +402,15 @@ def scan_csv(
             # connection keeps the rejects count of one attempt isolated.
             last_error: Exception | None = None
             known_row_count: int | None = None
-            needs_conversion_tolerance = False
+            count_includes_dropped = True
+            # Rungs without ignore_errors are skipped once tolerance is known
+            # to be required: after a conversion error (about values, not
+            # sniffing — lenient sniffing alone would fail identically), or
+            # from the start for a ragged file, where an error-free rung can
+            # only "succeed" by contorting the dialect into a garbage schema.
+            needs_tolerant_read = ragged_minority
             for profile in _CSV_READ_PROFILES:
-                if needs_conversion_tolerance and not profile.get("ignore_errors"):
-                    # A conversion error is about values, not sniffing — the
-                    # dialect already fit every line (the count succeeded) —
-                    # so lenient sniffing alone would fail identically.
+                if needs_tolerant_read and not profile.get("ignore_errors"):
                     continue
                 con = ibis.duckdb.connect()
                 try:
@@ -357,6 +424,9 @@ def scan_csv(
                     # valid for every rung — no full re-parse per attempt.
                     if known_row_count is None:
                         known_row_count = int(table.count().to_pyarrow().as_py())
+                        # An ignore_errors count already excludes the lines it
+                        # drops; a strict count parsed (hence counted) them all.
+                        count_includes_dropped = not profile.get("ignore_errors")
                     scanned = _scan_csv_table(
                         con,
                         table,
@@ -375,7 +445,7 @@ def scan_csv(
                 ) as exc:
                     last_error = exc
                     if isinstance(exc, _duckdb.ConversionException):
-                        needs_conversion_tolerance = True
+                        needs_tolerant_read = True
                     continue
                 else:
                     nb_row = scanned[1]
@@ -386,28 +456,24 @@ def scan_csv(
                     )
                     if dropped > _dropped_rows_tolerance(nb_row):
                         continue  # too mutilated — try text-only, else give up
-                    if profile.get("all_varchar"):
-                        unparseable = (
-                            f"; {dropped} unparseable row(s) dropped" if dropped else ""
-                        )
-                        log_warn(
-                            f"{label}: type conversion failed; all columns "
-                            f"read as text (all_varchar fallback){unparseable}",
-                            quiet,
-                        )
-                    elif dropped:
-                        log_warn(
-                            f"{label}: {dropped} unconvertible row(s) ignored "
-                            f"by statistics (ignore_errors fallback); they "
-                            f"still count in nb_row and appear as missing "
-                            f"values",
-                            quiet,
-                        )
+                    _warn_degraded_read(
+                        label, profile, dropped, count_includes_dropped, quiet
+                    )
                     return result(*scanned)
                 finally:
                     con.disconnect()
 
-            assert last_error is not None  # the ladder only ends via exceptions
+            if last_error is None:
+                # Only the ragged fall-through reaches here without an
+                # exception: every tolerant rung dropped more rows than
+                # _dropped_rows_tolerance allows, so the file is too mutilated
+                # to trust — same clean skip as the pre-flight.
+                log_warn(
+                    f"{label}: not a valid tabular dataset "
+                    f"({WIDER_THAN_HEADER}); skipped as untreatable",
+                    quiet,
+                )
+                return result([], None, None, None, None)
             if isinstance(last_error, _duckdb.InvalidInputException):
                 log_warn(
                     f"{label}: unscannable CSV "

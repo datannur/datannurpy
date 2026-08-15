@@ -285,6 +285,11 @@ def _capture_excel_diagnostics(label: str, quiet: bool) -> Iterator[None]:
                     log_debug(f"{label}: Excel parser diagnostic: {message}", quiet)
 
 
+# Shared with the CSV scanner, which treats this one reason as recoverable
+# (ragged lines) when the over-wide rows are a minority of the preview.
+WIDER_THAN_HEADER = "data wider than header row"
+
+
 def is_valid_tabular_dataset(rows: Sequence[tuple[object, ...]]) -> tuple[bool, str]:
     """Check if first rows look like a raw tabular dataset (xlsx or csv)."""
     if not rows:
@@ -323,7 +328,7 @@ def is_valid_tabular_dataset(rows: Sequence[tuple[object, ...]]) -> tuple[bool, 
         for i in range(len(row) - 1, -1, -1):
             if row[i] is not None:
                 if i >= header_width:
-                    return False, "data wider than header row"
+                    return False, WIDER_THAN_HEADER
                 break
 
     return True, ""
