@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.33.2 (2026-08-15)
+
+- fix: ui: wrap license text in a span for better line breaking in LicenseInfo component and fix crash on statically deployed entity pages
+
 ## 0.33.1 (2026-07-15)
 
 - fix: the `frequency` table is no longer tracked in evolution — its per-modality value counts flooded the history with one entry per changed count on every re-scan; frequencies are still exported, they just produce no evolution entries (via jsonjsdb 0.9.4's `evolution_exclude`)
