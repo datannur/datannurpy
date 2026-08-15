@@ -51,6 +51,9 @@ def configure_logging(
     _verbose = verbose
     if log_file is not None:
         _log_file_path = Path(log_file)
+        # A configured log_file implies its directory — create it so a fresh
+        # environment (CI runner, clean checkout) doesn't crash on truncation.
+        _log_file_path.parent.mkdir(parents=True, exist_ok=True)
         _log_file_path.write_text("", encoding="utf-8")
     else:
         _log_file_path = None
