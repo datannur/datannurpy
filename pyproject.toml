@@ -33,7 +33,7 @@ dependencies = [
   # 3.14+, which dropped Python 3.9 — so 3.9 gets no CVE-free aiohttp at all.
   # On 3.9 the dependency is absent and HTTP-URL scanning raises a clear error;
   # every other feature keeps working. See _ensure_http_support in filesystem.py.
-  "aiohttp>=3.14.1; python_version >= '3.10'",
+  "aiohttp>=3.14.3; python_version >= '3.10'",
   "rdflib>=7.0",
   "pyshacl>=0.30",
   "pyyaml>=6.0",
