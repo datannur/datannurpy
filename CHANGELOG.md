@@ -1,5 +1,10 @@
 # datannurpy
 
+## 0.33.3 (2026-08-15)
+
+- fix: a configured `log_file` creates its missing parent directories instead of crashing with `FileNotFoundError` on a fresh environment
+- fix: a CSV whose first rows contain a few over-wide lines (unescaped separator in free text) is scanned tolerantly — over-wide rows truncated at header width with a warning, same treatment ragged lines further down already got — instead of being skipped wholesale as untreatable
+
 ## 0.33.2 (2026-08-15)
 
 - fix: ui: wrap license text in a span for better line breaking in LicenseInfo component and fix crash on statically deployed entity pages

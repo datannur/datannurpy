@@ -297,6 +297,16 @@ def test_log_file_truncated_each_run(tmp_path):
     assert log_path.read_text(encoding="utf-8") == ""
 
 
+def test_log_file_creates_missing_parent_directory(tmp_path):
+    """configure_logging should create the log file's parent directory."""
+    log_path = tmp_path / "staging" / "logs" / "datannurpy.log"
+
+    configure_logging(log_file=log_path)
+    configure_logging()  # reset
+
+    assert log_path.read_text(encoding="utf-8") == ""
+
+
 def test_log_file_captures_all_levels(tmp_path):
     """log_file should capture output from all log functions."""
     log_path = tmp_path / "full.log"
