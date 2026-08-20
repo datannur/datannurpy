@@ -47,6 +47,10 @@ python -m datannurpy catalog.yml
 
 This command scans the configured sources, generates the catalog files, and opens the datannur app.
 
+## Create your own catalog online
+
+No local install needed: the [datannur template](https://github.com/datannur/datannur-template) lets you publish your own catalog on GitHub Pages in a few minutes — point at open data URLs or drop files, and every commit rebuilds the catalog automatically. See the [example catalog](https://datannur.github.io/datannur-template/) built from the template.
+
 ## Documentation
 
 📖 **Full documentation:** [docs.datannur.com/builder](https://docs.datannur.com/builder/)
