@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "datannurpy"
-version = "0.33.3"
+version = "0.33.4"
 description = "Scan files and databases into ready-to-use datannur catalogs"
 authors = [{ name = "datannur" }]
 readme = "README.md"
@@ -23,6 +23,11 @@ classifiers = [
 ]
 dependencies = [
   "ibis-framework[duckdb]>=11.0",
+  # ibis 12.0.0 + sqlglot >= 30.18 emit a nameless `DROP VIEW IF EXISTS`, so every
+  # in-memory create_table fails (Excel/ODS, Iceberg, partitioned Parquet scans).
+  # Fixed upstream (ibis-project/ibis#12104) but unreleased — drop this cap once an
+  # ibis release ships the fix. See ibis-project/ibis#12124.
+  "sqlglot<30.18",
   "polars>=1.0",
   "jsonjsdb>=0.9.4",
   "openpyxl>=3.0",
