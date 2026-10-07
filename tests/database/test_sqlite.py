@@ -25,7 +25,7 @@ class TestSQLite(BaseDatabaseTests):
     def db(
         self, sample_sqlite_db: Path
     ) -> Generator[tuple[ibis.BaseBackend, str, str], None, None]:
-        con, _ = connect(f"sqlite:////{sample_sqlite_db}")
+        con, _ = connect(f"sqlite:///{sample_sqlite_db.as_posix()}")
         yield con, "sqlite", "sqlite"
         con.disconnect()
 
@@ -33,7 +33,7 @@ class TestSQLite(BaseDatabaseTests):
     def db_with_employees(
         self, sample_sqlite_db: Path
     ) -> Generator[tuple[ibis.BaseBackend, str, str], None, None]:
-        con, _ = connect(f"sqlite:////{sample_sqlite_db}")
+        con, _ = connect(f"sqlite:///{sample_sqlite_db.as_posix()}")
         yield con, "sqlite", "sqlite"
         con.disconnect()
 
@@ -67,7 +67,7 @@ class TestSQLiteIncrementalScan:
     ) -> None:
         """Rescanning database should mark existing prefix folders as _seen=True."""
         app_dir = tmp_path
-        conn_str = f"sqlite:////{sample_sqlite_db}"
+        conn_str = f"sqlite:///{sample_sqlite_db.as_posix()}"
 
         # First scan with prefix grouping
         catalog1 = Catalog(app_path=app_dir, quiet=True)
@@ -124,7 +124,7 @@ class TestDatabaseTimeSeries:
         """Tables with temporal pattern are grouped into a single dataset."""
         catalog = Catalog(quiet=True)
         catalog.add_database(
-            f"sqlite:////{ts_sqlite_db}",
+            f"sqlite:///{ts_sqlite_db.as_posix()}",
             metadata=EntityMetadata(id="db", name="DB"),
             group_by_prefix=False,
         )
@@ -143,7 +143,7 @@ class TestDatabaseTimeSeries:
         """Variable start_date/end_date reflect schema evolution."""
         catalog = Catalog(quiet=True)
         catalog.add_database(
-            f"sqlite:////{ts_sqlite_db}",
+            f"sqlite:///{ts_sqlite_db.as_posix()}",
             metadata=EntityMetadata(id="db", name="DB"),
             group_by_prefix=False,
         )
@@ -164,7 +164,7 @@ class TestDatabaseTimeSeries:
         """time_series=False keeps tables separate."""
         catalog = Catalog(quiet=True)
         catalog.add_database(
-            f"sqlite:////{ts_sqlite_db}",
+            f"sqlite:///{ts_sqlite_db.as_posix()}",
             metadata=EntityMetadata(id="db", name="DB"),
             time_series=False,
             group_by_prefix=False,
@@ -176,7 +176,7 @@ class TestDatabaseTimeSeries:
         """Structure mode creates series dataset without scanning."""
         catalog = Catalog(quiet=True)
         catalog.add_database(
-            f"sqlite:////{ts_sqlite_db}",
+            f"sqlite:///{ts_sqlite_db.as_posix()}",
             metadata=EntityMetadata(id="db", name="DB"),
             depth="dataset",
             group_by_prefix=False,
@@ -191,7 +191,7 @@ class TestDatabaseTimeSeries:
         """Schema mode scans columns but not stats."""
         catalog = Catalog(quiet=True)
         catalog.add_database(
-            f"sqlite:////{ts_sqlite_db}",
+            f"sqlite:///{ts_sqlite_db.as_posix()}",
             metadata=EntityMetadata(id="db", name="DB"),
             depth="variable",
             group_by_prefix=False,
@@ -227,7 +227,7 @@ class TestDatabaseTimeSeries:
 
         catalog = Catalog(quiet=True)
         catalog.add_database(
-            f"sqlite:////{db_path}",
+            f"sqlite:///{db_path.as_posix()}",
             metadata=EntityMetadata(id="db", name="DB"),
             group_by_prefix=True,
             prefix_min_tables=2,
@@ -251,7 +251,7 @@ class TestDatabaseTimeSeries:
 
     def test_time_series_rescan(self, ts_sqlite_db: Path) -> None:
         """Rescanning removes old series dataset and creates new one."""
-        conn_str = f"sqlite:////{ts_sqlite_db}"
+        conn_str = f"sqlite:///{ts_sqlite_db.as_posix()}"
         catalog = Catalog(quiet=True)
         catalog.add_database(
             conn_str,
@@ -295,7 +295,7 @@ class TestDatabaseTimeSeries:
 
         with patch("datannurpy.add_database.scan_table", side_effect=fail_on_full):
             catalog.add_database(
-                f"sqlite:////{db_path}",
+                f"sqlite:///{db_path.as_posix()}",
                 metadata=EntityMetadata(id="db", name="DB"),
                 group_by_prefix=False,
             )
@@ -322,7 +322,7 @@ class TestDatabaseTimeSeries:
 
         with patch("datannurpy.add_database.scan_table", side_effect=fail_all):
             catalog.add_database(
-                f"sqlite:////{db_path}",
+                f"sqlite:///{db_path.as_posix()}",
                 metadata=EntityMetadata(id="db", name="DB"),
                 depth="variable",
                 group_by_prefix=False,
@@ -358,7 +358,7 @@ class TestDatabaseTimeSeries:
 
         with patch("datannurpy.add_database.scan_table", side_effect=fail_first):
             catalog.add_database(
-                f"sqlite:////{db_path}",
+                f"sqlite:///{db_path.as_posix()}",
                 metadata=EntityMetadata(id="db", name="DB"),
                 group_by_prefix=False,
             )
@@ -378,7 +378,7 @@ class TestGeoPackage:
         """Test connecting to a GeoPackage file."""
         if not gpkg_path.exists():
             pytest.skip("GeoPackage test file not available")
-        con, backend = connect(f"sqlite:////{gpkg_path}")
+        con, backend = connect(f"sqlite:///{gpkg_path.as_posix()}")
         try:
             assert backend == "sqlite"
             assert con is not None
@@ -389,7 +389,7 @@ class TestGeoPackage:
         """Test listing tables in a GeoPackage (excludes system tables)."""
         if not gpkg_path.exists():
             pytest.skip("GeoPackage test file not available")
-        con, _ = connect(f"sqlite:////{gpkg_path}")
+        con, _ = connect(f"sqlite:///{gpkg_path.as_posix()}")
         try:
             tables = list_tables(con)
             # Should have data tables
@@ -407,7 +407,7 @@ class TestGeoPackage:
         """Test scanning a table with geometry columns (POINT → geometry type)."""
         if not gpkg_path.exists():
             pytest.skip("GeoPackage test file not available")
-        con, _ = connect(f"sqlite:////{gpkg_path}")
+        con, _ = connect(f"sqlite:///{gpkg_path.as_posix()}")
         try:
             # Project has: id, geom (POINT → geometry), ProjectName, etc.
             variables, row_count, _, freq_table = scan_table(

@@ -139,7 +139,7 @@ def sqlite_catalog(sqlite_with_constraints: Path) -> Catalog:
     """Catalog populated from SQLite DB with constraints."""
     catalog = Catalog()
     catalog.add_database(
-        f"sqlite:////{sqlite_with_constraints}",
+        f"sqlite:///{sqlite_with_constraints.as_posix()}",
         metadata=EntityMetadata(id="db", name="Test DB"),
     )
     return catalog
@@ -157,12 +157,12 @@ def _emp_vars(catalog: Catalog) -> dict[str, Variable]:
 
 class TestSQLiteIntrospection:
     def test_simple_pk(self, sqlite_with_constraints: Path) -> None:
-        con, _ = connect(f"sqlite:////{sqlite_with_constraints}")
+        con, _ = connect(f"sqlite:///{sqlite_with_constraints.as_posix()}")
         assert introspect_table(con, "sqlite", None, "departments").pk_map == {"id": 1}
         con.disconnect()
 
     def test_composite_pk(self, sqlite_with_constraints: Path) -> None:
-        con, _ = connect(f"sqlite:////{sqlite_with_constraints}")
+        con, _ = connect(f"sqlite:///{sqlite_with_constraints.as_posix()}")
         assert introspect_table(con, "sqlite", None, "order_items").pk_map == {
             "order_id": 1,
             "item_id": 2,
@@ -178,7 +178,7 @@ class TestSQLiteIntrospection:
         con.disconnect()
 
     def test_fk(self, sqlite_with_constraints: Path) -> None:
-        con, _ = connect(f"sqlite:////{sqlite_with_constraints}")
+        con, _ = connect(f"sqlite:///{sqlite_with_constraints.as_posix()}")
         fks = introspect_table(con, "sqlite", None, "employees").fks
         assert len(fks) == 1
         assert (fks[0].local_col, fks[0].ref_table, fks[0].ref_col) == (
@@ -189,38 +189,38 @@ class TestSQLiteIntrospection:
         con.disconnect()
 
     def test_no_fk(self, sqlite_with_constraints: Path) -> None:
-        con, _ = connect(f"sqlite:////{sqlite_with_constraints}")
+        con, _ = connect(f"sqlite:///{sqlite_with_constraints.as_posix()}")
         assert introspect_table(con, "sqlite", None, "departments").fks == []
         con.disconnect()
 
     def test_comments_empty(self, sqlite_with_constraints: Path) -> None:
-        con, _ = connect(f"sqlite:////{sqlite_with_constraints}")
+        con, _ = connect(f"sqlite:///{sqlite_with_constraints.as_posix()}")
         meta = introspect_table(con, "sqlite", None, "employees")
         assert meta.table_comment is None and meta.col_comments == {}
         con.disconnect()
 
     def test_not_null(self, sqlite_with_constraints: Path) -> None:
-        con, _ = connect(f"sqlite:////{sqlite_with_constraints}")
+        con, _ = connect(f"sqlite:///{sqlite_with_constraints.as_posix()}")
         assert {"name", "department_id"} <= introspect_table(
             con, "sqlite", None, "employees"
         ).not_null
         con.disconnect()
 
     def test_unique(self, sqlite_with_constraints: Path) -> None:
-        con, _ = connect(f"sqlite:////{sqlite_with_constraints}")
+        con, _ = connect(f"sqlite:///{sqlite_with_constraints.as_posix()}")
         assert "email" in introspect_table(con, "sqlite", None, "employees").unique
         assert "name" in introspect_table(con, "sqlite", None, "departments").unique
         con.disconnect()
 
     def test_indexed(self, sqlite_with_constraints: Path) -> None:
-        con, _ = connect(f"sqlite:////{sqlite_with_constraints}")
+        con, _ = connect(f"sqlite:///{sqlite_with_constraints.as_posix()}")
         assert {"name", "department_id"} <= introspect_table(
             con, "sqlite", None, "employees"
         ).indexed
         con.disconnect()
 
     def test_auto_increment(self, sqlite_with_constraints: Path) -> None:
-        con, _ = connect(f"sqlite:////{sqlite_with_constraints}")
+        con, _ = connect(f"sqlite:///{sqlite_with_constraints.as_posix()}")
         assert "id" in introspect_table(con, "sqlite", None, "employees").auto_inc
         con.disconnect()
 
@@ -798,7 +798,7 @@ class TestCatalogDatabaseIntrospection:
     def test_dataset_depth_skips(self, sqlite_with_constraints: Path) -> None:
         catalog = Catalog(depth="dataset")
         catalog.add_database(
-            f"sqlite:////{sqlite_with_constraints}",
+            f"sqlite:///{sqlite_with_constraints.as_posix()}",
             metadata=EntityMetadata(id="db", name="Test DB"),
         )
         assert catalog.tag.count == 0
@@ -807,7 +807,7 @@ class TestCatalogDatabaseIntrospection:
     def test_schema_depth_introspects(self, sqlite_with_constraints: Path) -> None:
         catalog = Catalog(depth="variable")
         catalog.add_database(
-            f"sqlite:////{sqlite_with_constraints}",
+            f"sqlite:///{sqlite_with_constraints.as_posix()}",
             metadata=EntityMetadata(id="db", name="Test DB"),
         )
         assert catalog.tag.count > 0
@@ -822,7 +822,7 @@ class TestCatalogIncrementalIntrospection:
         sqlite_with_constraints: Path,
         tmp_path: Path,
     ) -> None:
-        conn_str = f"sqlite:////{sqlite_with_constraints}"
+        conn_str = f"sqlite:///{sqlite_with_constraints.as_posix()}"
         metadata = EntityMetadata(id="db", name="Test DB")
 
         cat1 = Catalog(app_path=tmp_path, quiet=True)
@@ -842,7 +842,7 @@ class TestCatalogIncrementalIntrospection:
         tmp_path: Path,
     ) -> None:
         """Schema-depth cache hit still refreshes introspection metadata."""
-        conn_str = f"sqlite:////{sqlite_with_constraints}"
+        conn_str = f"sqlite:///{sqlite_with_constraints.as_posix()}"
         metadata = EntityMetadata(id="db", name="Test DB")
 
         cat1 = Catalog(app_path=tmp_path, depth="variable", quiet=True)
@@ -862,7 +862,7 @@ class TestCatalogIncrementalIntrospection:
     ) -> None:
         cat = Catalog(app_path=tmp_path, quiet=True)
         cat.add_database(
-            f"sqlite:////{sqlite_with_constraints}",
+            f"sqlite:///{sqlite_with_constraints.as_posix()}",
             metadata=EntityMetadata(id="db", name="Test DB"),
         )
         cat.finalize()
@@ -880,7 +880,7 @@ class TestCatalogIncrementalIntrospection:
         ):
             catalog = Catalog()
             catalog.add_database(
-                f"sqlite:////{sqlite_with_constraints}",
+                f"sqlite:///{sqlite_with_constraints.as_posix()}",
                 metadata=EntityMetadata(id="db", name="Test DB"),
             )
         v = _emp_vars(catalog)
@@ -909,7 +909,7 @@ class TestCatalogIncrementalIntrospection:
         tmp_path: Path,
     ) -> None:
         """If a column is no longer PK, key should be cleared on rescan."""
-        conn_str = f"sqlite:////{sqlite_with_constraints}"
+        conn_str = f"sqlite:///{sqlite_with_constraints.as_posix()}"
         metadata = EntityMetadata(id="db", name="Test DB")
 
         cat1 = Catalog(app_path=tmp_path, quiet=True)
@@ -944,7 +944,7 @@ class TestCatalogIncrementalIntrospection:
 
         catalog = Catalog()
         catalog.add_database(
-            f"sqlite:////{db_path}",
+            f"sqlite:///{db_path.as_posix()}",
             metadata=EntityMetadata(id="db", name="Test DB"),
             include=["child"],
         )

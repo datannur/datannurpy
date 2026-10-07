@@ -175,7 +175,7 @@ class TestApplyGeopackageGeoViaCatalog:
         _make_geopackage(gpkg, geometry_type_name="MULTIPOLYGON")
         catalog = Catalog(app_path=tmp_path / "app", quiet=True)
         catalog.add_database(
-            f"sqlite:////{gpkg}",
+            f"sqlite:///{gpkg.as_posix()}",
             metadata=EntityMetadata(id="db", name="DB"),
         )
         parcels = catalog.dataset.get_by("name", "parcels")
@@ -190,7 +190,7 @@ class TestApplyGeopackageGeoViaCatalog:
         app_dir = tmp_path / "app"
         catalog = Catalog(app_path=app_dir, quiet=True)
         catalog.add_database(
-            f"sqlite:////{gpkg}",
+            f"sqlite:///{gpkg.as_posix()}",
             metadata=EntityMetadata(id="db", name="DB"),
         )
         catalog.export_db()
@@ -210,7 +210,7 @@ class TestApplyGeopackageGeoViaCatalog:
         conn.close()
         catalog = Catalog(app_path=tmp_path / "app", quiet=True)
         catalog.add_database(
-            f"sqlite:////{db}",
+            f"sqlite:///{db.as_posix()}",
             metadata=EntityMetadata(id="db", name="DB"),
         )
         things = catalog.dataset.get_by("name", "things")

@@ -1,5 +1,9 @@
 # datannurpy
 
+## 0.33.4 (2026-10-07)
+
+- fix: Excel/ODS, Iceberg and partitioned-Parquet scans no longer fail with `ParserException: syntax error at end of input` on fresh installs — ibis 12.0.0 emits a nameless `DROP VIEW IF EXISTS` with sqlglot ≥ 30.18 (ibis-project/ibis#12124, fixed upstream but unreleased), so sqlglot is capped below 30.18 until an ibis release ships the fix
+
 ## 0.33.3 (2026-08-15)
 
 - fix: a configured `log_file` creates its missing parent directories instead of crashing with `FileNotFoundError` on a fresh environment
