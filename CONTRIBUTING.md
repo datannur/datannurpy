@@ -81,9 +81,9 @@ npm ci                   # install dependencies (first time)
 npm run docs:dev         # VitePress dev server
 npm run docs:build       # build docs site
 npm run docs:preview     # preview built docs
-npm run docs:deploy      # deploy to docs.datannur.com/builder/
-npm run docs:release     # build + deploy
 ```
+
+Published to [docs.datannur.com/builder](https://docs.datannur.com/builder/) by the [datannur/docs](https://github.com/datannur/docs) repository: after merging a docs change, run its **Build and deploy docs** workflow.
 
 Structure:
 
@@ -91,7 +91,6 @@ Structure:
 - `docs/*.md` — One page per section (flat layout)
 - `docs/.vitepress/config.ts` — site config (nav, sidebar, theme)
 - `docs/public/` — static assets (logo, favicon)
-- `docs/deploy/` — deploy script and config
 
 ## Pull Requests
 
