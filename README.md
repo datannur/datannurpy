@@ -59,7 +59,7 @@ No local install needed: the [datannur template](https://github.com/datannur/dat
 
 🌐 **Website:** [datannur.com](https://datannur.com)
 
-🚀 **Demo:** [dev.datannur.com](https://dev.datannur.com/)
+🚀 **Demo:** [demo.datannur.com](https://demo.datannur.com/)
 
 ## Contributing
 
