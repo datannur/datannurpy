@@ -46,22 +46,22 @@ const sidebar = {
 const nav = {
   en: [
     { text: "Website", link: "https://datannur.com" },
-    { text: "Demo", link: "https://dev.datannur.com/" },
+    { text: "Demo", link: "https://demo.datannur.com/" },
     { text: "App docs", link: "https://docs.datannur.com/app/" },
   ],
   de: [
     { text: "Website", link: "https://datannur.com" },
-    { text: "Demo", link: "https://dev.datannur.com/" },
+    { text: "Demo", link: "https://demo.datannur.com/" },
     { text: "App-Doku", link: "https://docs.datannur.com/app/" },
   ],
   fr: [
     { text: "Site web", link: "https://datannur.com" },
-    { text: "Démo", link: "https://dev.datannur.com/" },
+    { text: "Démo", link: "https://demo.datannur.com/" },
     { text: "Doc de l'app", link: "https://docs.datannur.com/app/" },
   ],
   it: [
     { text: "Sito web", link: "https://datannur.com" },
-    { text: "Demo", link: "https://dev.datannur.com/" },
+    { text: "Demo", link: "https://demo.datannur.com/" },
     { text: "Doc dell'app", link: "https://docs.datannur.com/app/" },
   ],
 } satisfies Record<string, DefaultTheme.NavItem[]>;
